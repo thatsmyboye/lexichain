@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { computeBenchmarksFromWordCount, type Benchmarks } from "@/lib/benchmarks";
+import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
 
 type Pos = { r: number; c: number };
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
@@ -12,13 +15,17 @@ const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c
 type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | null;
 type SpecialTile = {
   type: SpecialTileType;
-  value?: number; // for multiplier tiles (2, 3, 4)
-  expiryTurns?: number; // turns until tile reverts to normal (1-5)
+  value?: number;
+  expiryTurns?: number;
 };
+
+type GameMode = "classic" | "target";
 
 type GameSettings = {
   enableSpecialTiles: boolean;
   scoreThreshold: number;
+  mode: GameMode;
+  targetTier: "bronze" | "silver" | "gold" | "platinum";
 };
 
 // Letter frequencies for English to generate fun boards
@@ -225,12 +232,19 @@ export default function WordPathGame() {
   const [dict, setDict] = useState<Set<string> | null>(null);
   const [sorted, setSorted] = useState<string[] | null>(null);
   const [score, setScore] = useState(0);
+  const [benchmarks, setBenchmarks] = useState<Benchmarks | null>(null);
+  const [discoverableCount, setDiscoverableCount] = useState(0);
+  const [unlocked, setUnlocked] = useState<Set<AchievementId>>(new Set());
+  const [gameOver, setGameOver] = useState(false);
+  const [finalGrade, setFinalGrade] = useState<"None" | "Bronze" | "Silver" | "Gold" | "Platinum">("None");
   const [streak, setStreak] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
     enableSpecialTiles: true,
-    scoreThreshold: SPECIAL_TILE_SCORE_THRESHOLD
+    scoreThreshold: SPECIAL_TILE_SCORE_THRESHOLD,
+    mode: "classic",
+    targetTier: "silver"
   });
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -252,8 +266,15 @@ useEffect(() => {
       // Prepare a solvable board
       setIsGenerating(true);
       const newBoard = generateSolvableBoard(size, s, arr);
+      const probe = probeGrid(newBoard, s, arr, K_MIN_WORDS, MAX_DFS_NODES);
+      const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
       if (!mounted) return;
       setBoard(newBoard);
+      setBenchmarks(bms);
+      setDiscoverableCount(probe.words.size);
+      setUnlocked(new Set());
+      setGameOver(false);
+      setFinalGrade("None");
       setPath([]);
       setDragging(false);
       setUsedWords([]);
@@ -330,13 +351,26 @@ function onNewGame() {
     setSpecialTiles(createEmptySpecialTilesGrid(size));
     try {
       const newBoard = generateSolvableBoard(size, dict, sorted);
+      const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
+      const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
       setBoard(newBoard);
+      setBenchmarks(bms);
+      setDiscoverableCount(probe.words.size);
+      setUnlocked(new Set());
+      setGameOver(false);
+      setFinalGrade("None");
       toast.success("New board ready!");
     } finally {
       setIsGenerating(false);
     }
   } else {
-    setBoard(makeBoard(size));
+    const nb = makeBoard(size);
+    setBoard(nb);
+    setBenchmarks(null);
+    setDiscoverableCount(0);
+    setUnlocked(new Set());
+    setGameOver(false);
+    setFinalGrade("None")
     setPath([]);
     setDragging(false);
     setUsedWords([]);
@@ -437,28 +471,32 @@ function onNewGame() {
   }
 
   function submitWord() {
+    if (gameOver) {
+      toast.info("Round over");
+      return clearPath();
+    }
     let actualWord = wordFromPath;
-    
-    // Handle wild tiles
+    let wildUsed = false;
+
     const hasWildTile = path.some(p => specialTiles[p.r][p.c].type === "wild");
     if (hasWildTile && dict) {
-      // Try to find a valid word by substituting wild tiles
       const wildcardPositions = path.filter(p => specialTiles[p.r][p.c].type === "wild");
       if (wildcardPositions.length === 1) {
         const wildPos = wildcardPositions[0];
         const wildIndex = path.findIndex(p => p.r === wildPos.r && p.c === wildPos.c);
         for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-          const testWord = actualWord.split('').map((char, i) => 
+          const testWord = actualWord.split('').map((char, i) =>
             i === wildIndex ? letter.toLowerCase() : char
           ).join('');
           if (dict.has(testWord) && !usedWords.includes(testWord)) {
+            if (testWord !== actualWord) wildUsed = true;
             actualWord = testWord;
             break;
           }
         }
       }
     }
-    
+
     if (!dict) {
       toast("Loading dictionary...");
       return clearPath();
@@ -476,9 +514,8 @@ function onNewGame() {
       return clearPath();
     }
 
-    // Check if path contains any Stone tiles (blocked from use)
-    const hasStoneeTile = path.some(p => specialTiles[p.r][p.c].type === "stone");
-    if (hasStoneeTile) {
+    const hasStoneTile = path.some(p => specialTiles[p.r][p.c].type === "stone");
+    if (hasStoneTile) {
       toast.error("Cannot use words containing Stone tiles!");
       return clearPath();
     }
@@ -489,13 +526,11 @@ function onNewGame() {
         return clearPath();
       }
     }
-    
+
     setUsedWords(prev => [...prev, actualWord]);
 
-    // Scoring components
     let base = actualWord.length * actualWord.length;
 
-    // Check for multiplier tiles
     const multiplierTiles = path.filter(p => specialTiles[p.r][p.c].type === "multiplier");
     let multiplier = 1;
     multiplierTiles.forEach(p => {
@@ -503,40 +538,35 @@ function onNewGame() {
       if (tile.value) multiplier *= tile.value;
     });
 
-    // Link depth: overlap with previous word
     const sharedTilesCount = lastWordTiles.size ? path.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
     const linkBonus = 2 * sharedTilesCount;
 
-    // Rarity bonus: sum tile rarity along the path
     const raritySum = path.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
     const rarityBonus = RARITY_MULTIPLIER * raritySum;
 
-    // Chain bonus: streak of consecutive qualifying words (length >= STREAK_TARGET_LEN)
     const qualifies = actualWord.length >= STREAK_TARGET_LEN;
     const nextStreak = qualifies ? streak + 1 : 0;
     const chainBonus = 5 * nextStreak;
 
-    // Time bonus (Blitz mode) - placeholder for future mode
     const timeBonus = 0;
 
     const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
 
-    // Handle X-Factor tiles
     const xFactorTiles = path.filter(p => specialTiles[p.r][p.c].type === "xfactor");
+    let xChanged = 0;
     if (xFactorTiles.length > 0) {
       const newBoard = board.map(row => [...row]);
       const newSpecialTiles = specialTiles.map(row => [...row]);
       const changedTileKeys = new Set<string>();
-      
+
       xFactorTiles.forEach(xfPos => {
-        // Get diagonal neighbors
         const diagonals = [
           { r: xfPos.r - 1, c: xfPos.c - 1 },
           { r: xfPos.r - 1, c: xfPos.c + 1 },
           { r: xfPos.r + 1, c: xfPos.c - 1 },
           { r: xfPos.r + 1, c: xfPos.c + 1 }
         ];
-        
+
         diagonals.forEach(pos => {
           if (within(pos.r, pos.c, size)) {
             newBoard[pos.r][pos.c] = randomLetter();
@@ -545,73 +575,106 @@ function onNewGame() {
           }
         });
       });
-      
+
       setBoard(newBoard);
       setSpecialTiles(newSpecialTiles);
       setAffectedTiles(changedTileKeys);
-      
-      // Clear the animation after 1 second
+      xChanged = changedTileKeys.size;
+
       setTimeout(() => {
         setAffectedTiles(new Set());
       }, 1000);
-      
+
       toast.info("X-Factor activated! Adjacent tiles transformed!");
     }
 
-    // Clear used special tiles and expire all special tiles
     let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = { type: null };
       }
     });
-    
-    // Expire all special tiles by one turn
     newSpecialTiles = expireSpecialTiles(newSpecialTiles);
-    
     setSpecialTiles(newSpecialTiles);
 
     setLastWordTiles(new Set(path.map(keyOf)));
     const newScore = score + totalGain;
     setScore(newScore);
     setStreak(nextStreak);
-    
-    // Introduce special tiles if threshold reached
-    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(newScore, settings.scoreThreshold)) {
-      setTimeout(() => {
-        if (Math.random() < 0.3) { // 30% chance to add a special tile
-          const emptyPositions = [];
-          for (let r = 0; r < size; r++) {
-            for (let c = 0; c < size; c++) {
-              if (specialTiles[r][c].type === null) {
-                emptyPositions.push({ r, c });
-              }
-            }
-          }
-          
-          if (emptyPositions.length > 0) {
-            const randomPos = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
-            const newSpecialTile = generateSpecialTile();
-            
-            if (newSpecialTile.type !== null) {
-              const updatedSpecialTiles = specialTiles.map(row => [...row]);
-              updatedSpecialTiles[randomPos.r][randomPos.c] = newSpecialTile;
-              setSpecialTiles(updatedSpecialTiles);
-              toast.info(`Special tile appeared: ${newSpecialTile.type}!`);
-            }
-          }
-        }
-      }, 1000);
+
+    setUnlocked(prev => {
+      const next = new Set(prev);
+      if (nextStreak >= 3) next.add("streak3");
+      if (nextStreak >= 5) next.add("streak5");
+      if (nextStreak >= 8) next.add("streak8");
+      if (sharedTilesCount >= 2) next.add("link2");
+      if (sharedTilesCount >= 3) next.add("link3");
+      if (sharedTilesCount >= 4) next.add("link4");
+      if (actualWord.length >= 7) next.add("long7");
+      if (actualWord.length >= 8) next.add("epic8");
+      const ultraCount = path.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+      if (ultraCount >= 2) next.add("rare2");
+      if (multiplier >= 3) next.add("combo3x");
+      if (xChanged >= 3) next.add("chaos3");
+      const ratio = vowelRatioOfWord(actualWord);
+      if (actualWord.length >= 6 && ratio >= 0.6) next.add("vowelStorm");
+      if (actualWord.length >= 6 && ratio <= 0.2) next.add("consonantCrunch");
+      if (wildUsed) next.add("wildWizard");
+      const nextUsedCount = usedWords.length + 1;
+      if (nextUsedCount >= 10) next.add("cartographer10");
+      if (nextUsedCount >= 15) next.add("collector15");
+      if (discoverableCount > 0) {
+        const pct = (nextUsedCount / discoverableCount) * 100;
+        if (pct >= 80) next.add("completionist80");
+        if (nextUsedCount >= discoverableCount) next.add("completionist100");
+      }
+      return next;
+    });
+
+    if (benchmarks && settings.mode === "target") {
+      const targetScore = benchmarks[settings.targetTier];
+      if (newScore >= targetScore && !gameOver) {
+        setGameOver(true);
+        const grade = (settings.targetTier[0].toUpperCase() + settings.targetTier.slice(1)) as "Bronze" | "Silver" | "Gold" | "Platinum";
+        setFinalGrade(grade);
+        setUnlocked(prev => {
+          const next = new Set(prev);
+          if (grade === "Gold" || grade === "Platinum") next.add("firstWin");
+          return next;
+        });
+        toast.success(`Target reached: ${grade}`);
+      }
     }
 
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
     clearPath();
-    
-    // Check if any valid move remains (async so UI stays snappy)
+
     setTimeout(() => {
       if (sorted && dict) {
         const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords));
-        if (!any) toast.info("No valid words remain. Game over!");
+        if (!any) {
+          if (benchmarks) {
+            let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
+            const s = newScore;
+            if (s >= benchmarks.platinum) grade = "Platinum";
+            else if (s >= benchmarks.gold) grade = "Gold";
+            else if (s >= benchmarks.silver) grade = "Silver";
+            else if (s >= benchmarks.bronze) grade = "Bronze";
+            setFinalGrade(grade === "None" ? "None" : grade);
+            setGameOver(true);
+            if (grade !== "None") toast.info(`Game over • Grade: ${grade}`);
+            else toast.info("No valid words remain. Game over!");
+            setUnlocked(prev => {
+              const next = new Set(prev);
+              if (grade === "Gold" || grade === "Platinum") next.add("firstWin");
+              next.add("clutch");
+              return next;
+            });
+          } else {
+            toast.info("No valid words remain. Game over!");
+            setGameOver(true);
+          }
+        }
       }
     }, 0);
   }
@@ -770,33 +833,102 @@ function onNewGame() {
               <div>
                 <div className="text-xs text-muted-foreground">Score</div>
                 <div className="text-2xl font-bold">{score}</div>
+                {benchmarks && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {(() => {
+                      const grade = score >= benchmarks.platinum ? "Platinum"
+                        : score >= benchmarks.gold ? "Gold"
+                        : score >= benchmarks.silver ? "Silver"
+                        : score >= benchmarks.bronze ? "Bronze"
+                        : "None";
+                      const nextTarget = score < benchmarks.bronze ? ["Bronze", benchmarks.bronze]
+                        : score < benchmarks.silver ? ["Silver", benchmarks.silver]
+                        : score < benchmarks.gold ? ["Gold", benchmarks.gold]
+                        : score < benchmarks.platinum ? ["Platinum", benchmarks.platinum]
+                        : null;
+                      return (
+                        <>
+                          <span>Grade: {grade}</span>
+                          {nextTarget && (
+                            <span className="ml-2">• {(nextTarget[1] as number) - score} to {nextTarget[0] as string}</span>
+                          )}
+                          <span className="ml-2">• Board: {benchmarks.rating}</span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
-              {settings.enableSpecialTiles && (
-                <div className="text-xs text-muted-foreground text-right">
-                  {score >= settings.scoreThreshold 
-                    ? "Special tiles active!" 
-                    : `${settings.scoreThreshold - score} until specials`}
+              <div className="text-xs text-muted-foreground text-right">
+                {settings.enableSpecialTiles ? (
+                  score >= settings.scoreThreshold 
+                    ? "Special tiles active!"
+                    : `${settings.scoreThreshold - score} until specials`
+                ) : "Special tiles off"}
+                {gameOver && finalGrade !== "None" && (
+                  <div className="mt-1 font-medium">Final: {finalGrade}</div>
+                )}
+              </div>
+            </div>
+          </Card>
+          
+
+          <Card className="p-3">
+            <div className="text-xs text-muted-foreground mb-2">Settings</div>
+            <div className="space-y-2">
+              <label className="flex items-center space-x-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={settings.enableSpecialTiles}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      enableSpecialTiles: e.target.checked,
+                    }))
+                  }
+                  className="rounded"
+                />
+                <span>Enable Special Tiles</span>
+              </label>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Mode</span>
+                <select
+                  value={settings.mode}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      mode: e.target.value as GameMode,
+                    }))
+                  }
+                  className="bg-card border rounded px-2 py-1 text-sm"
+                >
+                  <option value="classic">Classic</option>
+                  <option value="target">Target Score</option>
+                </select>
+              </div>
+              {settings.mode === "target" && benchmarks && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Target</span>
+                  <select
+                    value={settings.targetTier}
+                    onChange={(e) =>
+                      setSettings((prev) => ({
+                        ...prev,
+                        targetTier: e.target.value as any,
+                      }))
+                    }
+                    className="bg-card border rounded px-2 py-1 text-sm"
+                  >
+                    <option value="bronze">Bronze ({benchmarks.bronze})</option>
+                    <option value="silver">Silver ({benchmarks.silver})</option>
+                    <option value="gold">Gold ({benchmarks.gold})</option>
+                    <option value="platinum">Platinum ({benchmarks.platinum})</option>
+                  </select>
                 </div>
               )}
             </div>
           </Card>
-          
-          <Card className="p-3">
-            <div className="text-xs text-muted-foreground mb-2">Settings</div>
-            <label className="flex items-center space-x-2 text-sm">
-              <input
-                type="checkbox"
-                checked={settings.enableSpecialTiles}
-                onChange={(e) => setSettings(prev => ({ 
-                  ...prev, 
-                  enableSpecialTiles: e.target.checked 
-                }))}
-                className="rounded"
-              />
-              <span>Enable Special Tiles</span>
-            </label>
-          </Card>
-
+ 
           <Card className="p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs text-muted-foreground">Used words</div>
@@ -823,6 +955,21 @@ function onNewGame() {
                 ));
               })()}
               {!usedWords.length && <span className="text-muted-foreground text-xs">None yet</span>}
+            </div>
+          </Card>
+
+          <Card className="p-3">
+            <div className="text-xs text-muted-foreground mb-2">Achievements</div>
+            <div className="flex flex-wrap gap-1">
+              {Array.from(unlocked).length ? (
+                Array.from(unlocked).map((id: AchievementId) => (
+                  <span key={id} className="px-1.5 py-0.5 rounded text-xs bg-secondary">
+                    {ACHIEVEMENTS[id].label}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted-foreground text-xs">None yet</span>
+              )}
             </div>
           </Card>
 
