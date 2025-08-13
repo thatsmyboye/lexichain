@@ -761,9 +761,6 @@ function onNewGame() {
           <div className="mt-3 flex items-center gap-3">
             <span className="text-sm text-muted-foreground">Current:</span>
             <span className="text-lg font-semibold flex-1">{wordFromPath.toUpperCase()}</span>
-            <Button onClick={submitWord} disabled={!isGameReady || path.length < 3 || isGenerating} size="sm">
-              Submit
-            </Button>
           </div>
         </div>
 
