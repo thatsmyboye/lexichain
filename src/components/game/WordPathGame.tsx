@@ -657,31 +657,32 @@ function onNewGame() {
   const isGameReady = !!dict;
 
   return (
-    <section className="container mx-auto py-8">
+    <section className="container mx-auto py-4 max-w-7xl">
       <div
-        className="rounded-xl p-6 mb-8 bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] text-[hsl(var(--hero-foreground))] shadow-[var(--shadow-soft)]"
+        className="rounded-lg p-4 mb-4 bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] text-[hsl(var(--hero-foreground))] shadow-[var(--shadow-soft)]"
         ref={containerRef}
       >
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <p className="text-sm/6 opacity-90">Chain words by drawing paths through adjacent letters.</p>
-            <p className="text-sm/6 opacity-90">Each new word must reuse at least one tile from the previous word.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-sm opacity-90">
+            Chain words by drawing paths • Each new word must reuse at least one tile
           </div>
-          <div className="flex gap-3">
-            <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating}>{isGenerating ? "Generating..." : "New Game"}</Button>
-            <Button variant="secondary" onClick={clearPath} disabled={!path.length}>Clear Path</Button>
+          <div className="flex gap-2">
+            <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
+              {isGenerating ? "Generating..." : "New Game"}
+            </Button>
+            <Button variant="secondary" onClick={clearPath} disabled={!path.length} size="sm">Clear</Button>
           </div>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-[1fr,300px] gap-8 items-start">
+      <div className="grid lg:grid-cols-[auto,280px] gap-6 items-start">
         <div 
           onPointerUp={onPointerUp}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           style={{ touchAction: 'none' }} // Prevent page scrolling on touch
         >
-          <div className="grid grid-cols-4 gap-6 select-none">
+          <div className="grid grid-cols-4 gap-3 select-none max-w-md">
             {board.map((row, r) => row.map((ch, c) => {
               const k = keyOf({ r, c });
               const idx = path.findIndex((p) => p.r === r && p.c === c);
@@ -757,81 +758,84 @@ function onNewGame() {
             }))}
           </div>
 
-          <div className="mt-4 flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">Current:</div>
-            <div className="text-lg font-semibold">{wordFromPath.toUpperCase()}</div>
-            <Button onClick={submitWord} disabled={!isGameReady || path.length < 3 || isGenerating}>Submit</Button>
+          <div className="mt-3 flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">Current:</span>
+            <span className="text-lg font-semibold flex-1">{wordFromPath.toUpperCase()}</span>
+            <Button onClick={submitWord} disabled={!isGameReady || path.length < 3 || isGenerating} size="sm">
+              Submit
+            </Button>
           </div>
         </div>
 
-        <aside className="space-y-4">
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground">Score</div>
-            <div className="text-3xl font-bold">{score}</div>
-            {settings.enableSpecialTiles && (
-              <div className="text-xs text-muted-foreground mt-1">
-                {score >= settings.scoreThreshold 
-                  ? "Special tiles active!" 
-                  : `${settings.scoreThreshold - score} points until special tiles`}
+        <aside className="space-y-3">
+          <Card className="p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground">Score</div>
+                <div className="text-2xl font-bold">{score}</div>
               </div>
-            )}
-          </Card>
-          
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground mb-2">Settings</div>
-            <div className="space-y-2">
-              <label className="flex items-center space-x-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={settings.enableSpecialTiles}
-                  onChange={(e) => setSettings(prev => ({ 
-                    ...prev, 
-                    enableSpecialTiles: e.target.checked 
-                  }))}
-                  className="rounded"
-                />
-                <span>Enable Special Tiles</span>
-              </label>
+              {settings.enableSpecialTiles && (
+                <div className="text-xs text-muted-foreground text-right">
+                  {score >= settings.scoreThreshold 
+                    ? "Special tiles active!" 
+                    : `${settings.scoreThreshold - score} until specials`}
+                </div>
+              )}
             </div>
           </Card>
-          <Card className="p-4">
+          
+          <Card className="p-3">
+            <div className="text-xs text-muted-foreground mb-2">Settings</div>
+            <label className="flex items-center space-x-2 text-sm">
+              <input
+                type="checkbox"
+                checked={settings.enableSpecialTiles}
+                onChange={(e) => setSettings(prev => ({ 
+                  ...prev, 
+                  enableSpecialTiles: e.target.checked 
+                }))}
+                className="rounded"
+              />
+              <span>Enable Special Tiles</span>
+            </label>
+          </Card>
+
+          <Card className="p-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-muted-foreground">Used words</div>
+              <div className="text-xs text-muted-foreground">Used words</div>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setSortAlphabetically(!sortAlphabetically)}
-                className="h-6 px-2 text-xs"
+                className="h-5 px-2 text-xs"
               >
                 {sortAlphabetically ? "A-Z" : "Latest"}
               </Button>
             </div>
             <div 
-              className={`flex flex-wrap gap-2 transition-all duration-300 ease-out overflow-hidden ${
-                sortAlphabetically ? 'max-h-96' : 'max-h-32'
+              className={`flex flex-wrap gap-1 transition-all duration-300 ease-out overflow-hidden ${
+                sortAlphabetically ? 'max-h-64' : 'max-h-24'
               }`}
-              style={{
-                maxHeight: sortAlphabetically ? 'none' : '8rem'
-              }}
             >
               {(() => {
                 const displayWords = sortAlphabetically 
                   ? [...usedWords].sort()
-                  : usedWords.slice(-20).reverse();
+                  : usedWords.slice(-15).reverse();
                 return displayWords.map((w) => (
-                  <span key={w} className="px-2 py-1 rounded-md bg-secondary text-sm">{w.toUpperCase()}</span>
+                  <span key={w} className="px-1.5 py-0.5 rounded text-xs bg-secondary">{w.toUpperCase()}</span>
                 ));
               })()}
-              {!usedWords.length && <span className="text-muted-foreground text-sm">None yet</span>}
+              {!usedWords.length && <span className="text-muted-foreground text-xs">None yet</span>}
             </div>
           </Card>
-          <Card className="p-4">
-            <div className="text-sm text-muted-foreground mb-2">How to play</div>
-            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
-              <li>Drag through adjacent tiles (8 directions) to form a word.</li>
-              <li>Words must be 3+ letters and valid English words.</li>
-              <li>Each new word must reuse at least one tile from the previous word.</li>
-              <li>Keep chaining until no valid word remains.</li>
+
+          <Card className="p-3">
+            <div className="text-xs text-muted-foreground mb-2">How to play</div>
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              <li>• Drag through adjacent tiles to form words</li>
+              <li>• Words must be 3+ letters and valid</li>
+              <li>• Each word must reuse ≥1 tile from previous</li>
+              <li>• Keep chaining until no valid word remains</li>
             </ul>
           </Card>
         </aside>
