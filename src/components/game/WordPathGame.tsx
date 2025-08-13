@@ -53,6 +53,20 @@ const VOWELS = new Set(["A", "E", "I", "O", "U", "Y"]);
 const VOWEL_POOL = LETTERS.filter(([ch]) => VOWELS.has(ch));
 const CONSONANT_POOL = LETTERS.filter(([ch]) => !VOWELS.has(ch));
 
+// Scoring constants
+const RARITY_MULTIPLIER = 1.5; // tunes impact of rare letters
+const STREAK_TARGET_LEN = 5; // words >= this length count towards streak
+
+// Letter rarity helpers (based on frequency with a special bucket for ultra-rare letters)
+const VERY_RARE = new Set(["J", "Q", "X", "Z"]);
+const FREQ_MAP = new Map<string, number>(LETTERS);
+function letterRarity(ch: string): number {
+  const up = ch.toUpperCase();
+  if (VERY_RARE.has(up)) return 2; // ultra-rare
+  const f = FREQ_MAP.get(up) ?? 10;
+  return f < 2 ? 1 : 0; // rare if frequency < 2%
+}
+
 function pickWeighted(pool: Array<[string, number]>) {
   const total = pool.reduce((a, [, f]) => a + f, 0);
   let x = Math.random() * total;
@@ -185,9 +199,10 @@ export default function WordPathGame() {
   const [lastWordTiles, setLastWordTiles] = useState<Set<string>>(new Set());
   const [dict, setDict] = useState<Set<string> | null>(null);
   const [sorted, setSorted] = useState<string[] | null>(null);
-  const [score, setScore] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+const [score, setScore] = useState(0);
+const [streak, setStreak] = useState(0);
+const [isGenerating, setIsGenerating] = useState(false);
+const containerRef = useRef<HTMLDivElement | null>(null);
 
 useEffect(() => {
   let mounted = true;
@@ -212,6 +227,7 @@ useEffect(() => {
       setUsedWords(new Set());
       setLastWordTiles(new Set());
       setScore(0);
+      setStreak(0);
       setIsGenerating(false);
       toast.success("Dictionary loaded. Board ready!");
     })
@@ -234,6 +250,7 @@ function onNewGame() {
     setUsedWords(new Set());
     setLastWordTiles(new Set());
     setScore(0);
+    setStreak(0);
     try {
       const newBoard = generateSolvableBoard(size, dict, sorted);
       setBoard(newBoard);
@@ -248,6 +265,7 @@ function onNewGame() {
     setUsedWords(new Set());
     setLastWordTiles(new Set());
     setScore(0);
+    setStreak(0);
   }
 }
 
@@ -309,8 +327,31 @@ function onNewGame() {
     const nextUsed = new Set(usedWords);
     nextUsed.add(w);
     setUsedWords(nextUsed);
+
+    // Scoring components
+    const base = w.length * w.length;
+
+    // Link depth: overlap with previous word
+    const sharedTilesCount = lastWordTiles.size ? path.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
+    const linkBonus = 2 * sharedTilesCount;
+
+    // Rarity bonus: sum tile rarity along the path
+    const raritySum = path.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
+    const rarityBonus = RARITY_MULTIPLIER * raritySum;
+
+    // Chain bonus: streak of consecutive qualifying words (length >= STREAK_TARGET_LEN)
+    const qualifies = w.length >= STREAK_TARGET_LEN;
+    const nextStreak = qualifies ? streak + 1 : 0;
+    const chainBonus = 5 * nextStreak;
+
+    // Time bonus (Blitz mode) - placeholder for future mode
+    const timeBonus = 0;
+
+    const totalGain = Math.round(base + rarityBonus + chainBonus + linkBonus + timeBonus);
+
     setLastWordTiles(new Set(path.map(keyOf)));
-    setScore((s) => s + Math.max(1, w.length - 2));
+    setScore((s) => s + totalGain);
+    setStreak(nextStreak);
     toast.success(`✓ ${w.toUpperCase()}`);
     clearPath();
     // Check if any valid move remains (async so UI stays snappy)
