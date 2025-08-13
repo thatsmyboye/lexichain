@@ -6,7 +6,7 @@ import { toast } from "sonner";
 type Pos = { r: number; c: number };
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
 const within = (r: number, c: number, size: number) => r >= 0 && c >= 0 && r < size && c < size;
-const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) === 1 || (Math.abs(a.r - b.r) === 1 && Math.abs(a.c - b.c) === 1);
+const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) <= 1;
 
 // Letter frequencies for English to generate fun boards
 const LETTERS: Array<[string, number]> = [
@@ -423,7 +423,7 @@ function onNewGame() {
 
       <div className="grid md:grid-cols-[1fr,300px] gap-8 items-start">
         <div onPointerUp={onPointerUp}>
-          <div className="grid grid-cols-4 gap-3 select-none">
+          <div className="grid grid-cols-4 gap-6 select-none">
             {board.map((row, r) => row.map((ch, c) => {
               const k = keyOf({ r, c });
               const idx = path.findIndex((p) => p.r === r && p.c === c);
