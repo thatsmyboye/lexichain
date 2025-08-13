@@ -436,7 +436,7 @@ function onNewGame() {
                   className={
                     "relative aspect-square flex items-center justify-center rounded-lg border transition-[transform,box-shadow] " +
                     (selected
-                      ? "ring-2 ring-[hsl(var(--brand-500))] bg-accent/40 shadow-[var(--shadow-soft)] scale-[0.98]"
+                      ? "ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] dark:bg-green-950 dark:ring-green-500"
                       : reused
                         ? "bg-secondary/60"
                         : "bg-card")
