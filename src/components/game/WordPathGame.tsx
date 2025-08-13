@@ -234,6 +234,7 @@ export default function WordPathGame() {
   });
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
 
 useEffect(() => {
   let mounted = true;
@@ -382,6 +383,57 @@ function onNewGame() {
     if (!dragging) return;
     setDragging(false);
     submitWord();
+  }
+
+  // Touch event handlers for mobile support
+  function onTouchStart(e: React.TouchEvent, pos: Pos) {
+    e.preventDefault(); // Prevent page scrolling
+    const touch = e.touches[0];
+    setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+    onTilePointerDown(pos);
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    e.preventDefault(); // Prevent page scrolling
+    if (!dragging || !touchStartPos) return;
+    
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    if (element && element.closest('[data-tile-pos]')) {
+      const tileElement = element.closest('[data-tile-pos]') as HTMLElement;
+      const posStr = tileElement.getAttribute('data-tile-pos');
+      if (posStr) {
+        const [r, c] = posStr.split(',').map(Number);
+        onTilePointerEnter({ r, c });
+      }
+    }
+  }
+
+  function onTouchEnd(e: React.TouchEvent) {
+    e.preventDefault(); // Prevent page scrolling
+    setTouchStartPos(null);
+    onPointerUp();
+  }
+
+  // Single tap handler for mobile
+  function onTileTap(pos: Pos) {
+    if (path.length === 0) {
+      // Start new path with tap
+      setDragging(true);
+      setPath([pos]);
+    } else if (path.length === 1 && path[0].r === pos.r && path[0].c === pos.c) {
+      // Double tap on same tile to submit single letter (if valid)
+      submitWord();
+    } else {
+      // Try to add to path or submit if tapping the same tile again
+      const isLastTile = path.length > 0 && path[path.length - 1].r === pos.r && path[path.length - 1].c === pos.c;
+      if (isLastTile) {
+        submitWord();
+      } else {
+        tryAddToPath(pos);
+      }
+    }
   }
 
   function submitWord() {
@@ -623,7 +675,12 @@ function onNewGame() {
       </div>
 
       <div className="grid md:grid-cols-[1fr,300px] gap-8 items-start">
-        <div onPointerUp={onPointerUp}>
+        <div 
+          onPointerUp={onPointerUp}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{ touchAction: 'none' }} // Prevent page scrolling on touch
+        >
           <div className="grid grid-cols-4 gap-6 select-none">
             {board.map((row, r) => row.map((ch, c) => {
               const k = keyOf({ r, c });
@@ -663,9 +720,13 @@ function onNewGame() {
               return (
                 <Card
                   key={k}
+                  data-tile-pos={`${r},${c}`}
                   onPointerDown={() => onTilePointerDown({ r, c })}
                   onPointerEnter={() => onTilePointerEnter({ r, c })}
+                  onTouchStart={(e) => onTouchStart(e, { r, c })}
+                  onClick={() => onTileTap({ r, c })}
                   className={getTileClasses()}
+                  style={{ touchAction: 'none' }} // Prevent page scrolling on individual tiles
                 >
                   <div className="text-3xl font-semibold tracking-wide">
                     {special.type === "wild" ? "?" : ch}
