@@ -195,13 +195,14 @@ export default function WordPathGame() {
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
   const [path, setPath] = useState<Pos[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
+  const [usedWords, setUsedWords] = useState<string[]>([]);
   const [lastWordTiles, setLastWordTiles] = useState<Set<string>>(new Set());
   const [dict, setDict] = useState<Set<string> | null>(null);
   const [sorted, setSorted] = useState<string[] | null>(null);
 const [score, setScore] = useState(0);
 const [streak, setStreak] = useState(0);
 const [isGenerating, setIsGenerating] = useState(false);
+const [sortAlphabetically, setSortAlphabetically] = useState(false);
 const containerRef = useRef<HTMLDivElement | null>(null);
 
 useEffect(() => {
@@ -224,7 +225,7 @@ useEffect(() => {
       setBoard(newBoard);
       setPath([]);
       setDragging(false);
-      setUsedWords(new Set());
+      setUsedWords([]);
       setLastWordTiles(new Set());
       setScore(0);
       setStreak(0);
@@ -247,7 +248,7 @@ function onNewGame() {
     setIsGenerating(true);
     setPath([]);
     setDragging(false);
-    setUsedWords(new Set());
+    setUsedWords([]);
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
@@ -262,7 +263,7 @@ function onNewGame() {
     setBoard(makeBoard(size));
     setPath([]);
     setDragging(false);
-    setUsedWords(new Set());
+    setUsedWords([]);
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
@@ -313,7 +314,7 @@ function onNewGame() {
       toast.error(`Not a valid word: ${w.toUpperCase()}`);
       return clearPath();
     }
-    if (usedWords.has(w)) {
+    if (usedWords.includes(w)) {
       toast.warning("Already used");
       return clearPath();
     }
@@ -324,9 +325,7 @@ function onNewGame() {
         return clearPath();
       }
     }
-    const nextUsed = new Set(usedWords);
-    nextUsed.add(w);
-    setUsedWords(nextUsed);
+    setUsedWords(prev => [...prev, w]);
 
     // Scoring components
     const base = w.length * w.length;
@@ -357,7 +356,7 @@ function onNewGame() {
     // Check if any valid move remains (async so UI stays snappy)
     setTimeout(() => {
       if (sorted && dict) {
-        const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, usedWords);
+        const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords));
         if (!any) toast.info("No valid words remain. Game over!");
       }
     }, 0);
@@ -467,12 +466,27 @@ function onNewGame() {
             <div className="text-3xl font-bold">{score}</div>
           </Card>
           <Card className="p-4">
-            <div className="text-sm text-muted-foreground mb-2">Used words</div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm text-muted-foreground">Used words</div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSortAlphabetically(!sortAlphabetically)}
+                className="h-6 px-2 text-xs"
+              >
+                {sortAlphabetically ? "A-Z" : "Latest"}
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-2">
-              {Array.from(usedWords).slice(-20).reverse().map((w) => (
-                <span key={w} className="px-2 py-1 rounded-md bg-secondary text-sm">{w.toUpperCase()}</span>
-              ))}
-              {!usedWords.size && <span className="text-muted-foreground text-sm">None yet</span>}
+              {(() => {
+                const displayWords = sortAlphabetically 
+                  ? [...usedWords].sort().slice(-20)
+                  : usedWords.slice(-20).reverse();
+                return displayWords.map((w) => (
+                  <span key={w} className="px-2 py-1 rounded-md bg-secondary text-sm">{w.toUpperCase()}</span>
+                ));
+              })()}
+              {!usedWords.length && <span className="text-muted-foreground text-sm">None yet</span>}
             </div>
           </Card>
           <Card className="p-4">
