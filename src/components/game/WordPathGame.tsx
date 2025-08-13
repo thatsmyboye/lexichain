@@ -13,6 +13,7 @@ type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | null;
 type SpecialTile = {
   type: SpecialTileType;
   value?: number; // for multiplier tiles (2, 3, 4)
+  expiryTurns?: number; // turns until tile reverts to normal (1-5)
 };
 
 type GameSettings = {
@@ -279,12 +280,13 @@ function generateSpecialTile(): SpecialTile {
   for (const [type, rarity] of Object.entries(SPECIAL_TILE_RARITIES)) {
     cumulative += rarity;
     if (rand <= cumulative) {
+      const expiryTurns = Math.floor(Math.random() * 5) + 1; // Random 1-5 turns
       if (type === "multiplier") {
         const multiplierValues = [2, 3, 4];
         const value = multiplierValues[Math.floor(Math.random() * multiplierValues.length)];
-        return { type: type as SpecialTileType, value };
+        return { type: type as SpecialTileType, value, expiryTurns };
       }
-      return { type: type as SpecialTileType };
+      return { type: type as SpecialTileType, expiryTurns };
     }
   }
   
@@ -297,6 +299,21 @@ function shouldIntroduceSpecialTiles(currentScore: number, threshold: number): b
 
 function createEmptySpecialTilesGrid(size: number): SpecialTile[][] {
   return Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null })));
+}
+
+function expireSpecialTiles(specialTiles: SpecialTile[][]): SpecialTile[][] {
+  return specialTiles.map(row => 
+    row.map(tile => {
+      if (tile.type !== null && tile.expiryTurns !== undefined) {
+        const newExpiryTurns = tile.expiryTurns - 1;
+        if (newExpiryTurns <= 0) {
+          return { type: null }; // Expire the tile
+        }
+        return { ...tile, expiryTurns: newExpiryTurns };
+      }
+      return tile;
+    })
+  );
 }
 
 function onNewGame() {
@@ -472,13 +489,17 @@ function onNewGame() {
       toast.info("X-Factor activated! Adjacent tiles transformed!");
     }
 
-    // Clear used special tiles
-    const newSpecialTiles = specialTiles.map(row => [...row]);
+    // Clear used special tiles and expire all special tiles
+    let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = { type: null };
       }
     });
+    
+    // Expire all special tiles by one turn
+    newSpecialTiles = expireSpecialTiles(newSpecialTiles);
+    
     setSpecialTiles(newSpecialTiles);
 
     setLastWordTiles(new Set(path.map(keyOf)));
@@ -643,6 +664,11 @@ function onNewGame() {
                   {special.type === "multiplier" && special.value && (
                     <div className="absolute bottom-1 text-xs font-bold bg-white/20 px-1 rounded">
                       {special.value}x
+                    </div>
+                  )}
+                  {special.type !== null && special.expiryTurns !== undefined && (
+                    <div className="absolute top-1 left-1 text-xs font-bold bg-black/30 text-white px-1 rounded-full min-w-[16px] text-center">
+                      {special.expiryTurns}
                     </div>
                   )}
                 </Card>
