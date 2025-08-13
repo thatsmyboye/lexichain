@@ -232,6 +232,7 @@ export default function WordPathGame() {
     enableSpecialTiles: true,
     scoreThreshold: SPECIAL_TILE_SCORE_THRESHOLD
   });
+  const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
 
 useEffect(() => {
@@ -473,6 +474,7 @@ function onNewGame() {
     if (xFactorTiles.length > 0) {
       const newBoard = board.map(row => [...row]);
       const newSpecialTiles = specialTiles.map(row => [...row]);
+      const changedTileKeys = new Set<string>();
       
       xFactorTiles.forEach(xfPos => {
         // Get diagonal neighbors
@@ -487,12 +489,20 @@ function onNewGame() {
           if (within(pos.r, pos.c, size)) {
             newBoard[pos.r][pos.c] = randomLetter();
             newSpecialTiles[pos.r][pos.c] = { type: null };
+            changedTileKeys.add(keyOf(pos));
           }
         });
       });
       
       setBoard(newBoard);
       setSpecialTiles(newSpecialTiles);
+      setAffectedTiles(changedTileKeys);
+      
+      // Clear the animation after 1 second
+      setTimeout(() => {
+        setAffectedTiles(new Set());
+      }, 1000);
+      
       toast.info("X-Factor activated! Adjacent tiles transformed!");
     }
 
@@ -621,12 +631,15 @@ function onNewGame() {
               const selected = idx !== -1;
               const reused = lastWordTiles.has(k);
               const special = specialTiles[r][c];
+              const isAffected = affectedTiles.has(k);
               
               const getTileClasses = () => {
-                let baseClasses = "relative aspect-square flex items-center justify-center rounded-lg border transition-[transform,box-shadow] ";
+                let baseClasses = "relative aspect-square flex items-center justify-center rounded-lg border transition-[transform,box-shadow,background-color] duration-300 ";
                 
                 if (selected) {
                   baseClasses += "ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] dark:bg-green-950 dark:ring-green-500 ";
+                } else if (isAffected) {
+                  baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
                 } else if (reused) {
                   baseClasses += "bg-secondary/60 ";
                 } else {
