@@ -422,6 +422,13 @@ function onNewGame() {
       toast.warning("Already used");
       return clearPath();
     }
+
+    // Check if path contains any Stone tiles (blocked from use)
+    const hasStoneeTile = path.some(p => specialTiles[p.r][p.c].type === "stone");
+    if (hasStoneeTile) {
+      toast.error("Cannot use words containing Stone tiles!");
+      return clearPath();
+    }
     if (lastWordTiles.size > 0) {
       const overlap = path.some((p) => lastWordTiles.has(keyOf(p)));
       if (!overlap) {
