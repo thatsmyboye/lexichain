@@ -40,6 +40,142 @@ function binaryHasPrefix(sortedWords: string[], prefix: string) {
   return sortedWords[lo].startsWith(prefix);
 }
 
+// --- Solvability heuristic helpers & constants ---
+const K_MIN_WORDS = 12;
+const TARGET_VOWEL_MIN = 0.35;
+const TARGET_VOWEL_MAX = 0.55;
+const RESPAWN_COUNT = 3;
+const MUTATION_ROUNDS = 4;
+const MAX_ATTEMPTS = 8;
+const MAX_DFS_NODES = 30000;
+
+const VOWELS = new Set(["A", "E", "I", "O", "U", "Y"]);
+const VOWEL_POOL = LETTERS.filter(([ch]) => VOWELS.has(ch));
+const CONSONANT_POOL = LETTERS.filter(([ch]) => !VOWELS.has(ch));
+
+function pickWeighted(pool: Array<[string, number]>) {
+  const total = pool.reduce((a, [, f]) => a + f, 0);
+  let x = Math.random() * total;
+  for (const [ch, f] of pool) {
+    if ((x -= f) <= 0) return ch;
+  }
+  return pool[0]?.[0] ?? "E";
+}
+function randomVowelWeighted() { return pickWeighted(VOWEL_POOL); }
+function randomConsonantWeighted() { return pickWeighted(CONSONANT_POOL); }
+function isVowel(ch: string) { return VOWELS.has(ch.toUpperCase()); }
+function countVowelRatio(grid: string[][]) {
+  let v = 0, t = 0;
+  for (const row of grid) for (const ch of row) { t++; if (isVowel(ch)) v++; }
+  return t ? v / t : 0.5;
+}
+
+type ProbeResult = { words: Set<string>; linkFound: boolean; usage: Map<string, number> };
+
+function probeGrid(
+  grid: string[][],
+  wordSet: Set<string>,
+  sortedArr: string[],
+  K: number,
+  maxNodes: number
+): ProbeResult {
+  const N = grid.length;
+  let nodes = 0;
+  const words = new Set<string>();
+  const usage = new Map<string, number>();
+  let linkFound = false;
+  const pathSets: Array<Set<string>> = [];
+  const dirs = [-1, 0, 1];
+
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const stack: { pos: Pos; path: Pos[]; word: string }[] = [
+      { pos: { r, c }, path: [], word: "" },
+    ];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      const { pos, path: pp, word } = cur;
+      const k = keyOf(pos);
+      if (pp.find((p) => p.r === pos.r && p.c === pos.c)) continue;
+      const nextPath = [...pp, pos];
+      const nextWord = word + grid[pos.r][pos.c].toLowerCase();
+      nodes++;
+      if (nodes > maxNodes) return { words, linkFound, usage };
+
+      if (nextWord.length >= 3 && wordSet.has(nextWord)) {
+        if (!words.has(nextWord)) {
+          words.add(nextWord);
+          const set = new Set(nextPath.map(keyOf));
+          for (const kk of set) usage.set(kk, (usage.get(kk) ?? 0) + 1);
+          for (const s of pathSets) {
+            let overlaps = false;
+            for (const kk of set) { if (s.has(kk)) { overlaps = true; break; } }
+            if (overlaps) { linkFound = true; break; }
+          }
+          pathSets.push(set);
+          if (words.size >= K && linkFound) return { words, linkFound, usage };
+        }
+      }
+
+      if (!binaryHasPrefix(sortedArr, nextWord)) continue;
+
+      for (const dr of dirs) for (const dc of dirs) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = pos.r + dr, nc = pos.c + dc;
+        if (!within(nr, nc, N)) continue;
+        if (nextPath.find((p) => p.r === nr && p.c === nc)) continue;
+        stack.push({ pos: { r: nr, c: nc }, path: nextPath, word: nextWord });
+      }
+    }
+  }
+
+  return { words, linkFound, usage };
+}
+
+function mutateGrid(
+  grid: string[][],
+  usage: Map<string, number>,
+  vowelRatio: number,
+  vMin: number,
+  vMax: number,
+  count: number
+) {
+  const N = grid.length;
+  const positions: Array<{ r: number; c: number; k: string; u: number }> = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const k = `${r},${c}`;
+    positions.push({ r, c, k, u: usage.get(k) ?? 0 });
+  }
+  positions.sort((a, b) => (a.u - b.u) || (Math.random() - 0.5));
+  const chosen = positions.slice(0, Math.min(count, positions.length));
+  const biasToVowel = vowelRatio < vMin ? true : vowelRatio > vMax ? false : Math.random() < 0.5;
+  const newGrid = grid.map((row) => row.slice());
+  for (const p of chosen) newGrid[p.r][p.c] = biasToVowel ? randomVowelWeighted() : randomConsonantWeighted();
+  return newGrid;
+}
+
+function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: string[]) {
+  let attempts = 0;
+  let lastBoard = makeBoard(size);
+  while (attempts < MAX_ATTEMPTS) {
+    let board = makeBoard(size);
+    let probe = probeGrid(board, wordSet, sortedArr, K_MIN_WORDS, MAX_DFS_NODES);
+    if (probe.words.size >= K_MIN_WORDS && probe.linkFound) return board;
+
+    let rounds = 0;
+    while (rounds < MUTATION_ROUNDS) {
+      const vr = countVowelRatio(board);
+      board = mutateGrid(board, probe.usage, vr, TARGET_VOWEL_MIN, TARGET_VOWEL_MAX, RESPAWN_COUNT);
+      probe = probeGrid(board, wordSet, sortedArr, K_MIN_WORDS, MAX_DFS_NODES);
+      if (probe.words.size >= K_MIN_WORDS && probe.linkFound) return board;
+      rounds++;
+    }
+
+    lastBoard = board;
+    attempts++;
+  }
+  return lastBoard;
+}
+
 export default function WordPathGame() {
   const size = 4;
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
@@ -50,26 +186,38 @@ export default function WordPathGame() {
   const [dict, setDict] = useState<Set<string> | null>(null);
   const [sorted, setSorted] = useState<string[] | null>(null);
   const [score, setScore] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    fetch("/words.txt")
-      .then((r) => r.text())
-      .then((txt) => {
-        if (!mounted) return;
-        const words = txt.split(/\r?\n/).filter(Boolean).map((w) => w.trim().toLowerCase());
-        const s = new Set<string>();
-        for (const w of words) if (w.length >= 3) s.add(w);
-        const arr = Array.from(s);
-        arr.sort();
-        setDict(s);
-        setSorted(arr);
-        toast.success("Dictionary loaded. Start chaining words!");
-      })
-      .catch(() => toast.error("Failed to load dictionary. Offline mode."));
-    return () => { mounted = false };
-  }, []);
+useEffect(() => {
+  let mounted = true;
+  fetch("/words.txt")
+    .then((r) => r.text())
+    .then((txt) => {
+      if (!mounted) return;
+      const words = txt.split(/\r?\n/).filter(Boolean).map((w) => w.trim().toLowerCase());
+      const s = new Set<string>();
+      for (const w of words) if (w.length >= 3) s.add(w);
+      const arr = Array.from(s);
+      arr.sort();
+      setDict(s);
+      setSorted(arr);
+      // Prepare a solvable board
+      setIsGenerating(true);
+      const newBoard = generateSolvableBoard(size, s, arr);
+      if (!mounted) return;
+      setBoard(newBoard);
+      setPath([]);
+      setDragging(false);
+      setUsedWords(new Set());
+      setLastWordTiles(new Set());
+      setScore(0);
+      setIsGenerating(false);
+      toast.success("Dictionary loaded. Board ready!");
+    })
+    .catch(() => toast.error("Failed to load dictionary. Offline mode."));
+  return () => { mounted = false };
+}, []);
 
   const wordFromPath = useMemo(() => path.map((p) => board[p.r][p.c]).join("").toLowerCase(), [path, board]);
 
@@ -78,7 +226,22 @@ export default function WordPathGame() {
     setDragging(false);
   }
 
-  function onNewGame() {
+function onNewGame() {
+  if (dict && sorted) {
+    setIsGenerating(true);
+    setPath([]);
+    setDragging(false);
+    setUsedWords(new Set());
+    setLastWordTiles(new Set());
+    setScore(0);
+    try {
+      const newBoard = generateSolvableBoard(size, dict, sorted);
+      setBoard(newBoard);
+      toast.success("New board ready!");
+    } finally {
+      setIsGenerating(false);
+    }
+  } else {
     setBoard(makeBoard(size));
     setPath([]);
     setDragging(false);
@@ -86,6 +249,7 @@ export default function WordPathGame() {
     setLastWordTiles(new Set());
     setScore(0);
   }
+}
 
   function tryAddToPath(pos: Pos) {
     if (path.length && !neighbors(path[path.length - 1], pos)) return;
@@ -210,7 +374,7 @@ export default function WordPathGame() {
             <p className="text-sm/6 opacity-90">Each new word must reuse at least one tile from the previous word.</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="hero" onClick={onNewGame}>New Game</Button>
+            <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating}>{isGenerating ? "Generating..." : "New Game"}</Button>
             <Button variant="secondary" onClick={clearPath} disabled={!path.length}>Clear Path</Button>
           </div>
         </div>
@@ -252,7 +416,7 @@ export default function WordPathGame() {
           <div className="mt-4 flex items-center gap-4">
             <div className="text-sm text-muted-foreground">Current:</div>
             <div className="text-lg font-semibold">{wordFromPath.toUpperCase()}</div>
-            <Button onClick={submitWord} disabled={!isGameReady || path.length < 3}>Submit</Button>
+            <Button onClick={submitWord} disabled={!isGameReady || path.length < 3 || isGenerating}>Submit</Button>
           </div>
         </div>
 
