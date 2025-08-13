@@ -477,10 +477,17 @@ function onNewGame() {
                 {sortAlphabetically ? "A-Z" : "Latest"}
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div 
+              className={`flex flex-wrap gap-2 transition-all duration-300 ease-out overflow-hidden ${
+                sortAlphabetically ? 'max-h-96' : 'max-h-32'
+              }`}
+              style={{
+                maxHeight: sortAlphabetically ? 'none' : '8rem'
+              }}
+            >
               {(() => {
                 const displayWords = sortAlphabetically 
-                  ? [...usedWords].sort().slice(-20)
+                  ? [...usedWords].sort()
                   : usedWords.slice(-20).reverse();
                 return displayWords.map((w) => (
                   <span key={w} className="px-2 py-1 rounded-md bg-secondary text-sm">{w.toUpperCase()}</span>
