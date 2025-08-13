@@ -8,6 +8,18 @@ const keyOf = (p: Pos) => `${p.r},${p.c}`;
 const within = (r: number, c: number, size: number) => r >= 0 && c >= 0 && r < size && c < size;
 const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) <= 1;
 
+// Special tile types
+type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | null;
+type SpecialTile = {
+  type: SpecialTileType;
+  value?: number; // for multiplier tiles (2, 3, 4)
+};
+
+type GameSettings = {
+  enableSpecialTiles: boolean;
+  scoreThreshold: number;
+};
+
 // Letter frequencies for English to generate fun boards
 const LETTERS: Array<[string, number]> = [
   ["E", 12.02], ["T", 9.10], ["A", 8.12], ["O", 7.68], ["I", 7.31], ["N", 6.95],
@@ -56,6 +68,15 @@ const CONSONANT_POOL = LETTERS.filter(([ch]) => !VOWELS.has(ch));
 // Scoring constants
 const RARITY_MULTIPLIER = 1.5; // tunes impact of rare letters
 const STREAK_TARGET_LEN = 5; // words >= this length count towards streak
+
+// Special tiles constants
+const SPECIAL_TILE_SCORE_THRESHOLD = 150;
+const SPECIAL_TILE_RARITIES = {
+  stone: 0.15,
+  wild: 0.05,
+  xfactor: 0.08,
+  multiplier: 0.12
+};
 
 // Letter rarity helpers (based on frequency with a special bucket for ultra-rare letters)
 const VERY_RARE = new Set(["J", "Q", "X", "Z"]);
@@ -193,17 +214,24 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
 export default function WordPathGame() {
   const size = 4;
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
+  const [specialTiles, setSpecialTiles] = useState<SpecialTile[][]>(() => 
+    Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null })))
+  );
   const [path, setPath] = useState<Pos[]>([]);
   const [dragging, setDragging] = useState(false);
   const [usedWords, setUsedWords] = useState<string[]>([]);
   const [lastWordTiles, setLastWordTiles] = useState<Set<string>>(new Set());
   const [dict, setDict] = useState<Set<string> | null>(null);
   const [sorted, setSorted] = useState<string[] | null>(null);
-const [score, setScore] = useState(0);
-const [streak, setStreak] = useState(0);
-const [isGenerating, setIsGenerating] = useState(false);
-const [sortAlphabetically, setSortAlphabetically] = useState(false);
-const containerRef = useRef<HTMLDivElement | null>(null);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [sortAlphabetically, setSortAlphabetically] = useState(false);
+  const [settings, setSettings] = useState<GameSettings>({
+    enableSpecialTiles: true,
+    scoreThreshold: SPECIAL_TILE_SCORE_THRESHOLD
+  });
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
 useEffect(() => {
   let mounted = true;
@@ -243,6 +271,34 @@ useEffect(() => {
     setDragging(false);
   }
 
+// Special tile generation functions
+function generateSpecialTile(): SpecialTile {
+  const rand = Math.random();
+  let cumulative = 0;
+  
+  for (const [type, rarity] of Object.entries(SPECIAL_TILE_RARITIES)) {
+    cumulative += rarity;
+    if (rand <= cumulative) {
+      if (type === "multiplier") {
+        const multiplierValues = [2, 3, 4];
+        const value = multiplierValues[Math.floor(Math.random() * multiplierValues.length)];
+        return { type: type as SpecialTileType, value };
+      }
+      return { type: type as SpecialTileType };
+    }
+  }
+  
+  return { type: null };
+}
+
+function shouldIntroduceSpecialTiles(currentScore: number, threshold: number): boolean {
+  return currentScore >= threshold;
+}
+
+function createEmptySpecialTilesGrid(size: number): SpecialTile[][] {
+  return Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null })));
+}
+
 function onNewGame() {
   if (dict && sorted) {
     setIsGenerating(true);
@@ -252,6 +308,7 @@ function onNewGame() {
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
+    setSpecialTiles(createEmptySpecialTilesGrid(size));
     try {
       const newBoard = generateSolvableBoard(size, dict, sorted);
       setBoard(newBoard);
@@ -267,6 +324,7 @@ function onNewGame() {
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
+    setSpecialTiles(createEmptySpecialTilesGrid(size));
   }
 }
 
@@ -274,6 +332,14 @@ function onNewGame() {
     if (path.length && !neighbors(path[path.length - 1], pos)) return;
     const k = keyOf(pos);
     if (path.find((p) => p.r === pos.r && p.c === pos.c)) return;
+    
+    // Check if this is a stone tile and it's blocked
+    const specialTile = specialTiles[pos.r][pos.c];
+    if (specialTile.type === "stone") {
+      toast.warning("Stone tile is blocked!");
+      return;
+    }
+    
     setPath((p) => [...p, pos]);
   }
 
@@ -301,20 +367,41 @@ function onNewGame() {
   }
 
   function submitWord() {
-    const w = wordFromPath;
+    let actualWord = wordFromPath;
+    
+    // Handle wild tiles
+    const hasWildTile = path.some(p => specialTiles[p.r][p.c].type === "wild");
+    if (hasWildTile && dict) {
+      // Try to find a valid word by substituting wild tiles
+      const wildcardPositions = path.filter(p => specialTiles[p.r][p.c].type === "wild");
+      if (wildcardPositions.length === 1) {
+        const wildPos = wildcardPositions[0];
+        const wildIndex = path.findIndex(p => p.r === wildPos.r && p.c === wildPos.c);
+        for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+          const testWord = actualWord.split('').map((char, i) => 
+            i === wildIndex ? letter.toLowerCase() : char
+          ).join('');
+          if (dict.has(testWord) && !usedWords.includes(testWord)) {
+            actualWord = testWord;
+            break;
+          }
+        }
+      }
+    }
+    
     if (!dict) {
       toast("Loading dictionary...");
       return clearPath();
     }
-    if (w.length < 3) {
+    if (actualWord.length < 3) {
       toast.warning("Words must be at least 3 letters");
       return clearPath();
     }
-    if (!dict.has(w)) {
-      toast.error(`Not a valid word: ${w.toUpperCase()}`);
+    if (!dict.has(actualWord)) {
+      toast.error(`Not a valid word: ${actualWord.toUpperCase()}`);
       return clearPath();
     }
-    if (usedWords.includes(w)) {
+    if (usedWords.includes(actualWord)) {
       toast.warning("Already used");
       return clearPath();
     }
@@ -325,10 +412,19 @@ function onNewGame() {
         return clearPath();
       }
     }
-    setUsedWords(prev => [...prev, w]);
+    
+    setUsedWords(prev => [...prev, actualWord]);
 
     // Scoring components
-    const base = w.length * w.length;
+    let base = actualWord.length * actualWord.length;
+
+    // Check for multiplier tiles
+    const multiplierTiles = path.filter(p => specialTiles[p.r][p.c].type === "multiplier");
+    let multiplier = 1;
+    multiplierTiles.forEach(p => {
+      const tile = specialTiles[p.r][p.c];
+      if (tile.value) multiplier *= tile.value;
+    });
 
     // Link depth: overlap with previous word
     const sharedTilesCount = lastWordTiles.size ? path.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
@@ -339,20 +435,88 @@ function onNewGame() {
     const rarityBonus = RARITY_MULTIPLIER * raritySum;
 
     // Chain bonus: streak of consecutive qualifying words (length >= STREAK_TARGET_LEN)
-    const qualifies = w.length >= STREAK_TARGET_LEN;
+    const qualifies = actualWord.length >= STREAK_TARGET_LEN;
     const nextStreak = qualifies ? streak + 1 : 0;
     const chainBonus = 5 * nextStreak;
 
     // Time bonus (Blitz mode) - placeholder for future mode
     const timeBonus = 0;
 
-    const totalGain = Math.round(base + rarityBonus + chainBonus + linkBonus + timeBonus);
+    const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
+
+    // Handle X-Factor tiles
+    const xFactorTiles = path.filter(p => specialTiles[p.r][p.c].type === "xfactor");
+    if (xFactorTiles.length > 0) {
+      const newBoard = board.map(row => [...row]);
+      const newSpecialTiles = specialTiles.map(row => [...row]);
+      
+      xFactorTiles.forEach(xfPos => {
+        // Get diagonal neighbors
+        const diagonals = [
+          { r: xfPos.r - 1, c: xfPos.c - 1 },
+          { r: xfPos.r - 1, c: xfPos.c + 1 },
+          { r: xfPos.r + 1, c: xfPos.c - 1 },
+          { r: xfPos.r + 1, c: xfPos.c + 1 }
+        ];
+        
+        diagonals.forEach(pos => {
+          if (within(pos.r, pos.c, size)) {
+            newBoard[pos.r][pos.c] = randomLetter();
+            newSpecialTiles[pos.r][pos.c] = { type: null };
+          }
+        });
+      });
+      
+      setBoard(newBoard);
+      setSpecialTiles(newSpecialTiles);
+      toast.info("X-Factor activated! Adjacent tiles transformed!");
+    }
+
+    // Clear used special tiles
+    const newSpecialTiles = specialTiles.map(row => [...row]);
+    path.forEach(p => {
+      if (specialTiles[p.r][p.c].type !== null) {
+        newSpecialTiles[p.r][p.c] = { type: null };
+      }
+    });
+    setSpecialTiles(newSpecialTiles);
 
     setLastWordTiles(new Set(path.map(keyOf)));
-    setScore((s) => s + totalGain);
+    const newScore = score + totalGain;
+    setScore(newScore);
     setStreak(nextStreak);
-    toast.success(`✓ ${w.toUpperCase()}`);
+    
+    // Introduce special tiles if threshold reached
+    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(newScore, settings.scoreThreshold)) {
+      setTimeout(() => {
+        if (Math.random() < 0.3) { // 30% chance to add a special tile
+          const emptyPositions = [];
+          for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+              if (specialTiles[r][c].type === null) {
+                emptyPositions.push({ r, c });
+              }
+            }
+          }
+          
+          if (emptyPositions.length > 0) {
+            const randomPos = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
+            const newSpecialTile = generateSpecialTile();
+            
+            if (newSpecialTile.type !== null) {
+              const updatedSpecialTiles = specialTiles.map(row => [...row]);
+              updatedSpecialTiles[randomPos.r][randomPos.c] = newSpecialTile;
+              setSpecialTiles(updatedSpecialTiles);
+              toast.info(`Special tile appeared: ${newSpecialTile.type}!`);
+            }
+          }
+        }
+      }, 1000);
+    }
+
+    toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
     clearPath();
+    
     // Check if any valid move remains (async so UI stays snappy)
     setTimeout(() => {
       if (sorted && dict) {
@@ -428,25 +592,58 @@ function onNewGame() {
               const idx = path.findIndex((p) => p.r === r && p.c === c);
               const selected = idx !== -1;
               const reused = lastWordTiles.has(k);
+              const special = specialTiles[r][c];
+              
+              const getTileClasses = () => {
+                let baseClasses = "relative aspect-square flex items-center justify-center rounded-lg border transition-[transform,box-shadow] ";
+                
+                if (selected) {
+                  baseClasses += "ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] dark:bg-green-950 dark:ring-green-500 ";
+                } else if (reused) {
+                  baseClasses += "bg-secondary/60 ";
+                } else {
+                  baseClasses += "bg-card ";
+                }
+                
+                // Special tile styling
+                if (special.type === "stone") {
+                  baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white ";
+                } else if (special.type === "wild") {
+                  baseClasses += "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white ";
+                } else if (special.type === "xfactor") {
+                  baseClasses += "bg-gradient-to-br from-orange-400 to-red-500 text-white ";
+                } else if (special.type === "multiplier") {
+                  baseClasses += "bg-gradient-to-br from-blue-400 to-blue-600 text-white ";
+                }
+                
+                return baseClasses;
+              };
+              
               return (
                 <Card
                   key={k}
                   onPointerDown={() => onTilePointerDown({ r, c })}
                   onPointerEnter={() => onTilePointerEnter({ r, c })}
-                  className={
-                    "relative aspect-square flex items-center justify-center rounded-lg border transition-[transform,box-shadow] " +
-                    (selected
-                      ? "ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] dark:bg-green-950 dark:ring-green-500"
-                      : reused
-                        ? "bg-secondary/60"
-                        : "bg-card")
-                  }
+                  className={getTileClasses()}
                 >
                   <div className="text-3xl font-semibold tracking-wide">
-                    {ch}
+                    {special.type === "wild" ? "?" : ch}
                   </div>
                   {selected && (
                     <div className="absolute top-1 right-2 text-xs font-medium text-muted-foreground">{idx + 1}</div>
+                  )}
+                  {special.type === "xfactor" && (
+                    <>
+                      <div className="absolute top-1 left-1 w-2 h-2 bg-white/30 rounded-full"></div>
+                      <div className="absolute top-1 right-1 w-2 h-2 bg-white/30 rounded-full"></div>
+                      <div className="absolute bottom-1 left-1 w-2 h-2 bg-white/30 rounded-full"></div>
+                      <div className="absolute bottom-1 right-1 w-2 h-2 bg-white/30 rounded-full"></div>
+                    </>
+                  )}
+                  {special.type === "multiplier" && special.value && (
+                    <div className="absolute bottom-1 text-xs font-bold bg-white/20 px-1 rounded">
+                      {special.value}x
+                    </div>
                   )}
                 </Card>
               );
@@ -464,6 +661,31 @@ function onNewGame() {
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Score</div>
             <div className="text-3xl font-bold">{score}</div>
+            {settings.enableSpecialTiles && (
+              <div className="text-xs text-muted-foreground mt-1">
+                {score >= settings.scoreThreshold 
+                  ? "Special tiles active!" 
+                  : `${settings.scoreThreshold - score} points until special tiles`}
+              </div>
+            )}
+          </Card>
+          
+          <Card className="p-4">
+            <div className="text-sm text-muted-foreground mb-2">Settings</div>
+            <div className="space-y-2">
+              <label className="flex items-center space-x-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={settings.enableSpecialTiles}
+                  onChange={(e) => setSettings(prev => ({ 
+                    ...prev, 
+                    enableSpecialTiles: e.target.checked 
+                  }))}
+                  className="rounded"
+                />
+                <span>Enable Special Tiles</span>
+              </label>
+            </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
