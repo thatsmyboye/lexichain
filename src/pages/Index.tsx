@@ -1,13 +1,26 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect } from "react";
+import WordPathGame from "@/components/game/WordPathGame";
 
 const Index = () => {
+  useEffect(() => {
+    document.title = "Word Path Chain Game | Build word chains by reusing tiles";
+    const desc = "Draw paths to make words. Each new word must reuse at least one tile. Keep chaining until no valid word remains.";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", desc);
+    const og = document.querySelector('meta[property="og:title"]');
+    if (og) og.setAttribute("content", "Word Path Chain Game");
+    const ogd = document.querySelector('meta[property="og:description"]');
+    if (ogd) ogd.setAttribute("content", desc);
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <main>
+      <header className="container mx-auto pt-10 pb-4">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">Word Path Chain Game</h1>
+        <p className="mt-2 text-muted-foreground max-w-2xl">Make as many valid words as you can by drawing paths through the letter grid. Each new word must reuse at least one tile from the previous word.</p>
+      </header>
+      <WordPathGame />
+    </main>
   );
 };
 
