@@ -828,7 +828,6 @@ function startDailyChallenge() {
       
       if (tilesToPlace > 0) {
         setSpecialTiles(updatedSpecialTiles);
-        toast.info(`Special tiles appeared! (${tilesToPlace} new)`);
       }
     }
     
