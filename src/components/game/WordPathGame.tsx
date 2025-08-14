@@ -1505,14 +1505,13 @@ function startDailyChallenge() {
               <div className="text-lg font-mono bg-muted p-2 rounded">
                 {pendingWildPath?.map((p, i) => {
                   const isWild = specialTiles[p.r][p.c].type === "wild";
-                  return isWild ? (
-                    <span key={i} className="text-purple-500 font-bold">
-                      {wildTileInput.toUpperCase() || "?"}
+                  const letter = isWild ? (wildTileInput.toUpperCase() || "?") : board[p.r][p.c];
+                  return (
+                    <span key={i} className={isWild ? "text-purple-500 font-bold" : ""}>
+                      {letter}
                     </span>
-                  ) : (
-                    board[p.r][p.c]
                   );
-                }).join("").toUpperCase()}
+                })}
               </div>
             </div>
             <div>
