@@ -749,50 +749,88 @@ function startDailyChallenge() {
     setSpecialTiles(newSpecialTiles);
 
     setLastWordTiles(new Set(path.map(keyOf)));
-    const newScore = score + totalGain;
-    setScore(newScore);
+    
+    // Check for new achievements
+    const newAchievements: AchievementId[] = [];
+    const checkAndAdd = (condition: boolean, achievement: AchievementId) => {
+      if (condition && !unlocked.has(achievement)) {
+        newAchievements.push(achievement);
+      }
+    };
+
+    if (nextStreak >= 3) checkAndAdd(true, "streak3");
+    if (nextStreak >= 5) checkAndAdd(true, "streak5");
+    if (nextStreak >= 8) checkAndAdd(true, "streak8");
+    if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
+    if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
+    if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
+    if (actualWord.length >= 7) checkAndAdd(true, "long7");
+    if (actualWord.length >= 8) checkAndAdd(true, "epic8");
+    const ultraCount = path.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+    if (ultraCount >= 2) checkAndAdd(true, "rare2");
+    if (multiplier >= 3) checkAndAdd(true, "combo3x");
+    if (xChanged >= 3) checkAndAdd(true, "chaos3");
+    const ratio = vowelRatioOfWord(actualWord);
+    if (actualWord.length >= 6 && ratio >= 0.6) checkAndAdd(true, "vowelStorm");
+    if (actualWord.length >= 6 && ratio <= 0.2) checkAndAdd(true, "consonantCrunch");
+    if (wildUsed) checkAndAdd(true, "wildWizard");
+    const nextUsedCount = usedWords.length + 1;
+    if (nextUsedCount >= 10) checkAndAdd(true, "cartographer10");
+    if (nextUsedCount >= 15) checkAndAdd(true, "collector15");
+    if (discoverableCount > 0) {
+      const pct = (nextUsedCount / discoverableCount) * 100;
+      if (pct >= 80) checkAndAdd(true, "completionist80");
+      if (nextUsedCount >= discoverableCount) checkAndAdd(true, "completionist100");
+    }
+
+    // Calculate achievement bonus
+    const achievementBonus = newAchievements.reduce((total, id) => total + ACHIEVEMENTS[id].scoreBonus, 0);
+    const finalScore = score + totalGain + achievementBonus;
+    
+    setScore(finalScore);
     setStreak(nextStreak);
 
     setUnlocked(prev => {
       const next = new Set(prev);
-      if (nextStreak >= 3) next.add("streak3");
-      if (nextStreak >= 5) next.add("streak5");
-      if (nextStreak >= 8) next.add("streak8");
-      if (sharedTilesCount >= 2) next.add("link2");
-      if (sharedTilesCount >= 3) next.add("link3");
-      if (sharedTilesCount >= 4) next.add("link4");
-      if (actualWord.length >= 7) next.add("long7");
-      if (actualWord.length >= 8) next.add("epic8");
-      const ultraCount = path.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
-      if (ultraCount >= 2) next.add("rare2");
-      if (multiplier >= 3) next.add("combo3x");
-      if (xChanged >= 3) next.add("chaos3");
-      const ratio = vowelRatioOfWord(actualWord);
-      if (actualWord.length >= 6 && ratio >= 0.6) next.add("vowelStorm");
-      if (actualWord.length >= 6 && ratio <= 0.2) next.add("consonantCrunch");
-      if (wildUsed) next.add("wildWizard");
-      const nextUsedCount = usedWords.length + 1;
-      if (nextUsedCount >= 10) next.add("cartographer10");
-      if (nextUsedCount >= 15) next.add("collector15");
-      if (discoverableCount > 0) {
-        const pct = (nextUsedCount / discoverableCount) * 100;
-        if (pct >= 80) next.add("completionist80");
-        if (nextUsedCount >= discoverableCount) next.add("completionist100");
-      }
+      newAchievements.forEach(id => next.add(id));
       return next;
+    });
+
+    // Show achievement toasts
+    newAchievements.forEach(id => {
+      const achievement = ACHIEVEMENTS[id];
+      const rarityEmoji = {
+        common: "🏆",
+        rare: "⭐",
+        epic: "💎",
+        legendary: "👑"
+      }[achievement.rarity];
+      toast.success(`${rarityEmoji} ${achievement.label} (+${achievement.scoreBonus} pts)`, {
+        duration: 4000,
+      });
     });
 
     if (benchmarks && settings.mode === "target") {
       const targetScore = benchmarks[settings.targetTier];
-      if (newScore >= targetScore && !gameOver) {
+      if (finalScore >= targetScore && !gameOver) {
         setGameOver(true);
         const grade = (settings.targetTier[0].toUpperCase() + settings.targetTier.slice(1)) as "Bronze" | "Silver" | "Gold" | "Platinum";
         setFinalGrade(grade);
-        setUnlocked(prev => {
-          const next = new Set(prev);
-          if (grade === "Gold" || grade === "Platinum") next.add("firstWin");
-          return next;
-        });
+        
+        // Check for firstWin achievement
+        if ((grade === "Gold" || grade === "Platinum") && !unlocked.has("firstWin")) {
+          const achievement = ACHIEVEMENTS.firstWin;
+          setScore(prev => prev + achievement.scoreBonus);
+          setUnlocked(prev => {
+            const next = new Set(prev);
+            next.add("firstWin");
+            return next;
+          });
+          toast.success(`💎 ${achievement.label} (+${achievement.scoreBonus} pts)`, {
+            duration: 4000,
+          });
+        }
+        
         toast.success(`Target reached: ${grade}`);
       }
     }
@@ -800,7 +838,7 @@ function startDailyChallenge() {
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
     
     // Introduce special tiles if conditions are met
-    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(newScore, settings.scoreThreshold)) {
+    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, settings.scoreThreshold)) {
       const updatedSpecialTiles = [...newSpecialTiles];
       const emptyPositions: Pos[] = [];
       
@@ -842,7 +880,7 @@ function startDailyChallenge() {
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
             let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
-            const s = newScore;
+            const s = finalScore;
             if (s >= benchmarks.platinum) grade = "Platinum";
             else if (s >= benchmarks.gold) grade = "Gold";
             else if (s >= benchmarks.silver) grade = "Silver";
@@ -851,7 +889,7 @@ function startDailyChallenge() {
             setGameOver(true);
             
             if (dailyMovesExceeded) {
-              toast.info(`Daily Challenge complete! Final score: ${newScore} (${grade})`);
+              toast.info(`Daily Challenge complete! Final score: ${finalScore} (${grade})`);
             } else if (grade !== "None") {
               toast.info(`Game over • Grade: ${grade}`);
             } else {
@@ -860,8 +898,27 @@ function startDailyChallenge() {
             
             setUnlocked(prev => {
               const next = new Set(prev);
-              if (grade === "Gold" || grade === "Platinum") next.add("firstWin");
-              if (!dailyMovesExceeded) next.add("clutch");
+              let bonusScore = 0;
+              
+              if ((grade === "Gold" || grade === "Platinum") && !prev.has("firstWin")) {
+                next.add("firstWin");
+                bonusScore += ACHIEVEMENTS.firstWin.scoreBonus;
+                toast.success(`💎 ${ACHIEVEMENTS.firstWin.label} (+${ACHIEVEMENTS.firstWin.scoreBonus} pts)`, {
+                  duration: 4000,
+                });
+              }
+              if (!dailyMovesExceeded && !prev.has("clutch")) {
+                next.add("clutch");
+                bonusScore += ACHIEVEMENTS.clutch.scoreBonus;
+                toast.success(`💎 ${ACHIEVEMENTS.clutch.label} (+${ACHIEVEMENTS.clutch.scoreBonus} pts)`, {
+                  duration: 4000,
+                });
+              }
+              
+              if (bonusScore > 0) {
+                setScore(prevScore => prevScore + bonusScore);
+              }
+              
               return next;
             });
           } else {
