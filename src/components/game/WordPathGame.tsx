@@ -806,7 +806,7 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-start mb-4">
         <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
           {isGenerating ? "Generating..." : "New Game"}
         </Button>
