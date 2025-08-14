@@ -99,7 +99,7 @@ const AuthForm = ({ onBackToTitle }: AuthFormProps) => {
             <CardDescription>
               {isLogin 
                 ? "Sign in to your Lexichain account" 
-                : "Join Lexichain and start playing"
+                : "Register to track your stats and achievements"
               }
             </CardDescription>
           </CardHeader>
