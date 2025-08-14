@@ -905,6 +905,26 @@ function startDailyChallenge() {
 
   const isGameReady = !!dict;
 
+  const shareScoreInline = () => {
+    const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const grade = finalGrade !== "None" ? finalGrade : score >= (benchmarks?.platinum || 0) ? "Platinum"
+      : score >= (benchmarks?.gold || 0) ? "Gold"
+      : score >= (benchmarks?.silver || 0) ? "Silver"
+      : score >= (benchmarks?.bronze || 0) ? "Bronze"
+      : "None";
+    const shareText = `🔤 Lexichain Daily ${date}\n📊 ${score} points (${grade})\n📝 ${usedWords.length} words\n\nlexichain.app`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Lexichain Daily Challenge',
+        text: shareText
+      });
+    } else {
+      navigator.clipboard.writeText(shareText);
+      toast.success("Copied to clipboard!");
+    }
+  };
+
   return (
     <section className="container mx-auto py-4 max-w-7xl">
       <Dialog open={showDifficultyDialog} onOpenChange={setShowDifficultyDialog}>
@@ -1216,6 +1236,16 @@ function startDailyChallenge() {
                 ) : "Special tiles off"}
                 {gameOver && finalGrade !== "None" && (
                   <div className="mt-1 font-medium">Final: {finalGrade}</div>
+                )}
+                {settings.mode === "daily" && gameOver && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={shareScoreInline}
+                    className="mt-2 h-6 px-2 text-xs bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+                  >
+                    Share
+                  </Button>
                 )}
               </div>
             </div>
