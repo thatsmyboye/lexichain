@@ -796,7 +796,10 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
           onTouchEnd={onTouchEnd}
           style={{ touchAction: 'none' }} // Prevent page scrolling on touch
         >
-          <div className={`grid grid-cols-${size} gap-3 select-none max-w-md`}>
+          <div 
+            className="grid gap-3 select-none max-w-md"
+            style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+          >
             {board.map((row, r) => row.map((ch, c) => {
               const k = keyOf({ r, c });
               const idx = path.findIndex((p) => p.r === r && p.c === c);
