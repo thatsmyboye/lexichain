@@ -20,7 +20,7 @@ type SpecialTile = {
   expiryTurns?: number;
 };
 
-type GameMode = "classic" | "target";
+type GameMode = "classic" | "target" | "daily";
 
 type GameSettings = {
   enableSpecialTiles: boolean;
@@ -29,6 +29,7 @@ type GameSettings = {
   targetTier: "bronze" | "silver" | "gold" | "platinum";
   difficulty: "easy" | "medium" | "hard" | "expert";
   gridSize: number;
+  dailyMovesLimit: number;
 };
 
 // Letter frequencies for English to generate fun boards
@@ -48,8 +49,43 @@ function randomLetter() {
   return "E";
 }
 
-function makeBoard(size: number) {
+function makeBoard(size: number, seed?: string) {
+  if (seed) {
+    // Use seeded random for daily challenge
+    const rng = seedRandom(seed);
+    return Array.from({ length: size }, () => Array.from({ length: size }, () => seededRandomLetter(rng)));
+  }
   return Array.from({ length: size }, () => Array.from({ length: size }, () => randomLetter()));
+}
+
+// Seeded random number generator
+function seedRandom(seed: string) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return function() {
+    hash = Math.imul(hash, 0x9e3779b9);
+    hash = hash ^ (hash >>> 16);
+    return (hash >>> 0) / 0x100000000;
+  };
+}
+
+function seededRandomLetter(rng: () => number) {
+  const total = LETTERS.reduce((a, [, f]) => a + f, 0);
+  let x = rng() * total;
+  for (const [ch, f] of LETTERS) {
+    if ((x -= f) <= 0) return ch;
+  }
+  return "E";
+}
+
+function getDailySeed(): string {
+  const today = new Date();
+  return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 }
 
 function binaryHasPrefix(sortedWords: string[], prefix: string) {
@@ -249,13 +285,16 @@ export default function WordPathGame() {
     mode: "classic",
     targetTier: "silver",
     difficulty: "medium",
-    gridSize: 4
+    gridSize: 4,
+    dailyMovesLimit: 20
   });
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [movesUsed, setMovesUsed] = useState(0);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
 useEffect(() => {
   let mounted = true;
@@ -362,7 +401,7 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
   const config = DIFFICULTY_CONFIG[difficulty];
   const newSize = config.gridSize;
   
-  setSettings(prev => ({ ...prev, difficulty, gridSize: newSize }));
+  setSettings(prev => ({ ...prev, difficulty, gridSize: newSize, mode: "classic" }));
   setSize(newSize);
   setShowDifficultyDialog(false);
   
@@ -374,6 +413,7 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
+    setMovesUsed(0);
     setSpecialTiles(createEmptySpecialTilesGrid(newSize));
     try {
       const newBoard = generateSolvableBoard(newSize, dict, sorted);
@@ -404,6 +444,66 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
+    setMovesUsed(0);
+    setSpecialTiles(createEmptySpecialTilesGrid(newSize));
+  }
+}
+
+function startDailyChallenge() {
+  const difficulty = "medium"; // Daily challenges use medium difficulty
+  const config = DIFFICULTY_CONFIG[difficulty];
+  const newSize = config.gridSize;
+  const dailySeed = getDailySeed();
+  
+  setSettings(prev => ({ 
+    ...prev, 
+    difficulty, 
+    gridSize: newSize, 
+    mode: "daily",
+    dailyMovesLimit: 20 
+  }));
+  setSize(newSize);
+  
+  if (dict && sorted) {
+    setIsGenerating(true);
+    setPath([]);
+    setDragging(false);
+    setUsedWords([]);
+    setLastWordTiles(new Set());
+    setScore(0);
+    setStreak(0);
+    setMovesUsed(0);
+    setSpecialTiles(createEmptySpecialTilesGrid(newSize));
+    
+    try {
+      const newBoard = makeBoard(newSize, dailySeed);
+      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
+      const bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      setBoard(newBoard);
+      setBenchmarks(bms);
+      setDiscoverableCount(probe.words.size);
+      setUnlocked(new Set());
+      setGameOver(false);
+      setFinalGrade("None");
+      toast.success(`Daily Challenge ${dailySeed} ready! 20 moves to make your best score.`);
+    } finally {
+      setIsGenerating(false);
+    }
+  } else {
+    const nb = makeBoard(newSize, dailySeed);
+    setBoard(nb);
+    setBenchmarks(null);
+    setDiscoverableCount(0);
+    setUnlocked(new Set());
+    setGameOver(false);
+    setFinalGrade("None");
+    setPath([]);
+    setDragging(false);
+    setUsedWords([]);
+    setLastWordTiles(new Set());
+    setScore(0);
+    setStreak(0);
+    setMovesUsed(0);
     setSpecialTiles(createEmptySpecialTilesGrid(newSize));
   }
 }
@@ -502,6 +602,12 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
       toast.info("Round over");
       return clearPath();
     }
+
+    // Check daily challenge move limit
+    if (settings.mode === "daily" && movesUsed >= settings.dailyMovesLimit) {
+      toast.error("Daily move limit reached!");
+      return clearPath();
+    }
     let actualWord = wordFromPath;
     let wildUsed = false;
 
@@ -555,6 +661,11 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
     }
 
     setUsedWords(prev => [...prev, actualWord]);
+    
+    // Increment moves for daily challenge
+    if (settings.mode === "daily") {
+      setMovesUsed(prev => prev + 1);
+    }
 
     let base = actualWord.length * actualWord.length;
 
@@ -712,8 +823,11 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
 
     setTimeout(() => {
       if (sorted && dict) {
+        // Check if daily challenge is out of moves
+        const dailyMovesExceeded = settings.mode === "daily" && (movesUsed + 1) >= settings.dailyMovesLimit;
         const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords));
-        if (!any) {
+        
+        if (!any || dailyMovesExceeded) {
           if (benchmarks) {
             let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
             const s = newScore;
@@ -723,16 +837,27 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
             else if (s >= benchmarks.bronze) grade = "Bronze";
             setFinalGrade(grade === "None" ? "None" : grade);
             setGameOver(true);
-            if (grade !== "None") toast.info(`Game over • Grade: ${grade}`);
-            else toast.info("No valid words remain. Game over!");
+            
+            if (dailyMovesExceeded) {
+              toast.info(`Daily Challenge complete! Final score: ${newScore} (${grade})`);
+            } else if (grade !== "None") {
+              toast.info(`Game over • Grade: ${grade}`);
+            } else {
+              toast.info("No valid words remain. Game over!");
+            }
+            
             setUnlocked(prev => {
               const next = new Set(prev);
               if (grade === "Gold" || grade === "Platinum") next.add("firstWin");
-              next.add("clutch");
+              if (!dailyMovesExceeded) next.add("clutch");
               return next;
             });
           } else {
-            toast.info("No valid words remain. Game over!");
+            if (dailyMovesExceeded) {
+              toast.info("Daily Challenge complete!");
+            } else {
+              toast.info("No valid words remain. Game over!");
+            }
             setGameOver(true);
           }
         }
@@ -808,9 +933,29 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
       </Dialog>
 
       <div className="flex justify-start items-center gap-2 mb-4">
-        <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
-          {isGenerating ? "Generating..." : "New Game"}
-        </Button>
+        <div className="flex gap-1">
+          <Button 
+            variant={settings.mode === "classic" ? "hero" : "outline"} 
+            onClick={() => setSettings(prev => ({ ...prev, mode: "classic" }))} 
+            size="sm"
+          >
+            Classic
+          </Button>
+          <Button 
+            variant={settings.mode === "daily" ? "hero" : "outline"} 
+            onClick={() => startDailyChallenge()} 
+            size="sm"
+          >
+            Daily Challenge
+          </Button>
+        </div>
+        
+        {settings.mode === "classic" && (
+          <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
+            {isGenerating ? "Generating..." : "New Game"}
+          </Button>
+        )}
+        
         <Button 
           variant="outline" 
           onClick={() => setShowHowToPlay(true)} 
@@ -819,6 +964,17 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
         >
           How to Play
         </Button>
+        
+        {settings.mode === "daily" && gameOver && (
+          <Button 
+            variant="outline" 
+            onClick={() => setShowShareDialog(true)} 
+            size="sm"
+            className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+          >
+            Share Score
+          </Button>
+        )}
       </div>
 
       {/* How to Play Modal */}
@@ -844,6 +1000,48 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
               <span className="text-muted-foreground mt-1">•</span>
               <span className="text-sm">Keep chaining until no valid word remains</span>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Score Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Your Daily Challenge Score</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[hsl(var(--brand-500))]">{score} points</div>
+              <div className="text-sm text-muted-foreground">
+                {usedWords.length} words • {movesUsed}/{settings.dailyMovesLimit} moves
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Grade: {finalGrade}
+              </div>
+            </div>
+            <div className="bg-muted p-3 rounded-lg">
+              <div className="text-xs text-muted-foreground mb-2">Share this:</div>
+              <div className="text-sm font-mono">
+                🔤 Lexichain Daily Challenge {getDailySeed()}<br/>
+                📊 {score} points ({finalGrade})<br/>
+                📝 {usedWords.length} words in {movesUsed} moves<br/>
+                🎯 {settings.dailyMovesLimit - movesUsed} moves remaining<br/>
+                <br/>
+                Play at lexichain.app
+              </div>
+            </div>
+            <Button 
+              onClick={() => {
+                const shareText = `🔤 Lexichain Daily Challenge ${getDailySeed()}\n📊 ${score} points (${finalGrade})\n📝 ${usedWords.length} words in ${movesUsed} moves\n🎯 ${settings.dailyMovesLimit - movesUsed} moves remaining\n\nPlay at lexichain.app`;
+                navigator.clipboard.writeText(shareText);
+                toast.success("Copied to clipboard!");
+                setShowShareDialog(false);
+              }}
+              className="w-full"
+            >
+              Copy to Clipboard
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -977,6 +1175,11 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
               <div>
                 <div className="text-xs text-muted-foreground">Score</div>
                 <div className="text-2xl font-bold">{score}</div>
+                {settings.mode === "daily" && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Moves: {movesUsed}/{settings.dailyMovesLimit}
+                  </div>
+                )}
                 {benchmarks && (
                   <div className="mt-1 text-xs text-muted-foreground">
                     {(() => {
