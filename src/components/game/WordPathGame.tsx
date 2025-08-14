@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { computeBenchmarksFromWordCount, type Benchmarks } from "@/lib/benchmarks";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
@@ -26,6 +27,8 @@ type GameSettings = {
   scoreThreshold: number;
   mode: GameMode;
   targetTier: "bronze" | "silver" | "gold" | "platinum";
+  difficulty: "easy" | "medium" | "hard" | "expert";
+  gridSize: number;
 };
 
 // Letter frequencies for English to generate fun boards
@@ -220,7 +223,7 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
 }
 
 export default function WordPathGame() {
-  const size = 4;
+  const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
   const [specialTiles, setSpecialTiles] = useState<SpecialTile[][]>(() => 
     Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null })))
@@ -244,8 +247,11 @@ export default function WordPathGame() {
     enableSpecialTiles: true,
     scoreThreshold: SPECIAL_TILE_SCORE_THRESHOLD,
     mode: "classic",
-    targetTier: "silver"
+    targetTier: "silver",
+    difficulty: "medium",
+    gridSize: 4
   });
+  const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
@@ -339,7 +345,26 @@ function expireSpecialTiles(specialTiles: SpecialTile[][]): SpecialTile[][] {
   );
 }
 
+// Difficulty configurations
+const DIFFICULTY_CONFIG = {
+  easy: { gridSize: 4, minWords: 8, scoreMultiplier: 0.7 },
+  medium: { gridSize: 4, minWords: 12, scoreMultiplier: 1.0 },
+  hard: { gridSize: 5, minWords: 18, scoreMultiplier: 1.3 },
+  expert: { gridSize: 6, minWords: 25, scoreMultiplier: 1.6 }
+};
+
 function onNewGame() {
+  setShowDifficultyDialog(true);
+}
+
+function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "expert") {
+  const config = DIFFICULTY_CONFIG[difficulty];
+  const newSize = config.gridSize;
+  
+  setSettings(prev => ({ ...prev, difficulty, gridSize: newSize }));
+  setSize(newSize);
+  setShowDifficultyDialog(false);
+  
   if (dict && sorted) {
     setIsGenerating(true);
     setPath([]);
@@ -348,23 +373,24 @@ function onNewGame() {
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
-    setSpecialTiles(createEmptySpecialTilesGrid(size));
+    setSpecialTiles(createEmptySpecialTilesGrid(newSize));
     try {
-      const newBoard = generateSolvableBoard(size, dict, sorted);
-      const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
-      const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+      const newBoard = generateSolvableBoard(newSize, dict, sorted);
+      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
+      const adjustedWordCount = Math.floor(probe.words.size * config.scoreMultiplier);
+      const bms = computeBenchmarksFromWordCount(adjustedWordCount, config.minWords);
       setBoard(newBoard);
       setBenchmarks(bms);
       setDiscoverableCount(probe.words.size);
       setUnlocked(new Set());
       setGameOver(false);
       setFinalGrade("None");
-      toast.success("New board ready!");
+      toast.success(`New ${difficulty} board ready!`);
     } finally {
       setIsGenerating(false);
     }
   } else {
-    const nb = makeBoard(size);
+    const nb = makeBoard(newSize);
     setBoard(nb);
     setBenchmarks(null);
     setDiscoverableCount(0);
@@ -377,7 +403,7 @@ function onNewGame() {
     setLastWordTiles(new Set());
     setScore(0);
     setStreak(0);
-    setSpecialTiles(createEmptySpecialTilesGrid(size));
+    setSpecialTiles(createEmptySpecialTilesGrid(newSize));
   }
 }
 
@@ -721,6 +747,31 @@ function onNewGame() {
 
   return (
     <section className="container mx-auto py-4 max-w-7xl">
+      <Dialog open={showDifficultyDialog} onOpenChange={setShowDifficultyDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Difficulty</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            {Object.entries(DIFFICULTY_CONFIG).map(([diff, config]) => (
+              <Button
+                key={diff}
+                variant="outline"
+                onClick={() => startGameWithDifficulty(diff as any)}
+                className="justify-between p-4 h-auto"
+              >
+                <div className="text-left">
+                  <div className="font-semibold capitalize">{diff}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {config.gridSize}×{config.gridSize} grid • {config.minWords}+ words • {Math.round(config.scoreMultiplier * 100)}% scoring
+                  </div>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div
         className="rounded-lg p-4 mb-4 bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] text-[hsl(var(--hero-foreground))] shadow-[var(--shadow-soft)]"
         ref={containerRef}
@@ -745,7 +796,7 @@ function onNewGame() {
           onTouchEnd={onTouchEnd}
           style={{ touchAction: 'none' }} // Prevent page scrolling on touch
         >
-          <div className="grid grid-cols-4 gap-3 select-none max-w-md">
+          <div className={`grid grid-cols-${size} gap-3 select-none max-w-md`}>
             {board.map((row, r) => row.map((ch, c) => {
               const k = keyOf({ r, c });
               const idx = path.findIndex((p) => p.r === r && p.c === c);
