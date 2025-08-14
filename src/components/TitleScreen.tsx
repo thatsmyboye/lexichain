@@ -1,4 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from '@supabase/supabase-js';
 
 interface TitleScreenProps {
   onPlayClick: () => void;
@@ -7,6 +10,23 @@ interface TitleScreenProps {
 }
 
 const TitleScreen = ({ onPlayClick, onLoginClick, onRegisterClick }: TitleScreenProps) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative">
@@ -20,9 +40,10 @@ const TitleScreen = ({ onPlayClick, onLoginClick, onRegisterClick }: TitleScreen
             variant="outline" 
             size="lg"
             onClick={onLoginClick}
-            className="px-8"
+            className={`px-8 ${user ? 'bg-gray-500/20 border-gray-500/30 text-muted-foreground cursor-not-allowed' : ''}`}
+            disabled={!!user}
           >
-            Login
+            {user ? 'Logged In' : 'Login'}
           </Button>
           <Button 
             variant="hero" 
