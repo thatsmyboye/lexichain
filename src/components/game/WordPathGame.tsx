@@ -932,8 +932,36 @@ function startDailyChallenge() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-start items-center gap-2 mb-4">
-        <div className="flex gap-1">
+      <div className="space-y-2 mb-4">
+        <div className="flex justify-start items-center gap-2">
+          {settings.mode === "classic" && (
+            <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
+              {isGenerating ? "Generating..." : "New Game"}
+            </Button>
+          )}
+          
+          <Button 
+            variant="outline" 
+            onClick={() => setShowHowToPlay(true)} 
+            size="sm"
+            className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+          >
+            How to Play
+          </Button>
+          
+          {settings.mode === "daily" && gameOver && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowShareDialog(true)} 
+              size="sm"
+              className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+            >
+              Share Score
+            </Button>
+          )}
+        </div>
+        
+        <div className="flex justify-start items-center gap-1">
           <Button 
             variant={settings.mode === "classic" ? "hero" : "outline"} 
             onClick={() => setSettings(prev => ({ ...prev, mode: "classic" }))} 
@@ -949,32 +977,6 @@ function startDailyChallenge() {
             Daily Challenge
           </Button>
         </div>
-        
-        {settings.mode === "classic" && (
-          <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
-            {isGenerating ? "Generating..." : "New Game"}
-          </Button>
-        )}
-        
-        <Button 
-          variant="outline" 
-          onClick={() => setShowHowToPlay(true)} 
-          size="sm"
-          className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
-        >
-          How to Play
-        </Button>
-        
-        {settings.mode === "daily" && gameOver && (
-          <Button 
-            variant="outline" 
-            onClick={() => setShowShareDialog(true)} 
-            size="sm"
-            className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
-          >
-            Share Score
-          </Button>
-        )}
       </div>
 
       {/* How to Play Modal */}
