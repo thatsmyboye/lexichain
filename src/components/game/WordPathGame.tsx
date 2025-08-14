@@ -312,7 +312,7 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
   return lastBoard;
 }
 
-export default function WordPathGame() {
+export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => void }) {
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
   const [specialTiles, setSpecialTiles] = useState<SpecialTile[][]>(() => 
@@ -1426,6 +1426,15 @@ function startDailyChallenge() {
             className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
           >
             How to Play
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={onBackToTitle} 
+            size="sm"
+            className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+          >
+            Back to Title
           </Button>
           
           {settings.mode === "daily" && gameOver && (

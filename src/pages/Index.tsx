@@ -20,6 +20,10 @@ const Index = () => {
     setShowGame(true);
   };
 
+  const handleBackToTitle = () => {
+    setShowGame(false);
+  };
+
   const handleLoginClick = () => {
     // TODO: Implement login functionality
     console.log("Login clicked");
@@ -33,7 +37,7 @@ const Index = () => {
           <p className="mt-2 text-muted-foreground max-w-2xl">Make as many valid words as you can by drawing paths through the letter grid. Each new word must reuse at least one tile from the previous word.</p>
           <p className="mt-1 text-muted-foreground max-w-2xl text-sm">This game is in early development, and will undergo frequent changes.</p>
         </header>
-        <WordPathGame />
+        <WordPathGame onBackToTitle={handleBackToTitle} />
       </main>
     );
   }
