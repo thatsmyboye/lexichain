@@ -6,8 +6,13 @@ interface TitleScreenProps {
 }
 
 const TitleScreen = ({ onPlayClick, onLoginClick }: TitleScreenProps) => {
+  const handleRegisterClick = () => {
+    // TODO: Implement register functionality
+    console.log("Register clicked");
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative">
       <div className="text-center space-y-8">
         <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
           Lexichain
@@ -31,7 +36,21 @@ const TitleScreen = ({ onPlayClick, onLoginClick }: TitleScreenProps) => {
             Play
           </Button>
         </div>
+        
+        <div className="text-center">
+          <button 
+            onClick={handleRegisterClick}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+          >
+            Register
+          </button>
+        </div>
       </div>
+      
+      {/* Copyright footer */}
+      <footer className="absolute bottom-6 text-center text-xs text-muted-foreground">
+        © {new Date().getFullYear()} Banton Games. All rights reserved.
+      </footer>
     </div>
   );
 };
