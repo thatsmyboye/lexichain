@@ -1882,6 +1882,11 @@ function startDailyChallenge() {
 
         </aside>
       </div>
+      
+      {/* Footer */}
+      <footer className="mt-8 text-center text-xs text-muted-foreground">
+        © {new Date().getFullYear()} Banton Games. All rights reserved.
+      </footer>
     </section>
   );
 }
