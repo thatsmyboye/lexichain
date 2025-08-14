@@ -50,13 +50,53 @@ function randomLetter() {
   return "E";
 }
 
+function getAdjacentPositions(pos: Pos, size: number): Pos[] {
+  const adjacent: Pos[] = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue; // Skip the center position
+      const newR = pos.r + dr;
+      const newC = pos.c + dc;
+      if (within(newR, newC, size)) {
+        adjacent.push({ r: newR, c: newC });
+      }
+    }
+  }
+  return adjacent;
+}
+
 function makeBoard(size: number, seed?: string) {
+  let board: string[][];
+  
   if (seed) {
     // Use seeded random for daily challenge
     const rng = seedRandom(seed);
-    return Array.from({ length: size }, () => Array.from({ length: size }, () => seededRandomLetter(rng)));
+    board = Array.from({ length: size }, () => Array.from({ length: size }, () => seededRandomLetter(rng)));
+  } else {
+    board = Array.from({ length: size }, () => Array.from({ length: size }, () => randomLetter()));
   }
-  return Array.from({ length: size }, () => Array.from({ length: size }, () => randomLetter()));
+  
+  // Validate Q-U adjacency and fix if needed
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (board[r][c] === 'Q') {
+        // Check if there's a U adjacent to this Q
+        const adjacentPositions = getAdjacentPositions({ r, c }, size);
+        const hasAdjacentU = adjacentPositions.some(pos => board[pos.r][pos.c] === 'U');
+        
+        if (!hasAdjacentU) {
+          // No adjacent U found, spawn a different letter
+          let newLetter;
+          do {
+            newLetter = seed ? seededRandomLetter(seedRandom(seed + r + c)) : randomLetter();
+          } while (newLetter === 'Q');
+          board[r][c] = newLetter;
+        }
+      }
+    }
+  }
+  
+  return board;
 }
 
 // Seeded random number generator
