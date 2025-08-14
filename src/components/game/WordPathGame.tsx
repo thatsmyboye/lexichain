@@ -806,21 +806,10 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
         </DialogContent>
       </Dialog>
 
-      <div
-        className="rounded-lg p-4 mb-4 bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] text-[hsl(var(--hero-foreground))] shadow-[var(--shadow-soft)]"
-        ref={containerRef}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="text-sm opacity-90">
-            Chain words by drawing paths • Each new word must reuse at least one tile
-          </div>
-          <div className="flex gap-2">
-            <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
-              {isGenerating ? "Generating..." : "New Game"}
-            </Button>
-            <Button variant="secondary" onClick={clearPath} disabled={!path.length} size="sm">Clear</Button>
-          </div>
-        </div>
+      <div className="flex justify-end mb-4">
+        <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
+          {isGenerating ? "Generating..." : "New Game"}
+        </Button>
       </div>
 
       <div className="grid lg:grid-cols-[auto,280px] gap-6 items-start">
