@@ -1012,7 +1012,7 @@ function startDailyChallenge() {
                 <div className="text-left">
                   <div className="font-semibold capitalize">{diff}</div>
                   <div className="text-sm text-muted-foreground">
-                    {config.gridSize}×{config.gridSize} grid • {config.minWords}+ words • {Math.round(config.scoreMultiplier * 100)}% scoring
+                    {config.gridSize}×{config.gridSize} grid • {config.minWords}+ discoverable words • {Math.round(config.scoreMultiplier * 100)}% scoring
                   </div>
                 </div>
               </Button>
