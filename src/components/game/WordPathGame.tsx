@@ -1152,8 +1152,8 @@ function startDailyChallenge() {
 
     const qualifies = actualWord.length >= STREAK_TARGET_LEN;
     const nextStreak = qualifies ? streak + 1 : 0;
-    // RECALIBRATED: Exponential streak bonus
-    const chainBonus = nextStreak > 0 ? Math.round(10 * Math.pow(1.5, nextStreak)) : 0;
+    // RECALIBRATED: Linear streak bonus with cap to prevent runaway scoring
+    const chainBonus = nextStreak > 0 ? Math.min(100, 5 + (nextStreak * 8)) : 0;
 
     const timeBonus = 0;
 
