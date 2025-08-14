@@ -4,12 +4,44 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from '@supabase/supabase-js';
-import { ArrowLeft, Trophy, Target, Clock, Zap } from "lucide-react";
+import { ArrowLeft, Trophy, Target, Clock, Zap, Medal } from "lucide-react";
 
 const StatsPage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [achievementCounts, setAchievementCounts] = useState({
+    Bronze: 0,
+    Silver: 0,
+    Gold: 0,
+    Platinum: 0
+  });
+
+  const fetchAchievementCounts = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('daily_challenge_results')
+        .select('achievement_level')
+        .eq('user_id', userId)
+        .neq('achievement_level', 'None');
+
+      if (error) {
+        console.error('Error fetching achievement counts:', error);
+        return;
+      }
+
+      const counts = { Bronze: 0, Silver: 0, Gold: 0, Platinum: 0 };
+      data?.forEach((result) => {
+        if (result.achievement_level in counts) {
+          counts[result.achievement_level as keyof typeof counts]++;
+        }
+      });
+
+      setAchievementCounts(counts);
+    } catch (error) {
+      console.error('Error fetching achievement counts:', error);
+    }
+  };
 
   useEffect(() => {
     document.title = "Your Stats | Lexichain";
@@ -22,6 +54,9 @@ const StatsPage = () => {
         return;
       }
       setUser(session.user);
+      
+      // Fetch achievement counts
+      await fetchAchievementCounts(session.user.id);
       setLoading(false);
     };
 
@@ -112,6 +147,38 @@ const StatsPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Medal className="h-5 w-5" />
+              Daily Challenge Achievements
+            </CardTitle>
+            <CardDescription>
+              Your achievement counts in daily challenges
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20">
+                <div className="text-2xl font-bold text-orange-600">{achievementCounts.Bronze}</div>
+                <p className="text-sm text-muted-foreground">Bronze</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-gray-400/10 to-gray-500/10 border border-gray-400/20">
+                <div className="text-2xl font-bold text-gray-600">{achievementCounts.Silver}</div>
+                <p className="text-sm text-muted-foreground">Silver</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border border-yellow-500/20">
+                <div className="text-2xl font-bold text-yellow-600">{achievementCounts.Gold}</div>
+                <p className="text-sm text-muted-foreground">Gold</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20">
+                <div className="text-2xl font-bold text-purple-600">{achievementCounts.Platinum}</div>
+                <p className="text-sm text-muted-foreground">Platinum</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
