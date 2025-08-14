@@ -255,6 +255,7 @@ export default function WordPathGame() {
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
 useEffect(() => {
   let mounted = true;
@@ -806,11 +807,46 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-start mb-4">
+      <div className="flex justify-start items-center gap-2 mb-4">
         <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
           {isGenerating ? "Generating..." : "New Game"}
         </Button>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowHowToPlay(true)} 
+          size="sm"
+          className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+        >
+          How to Play
+        </Button>
       </div>
+
+      {/* How to Play Modal */}
+      <Dialog open={showHowToPlay} onOpenChange={setShowHowToPlay}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>How to play</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-start gap-2">
+              <span className="text-muted-foreground mt-1">•</span>
+              <span className="text-sm">Drag through adjacent tiles to form words</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-muted-foreground mt-1">•</span>
+              <span className="text-sm">Words must be 3+ letters and valid</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-muted-foreground mt-1">•</span>
+              <span className="text-sm">Each word must reuse ≥1 tile from previous</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-muted-foreground mt-1">•</span>
+              <span className="text-sm">Keep chaining until no valid word remains</span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid lg:grid-cols-[auto,280px] gap-6 items-start">
         <div 
@@ -1081,15 +1117,6 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
             </div>
           </Card>
 
-          <Card className="p-3">
-            <div className="text-xs text-muted-foreground mb-2">How to play</div>
-            <ul className="space-y-1 text-xs text-muted-foreground">
-              <li>• Drag through adjacent tiles to form words</li>
-              <li>• Words must be 3+ letters and valid</li>
-              <li>• Each word must reuse ≥1 tile from previous</li>
-              <li>• Keep chaining until no valid word remains</li>
-            </ul>
-          </Card>
         </aside>
       </div>
     </section>
