@@ -10,10 +10,11 @@ export type Benchmarks = {
 export function computeBenchmarksFromWordCount(wordCount: number, kMin: number): Benchmarks {
   const richness = Math.max(1, wordCount) / Math.max(1, kMin);
   const scale = Math.min(1.5, Math.max(0.7, 0.8 + 0.2 * (richness - 1)));
-  const bronze = Math.round(150 * scale);
-  const silver = Math.round(300 * scale);
-  const gold = Math.round(500 * scale);
-  const platinum = Math.round(800 * scale);
+  // RECALIBRATED: Adjusted base thresholds for balanced progression
+  const bronze = Math.round(120 * scale);
+  const silver = Math.round(250 * scale);
+  const gold = Math.round(420 * scale);
+  const platinum = Math.round(650 * scale);
   // For standard 4x4 grids (kMin = 12), ensure it shows as Medium by default
   const rating = kMin === 12 && wordCount >= 10 ? "Medium" : 
                  wordCount >= 2 * kMin ? "Easy" : 

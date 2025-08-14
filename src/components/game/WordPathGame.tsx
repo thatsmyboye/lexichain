@@ -166,9 +166,10 @@ const VOWELS = new Set(["A", "E", "I", "O", "U", "Y"]);
 const VOWEL_POOL = LETTERS.filter(([ch]) => VOWELS.has(ch));
 const CONSONANT_POOL = LETTERS.filter(([ch]) => !VOWELS.has(ch));
 
-// Scoring constants
-const RARITY_MULTIPLIER = 1.5; // tunes impact of rare letters
-const STREAK_TARGET_LEN = 5; // words >= this length count towards streak
+// Scoring constants - RECALIBRATED
+const RARITY_MULTIPLIER = 3.0; // increased impact of rare letters
+const ULTRA_RARE_MULTIPLIER = 1.5; // additional multiplier for ultra-rare letters
+const STREAK_TARGET_LEN = 4; // reduced qualifying length for streaks
 
 // Special tiles constants
 const SPECIAL_TILE_SCORE_THRESHOLD = 150;
@@ -1132,7 +1133,8 @@ function startDailyChallenge() {
       setMovesUsed(prev => prev + 1);
     }
 
-    let base = actualWord.length * actualWord.length;
+    // RECALIBRATED: Hybrid scoring formula
+    let base = (actualWord.length * 8) + (actualWord.length * actualWord.length * 2);
 
     const multiplierTiles = path.filter(p => specialTiles[p.r][p.c].type === "multiplier");
     let multiplier = 1;
@@ -1145,11 +1147,13 @@ function startDailyChallenge() {
     const linkBonus = 2 * sharedTilesCount;
 
     const raritySum = path.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
-    const rarityBonus = RARITY_MULTIPLIER * raritySum;
+    const ultraRareCount = path.reduce((acc, p) => acc + (VERY_RARE.has(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+    const rarityBonus = (RARITY_MULTIPLIER * raritySum) + (ultraRareCount * ULTRA_RARE_MULTIPLIER * 10);
 
     const qualifies = actualWord.length >= STREAK_TARGET_LEN;
     const nextStreak = qualifies ? streak + 1 : 0;
-    const chainBonus = 5 * nextStreak;
+    // RECALIBRATED: Exponential streak bonus
+    const chainBonus = nextStreak > 0 ? Math.round(10 * Math.pow(1.5, nextStreak)) : 0;
 
     const timeBonus = 0;
 
