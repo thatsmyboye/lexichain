@@ -392,6 +392,16 @@ useEffect(() => {
   }, []);
 
   const wordFromPath = useMemo(() => path.map((p) => board[p.r][p.c]).join("").toLowerCase(), [path, board]);
+  
+  // Display version that shows ? for Wild tiles during selection
+  const displayWordFromPath = useMemo(() => {
+    return path.map((p) => {
+      if (specialTiles[p.r][p.c].type === "wild") {
+        return "?";
+      }
+      return board[p.r][p.c];
+    }).join("").toUpperCase();
+  }, [path, board, specialTiles]);
 
   function handleWildSubmit() {
     if (!pendingWildPath || !wildTileInput || !dict) return;
@@ -1755,7 +1765,7 @@ function startDailyChallenge() {
 
           <div className="mt-3 flex items-center gap-3">
             <span className="text-sm text-muted-foreground">Current:</span>
-            <span className="text-lg font-semibold flex-1">{wordFromPath.toUpperCase()}</span>
+            <span className="text-lg font-semibold flex-1">{displayWordFromPath}</span>
           </div>
         </div>
 
