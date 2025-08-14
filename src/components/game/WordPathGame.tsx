@@ -1070,7 +1070,7 @@ function startDailyChallenge() {
                     </div>
                     <div className="text-xs">
                       <div className="font-medium">X-Factor</div>
-                      <div className="text-muted-foreground">Double letters</div>
+                      <div className="text-muted-foreground">Changes adjacent corner tiles</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
