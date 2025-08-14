@@ -353,6 +353,54 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
   const [wildTileInput, setWildTileInput] = useState('');
   const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
 
+  // Save and restore daily challenge state
+  const saveDailyState = () => {
+    if (settings.mode === "daily") {
+      const gameState = {
+        board,
+        specialTiles,
+        usedWords,
+        score,
+        streak,
+        movesUsed,
+        unlocked: Array.from(unlocked),
+        gameOver,
+        finalGrade,
+        seed: getDailySeed()
+      };
+      localStorage.setItem(`daily-challenge-${getDailySeed()}`, JSON.stringify(gameState));
+    }
+  };
+
+  const loadDailyState = () => {
+    const savedState = localStorage.getItem(`daily-challenge-${getDailySeed()}`);
+    if (savedState) {
+      try {
+        const gameState = JSON.parse(savedState);
+        if (gameState.seed === getDailySeed()) {
+          setBoard(gameState.board);
+          setSpecialTiles(gameState.specialTiles);
+          setUsedWords(gameState.usedWords);
+          setScore(gameState.score);
+          setStreak(gameState.streak);
+          setMovesUsed(gameState.movesUsed);
+          setUnlocked(new Set(gameState.unlocked));
+          setGameOver(gameState.gameOver);
+          setFinalGrade(gameState.finalGrade);
+          return true;
+        }
+      } catch (e) {
+        console.warn('Failed to load daily challenge state:', e);
+      }
+    }
+    return false;
+  };
+
+  // Save state whenever relevant data changes in daily mode
+  useEffect(() => {
+    saveDailyState();
+  }, [board, specialTiles, usedWords, score, streak, movesUsed, unlocked, gameOver, finalGrade, settings.mode]);
+
 useEffect(() => {
   let mounted = true;
   fetch("/words.txt")
@@ -865,6 +913,20 @@ function startDailyChallenge() {
   const config = DIFFICULTY_CONFIG[difficulty];
   const newSize = config.gridSize;
   const dailySeed = getDailySeed();
+  
+  // Try to load existing daily state first
+  if (loadDailyState()) {
+    setSettings(prev => ({ 
+      ...prev, 
+      difficulty, 
+      gridSize: newSize, 
+      mode: "daily",
+      dailyMovesLimit: getDailyMovesLimit() 
+    }));
+    setSize(newSize);
+    toast.success("Daily Challenge resumed!");
+    return;
+  }
   
   setSettings(prev => ({ 
     ...prev, 
