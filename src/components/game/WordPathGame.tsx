@@ -673,6 +673,40 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
     }
 
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
+    
+    // Introduce special tiles if conditions are met
+    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(newScore, settings.scoreThreshold)) {
+      const updatedSpecialTiles = [...newSpecialTiles];
+      const emptyPositions: Pos[] = [];
+      
+      // Find empty positions (tiles without special tiles)
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (updatedSpecialTiles[r][c].type === null) {
+            emptyPositions.push({ r, c });
+          }
+        }
+      }
+      
+      // Randomly place special tiles (1-3 tiles per trigger)
+      const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
+      const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
+      
+      for (let i = 0; i < tilesToPlace; i++) {
+        const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+        const pos = emptyPositions.splice(randomIndex, 1)[0];
+        const specialTile = generateSpecialTile();
+        if (specialTile.type !== null) {
+          updatedSpecialTiles[pos.r][pos.c] = specialTile;
+        }
+      }
+      
+      if (tilesToPlace > 0) {
+        setSpecialTiles(updatedSpecialTiles);
+        toast.info(`Special tiles appeared! (${tilesToPlace} new)`);
+      }
+    }
+    
     clearPath();
 
     setTimeout(() => {
