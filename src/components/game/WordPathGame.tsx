@@ -320,7 +320,7 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
   );
   const [path, setPath] = useState<Pos[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [usedWords, setUsedWords] = useState<string[]>([]);
+  const [usedWords, setUsedWords] = useState<{word: string, score: number}[]>([]);
   const [lastWordTiles, setLastWordTiles] = useState<Set<string>>(new Set());
   const [dict, setDict] = useState<Set<string> | null>(null);
   const [sorted, setSorted] = useState<string[] | null>(null);
@@ -479,7 +479,7 @@ useEffect(() => {
       return;
     }
     
-    if (usedWords.includes(testWord)) {
+    if (usedWords.some(entry => entry.word === testWord)) {
       toast.warning("Already used");
       return;
     }
@@ -527,7 +527,7 @@ useEffect(() => {
       }
     }
 
-    setUsedWords(prev => [...prev, actualWord]);
+    setUsedWords(prev => [...prev, {word: actualWord, score: totalGain}]);
     
     // Update the wild tile with the chosen letter
     const newBoard = board.map(row => [...row]);
@@ -736,7 +736,7 @@ useEffect(() => {
       if (sorted && dict) {
         // Check if daily challenge is out of moves
         const dailyMovesExceeded = settings.mode === "daily" && (movesUsed + 1) >= settings.dailyMovesLimit;
-        const any = hasAnyValidMove(newBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords));
+        const any = hasAnyValidMove(newBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
@@ -1107,7 +1107,7 @@ function startDailyChallenge() {
       toast.error(`Not a valid word: ${actualWord.toUpperCase()}`);
       return clearPath();
     }
-    if (usedWords.includes(actualWord)) {
+    if (usedWords.some(entry => entry.word === actualWord)) {
       toast.warning("Already used");
       return clearPath();
     }
@@ -1125,7 +1125,7 @@ function startDailyChallenge() {
       }
     }
 
-    setUsedWords(prev => [...prev, actualWord]);
+    setUsedWords(prev => [...prev, {word: actualWord, score: totalGain}]);
     
     // Increment moves for daily challenge
     if (settings.mode === "daily") {
@@ -1327,7 +1327,7 @@ function startDailyChallenge() {
       if (sorted && dict) {
         // Check if daily challenge is out of moves
         const dailyMovesExceeded = settings.mode === "daily" && (movesUsed + 1) >= settings.dailyMovesLimit;
-        const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords));
+        const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
@@ -1970,19 +1970,41 @@ function startDailyChallenge() {
               </Button>
             </div>
             <div 
-              className={`flex flex-wrap gap-1 transition-all duration-300 ease-out overflow-hidden ${
+              className={`transition-all duration-300 ease-out overflow-hidden ${
                 sortAlphabetically ? 'max-h-64' : 'max-h-24'
               }`}
             >
               {(() => {
-                const displayWords = sortAlphabetically 
-                  ? [...usedWords].sort()
-                  : usedWords.slice(-15).reverse();
-                return displayWords.map((w) => (
-                  <span key={w} className="px-1.5 py-0.5 rounded text-xs bg-secondary">{w.toUpperCase()}</span>
-                ));
+                if (!usedWords.length) {
+                  return <span className="text-muted-foreground text-xs">None yet</span>;
+                }
+                
+                if (sortAlphabetically) {
+                  const sortedWords = [...usedWords].sort((a, b) => a.word.localeCompare(b.word));
+                  return (
+                    <div className="flex flex-wrap gap-1">
+                      {sortedWords.map((entry, index) => (
+                        <span key={`${entry.word}-${index}`} className="px-1.5 py-0.5 rounded text-xs bg-secondary">
+                          {entry.word.toUpperCase()}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                } else {
+                  // Latest sort - 2-column format
+                  const latestWords = usedWords.slice(-15).reverse();
+                  return (
+                    <div className="space-y-1">
+                      {latestWords.map((entry, index) => (
+                        <div key={`${entry.word}-${index}`} className="flex justify-between items-center text-xs">
+                          <span className="font-medium">{entry.word.toUpperCase()}</span>
+                          <span className="text-muted-foreground">+{entry.score}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
               })()}
-              {!usedWords.length && <span className="text-muted-foreground text-xs">None yet</span>}
             </div>
           </Card>
 
