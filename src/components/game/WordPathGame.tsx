@@ -3,6 +3,7 @@ import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { computeBenchmarksFromWordCount, type Benchmarks } from "@/lib/benchmarks";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
@@ -308,6 +309,9 @@ export default function WordPathGame() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [movesUsed, setMovesUsed] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showWildDialog, setShowWildDialog] = useState(false);
+  const [wildTileInput, setWildTileInput] = useState('');
+  const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
 
 useEffect(() => {
   let mounted = true;
@@ -345,9 +349,353 @@ useEffect(() => {
     })
     .catch(() => toast.error("Failed to load dictionary. Offline mode."));
   return () => { mounted = false };
-}, []);
+  }, []);
 
   const wordFromPath = useMemo(() => path.map((p) => board[p.r][p.c]).join("").toLowerCase(), [path, board]);
+
+  function handleWildSubmit() {
+    if (!pendingWildPath || !wildTileInput || !dict) return;
+    
+    const wildcardPositions = pendingWildPath.filter(p => specialTiles[p.r][p.c].type === "wild");
+    if (wildcardPositions.length !== 1) return;
+    
+    const wildPos = wildcardPositions[0];
+    const wildIndex = pendingWildPath.findIndex(p => p.r === wildPos.r && p.c === wildPos.c);
+    
+    // Create the word with the user's chosen letter
+    const testWord = pendingWildPath.map((p, i) => {
+      if (i === wildIndex) {
+        return wildTileInput.toLowerCase();
+      }
+      return board[p.r][p.c];
+    }).join("").toLowerCase();
+    
+    // Validate the word
+    if (testWord.length < 3) {
+      toast.warning("Words must be at least 3 letters");
+      return;
+    }
+    
+    if (!dict.has(testWord)) {
+      toast.error(`Not a valid word: ${testWord.toUpperCase()}`);
+      return;
+    }
+    
+    if (usedWords.includes(testWord)) {
+      toast.warning("Already used");
+      return;
+    }
+    
+    // Close dialog and continue with word submission logic
+    setShowWildDialog(false);
+    setWildTileInput('');
+    
+    // Set the path back and continue submission with the chosen word
+    setPath(pendingWildPath);
+    setPendingWildPath(null);
+    
+    // Now continue with the normal submission process using the validated word
+    setTimeout(() => {
+      submitWordWithWildLetter(testWord, pendingWildPath, wildTileInput.toLowerCase());
+    }, 0);
+  }
+
+  function submitWordWithWildLetter(validatedWord: string, wordPath: Pos[], wildLetter: string) {
+    if (gameOver) {
+      toast.info("Round over");
+      return;
+    }
+
+    // Check daily challenge move limit
+    if (settings.mode === "daily" && movesUsed >= settings.dailyMovesLimit) {
+      toast.error("Daily move limit reached!");
+      return;
+    }
+
+    const actualWord = validatedWord;
+    const wildUsed = true;
+
+    const hasStoneTile = wordPath.some(p => specialTiles[p.r][p.c].type === "stone");
+    if (hasStoneTile) {
+      toast.error("Cannot use words containing Stone tiles!");
+      return;
+    }
+    
+    if (lastWordTiles.size > 0) {
+      const overlap = wordPath.some((p) => lastWordTiles.has(keyOf(p)));
+      if (!overlap) {
+        toast.error("Must reuse at least one tile from previous word");
+        return;
+      }
+    }
+
+    setUsedWords(prev => [...prev, actualWord]);
+    
+    // Update the wild tile with the chosen letter
+    const newBoard = board.map(row => [...row]);
+    const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
+    if (wildcardPositions.length === 1) {
+      const wildPos = wildcardPositions[0];
+      newBoard[wildPos.r][wildPos.c] = wildLetter.toUpperCase();
+    }
+    setBoard(newBoard);
+    
+    // Increment moves for daily challenge
+    if (settings.mode === "daily") {
+      setMovesUsed(prev => prev + 1);
+    }
+
+    let base = actualWord.length * actualWord.length;
+
+    const multiplierTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "multiplier");
+    let multiplier = 1;
+    multiplierTiles.forEach(p => {
+      const tile = specialTiles[p.r][p.c];
+      if (tile.value) multiplier *= tile.value;
+    });
+
+    const sharedTilesCount = lastWordTiles.size ? wordPath.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
+    const linkBonus = 2 * sharedTilesCount;
+
+    const raritySum = wordPath.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
+    const rarityBonus = RARITY_MULTIPLIER * raritySum;
+
+    const qualifies = actualWord.length >= STREAK_TARGET_LEN;
+    const nextStreak = qualifies ? streak + 1 : 0;
+    const chainBonus = 5 * nextStreak;
+
+    const timeBonus = 0;
+
+    const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
+
+    const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
+    let xChanged = 0;
+    if (xFactorTiles.length > 0) {
+      const newBoardAfterX = newBoard.map(row => [...row]);
+      const newSpecialTiles = specialTiles.map(row => [...row]);
+      const changedTileKeys = new Set<string>();
+
+      xFactorTiles.forEach(xfPos => {
+        const diagonals = [
+          { r: xfPos.r - 1, c: xfPos.c - 1 },
+          { r: xfPos.r - 1, c: xfPos.c + 1 },
+          { r: xfPos.r + 1, c: xfPos.c - 1 },
+          { r: xfPos.r + 1, c: xfPos.c + 1 }
+        ];
+
+        diagonals.forEach(pos => {
+          if (within(pos.r, pos.c, size)) {
+            newBoardAfterX[pos.r][pos.c] = randomLetter();
+            newSpecialTiles[pos.r][pos.c] = { type: null };
+            changedTileKeys.add(keyOf(pos));
+          }
+        });
+      });
+
+      setBoard(newBoardAfterX);
+      setSpecialTiles(newSpecialTiles);
+      setAffectedTiles(changedTileKeys);
+      xChanged = changedTileKeys.size;
+
+      setTimeout(() => {
+        setAffectedTiles(new Set());
+      }, 1000);
+
+      toast.info("X-Factor activated! Adjacent tiles transformed!");
+    }
+
+    let newSpecialTiles = specialTiles.map(row => [...row]);
+    wordPath.forEach(p => {
+      if (specialTiles[p.r][p.c].type !== null) {
+        newSpecialTiles[p.r][p.c] = { type: null };
+      }
+    });
+    newSpecialTiles = expireSpecialTiles(newSpecialTiles);
+    setSpecialTiles(newSpecialTiles);
+
+    setLastWordTiles(new Set(wordPath.map(keyOf)));
+    
+    // Check for new achievements (same logic as original submitWord)
+    const newAchievements: AchievementId[] = [];
+    const checkAndAdd = (condition: boolean, achievement: AchievementId) => {
+      if (condition && !unlocked.has(achievement)) {
+        newAchievements.push(achievement);
+      }
+    };
+
+    if (nextStreak >= 3) checkAndAdd(true, "streak3");
+    if (nextStreak >= 5) checkAndAdd(true, "streak5");
+    if (nextStreak >= 8) checkAndAdd(true, "streak8");
+    if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
+    if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
+    if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
+    if (actualWord.length >= 7) checkAndAdd(true, "long7");
+    if (actualWord.length >= 8) checkAndAdd(true, "epic8");
+    const ultraCount = wordPath.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+    if (ultraCount >= 2) checkAndAdd(true, "rare2");
+    if (multiplier >= 3) checkAndAdd(true, "combo3x");
+    if (xChanged >= 3) checkAndAdd(true, "chaos3");
+    const ratio = vowelRatioOfWord(actualWord);
+    if (actualWord.length >= 6 && ratio >= 0.6) checkAndAdd(true, "vowelStorm");
+    if (actualWord.length >= 6 && ratio <= 0.2) checkAndAdd(true, "consonantCrunch");
+    if (wildUsed) checkAndAdd(true, "wildWizard");
+    const nextUsedCount = usedWords.length + 1;
+    if (nextUsedCount >= 10) checkAndAdd(true, "cartographer10");
+    if (nextUsedCount >= 15) checkAndAdd(true, "collector15");
+    if (discoverableCount > 0) {
+      const pct = (nextUsedCount / discoverableCount) * 100;
+      if (pct >= 80) checkAndAdd(true, "completionist80");
+      if (nextUsedCount >= discoverableCount) checkAndAdd(true, "completionist100");
+    }
+
+    // Calculate achievement bonus
+    const achievementBonus = newAchievements.reduce((total, id) => total + ACHIEVEMENTS[id].scoreBonus, 0);
+    const finalScore = score + totalGain + achievementBonus;
+    
+    setScore(finalScore);
+    setStreak(nextStreak);
+
+    setUnlocked(prev => {
+      const next = new Set(prev);
+      newAchievements.forEach(id => next.add(id));
+      return next;
+    });
+
+    // Show achievement toasts
+    newAchievements.forEach(id => {
+      const achievement = ACHIEVEMENTS[id];
+      const rarityEmoji = {
+        common: "🏆",
+        rare: "⭐",
+        epic: "💎",
+        legendary: "👑"
+      }[achievement.rarity];
+      toast.success(`${rarityEmoji} ${achievement.label} (+${achievement.scoreBonus} pts)`, {
+        duration: 4000,
+      });
+    });
+
+    if (benchmarks && settings.mode === "target") {
+      const targetScore = benchmarks[settings.targetTier];
+      if (finalScore >= targetScore && !gameOver) {
+        setGameOver(true);
+        const grade = (settings.targetTier[0].toUpperCase() + settings.targetTier.slice(1)) as "Bronze" | "Silver" | "Gold" | "Platinum";
+        setFinalGrade(grade);
+        
+        // Check for firstWin achievement
+        if ((grade === "Gold" || grade === "Platinum") && !unlocked.has("firstWin")) {
+          const achievement = ACHIEVEMENTS.firstWin;
+          setScore(prev => prev + achievement.scoreBonus);
+          setUnlocked(prev => {
+            const next = new Set(prev);
+            next.add("firstWin");
+            return next;
+          });
+          toast.success(`💎 ${achievement.label} (+${achievement.scoreBonus} pts)`, {
+            duration: 4000,
+          });
+        }
+        
+        toast.success(`Target reached: ${grade}`);
+      }
+    }
+
+    toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
+    
+    // Introduce special tiles if conditions are met
+    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, settings.scoreThreshold)) {
+      const updatedSpecialTiles = [...newSpecialTiles];
+      const emptyPositions: Pos[] = [];
+      
+      // Find empty positions (tiles without special tiles)
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (updatedSpecialTiles[r][c].type === null) {
+            emptyPositions.push({ r, c });
+          }
+        }
+      }
+      
+      // Randomly place special tiles (1-3 tiles per trigger)
+      const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
+      const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
+      
+      for (let i = 0; i < tilesToPlace; i++) {
+        const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+        const pos = emptyPositions.splice(randomIndex, 1)[0];
+        const specialTile = generateSpecialTile();
+        if (specialTile.type !== null) {
+          updatedSpecialTiles[pos.r][pos.c] = specialTile;
+        }
+      }
+      
+      if (tilesToPlace > 0) {
+        setSpecialTiles(updatedSpecialTiles);
+      }
+    }
+
+    setTimeout(() => {
+      if (sorted && dict) {
+        // Check if daily challenge is out of moves
+        const dailyMovesExceeded = settings.mode === "daily" && (movesUsed + 1) >= settings.dailyMovesLimit;
+        const any = hasAnyValidMove(newBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords));
+        
+        if (!any || dailyMovesExceeded) {
+          if (benchmarks) {
+            let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
+            const s = finalScore;
+            if (s >= benchmarks.platinum) grade = "Platinum";
+            else if (s >= benchmarks.gold) grade = "Gold";
+            else if (s >= benchmarks.silver) grade = "Silver";
+            else if (s >= benchmarks.bronze) grade = "Bronze";
+            setFinalGrade(grade === "None" ? "None" : grade);
+            setGameOver(true);
+            
+            if (dailyMovesExceeded) {
+              toast.info(`Daily Challenge complete! Final score: ${finalScore} (${grade})`);
+            } else if (grade !== "None") {
+              toast.info(`Game over • Grade: ${grade}`);
+            } else {
+              toast.info("No valid words remain. Game over!");
+            }
+            
+            setUnlocked(prev => {
+              const next = new Set(prev);
+              let bonusScore = 0;
+              
+              if ((grade === "Gold" || grade === "Platinum") && !prev.has("firstWin")) {
+                next.add("firstWin");
+                bonusScore += ACHIEVEMENTS.firstWin.scoreBonus;
+                toast.success(`💎 ${ACHIEVEMENTS.firstWin.label} (+${ACHIEVEMENTS.firstWin.scoreBonus} pts)`, {
+                  duration: 4000,
+                });
+              }
+              if (!dailyMovesExceeded && !prev.has("clutch")) {
+                next.add("clutch");
+                bonusScore += ACHIEVEMENTS.clutch.scoreBonus;
+                toast.success(`💎 ${ACHIEVEMENTS.clutch.label} (+${ACHIEVEMENTS.clutch.scoreBonus} pts)`, {
+                  duration: 4000,
+                });
+              }
+              
+              if (bonusScore > 0) {
+                setScore(prevScore => prevScore + bonusScore);
+              }
+              
+              return next;
+            });
+          } else {
+            if (dailyMovesExceeded) {
+              toast.info("Daily Challenge complete!");
+            } else {
+              toast.info("No valid words remain. Game over!");
+            }
+            setGameOver(true);
+          }
+        }
+      }
+    }, 0);
+  }
 
   function clearPath() {
     setPath([]);
@@ -628,18 +976,10 @@ function startDailyChallenge() {
     if (hasWildTile && dict) {
       const wildcardPositions = path.filter(p => specialTiles[p.r][p.c].type === "wild");
       if (wildcardPositions.length === 1) {
-        const wildPos = wildcardPositions[0];
-        const wildIndex = path.findIndex(p => p.r === wildPos.r && p.c === wildPos.c);
-        for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-          const testWord = actualWord.split('').map((char, i) =>
-            i === wildIndex ? letter.toLowerCase() : char
-          ).join('');
-          if (dict.has(testWord) && !usedWords.includes(testWord)) {
-            if (testWord !== actualWord) wildUsed = true;
-            actualWord = testWord;
-            break;
-          }
-        }
+        // Show dialog to let user choose the letter
+        setPendingWildPath(path);
+        setShowWildDialog(true);
+        return clearPath();
       }
     }
 
@@ -1147,6 +1487,70 @@ function startDailyChallenge() {
                 </div>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wild Letter Input Dialog */}
+      <Dialog open={showWildDialog} onOpenChange={setShowWildDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose Wild Tile Letter</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Enter a letter for the Wild tile to complete your word:
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-mono bg-muted p-2 rounded">
+                {pendingWildPath?.map((p, i) => {
+                  const isWild = specialTiles[p.r][p.c].type === "wild";
+                  return isWild ? (
+                    <span key={i} className="text-purple-500 font-bold">
+                      {wildTileInput.toUpperCase() || "?"}
+                    </span>
+                  ) : (
+                    board[p.r][p.c]
+                  );
+                }).join("").toUpperCase()}
+              </div>
+            </div>
+            <div>
+              <Input
+                type="text"
+                value={wildTileInput}
+                onChange={(e) => setWildTileInput(e.target.value.slice(0, 1).toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && wildTileInput) {
+                    handleWildSubmit();
+                  }
+                }}
+                placeholder="Enter letter (A-Z)"
+                className="w-full text-center text-lg font-mono"
+                maxLength={1}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowWildDialog(false);
+                  setWildTileInput('');
+                  setPendingWildPath(null);
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleWildSubmit}
+                disabled={!wildTileInput || !/[A-Z]/.test(wildTileInput)}
+                className="flex-1"
+              >
+                Submit Word
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
