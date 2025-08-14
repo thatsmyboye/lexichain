@@ -1014,27 +1014,83 @@ function startDailyChallenge() {
 
       {/* How to Play Modal */}
       <Dialog open={showHowToPlay} onOpenChange={setShowHowToPlay}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>How to play</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="flex items-start gap-2">
-              <span className="text-muted-foreground mt-1">•</span>
-              <span className="text-sm">Drag through adjacent tiles to form words</span>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground mt-1">•</span>
+                <span className="text-sm">Drag through adjacent tiles to form words</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground mt-1">•</span>
+                <span className="text-sm">Words must be 3+ letters and valid</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground mt-1">•</span>
+                <span className="text-sm">Each word must reuse ≥1 tile from previous</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground mt-1">•</span>
+                <span className="text-sm">Keep chaining until no valid word remains</span>
+              </div>
             </div>
-            <div className="flex items-start gap-2">
-              <span className="text-muted-foreground mt-1">•</span>
-              <span className="text-sm">Words must be 3+ letters and valid</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-muted-foreground mt-1">•</span>
-              <span className="text-sm">Each word must reuse ≥1 tile from previous</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-muted-foreground mt-1">•</span>
-              <span className="text-sm">Keep chaining until no valid word remains</span>
-            </div>
+            
+            {settings.enableSpecialTiles && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-bold">
+                      A
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Stone</div>
+                      <div className="text-muted-foreground">Cannot be used</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 flex items-center justify-center text-white text-xs font-bold">
+                      ?
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Wild</div>
+                      <div className="text-muted-foreground">Any letter</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-xs font-bold relative">
+                      A
+                      <div className="absolute top-0 left-0 w-1 h-1 bg-white/30 rounded-full"></div>
+                      <div className="absolute top-0 right-0 w-1 h-1 bg-white/30 rounded-full"></div>
+                      <div className="absolute bottom-0 left-0 w-1 h-1 bg-white/30 rounded-full"></div>
+                      <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/30 rounded-full"></div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">X-Factor</div>
+                      <div className="text-muted-foreground">Double letters</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold relative">
+                      A
+                      <div className="absolute bottom-0 right-0 text-xs font-bold bg-white/20 px-0.5 rounded text-[10px]">
+                        2x
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Multiplier</div>
+                      <div className="text-muted-foreground">Boost word score</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Special tiles appear after reaching {settings.scoreThreshold} points and expire after a few turns.
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
