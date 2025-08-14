@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import WordPathGame from "@/components/game/WordPathGame";
 import TitleScreen from "@/components/TitleScreen";
 
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.title = "Lexichain | Build word chains by reusing tiles";
@@ -25,8 +27,11 @@ const Index = () => {
   };
 
   const handleLoginClick = () => {
-    // TODO: Implement login functionality
-    console.log("Login clicked");
+    navigate("/auth");
+  };
+
+  const handleRegisterClick = () => {
+    navigate("/auth");
   };
 
   if (showGame) {
@@ -42,7 +47,7 @@ const Index = () => {
     );
   }
 
-  return <TitleScreen onPlayClick={handlePlayClick} onLoginClick={handleLoginClick} />;
+  return <TitleScreen onPlayClick={handlePlayClick} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />;
 };
 
 export default Index;

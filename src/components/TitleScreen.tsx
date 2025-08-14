@@ -3,13 +3,10 @@ import { Button } from "@/components/ui/button";
 interface TitleScreenProps {
   onPlayClick: () => void;
   onLoginClick: () => void;
+  onRegisterClick: () => void;
 }
 
-const TitleScreen = ({ onPlayClick, onLoginClick }: TitleScreenProps) => {
-  const handleRegisterClick = () => {
-    // TODO: Implement register functionality
-    console.log("Register clicked");
-  };
+const TitleScreen = ({ onPlayClick, onLoginClick, onRegisterClick }: TitleScreenProps) => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative">
@@ -39,7 +36,7 @@ const TitleScreen = ({ onPlayClick, onLoginClick }: TitleScreenProps) => {
         
         <div className="text-center">
           <button 
-            onClick={handleRegisterClick}
+            onClick={onRegisterClick}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
           >
             Register
