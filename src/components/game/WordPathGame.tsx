@@ -775,6 +775,17 @@ function onNewGame() {
                   }
                 };
                 
+                // Define background colors for last word tiles based on achievement level
+                const getLastWordBackground = () => {
+                  switch (currentGrade) {
+                    case "platinum": return "bg-purple-100 dark:bg-purple-950/30";
+                    case "gold": return "bg-yellow-100 dark:bg-yellow-950/30"; 
+                    case "silver": return "bg-gray-100 dark:bg-gray-950/30";
+                    case "bronze": return "bg-amber-100 dark:bg-amber-950/30";
+                    default: return "bg-secondary/60";
+                  }
+                };
+                
                 let baseClasses = `relative aspect-square flex items-center justify-center rounded-lg ${getBorderColor()} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
                 
                 if (selected) {
@@ -782,7 +793,7 @@ function onNewGame() {
                 } else if (isAffected) {
                   baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
                 } else if (reused) {
-                  baseClasses += "bg-secondary/60 ";
+                  baseClasses += getLastWordBackground() + " ";
                 } else {
                   baseClasses += "bg-card ";
                 }
