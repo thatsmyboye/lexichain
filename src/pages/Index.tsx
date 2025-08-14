@@ -34,6 +34,10 @@ const Index = () => {
     navigate("/auth");
   };
 
+  const handleStatsClick = () => {
+    navigate("/stats");
+  };
+
   if (showGame) {
     return (
       <main>
@@ -47,7 +51,7 @@ const Index = () => {
     );
   }
 
-  return <TitleScreen onPlayClick={handlePlayClick} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} />;
+  return <TitleScreen onPlayClick={handlePlayClick} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} />;
 };
 
 export default Index;
