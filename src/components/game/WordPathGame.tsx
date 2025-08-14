@@ -755,7 +755,27 @@ function onNewGame() {
               const isAffected = affectedTiles.has(k);
               
               const getTileClasses = () => {
-                let baseClasses = "relative aspect-square flex items-center justify-center rounded-lg border transition-[transform,box-shadow,background-color] duration-300 ";
+                // Determine current achievement level for border color
+                const currentGrade = benchmarks ? (
+                  score >= benchmarks.platinum ? "platinum"
+                  : score >= benchmarks.gold ? "gold"
+                  : score >= benchmarks.silver ? "silver"
+                  : score >= benchmarks.bronze ? "bronze"
+                  : "none"
+                ) : "none";
+                
+                // Define border colors for each achievement level
+                const getBorderColor = () => {
+                  switch (currentGrade) {
+                    case "platinum": return "border-purple-400";
+                    case "gold": return "border-yellow-400"; 
+                    case "silver": return "border-gray-400";
+                    case "bronze": return "border-amber-600";
+                    default: return "border-border";
+                  }
+                };
+                
+                let baseClasses = `relative aspect-square flex items-center justify-center rounded-lg ${getBorderColor()} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
                 
                 if (selected) {
                   baseClasses += "ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] dark:bg-green-950 dark:ring-green-500 ";
