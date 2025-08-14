@@ -14,6 +14,6 @@ export function computeBenchmarksFromWordCount(wordCount: number, kMin: number):
   const silver = Math.round(300 * scale);
   const gold = Math.round(500 * scale);
   const platinum = Math.round(800 * scale);
-  const rating = wordCount >= 2 * kMin ? "Easy" : wordCount >= 1.4 * kMin ? "Medium" : "Hard";
+  const rating = wordCount >= 2 * kMin ? "Easy" : wordCount >= 1.2 * kMin ? "Medium" : "Hard";
   return { bronze, silver, gold, platinum, rating, wordCount };
 }
