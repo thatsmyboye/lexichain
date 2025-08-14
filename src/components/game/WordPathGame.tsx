@@ -88,6 +88,19 @@ function getDailySeed(): string {
   return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 }
 
+function getDailyMovesLimit(): number {
+  const seed = getDailySeed();
+  // Simple hash function to get consistent random number from date string
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Use hash to choose between 10 or 15
+  return Math.abs(hash) % 2 === 0 ? 10 : 15;
+}
+
 function binaryHasPrefix(sortedWords: string[], prefix: string) {
   let lo = 0, hi = sortedWords.length;
   while (lo < hi) {
@@ -286,7 +299,7 @@ export default function WordPathGame() {
     targetTier: "silver",
     difficulty: "medium",
     gridSize: 4,
-    dailyMovesLimit: 20
+    dailyMovesLimit: getDailyMovesLimit()
   });
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
@@ -460,7 +473,7 @@ function startDailyChallenge() {
     difficulty, 
     gridSize: newSize, 
     mode: "daily",
-    dailyMovesLimit: 20 
+    dailyMovesLimit: getDailyMovesLimit() 
   }));
   setSize(newSize);
   
