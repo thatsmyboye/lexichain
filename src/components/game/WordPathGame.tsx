@@ -925,7 +925,7 @@ function startDailyChallenge() {
       : score >= (benchmarks?.silver || 0) ? "Silver"
       : score >= (benchmarks?.bronze || 0) ? "Bronze"
       : "None";
-    const shareText = `🔤 Lexichain Daily ${date}\n📊 ${score} points (${grade})\n📝 ${usedWords.length} words\n\nlexichain.app`;
+    const shareText = `🔤 Lexichain Daily ${date}\n📊 ${score} points (${grade})\n📝 ${usedWords.length} words\n\nlexichain.lovable.app`;
     
     if (navigator.share) {
       navigator.share({
@@ -1063,12 +1063,12 @@ function startDailyChallenge() {
                 📝 {usedWords.length} words in {movesUsed} moves<br/>
                 🎯 {settings.dailyMovesLimit - movesUsed} moves remaining<br/>
                 <br/>
-                Play at lexichain.app
+                Play at lexichain.lovable.app
               </div>
             </div>
             <Button 
               onClick={() => {
-                const shareText = `🔤 Lexichain Daily Challenge ${getDailySeed()}\n📊 ${score} points (${finalGrade})\n📝 ${usedWords.length} words in ${movesUsed} moves\n🎯 ${settings.dailyMovesLimit - movesUsed} moves remaining\n\nPlay at lexichain.app`;
+                const shareText = `🔤 Lexichain Daily Challenge ${getDailySeed()}\n📊 ${score} points (${finalGrade})\n📝 ${usedWords.length} words in ${movesUsed} moves\n🎯 ${settings.dailyMovesLimit - movesUsed} moves remaining\n\nPlay at lexichain.lovable.app`;
                 navigator.clipboard.writeText(shareText);
                 toast.success("Copied to clipboard!");
                 setShowShareDialog(false);
