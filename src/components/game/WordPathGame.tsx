@@ -1963,7 +1963,7 @@ function startDailyChallenge() {
  
           <Card className="p-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-muted-foreground">Used words</div>
+              <div className="text-xs text-muted-foreground">Used words ({usedWords.length})</div>
               <Button 
                 variant="ghost" 
                 size="sm" 
