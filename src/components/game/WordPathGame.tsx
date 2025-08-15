@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { computeBenchmarksFromWordCount, type Benchmarks } from "@/lib/benchmarks";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
+import { supabase } from "@/integrations/supabase/client";
+import { useGoals } from "@/hooks/useGoals";
+import type { User } from "@supabase/supabase-js";
 
 type Pos = { r: number; c: number };
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
@@ -314,6 +317,10 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
 }
 
 export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => void }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
+  const { updateGoalProgress } = useGoals(user);
+  
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
   const [specialTiles, setSpecialTiles] = useState<SpecialTile[][]>(() => 
@@ -353,6 +360,78 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
   const [showWildDialog, setShowWildDialog] = useState(false);
   const [wildTileInput, setWildTileInput] = useState('');
   const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
+
+  // Initialize user auth
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => setUser(session?.user || null)
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Reset game start time when new game starts
+  useEffect(() => {
+    setGameStartTime(Date.now());
+  }, [board]);
+
+  // Save standard game result and update goals when game ends
+  const saveGameResult = async () => {
+    if (!user || settings.mode === "daily" || !gameOver) return;
+
+    const longestWord = usedWords.reduce((longest, wordEntry) => 
+      wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+    );
+
+    try {
+      const gameResult = {
+        user_id: user.id,
+        score: score,
+        words_found: usedWords.length,
+        longest_word: longestWord,
+        moves_used: movesUsed,
+        time_played: Math.round((Date.now() - gameStartTime) / 1000),
+        achievement_grade: finalGrade,
+        achievements_unlocked: Array.from(unlocked),
+        grid_size: size,
+        game_mode: settings.mode
+      };
+
+      const { data, error } = await supabase
+        .from("standard_game_results")
+        .insert(gameResult)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update goal progress
+      if (data) {
+        await updateGoalProgress({
+          score: score,
+          words_found: usedWords.length,
+          longest_word: longestWord,
+          achievement_grade: finalGrade,
+          game_id: data.id
+        });
+      }
+    } catch (error) {
+      console.error("Error saving game result:", error);
+    }
+  };
+
+  // Save game result when game ends
+  useEffect(() => {
+    if (gameOver) {
+      saveGameResult();
+    }
+  }, [gameOver, user, settings.mode]);
 
   // Save and restore daily challenge state
   const saveDailyState = () => {

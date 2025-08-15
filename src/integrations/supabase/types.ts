@@ -44,6 +44,93 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_progress: {
+        Row: {
+          created_at: string
+          game_result_id: string | null
+          goal_id: string
+          id: string
+          progress_data: Json | null
+          progress_increment: number
+        }
+        Insert: {
+          created_at?: string
+          game_result_id?: string | null
+          goal_id: string
+          id?: string
+          progress_data?: Json | null
+          progress_increment?: number
+        }
+        Update: {
+          created_at?: string
+          game_result_id?: string | null
+          goal_id?: string
+          id?: string
+          progress_data?: Json | null
+          progress_increment?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_progress_game_result_id_fkey"
+            columns: ["game_result_id"]
+            isOneToOne: false
+            referencedRelation: "standard_game_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_progress_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "player_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_goals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          expires_at: string | null
+          goal_data: Json | null
+          goal_id: string
+          id: string
+          started_at: string
+          status: string | null
+          target_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          expires_at?: string | null
+          goal_data?: Json | null
+          goal_id: string
+          id?: string
+          started_at?: string
+          status?: string | null
+          target_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          expires_at?: string | null
+          goal_data?: Json | null
+          goal_id?: string
+          id?: string
+          started_at?: string
+          status?: string | null
+          target_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -65,6 +152,54 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      standard_game_results: {
+        Row: {
+          achievement_grade: string | null
+          achievements_unlocked: string[] | null
+          created_at: string
+          game_mode: string
+          grid_size: number
+          id: string
+          longest_word: string | null
+          moves_used: number
+          score: number
+          time_played: number | null
+          updated_at: string
+          user_id: string
+          words_found: number
+        }
+        Insert: {
+          achievement_grade?: string | null
+          achievements_unlocked?: string[] | null
+          created_at?: string
+          game_mode?: string
+          grid_size?: number
+          id?: string
+          longest_word?: string | null
+          moves_used?: number
+          score: number
+          time_played?: number | null
+          updated_at?: string
+          user_id: string
+          words_found?: number
+        }
+        Update: {
+          achievement_grade?: string | null
+          achievements_unlocked?: string[] | null
+          created_at?: string
+          game_mode?: string
+          grid_size?: number
+          id?: string
+          longest_word?: string | null
+          moves_used?: number
+          score?: number
+          time_played?: number | null
+          updated_at?: string
+          user_id?: string
+          words_found?: number
         }
         Relationships: []
       }

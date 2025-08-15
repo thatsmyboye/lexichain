@@ -6,6 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from '@supabase/supabase-js';
 import { ArrowLeft, Trophy, Target, Clock, Zap, Medal } from "lucide-react";
+import { GoalCard } from "@/components/goals/GoalCard";
+import { GoalSelector } from "@/components/goals/GoalSelector";
+import { useGoals } from "@/hooks/useGoals";
 
 const StatsPage = () => {
   const navigate = useNavigate();
@@ -17,6 +20,15 @@ const StatsPage = () => {
     Gold: 0,
     Platinum: 0
   });
+  
+  const { 
+    activeGoals, 
+    completedGoals, 
+    gameStats, 
+    loading: goalsLoading, 
+    addGoal, 
+    dismissGoal 
+  } = useGoals(user);
 
   const fetchAchievementCounts = async (userId: string) => {
     try {
@@ -117,7 +129,7 @@ const StatsPage = () => {
                   <Target className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{gameStats.totalGames}</div>
                   <p className="text-xs text-muted-foreground">Games played</p>
                 </CardContent>
               </Card>
@@ -128,7 +140,7 @@ const StatsPage = () => {
                   <Trophy className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{gameStats.highestScore}</div>
                   <p className="text-xs text-muted-foreground">Highest points</p>
                 </CardContent>
               </Card>
@@ -139,7 +151,7 @@ const StatsPage = () => {
                   <Zap className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{gameStats.longestWord}</div>
                   <p className="text-xs text-muted-foreground">Letters</p>
                 </CardContent>
               </Card>
@@ -150,10 +162,64 @@ const StatsPage = () => {
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Minutes played</p>
+                  <div className="text-2xl font-bold">{gameStats.totalScore.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">Total score</p>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Goals Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Your Goals</h3>
+                <GoalSelector 
+                  activeGoals={activeGoals}
+                  completedGoals={completedGoals}
+                  onAddGoal={addGoal}
+                />
+              </div>
+              
+              {activeGoals.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Active Goals</h4>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {activeGoals.map((goal) => (
+                      <GoalCard
+                        key={goal.id}
+                        goal={goal}
+                        onDismiss={dismissGoal}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {completedGoals.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Completed Goals</h4>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {completedGoals.slice(0, 6).map((goal) => (
+                      <GoalCard
+                        key={goal.id}
+                        goal={goal}
+                        showDismiss={false}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {activeGoals.length === 0 && completedGoals.length === 0 && !goalsLoading && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No goals yet</p>
+                      <p className="text-sm">Goals will be automatically set up when you start playing</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <Card>
