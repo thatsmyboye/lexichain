@@ -27,11 +27,11 @@ const Index = () => {
   };
 
   const handleLoginClick = () => {
-    navigate("/auth");
+    navigate("/auth?mode=login");
   };
 
   const handleRegisterClick = () => {
-    navigate("/auth");
+    navigate("/auth?mode=signup");
   };
 
   const handleStatsClick = () => {

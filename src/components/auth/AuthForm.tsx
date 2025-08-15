@@ -8,10 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface AuthFormProps {
   onBackToTitle: () => void;
+  initialMode?: "login" | "signup";
 }
 
-const AuthForm = ({ onBackToTitle }: AuthFormProps) => {
-  const [isLogin, setIsLogin] = useState(false);
+const AuthForm = ({ onBackToTitle, initialMode = "signup" }: AuthFormProps) => {
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
