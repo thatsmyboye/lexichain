@@ -959,7 +959,7 @@ function startDailyChallenge() {
       setUnlocked(new Set());
       setGameOver(false);
       setFinalGrade("None");
-      toast.success(`Daily Challenge ${dailySeed} ready! 20 moves to make your best score.`);
+      toast.success(`Daily Challenge ${dailySeed} ready! ${settings.dailyMovesLimit} moves to make your best score.`);
     } finally {
       setIsGenerating(false);
     }
