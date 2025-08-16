@@ -1093,6 +1093,61 @@ function startDailyChallenge() {
   }
 }
 
+function resetDailyChallenge() {
+  // Clear saved daily state
+  localStorage.removeItem(`daily-challenge-${getDailySeed()}`);
+  
+  // Start fresh daily challenge
+  const difficulty = "medium";
+  const config = DIFFICULTY_CONFIG[difficulty];
+  const newSize = config.gridSize;
+  const dailySeed = getDailySeed();
+  
+  setSettings(prev => ({ 
+    ...prev, 
+    difficulty, 
+    gridSize: newSize, 
+    mode: "daily",
+    dailyMovesLimit: getDailyMovesLimit() 
+  }));
+  setSize(newSize);
+  
+  // Reset all state for fresh daily challenge
+  setGameOver(false);
+  setFinalGrade("None");
+  setUsedWords([]);
+  setLastWordTiles(new Set());
+  setScore(0);
+  setStreak(0);
+  setMovesUsed(0);
+  setUnlocked(new Set());
+  setSpecialTiles(createEmptySpecialTilesGrid(newSize));
+  
+  if (dict && sorted) {
+    setIsGenerating(true);
+    setPath([]);
+    setDragging(false);
+    
+    try {
+      const newBoard = makeBoard(newSize, dailySeed);
+      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
+      const bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      setBoard(newBoard);
+      setBenchmarks(bms);
+      setDiscoverableCount(probe.words.size);
+      setUnlocked(new Set());
+      setGameOver(false);
+      setFinalGrade("None");
+      setIsGenerating(false);
+      toast.success("Daily Challenge reset to new board!");
+    } catch (error) {
+      console.error("Error generating daily board:", error);
+      setIsGenerating(false);
+      toast.error("Failed to generate daily board");
+    }
+  }
+}
+
   function tryAddToPath(pos: Pos) {
     if (path.length && !neighbors(path[path.length - 1], pos)) return;
     const k = keyOf(pos);
@@ -1596,6 +1651,18 @@ function startDailyChallenge() {
             </Button>
           )}
           
+          {settings.mode === "daily" && (
+            <Button 
+              variant="outline" 
+              onClick={resetDailyChallenge} 
+              disabled={!isGameReady || isGenerating} 
+              size="sm"
+              className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+            >
+              Reset Daily
+            </Button>
+          )}
+          
           <Button 
             variant="outline" 
             onClick={() => setShowHowToPlay(true)} 
@@ -1991,7 +2058,7 @@ function startDailyChallenge() {
                 {settings.enableSpecialTiles ? (
                   score >= (benchmarks?.bronze || 100) 
                     ? "Special tiles active!"
-                    : `${(benchmarks?.bronze || 100) - score} until specials`
+                    : ""
                 ) : "Special tiles off"}
                 {gameOver && finalGrade !== "None" && (
                   <div className="mt-1 font-medium">Final: {finalGrade}</div>
