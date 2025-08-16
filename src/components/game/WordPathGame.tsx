@@ -1949,11 +1949,6 @@ function startDailyChallenge() {
               <div>
                 <div className="text-xs text-muted-foreground">Score</div>
                 <div className="text-2xl font-bold">{score}</div>
-                {settings.mode === "daily" && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Moves: {movesUsed}/{settings.dailyMovesLimit}
-                  </div>
-                )}
                 {benchmarks && (
                   <div className="mt-1 text-xs text-muted-foreground">
                     {(() => {
@@ -1988,6 +1983,11 @@ function startDailyChallenge() {
                 ) : "Special tiles off"}
                 {gameOver && finalGrade !== "None" && (
                   <div className="mt-1 font-medium">Final: {finalGrade}</div>
+                )}
+                {settings.mode === "daily" && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {settings.dailyMovesLimit - movesUsed} moves remaining
+                  </div>
                 )}
                 {settings.mode === "daily" && gameOver && (
                   <Button 
