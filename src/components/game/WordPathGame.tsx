@@ -1028,6 +1028,7 @@ function startDailyChallenge() {
     return;
   }
   
+  // If no saved state, start fresh daily challenge
   setSettings(prev => ({ 
     ...prev, 
     difficulty, 
@@ -1036,6 +1037,17 @@ function startDailyChallenge() {
     dailyMovesLimit: getDailyMovesLimit() 
   }));
   setSize(newSize);
+  
+  // Reset all state for fresh daily challenge
+  setGameOver(false);
+  setFinalGrade("None");
+  setUsedWords([]);
+  setLastWordTiles(new Set());
+  setScore(0);
+  setStreak(0);
+  setMovesUsed(0);
+  setUnlocked(new Set());
+  setSpecialTiles(createEmptySpecialTilesGrid(newSize));
   
   if (dict && sorted) {
     setIsGenerating(true);
