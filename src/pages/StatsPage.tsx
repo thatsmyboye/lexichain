@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from '@supabase/supabase-js';
-import { ArrowLeft, Trophy, Target, Clock, Zap, Medal } from "lucide-react";
+import { ArrowLeft, Trophy, Target, Clock, Zap, Medal, Trash2 } from "lucide-react";
 import { GoalCard } from "@/components/goals/GoalCard";
 import { GoalSelector } from "@/components/goals/GoalSelector";
 import { useGoals } from "@/hooks/useGoals";
+import { useToast } from "@/hooks/use-toast";
 
 const StatsPage = () => {
   const navigate = useNavigate();
@@ -29,6 +31,8 @@ const StatsPage = () => {
     addGoal, 
     dismissGoal 
   } = useGoals(user);
+
+  const { toast } = useToast();
 
   const fetchAchievementCounts = async (userId: string) => {
     try {
@@ -53,6 +57,55 @@ const StatsPage = () => {
       setAchievementCounts(counts);
     } catch (error) {
       console.error('Error fetching achievement counts:', error);
+    }
+  };
+
+  const handleResetStats = async () => {
+    if (!user) return;
+
+    try {
+      // First get all goal IDs for this user to delete related progress
+      const { data: userGoals } = await supabase
+        .from('player_goals')
+        .select('id')
+        .eq('user_id', user.id);
+
+      // Delete goal progress first if there are goals
+      if (userGoals && userGoals.length > 0) {
+        const goalIds = userGoals.map(goal => goal.id);
+        await supabase
+          .from('goal_progress')
+          .delete()
+          .in('goal_id', goalIds);
+      }
+
+      // Delete all user data from all tables
+      const deletePromises = [
+        supabase.from('standard_game_results').delete().eq('user_id', user.id),
+        supabase.from('daily_challenge_results').delete().eq('user_id', user.id),
+        supabase.from('player_goals').delete().eq('user_id', user.id)
+      ];
+
+      // Execute all delete operations
+      await Promise.all(deletePromises);
+
+      // Reset local state
+      setAchievementCounts({ Bronze: 0, Silver: 0, Gold: 0, Platinum: 0 });
+
+      toast({
+        title: "Stats Reset Complete",
+        description: "All your stats have been successfully reset to 0.",
+      });
+
+      // Refresh the page to reload all data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error resetting stats:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset stats. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -335,6 +388,41 @@ const StatsPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Reset Stats Section */}
+        <div className="mt-12 pt-8 border-t border-border">
+          <div className="text-center">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  size="lg"
+                  className="bg-destructive hover:bg-destructive-hover text-destructive-foreground"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Reset All Stats
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset All Stats</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure? This will erase ALL of your stats including game results, achievements, goals, and progress. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleResetStats}
+                    className="bg-destructive hover:bg-destructive-hover text-destructive-foreground"
+                  >
+                    Confirm Reset
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
       </div>
     </div>
   );
