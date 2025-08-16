@@ -418,10 +418,38 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
     }
   };
 
+  // Save daily challenge result when game ends
+  const saveDailyChallengeResult = async () => {
+    if (!user || settings.mode !== "daily" || !gameOver) return;
+
+    try {
+      const challengeResult = {
+        user_id: user.id,
+        challenge_date: getDailySeed(), // Use the daily seed as the challenge date
+        score: score,
+        achievement_level: finalGrade
+      };
+
+      const { error } = await supabase
+        .from("daily_challenge_results")
+        .insert(challengeResult);
+
+      if (error) throw error;
+
+      console.log("Daily challenge result saved successfully");
+    } catch (error) {
+      console.error("Error saving daily challenge result:", error);
+    }
+  };
+
   // Save game result when game ends
   useEffect(() => {
     if (gameOver) {
-      saveGameResult();
+      if (settings.mode === "daily") {
+        saveDailyChallengeResult();
+      } else {
+        saveGameResult();
+      }
     }
   }, [gameOver, user, settings.mode]);
 
