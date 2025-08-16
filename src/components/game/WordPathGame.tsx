@@ -335,7 +335,7 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
     enableSpecialTiles: true,
-    scoreThreshold: SPECIAL_TILE_SCORE_THRESHOLD,
+    scoreThreshold: benchmarks?.bronze || 100, // Use Bronze threshold
     mode: "classic",
     targetTier: "silver",
     difficulty: "medium",
@@ -801,7 +801,7 @@ useEffect(() => {
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
     
     // Introduce special tiles if conditions are met
-    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, settings.scoreThreshold)) {
+    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
       const updatedSpecialTiles = [...newSpecialTiles];
       const emptyPositions: Pos[] = [];
       
@@ -921,8 +921,8 @@ function generateSpecialTile(): SpecialTile {
   return { type: null };
 }
 
-function shouldIntroduceSpecialTiles(currentScore: number, threshold: number): boolean {
-  return currentScore >= threshold;
+function shouldIntroduceSpecialTiles(currentScore: number, bronzeThreshold: number): boolean {
+  return currentScore >= bronzeThreshold;
 }
 
 function createEmptySpecialTilesGrid(size: number): SpecialTile[][] {
@@ -1393,7 +1393,7 @@ function startDailyChallenge() {
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
     
     // Introduce special tiles if conditions are met
-    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, settings.scoreThreshold)) {
+    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
       const updatedSpecialTiles = [...newSpecialTiles];
       const emptyPositions: Pos[] = [];
       
@@ -1707,7 +1707,7 @@ function startDailyChallenge() {
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Special tiles appear after reaching {settings.scoreThreshold} points and expire after a few turns.
+                  Special tiles appear after reaching Bronze level and expire after a few turns.
                 </div>
               </div>
             )}
@@ -1977,9 +1977,9 @@ function startDailyChallenge() {
               </div>
               <div className="text-xs text-muted-foreground text-right">
                 {settings.enableSpecialTiles ? (
-                  score >= settings.scoreThreshold 
+                  score >= (benchmarks?.bronze || 100) 
                     ? "Special tiles active!"
-                    : `${settings.scoreThreshold - score} until specials`
+                    : `${(benchmarks?.bronze || 100) - score} until specials`
                 ) : "Special tiles off"}
                 {gameOver && finalGrade !== "None" && (
                   <div className="mt-1 font-medium">Final: {finalGrade}</div>
