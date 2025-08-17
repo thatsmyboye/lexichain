@@ -17,7 +17,7 @@ const within = (r: number, c: number, size: number) => r >= 0 && c >= 0 && r < s
 const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) <= 1;
 
 // Special tile types
-type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | null;
+type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | "shuffle" | null;
 type SpecialTile = {
   type: SpecialTileType;
   value?: number;
@@ -172,7 +172,8 @@ const SPECIAL_TILE_RARITIES = {
   stone: 0.15,
   wild: 0.05,
   xfactor: 0.08,
-  multiplier: 0.12
+  multiplier: 0.12,
+  shuffle: 0.03  // Rare occurrence
 };
 
 // Letter rarity helpers (based on frequency with a special bucket for ultra-rare letters)
@@ -700,6 +701,53 @@ useEffect(() => {
       }, 1000);
 
       toast.info("X-Factor activated! Adjacent tiles transformed!");
+    }
+
+    // Handle shuffle tiles
+    const shuffleTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "shuffle");
+    if (shuffleTiles.length > 0) {
+      // Create a copy of the current board
+      const currentBoard = (xFactorTiles.length > 0 ? newBoard : board).map(row => [...row]);
+      
+      // Get all letters from the board
+      const allLetters: string[] = [];
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          allLetters.push(currentBoard[r][c]);
+        }
+      }
+      
+      // Shuffle the letters array
+      for (let i = allLetters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
+      }
+      
+      // Redistribute the shuffled letters
+      let letterIndex = 0;
+      const shuffledBoard = currentBoard.map(row => [...row]);
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          shuffledBoard[r][c] = allLetters[letterIndex++];
+        }
+      }
+      
+      setBoard(shuffledBoard);
+      
+      // Set all tiles as affected for visual effect
+      const allTileKeys = new Set<string>();
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          allTileKeys.add(keyOf({ r, c }));
+        }
+      }
+      setAffectedTiles(allTileKeys);
+      
+      setTimeout(() => {
+        setAffectedTiles(new Set());
+      }, 1500);
+      
+      toast.success("Shuffle activated! All letters repositioned!");
     }
 
     let newSpecialTiles = specialTiles.map(row => [...row]);
@@ -1361,6 +1409,53 @@ function resetDailyChallenge() {
       toast.info("X-Factor activated! Adjacent tiles transformed!");
     }
 
+    // Handle shuffle tiles
+    const shuffleTiles = path.filter(p => specialTiles[p.r][p.c].type === "shuffle");
+    if (shuffleTiles.length > 0) {
+      // Create a copy of the current board (use updated board if X-factor was triggered)
+      const currentBoard = board.map(row => [...row]);
+      
+      // Get all letters from the board
+      const allLetters: string[] = [];
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          allLetters.push(currentBoard[r][c]);
+        }
+      }
+      
+      // Shuffle the letters array
+      for (let i = allLetters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
+      }
+      
+      // Redistribute the shuffled letters
+      let letterIndex = 0;
+      const shuffledBoard = currentBoard.map(row => [...row]);
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          shuffledBoard[r][c] = allLetters[letterIndex++];
+        }
+      }
+      
+      setBoard(shuffledBoard);
+      
+      // Set all tiles as affected for visual effect
+      const allTileKeys = new Set<string>();
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          allTileKeys.add(keyOf({ r, c }));
+        }
+      }
+      setAffectedTiles(allTileKeys);
+      
+      setTimeout(() => {
+        setAffectedTiles(new Set());
+      }, 1500);
+      
+      toast.success("Shuffle activated! All letters repositioned!");
+    }
+
     let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
@@ -1740,7 +1835,7 @@ function resetDailyChallenge() {
             {settings.enableSpecialTiles && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-y-3 gap-x-2 sm:grid-cols-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-bold">
                       A
@@ -1782,6 +1877,21 @@ function resetDailyChallenge() {
                     <div className="text-xs">
                       <div className="font-medium">Multiplier</div>
                       <div className="text-muted-foreground">Boost word score</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-red-200 to-red-300 flex items-center justify-center text-red-800 text-xs font-bold relative">
+                      A
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="relative">
+                          <div className="w-3 h-3 border border-red-700 rounded-full opacity-70"></div>
+                          <div className="absolute inset-0.5 w-2 h-2 border border-red-700 rounded-full opacity-50"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Shuffle</div>
+                      <div className="text-muted-foreground">Randomize all letters</div>
                     </div>
                   </div>
                 </div>
@@ -1971,6 +2081,8 @@ function resetDailyChallenge() {
                   baseClasses += "bg-gradient-to-br from-orange-400 to-red-500 text-white ";
                 } else if (special.type === "multiplier") {
                   baseClasses += "bg-gradient-to-br from-blue-400 to-blue-600 text-white ";
+                } else if (special.type === "shuffle") {
+                  baseClasses += "bg-gradient-to-br from-red-200 to-red-300 text-red-800 ";
                 }
                 
                 return baseClasses;
@@ -2004,6 +2116,16 @@ function resetDailyChallenge() {
                   {special.type === "multiplier" && special.value && (
                     <div className="absolute bottom-1 text-xs font-bold bg-white/20 px-1 rounded">
                       {special.value}x
+                    </div>
+                  )}
+                  {special.type === "shuffle" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative">
+                        <div className="w-4 h-4 border-2 border-red-700 rounded-full opacity-70"></div>
+                        <div className="absolute inset-0.5 w-3 h-3 border-2 border-red-700 rounded-full opacity-50"></div>
+                        <div className="absolute top-0 left-1.5 w-1 h-1 bg-red-700 rounded-full transform -translate-y-0.5"></div>
+                        <div className="absolute bottom-0 right-1.5 w-1 h-1 bg-red-700 rounded-full transform translate-y-0.5"></div>
+                      </div>
                     </div>
                   )}
                   {special.type !== null && special.expiryTurns !== undefined && (
