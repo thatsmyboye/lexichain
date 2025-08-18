@@ -1822,7 +1822,18 @@ async function resetDailyChallenge() {
       : score >= (benchmarks?.silver || 0) ? "Silver"
       : score >= (benchmarks?.bronze || 0) ? "Bronze"
       : "None";
-    const shareText = `🔤 Lexichain Daily ${date}\n📊 ${score} points (${grade})\n📝 ${usedWords.length} words\n\nlexichain.lovable.app`;
+    
+    // Get emoji based on grade
+    const gradeEmoji = grade === "Platinum" ? "💎" 
+      : grade === "Gold" ? "🥇"
+      : grade === "Silver" ? "🥈" 
+      : grade === "Bronze" ? "🥉"
+      : "📊";
+    
+    // Get highest single word score
+    const topWordScore = usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0;
+    
+    const shareText = `🔤 Lexichain Daily ${date}\n${gradeEmoji} ${score} points (${grade})\n📝 Top word: ${topWordScore}\n\nlexichain.lovable.app`;
     
     if (navigator.share) {
       navigator.share({
@@ -2113,8 +2124,8 @@ async function resetDailyChallenge() {
               <div className="text-xs text-muted-foreground mb-2">Share this:</div>
               <div className="text-sm font-mono">
                 🔤 Lexichain Daily Challenge {getDailySeed()}<br/>
-                📊 {score} points ({finalGrade})<br/>
-                📝 {usedWords.length} words in {movesUsed} moves<br/>
+                {finalGrade === "Platinum" ? "💎" : finalGrade === "Gold" ? "🥇" : finalGrade === "Silver" ? "🥈" : finalGrade === "Bronze" ? "🥉" : "📊"} {score} points ({finalGrade})<br/>
+                📝 Top word: {usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0}<br/>
                 🎯 {settings.dailyMovesLimit - movesUsed} moves remaining<br/>
                 <br/>
                 Play at lexichain.lovable.app
@@ -2122,7 +2133,9 @@ async function resetDailyChallenge() {
             </div>
             <Button 
               onClick={() => {
-                const shareText = `🔤 Lexichain Daily Challenge ${getDailySeed()}\n📊 ${score} points (${finalGrade})\n📝 ${usedWords.length} words in ${movesUsed} moves\n🎯 ${settings.dailyMovesLimit - movesUsed} moves remaining\n\nPlay at lexichain.lovable.app`;
+                const gradeEmoji = finalGrade === "Platinum" ? "💎" : finalGrade === "Gold" ? "🥇" : finalGrade === "Silver" ? "🥈" : finalGrade === "Bronze" ? "🥉" : "📊";
+                const topWordScore = usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0;
+                const shareText = `🔤 Lexichain Daily Challenge ${getDailySeed()}\n${gradeEmoji} ${score} points (${finalGrade})\n📝 Top word: ${topWordScore}\n🎯 ${settings.dailyMovesLimit - movesUsed} moves remaining\n\nPlay at lexichain.lovable.app`;
                 navigator.clipboard.writeText(shareText);
                 toast.success("Copied to clipboard!");
                 setShowShareDialog(false);
