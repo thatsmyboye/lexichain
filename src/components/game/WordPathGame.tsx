@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { computeBenchmarksFromWordCount, type Benchmarks } from "@/lib/benchmarks";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
 import { supabase } from "@/integrations/supabase/client";
+import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
 import type { User } from "@supabase/supabase-js";
 
@@ -363,6 +364,7 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
   const { updateGoalProgress } = useGoals(user);
+  const dailyChallengeState = useDailyChallengeState(getDailySeed());
   
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
@@ -504,7 +506,7 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
   }, [gameOver, user, settings.mode]);
 
   // Save and restore daily challenge state
-  const saveDailyState = () => {
+  const saveDailyState = async () => {
     if (settings.mode === "daily") {
       const gameState = {
         board,
@@ -518,37 +520,33 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
         finalGrade,
         seed: getDailySeed()
       };
-      localStorage.setItem(`daily-challenge-${getDailySeed()}`, JSON.stringify(gameState));
+
+      await dailyChallengeState.saveState(gameState);
     }
   };
 
-  const loadDailyState = () => {
-    const savedState = localStorage.getItem(`daily-challenge-${getDailySeed()}`);
-    if (savedState) {
-      try {
-        const gameState = JSON.parse(savedState);
-        if (gameState.seed === getDailySeed()) {
-          setBoard(gameState.board);
-          setSpecialTiles(gameState.specialTiles);
-          setUsedWords(gameState.usedWords);
-          setScore(gameState.score);
-          setStreak(gameState.streak);
-          setMovesUsed(gameState.movesUsed);
-          setUnlocked(new Set(gameState.unlocked));
-          setGameOver(gameState.gameOver);
-          setFinalGrade(gameState.finalGrade);
-          return true;
-        }
-      } catch (e) {
-        console.warn('Failed to load daily challenge state:', e);
-      }
+  const loadDailyState = async () => {
+    const gameState = await dailyChallengeState.loadState();
+    if (gameState) {
+      setBoard(gameState.board);
+      setSpecialTiles(gameState.specialTiles);
+      setUsedWords(gameState.usedWords);
+      setScore(gameState.score);
+      setStreak(gameState.streak);
+      setMovesUsed(gameState.movesUsed);
+      setUnlocked(new Set(gameState.unlocked));
+      setGameOver(gameState.gameOver);
+      setFinalGrade(gameState.finalGrade);
+      return true;
     }
     return false;
   };
 
   // Save state whenever relevant data changes in daily mode
   useEffect(() => {
-    saveDailyState();
+    if (settings.mode === "daily") {
+      saveDailyState();
+    }
   }, [board, specialTiles, usedWords, score, streak, movesUsed, unlocked, gameOver, finalGrade, settings.mode]);
 
 useEffect(() => {
@@ -1142,14 +1140,14 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
   }
 }
 
-function startDailyChallenge() {
+async function startDailyChallenge() {
   const difficulty = "medium"; // Daily challenges use medium difficulty
   const config = DIFFICULTY_CONFIG[difficulty];
   const newSize = config.gridSize;
   const dailySeed = getDailySeed();
   
   // Try to load existing daily state first
-  if (loadDailyState()) {
+  if (await loadDailyState()) {
     setSettings(prev => ({ 
       ...prev, 
       difficulty, 
@@ -1227,9 +1225,9 @@ function startDailyChallenge() {
   }
 }
 
-function resetDailyChallenge() {
-  // Clear saved daily state
-  localStorage.removeItem(`daily-challenge-${getDailySeed()}`);
+async function resetDailyChallenge() {
+  // Clear saved daily state from both database and localStorage
+  await dailyChallengeState.clearState();
   
   // Start fresh daily challenge
   const difficulty = "medium";
@@ -1872,7 +1870,9 @@ function resetDailyChallenge() {
           {settings.mode === "daily" && (
             <Button 
               variant="outline" 
-              onClick={resetDailyChallenge} 
+              onClick={() => {
+                resetDailyChallenge().catch(console.error);
+              }} 
               disabled={!isGameReady || isGenerating} 
               size="sm"
               className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
@@ -1921,7 +1921,9 @@ function resetDailyChallenge() {
           </Button>
           <Button 
             variant={settings.mode === "daily" ? "hero" : "outline"} 
-            onClick={() => startDailyChallenge()} 
+            onClick={() => {
+              startDailyChallenge().catch(console.error);
+            }} 
             size="sm"
           >
             Daily Challenge

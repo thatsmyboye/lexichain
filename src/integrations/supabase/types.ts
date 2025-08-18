@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_challenge_states: {
+        Row: {
+          challenge_date: string
+          created_at: string
+          game_state: Json
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_date: string
+          created_at?: string
+          game_state: Json
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_date?: string
+          created_at?: string
+          game_state?: Json
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goal_progress: {
         Row: {
           created_at: string
