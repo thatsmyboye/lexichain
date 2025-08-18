@@ -12,6 +12,7 @@ export type DailyChallengeGameState = {
   unlocked: any[];
   gameOver: boolean;
   finalGrade: any;
+  lastWordTiles?: string[];
   seed: string;
 };
 

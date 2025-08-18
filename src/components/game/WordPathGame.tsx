@@ -518,6 +518,7 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
         unlocked: Array.from(unlocked),
         gameOver,
         finalGrade,
+        lastWordTiles: Array.from(lastWordTiles),
         seed: getDailySeed()
       };
 
@@ -537,6 +538,8 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
       setUnlocked(new Set(gameState.unlocked));
       setGameOver(gameState.gameOver);
       setFinalGrade(gameState.finalGrade);
+      // Restore last word tiles to show shaded tiles from previous attempt
+      setLastWordTiles(new Set(gameState.lastWordTiles || []));
       return true;
     }
     return false;
@@ -547,7 +550,7 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
     if (settings.mode === "daily") {
       saveDailyState();
     }
-  }, [board, specialTiles, usedWords, score, streak, movesUsed, unlocked, gameOver, finalGrade, settings.mode]);
+  }, [board, specialTiles, usedWords, score, streak, movesUsed, unlocked, gameOver, finalGrade, lastWordTiles, settings.mode]);
 
 useEffect(() => {
   let mounted = true;
