@@ -10,6 +10,9 @@ import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achiev
 import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
+import { useConsumables } from "@/hooks/useConsumables";
+import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/ConsumableInventory";
+import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
 
 type Pos = { r: number; c: number };
@@ -365,6 +368,14 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
   const { updateGoalProgress } = useGoals(user);
   const dailyChallengeState = useDailyChallengeState(getDailySeed());
+  const { 
+    inventory: consumableInventory, 
+    activeEffects, 
+    useConsumable, 
+    awardConsumables, 
+    addActiveEffect, 
+    removeActiveEffect 
+  } = useConsumables(user);
   
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
@@ -1290,6 +1301,180 @@ async function resetDailyChallenge() {
   }
 }
 
+// Consumable handlers
+const handleUseConsumable = async (consumableId: ConsumableId) => {
+  if (!user || gameOver) return;
+
+  const consumable = CONSUMABLES[consumableId];
+  
+  // Check if consumable can be used in current mode
+  if (consumable.dailyModeOnly && settings.mode !== "daily") {
+    toast.error("This consumable can only be used in Daily Challenge mode");
+    return;
+  }
+
+  // Check inventory
+  if (!consumableInventory[consumableId] || consumableInventory[consumableId].quantity <= 0) {
+    toast.error("You don't have any of this consumable");
+    return;
+  }
+
+  // Use the consumable
+  const success = await useConsumable(consumableId);
+  if (!success) {
+    toast.error("Failed to use consumable");
+    return;
+  }
+
+  // Apply consumable effects
+  switch (consumableId) {
+    case "hint_revealer":
+      handleHintRevealer();
+      break;
+    case "score_multiplier":
+      handleScoreMultiplier();
+      break;
+    case "letter_shuffle":
+      handleLetterShuffle();
+      break;
+    case "extra_moves":
+      handleExtraMoves();
+      break;
+  }
+};
+
+const handleHintRevealer = () => {
+  if (!dict || !sorted) return;
+  
+  // Use existing probeGrid logic to find words
+  const probe = probeGrid(board, dict, sorted, 3, MAX_DFS_NODES);
+  const availableWords = Array.from(probe.words).filter(word => 
+    !usedWords.some(used => used.word === word) && word.length >= 3
+  );
+  
+  if (availableWords.length === 0) {
+    toast.info("No more words to reveal!");
+    return;
+  }
+  
+  // Reveal 3-5 words by highlighting their tiles
+  const wordsToReveal = availableWords.slice(0, Math.min(5, availableWords.length));
+  const tilesToHighlight = new Set<string>();
+  
+  // Simple highlighting - just highlight the first letters of words
+  wordsToReveal.forEach(word => {
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (board[r][c].toLowerCase() === word[0]) {
+          tilesToHighlight.add(keyOf({ r, c }));
+          return; // Only highlight first occurrence of first letter
+        }
+      }
+    }
+  });
+  
+  setAffectedTiles(tilesToHighlight);
+  addActiveEffect({
+    id: "hint_revealer",
+    type: "hint_active",
+    duration: 10000,
+    expiresAt: new Date(Date.now() + 10000)
+  });
+  
+  setTimeout(() => {
+    setAffectedTiles(new Set());
+    removeActiveEffect("hint_revealer");
+  }, 10000);
+  
+  toast.success(`Revealed ${wordsToReveal.length} words for 10 seconds!`);
+};
+
+const handleScoreMultiplier = () => {
+  addActiveEffect({
+    id: "score_multiplier",
+    type: "score_boost",
+    duration: 0, // Until next word
+    data: { multiplier: 2.0 }
+  });
+  
+  toast.success("Next word will have 2x score!");
+};
+
+const handleLetterShuffle = () => {
+  if (path.length > 0) {
+    toast.error("Cannot shuffle while a word is in progress");
+    return;
+  }
+  
+  // Reuse existing shuffle logic from shuffle tile
+  const letterCounts = new Map<string, number>();
+  const allLetters: string[] = [];
+  
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (specialTiles[r][c].type !== "stone") {
+        const letter = board[r][c];
+        const count = letterCounts.get(letter) || 0;
+        letterCounts.set(letter, count + 1);
+        allLetters.push(letter);
+      }
+    }
+  }
+  
+  // Shuffle the letters array
+  for (let i = allLetters.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
+  }
+  
+  // Redistribute the shuffled letters
+  let letterIndex = 0;
+  const shuffledBoard = board.map(row => [...row]);
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (specialTiles[r][c].type !== "stone") {
+        shuffledBoard[r][c] = allLetters[letterIndex++];
+      }
+    }
+  }
+  
+  setBoard(shuffledBoard);
+  
+  // Set all tiles as affected for visual effect
+  const allTileKeys = new Set<string>();
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      allTileKeys.add(keyOf({ r, c }));
+    }
+  }
+  setAffectedTiles(allTileKeys);
+  
+  setTimeout(() => {
+    setAffectedTiles(new Set());
+  }, 1500);
+  
+  toast.success("Letters shuffled! Board refreshed!");
+};
+
+const handleExtraMoves = () => {
+  if (settings.mode !== "daily") {
+    toast.error("Extra moves can only be used in Daily Challenge mode");
+    return;
+  }
+  
+  if (movesUsed < settings.dailyMovesLimit - 5) {
+    toast.error("You can only use this when you have 5 or fewer moves remaining");
+    return;
+  }
+  
+  setSettings(prev => ({
+    ...prev,
+    dailyMovesLimit: prev.dailyMovesLimit + 3
+  }));
+  
+  toast.success("Added 3 extra moves to your daily challenge!");
+};
+
   function tryAddToPath(pos: Pos) {
     if (path.length && !neighbors(path[path.length - 1], pos)) return;
     const k = keyOf(pos);
@@ -1465,7 +1650,16 @@ async function resetDailyChallenge() {
 
     const timeBonus = 0;
 
-    const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
+    // Apply consumable score multiplier if active
+    const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
+    const consumableMultiplier = scoreMultiplierEffect?.data?.multiplier || 1;
+    
+    const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier * consumableMultiplier);
+    
+    // Remove score multiplier effect after use
+    if (scoreMultiplierEffect) {
+      removeActiveEffect("score_multiplier");
+    }
 
     const xFactorTiles = path.filter(p => specialTiles[p.r][p.c].type === "xfactor");
     let xChanged = 0;
@@ -2438,6 +2632,14 @@ async function resetDailyChallenge() {
               )}
             </div>
           </Card>
+
+          {/* Consumables Inventory */}
+          <ConsumableInventoryPanel 
+            inventory={consumableInventory}
+            onUseConsumable={handleUseConsumable}
+            gameMode={settings.mode}
+            disabled={gameOver || isGenerating}
+          />
 
         </aside>
       </div>

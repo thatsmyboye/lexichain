@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      consumable_transactions: {
+        Row: {
+          consumable_id: string
+          created_at: string
+          game_result_id: string | null
+          id: string
+          quantity: number
+          source: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          consumable_id: string
+          created_at?: string
+          game_result_id?: string | null
+          id?: string
+          quantity: number
+          source?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          consumable_id?: string
+          created_at?: string
+          game_result_id?: string | null
+          id?: string
+          quantity?: number
+          source?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_game_result"
+            columns: ["game_result_id"]
+            isOneToOne: false
+            referencedRelation: "standard_game_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_challenge_results: {
         Row: {
           achievement_level: string
@@ -66,6 +107,36 @@ export type Database = {
           created_at?: string
           game_state?: Json
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_login_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_login_date: string
+          total_logins: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_date: string
+          total_logins?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_date?: string
+          total_logins?: number
           updated_at?: string
           user_id?: string
         }
@@ -227,6 +298,36 @@ export type Database = {
           updated_at?: string
           user_id?: string
           words_found?: number
+        }
+        Relationships: []
+      }
+      user_consumables: {
+        Row: {
+          consumable_id: string
+          created_at: string
+          id: string
+          last_used: string | null
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consumable_id: string
+          created_at?: string
+          id?: string
+          last_used?: string | null
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consumable_id?: string
+          created_at?: string
+          id?: string
+          last_used?: string | null
+          quantity?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
