@@ -79,9 +79,10 @@ const TitleScreen = ({ onPlayClick, onLoginClick, onRegisterClick, onStatsClick 
         </div>
       </div>
       
-      {/* Copyright footer */}
-      <footer className="absolute bottom-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Banton Games. All rights reserved.
+      {/* Version and Copyright footer */}
+      <footer className="absolute bottom-6 text-center text-xs text-muted-foreground space-y-1">
+        <div>v08.18.2025-001</div>
+        <div>© {new Date().getFullYear()} Banton Games. All rights reserved.</div>
       </footer>
     </div>
   );
