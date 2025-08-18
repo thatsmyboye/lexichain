@@ -360,7 +360,7 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
   return lastBoard;
 }
 
-export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => void }) {
+export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
   const { updateGoalProgress } = useGoals(user);
@@ -419,6 +419,13 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Start daily challenge if initial mode is daily
+  useEffect(() => {
+    if (initialMode === "daily") {
+      startDailyChallenge().catch(console.error);
+    }
+  }, [initialMode]);
 
   // Reset game start time when new game starts
   useEffect(() => {
@@ -1925,24 +1932,6 @@ async function resetDailyChallenge() {
           )}
         </div>
         
-        <div className="flex justify-start items-center gap-1">
-          <Button 
-            variant={settings.mode === "classic" ? "hero" : "outline"} 
-            onClick={() => setSettings(prev => ({ ...prev, mode: "classic" }))} 
-            size="sm"
-          >
-            Classic
-          </Button>
-          <Button 
-            variant={settings.mode === "daily" ? "hero" : "outline"} 
-            onClick={() => {
-              startDailyChallenge().catch(console.error);
-            }} 
-            size="sm"
-          >
-            Daily Challenge
-          </Button>
-        </div>
       </div>
 
       {/* How to Play Modal */}

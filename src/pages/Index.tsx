@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WordPathGame from "@/components/game/WordPathGame";
 import TitleScreen from "@/components/TitleScreen";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
+  const [showModeSelection, setShowModeSelection] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<"classic" | "daily">("classic");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,11 +22,18 @@ const Index = () => {
   }, []);
 
   const handlePlayClick = () => {
+    setShowModeSelection(true);
+  };
+
+  const handleModeSelect = (mode: "classic" | "daily") => {
+    setSelectedMode(mode);
+    setShowModeSelection(false);
     setShowGame(true);
   };
 
   const handleBackToTitle = () => {
     setShowGame(false);
+    setShowModeSelection(false);
   };
 
   const handleLoginClick = () => {
@@ -46,8 +56,61 @@ const Index = () => {
           <p className="mt-2 text-muted-foreground max-w-2xl">Make as many valid words as you can by drawing paths through the letter grid. Each new word must reuse at least one tile from the previous word.</p>
           <p className="mt-1 text-muted-foreground max-w-2xl text-sm">This game is in early development, and will undergo frequent changes.</p>
         </header>
-        <WordPathGame onBackToTitle={handleBackToTitle} />
+        <WordPathGame onBackToTitle={handleBackToTitle} initialMode={selectedMode} />
       </main>
+    );
+  }
+
+  if (showModeSelection) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative">
+        <div className="text-center space-y-8">
+          <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+            Lexichain
+          </h1>
+          
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold text-foreground">Choose Game Mode</h2>
+            
+            <div className="flex flex-col gap-3">
+              <Button 
+                variant="hero" 
+                size="lg"
+                onClick={() => handleModeSelect("daily")}
+                className="px-12 py-4 text-lg"
+              >
+                Daily Challenge
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => handleModeSelect("classic")}
+                className="px-12 py-4 text-lg"
+              >
+                Classic
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="lg"
+                disabled
+                className="px-12 py-4 text-lg opacity-50 cursor-not-allowed"
+              >
+                Blitz
+              </Button>
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowModeSelection(false)}
+              className="mt-4"
+            >
+              Back
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
