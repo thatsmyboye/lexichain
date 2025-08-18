@@ -27,7 +27,6 @@ type SpecialTile = {
 type GameMode = "classic" | "target" | "daily";
 
 type GameSettings = {
-  enableSpecialTiles: boolean;
   scoreThreshold: number;
   mode: GameMode;
   targetTier: "bronze" | "silver" | "gold" | "platinum";
@@ -386,7 +385,6 @@ export default function WordPathGame({ onBackToTitle }: { onBackToTitle?: () => 
   const [isGenerating, setIsGenerating] = useState(false);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
-    enableSpecialTiles: true,
     scoreThreshold: benchmarks?.bronze || 100, // Use Bronze threshold
     mode: "classic",
     targetTier: "silver",
@@ -937,7 +935,7 @@ useEffect(() => {
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
     
     // Introduce special tiles if conditions are met
-    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
+    if (shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
       const updatedSpecialTiles = [...newSpecialTiles];
       const emptyPositions: Pos[] = [];
       
@@ -1680,7 +1678,7 @@ function resetDailyChallenge() {
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
     
     // Introduce special tiles if conditions are met
-    if (settings.enableSpecialTiles && shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
+    if (shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
       const updatedSpecialTiles = [...newSpecialTiles];
       const emptyPositions: Pos[] = [];
       
@@ -1957,9 +1955,8 @@ function resetDailyChallenge() {
               </div>
             </div>
             
-            {settings.enableSpecialTiles && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
                 <div className="grid grid-cols-2 gap-y-3 gap-x-2 sm:grid-cols-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-bold">
@@ -2023,8 +2020,7 @@ function resetDailyChallenge() {
                 <div className="text-xs text-muted-foreground">
                   Special tiles appear after reaching Bronze level and expire after a few turns.
                 </div>
-              </div>
-            )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -2302,11 +2298,9 @@ function resetDailyChallenge() {
                 )}
               </div>
               <div className="text-xs text-muted-foreground text-right">
-                {settings.enableSpecialTiles ? (
-                  score >= (benchmarks?.bronze || 100) 
-                    ? "Special tiles active!"
-                    : ""
-                ) : "Special tiles off"}
+                {score >= (benchmarks?.bronze || 100) 
+                  ? "Special tiles active!"
+                  : ""}
                 {gameOver && finalGrade !== "None" && (
                   <div className="mt-1 font-medium">Final: {finalGrade}</div>
                 )}
@@ -2333,20 +2327,6 @@ function resetDailyChallenge() {
           <Card className="p-3">
             <div className="text-xs text-muted-foreground mb-2">Settings</div>
             <div className="space-y-2">
-              <label className="flex items-center space-x-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={settings.enableSpecialTiles}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      enableSpecialTiles: e.target.checked,
-                    }))
-                  }
-                  className="rounded"
-                />
-                <span>Enable Special Tiles</span>
-              </label>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Mode</span>
                 <select
