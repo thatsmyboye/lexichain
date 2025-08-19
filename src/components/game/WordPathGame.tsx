@@ -1618,6 +1618,12 @@ const handleExtraMoves = () => {
 
   // Single tap handler for mobile
   function onTileTap(pos: Pos) {
+    // Check if hammer is activated and this is a stone tile - handle before path logic
+    if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
+      handleHammer(pos);
+      return;
+    }
+
     if (path.length === 0) {
       // Start new path with tap
       setDragging(true);
