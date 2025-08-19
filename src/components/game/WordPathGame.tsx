@@ -2312,10 +2312,6 @@ const handleExtraMoves = () => {
                   <span className="text-muted-foreground mt-1">•</span>
                   <span className="text-sm">Tap a consumable in your inventory (top-left) to use it</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-1">•</span>
-                  <span className="text-sm">Most consumables expire after a few turns</span>
-                </div>
                 <div className="grid gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🔨</span>
