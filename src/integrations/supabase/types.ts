@@ -340,6 +340,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      grant_starter_consumables: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

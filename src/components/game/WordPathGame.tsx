@@ -12,6 +12,7 @@ import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
 import { useConsumables } from "@/hooks/useConsumables";
 import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/ConsumableInventory";
+import { ConsumableInventoryBox } from "@/components/consumables/ConsumableInventoryBox";
 import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
 
@@ -2305,16 +2306,23 @@ const handleExtraMoves = () => {
       </Dialog>
 
       <div className="grid lg:grid-cols-[auto,280px] gap-6 items-start">
-        <div 
-          onPointerUp={onPointerUp}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-          style={{ touchAction: 'none' }} // Prevent page scrolling on touch
-        >
+        <div className="space-y-4">
+          {/* Consumable Inventory Box */}
+          <ConsumableInventoryBox 
+            inventory={consumableInventory}
+            user={user}
+          />
+          
           <div 
-            className="grid gap-3 select-none max-w-md"
-            style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+            onPointerUp={onPointerUp}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            style={{ touchAction: 'none' }} // Prevent page scrolling on touch
           >
+            <div 
+              className="grid gap-3 select-none max-w-md"
+              style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+            >
             {board.map((row, r) => row.map((ch, c) => {
               const k = keyOf({ r, c });
               const idx = path.findIndex((p) => p.r === r && p.c === c);
@@ -2431,14 +2439,16 @@ const handleExtraMoves = () => {
                 </Card>
               );
             }))}
-          </div>
+           </div>
 
-          <div className="mt-3 flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Current:</span>
-            <span className="text-lg font-semibold flex-1">{displayWordFromPath}</span>
+           <div className="mt-3 flex items-center gap-3">
+             <span className="text-sm text-muted-foreground">Current:</span>
+             <span className="text-lg font-semibold flex-1">{displayWordFromPath}</span>
+           </div>
+           
           </div>
         </div>
-
+        
         <aside className="space-y-3">
           <Card className="p-3">
             <div className="flex items-center justify-between">
@@ -2493,8 +2503,8 @@ const handleExtraMoves = () => {
                     Share
                   </Button>
                 )}
-              </div>
-            </div>
+          </div>
+        </div>
           </Card>
           
 
