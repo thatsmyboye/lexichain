@@ -14,6 +14,7 @@ import { useConsumables } from "@/hooks/useConsumables";
 import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/ConsumableInventory";
 import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Pos = { r: number; c: number };
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
@@ -376,6 +377,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     addActiveEffect, 
     removeActiveEffect 
   } = useConsumables(user);
+  const isMobile = useIsMobile();
   
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
@@ -2407,8 +2409,20 @@ const handleExtraMoves = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="grid lg:grid-cols-[auto,280px] gap-6 items-start">
+      <div className="grid lg:grid-cols-[auto,280px] gap-3 lg:gap-4 items-start">
         <div className="space-y-4">
+          {/* Mobile QuickUse Bar */}
+          {isMobile && (
+            <div className="lg:hidden">
+              <QuickUseBar 
+                inventory={consumableInventory}
+                onUseConsumable={handleUseConsumable}
+                gameMode={settings.mode}
+                gameState={{ gameOver, isGenerating }}
+                disabled={gameOver || isGenerating}
+              />
+            </div>
+          )}
           <div
             onPointerUp={onPointerUp}
             onTouchMove={onTouchMove}
@@ -2520,11 +2534,10 @@ const handleExtraMoves = () => {
                     </div>
                   )}
                   {special.type === "shuffle" && (
-                    <div className="absolute top-1 right-1">
-                      <div className="relative w-3 h-3">
-                        <div className="w-2 h-2 border border-red-700 rounded-full opacity-70 bg-white/20"></div>
-                        <div className="absolute top-0.5 left-0.5 w-1 h-1 border border-red-700 rounded-full opacity-50"></div>
-                      </div>
+                   <div className="absolute top-0.5 right-0.5">
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" className="opacity-60">
+                        <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
                     </div>
                   )}
                   {special.type !== null && special.expiryTurns !== undefined && (
@@ -2545,7 +2558,7 @@ const handleExtraMoves = () => {
           </div>
         </div>
         
-        <aside className="space-y-3">
+        <aside className="space-y-2 lg:space-y-3">
           <Card className="p-3">
             <div className="flex items-center justify-between">
               <div>
