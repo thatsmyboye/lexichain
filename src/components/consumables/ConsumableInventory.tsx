@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ChevronDown, ShoppingCart } from "lucide-react";
 import { CONSUMABLES, RARITY_COLORS, type ConsumableId } from "@/lib/consumables";
+import { ConsumableStore } from "@/components/store/ConsumableStore";
 import type { ConsumableInventory } from "@/hooks/useConsumables";
+import type { User } from "@supabase/supabase-js";
 
 interface ConsumableInventoryProps {
   inventory: ConsumableInventory;
@@ -12,6 +15,7 @@ interface ConsumableInventoryProps {
   gameMode: string;
   disabled?: boolean;
   activatedConsumables?: Set<ConsumableId>;
+  user?: User | null;
 }
 
 export function ConsumableInventoryPanel({ 
@@ -19,9 +23,11 @@ export function ConsumableInventoryPanel({
   onUseConsumable, 
   gameMode,
   disabled = false,
-  activatedConsumables = new Set()
+  activatedConsumables = new Set(),
+  user = null
 }: ConsumableInventoryProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [showStore, setShowStore] = useState(false);
 
   const availableConsumables = Object.entries(inventory).filter(([_, data]) => data.quantity > 0);
 
@@ -33,14 +39,25 @@ export function ConsumableInventoryPanel({
     <Card className="p-3 bg-card">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs text-muted-foreground font-medium">Consumables</div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="h-6 w-6 p-0"
-        >
-          <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowStore(true)}
+            className="h-6 px-2 text-xs"
+          >
+            <ShoppingCart className="h-3 w-3 mr-1" />
+            Buy More
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="h-6 w-6 p-0"
+          >
+            <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          </Button>
+        </div>
       </div>
       
       {isExpanded && (
@@ -81,6 +98,19 @@ export function ConsumableInventoryPanel({
           })}
         </div>
       )}
+      
+      {/* Consumable Store Dialog */}
+      <Dialog open={showStore} onOpenChange={setShowStore}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Consumable Store</DialogTitle>
+          </DialogHeader>
+          <ConsumableStore 
+            user={user}
+            onPurchaseComplete={() => setShowStore(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

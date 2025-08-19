@@ -12,7 +12,6 @@ import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
 import { useConsumables } from "@/hooks/useConsumables";
 import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/ConsumableInventory";
-import { ConsumableInventoryBox } from "@/components/consumables/ConsumableInventoryBox";
 import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
 
@@ -2410,13 +2409,7 @@ const handleExtraMoves = () => {
 
       <div className="grid lg:grid-cols-[auto,280px] gap-6 items-start">
         <div className="space-y-4">
-          {/* Consumable Inventory Box */}
-          <ConsumableInventoryBox 
-            inventory={consumableInventory}
-            user={user}
-          />
-          
-          <div 
+          <div
             onPointerUp={onPointerUp}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -2527,12 +2520,10 @@ const handleExtraMoves = () => {
                     </div>
                   )}
                   {special.type === "shuffle" && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <div className="w-4 h-4 border-2 border-red-700 rounded-full opacity-70"></div>
-                        <div className="absolute inset-0.5 w-3 h-3 border-2 border-red-700 rounded-full opacity-50"></div>
-                        <div className="absolute top-0 left-1.5 w-1 h-1 bg-red-700 rounded-full transform -translate-y-0.5"></div>
-                        <div className="absolute bottom-0 right-1.5 w-1 h-1 bg-red-700 rounded-full transform translate-y-0.5"></div>
+                    <div className="absolute top-1 right-1">
+                      <div className="relative w-3 h-3">
+                        <div className="w-2 h-2 border border-red-700 rounded-full opacity-70 bg-white/20"></div>
+                        <div className="absolute top-0.5 left-0.5 w-1 h-1 border border-red-700 rounded-full opacity-50"></div>
                       </div>
                     </div>
                   )}
@@ -2728,6 +2719,7 @@ const handleExtraMoves = () => {
             gameMode={settings.mode}
             disabled={gameOver || isGenerating}
             activatedConsumables={activatedConsumables}
+            user={user}
           />
 
         </aside>
