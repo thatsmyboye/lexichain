@@ -2409,7 +2409,7 @@ const handleExtraMoves = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="grid lg:grid-cols-[auto,280px] gap-3 lg:gap-4 items-start">
+      <div className="grid lg:grid-cols-[auto,280px] gap-3 lg:gap-2 items-start">
         <div className="space-y-4">
           {/* Mobile QuickUse Bar */}
           {isMobile && (
