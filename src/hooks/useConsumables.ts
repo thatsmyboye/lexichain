@@ -66,6 +66,11 @@ export function useConsumables(user: User | null) {
 
   const useConsumable = async (consumableId: ConsumableId, gameResultId?: string): Promise<boolean> => {
     if (!user || !inventory[consumableId] || inventory[consumableId].quantity <= 0) {
+      console.warn(`Cannot use consumable ${consumableId}:`, {
+        hasUser: !!user,
+        hasInventory: !!inventory[consumableId],
+        quantity: inventory[consumableId]?.quantity
+      });
       return false;
     }
 
@@ -83,7 +88,12 @@ export function useConsumables(user: User | null) {
         });
 
       if (transactionError) {
-        console.error('Error recording transaction:', transactionError);
+        console.error('Error recording consumable transaction:', transactionError);
+        toast({
+          title: "Database Error",
+          description: `Failed to record consumable usage: ${transactionError.message}`,
+          variant: "destructive"
+        });
         return false;
       }
 
@@ -99,7 +109,12 @@ export function useConsumables(user: User | null) {
         });
 
       if (inventoryError) {
-        console.error('Error updating inventory:', inventoryError);
+        console.error('Error updating consumable inventory:', inventoryError);
+        toast({
+          title: "Database Error", 
+          description: `Failed to update inventory: ${inventoryError.message}`,
+          variant: "destructive"
+        });
         return false;
       }
 
@@ -113,9 +128,15 @@ export function useConsumables(user: User | null) {
         }
       }));
 
+      console.log(`Successfully used consumable ${consumableId}, remaining: ${newQuantity}`);
       return true;
     } catch (error) {
       console.error('Error using consumable:', error);
+      toast({
+        title: "Error",
+        description: `Unexpected error using consumable: ${error}`,
+        variant: "destructive"
+      });
       return false;
     }
   };
