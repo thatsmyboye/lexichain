@@ -9,23 +9,23 @@ const corsHeaders = {
 
 // Consumable pricing in USD cents
 const CONSUMABLE_PRICES = {
-  hint_revealer: 99, // $0.99
-  score_multiplier: 199, // $1.99
-  letter_shuffle: 79, // $0.79
-  extra_moves: 299, // $2.99
-  bundle_starter: 499, // $4.99 - 5 hints, 2 shuffles, 1 multiplier
-  bundle_power: 999, // $9.99 - 10 hints, 5 shuffles, 3 multipliers, 2 extra moves
-  bundle_ultimate: 1999 // $19.99 - 25 hints, 15 shuffles, 10 multipliers, 5 extra moves
+  hint_revealer: 99, // $0.99 for 3 pack
+  score_multiplier: 99, // $0.99 for 2 pack
+  hammer: 99, // $0.99 for 3 pack
+  extra_moves: 99, // $0.99 each
+  bundle_starter: 199, // $1.99 - 5 hints, 2 hammers, 1 multiplier
+  bundle_power: 599, // $5.99 - 10 hints, 5 hammers, 3 multipliers, 2 extra moves
+  bundle_ultimate: 1599 // $15.99 - 25 hints, 15 hammers, 10 multipliers, 5 extra moves
 };
 
 const CONSUMABLE_QUANTITIES = {
-  hint_revealer: 1,
-  score_multiplier: 1, 
-  letter_shuffle: 1,
+  hint_revealer: 3,
+  score_multiplier: 2, 
+  hammer: 3,
   extra_moves: 1,
-  bundle_starter: { hint_revealer: 5, letter_shuffle: 2, score_multiplier: 1 },
-  bundle_power: { hint_revealer: 10, letter_shuffle: 5, score_multiplier: 3, extra_moves: 2 },
-  bundle_ultimate: { hint_revealer: 25, letter_shuffle: 15, score_multiplier: 10, extra_moves: 5 }
+  bundle_starter: { hint_revealer: 5, hammer: 2, score_multiplier: 1 },
+  bundle_power: { hint_revealer: 10, hammer: 5, score_multiplier: 3, extra_moves: 2 },
+  bundle_ultimate: { hint_revealer: 25, hammer: 15, score_multiplier: 10, extra_moves: 5 }
 };
 
 serve(async (req) => {

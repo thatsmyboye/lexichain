@@ -28,35 +28,35 @@ interface StoreItem {
 }
 
 const STORE_ITEMS: Record<string, StoreItem> = {
-  // Individual consumables
-  hint_revealer: { name: "Hint Revealer", price: 0.99, description: "Reveals hidden words", icon: "💡" },
-  score_multiplier: { name: "Score Multiplier", price: 1.99, description: "Doubles next word score", icon: "⚡" },
-  letter_shuffle: { name: "Letter Shuffle", price: 0.79, description: "Reshuffles the board", icon: "🔄" },
-  extra_moves: { name: "Extra Moves", price: 2.99, description: "Adds 3 moves (Daily only)", icon: "🎯" },
+  // Individual consumables - sold in packs
+  hint_revealer: { name: "Hint Revealer Pack", price: 0.99, description: "3 Hint Revealers - Reveals hidden words", icon: "💡" },
+  score_multiplier: { name: "Score Multiplier Pack", price: 0.99, description: "2 Score Multipliers - Doubles word score", icon: "⚡" },
+  hammer: { name: "Hammer Pack", price: 0.99, description: "3 Hammers - Disables stone tiles", icon: "🔨" },
+  extra_moves: { name: "Extra Moves", price: 0.99, description: "Adds 3 moves (Daily only)", icon: "🎯" },
   
   // Bundles
   bundle_starter: { 
     name: "Starter Bundle", 
-    price: 4.99, 
-    description: "5 Hints + 2 Shuffles + 1 Multiplier", 
+    price: 1.99, 
+    description: "5 Hints + 2 Hammers + 1 Multiplier", 
     icon: "📦",
-    originalPrice: 6.37,
+    originalPrice: 2.81,
     isBundle: true
   },
   bundle_power: { 
     name: "Power Bundle", 
-    price: 9.99, 
-    description: "10 Hints + 5 Shuffles + 3 Multipliers + 2 Extra Moves", 
+    price: 5.99, 
+    description: "10 Hints + 5 Hammers + 3 Multipliers + 2 Extra Moves", 
     icon: "⚡",
-    originalPrice: 21.85,
+    originalPrice: 8.43,
     isBundle: true
   },
   bundle_ultimate: { 
     name: "Ultimate Bundle", 
-    price: 19.99, 
-    description: "25 Hints + 15 Shuffles + 10 Multipliers + 5 Extra Moves", 
+    price: 15.99, 
+    description: "25 Hints + 15 Hammers + 10 Multipliers + 5 Extra Moves", 
     icon: "👑",
-    originalPrice: 44.65,
+    originalPrice: 23.15,
     isBundle: true
   }
 };

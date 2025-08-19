@@ -3,7 +3,7 @@
 export type ConsumableId = 
   | "hint_revealer"
   | "score_multiplier" 
-  | "letter_shuffle"
+  | "hammer"
   | "extra_moves";
 
 export type ConsumableRarity = "common" | "uncommon" | "rare" | "epic";
@@ -54,14 +54,14 @@ export const CONSUMABLES: Record<ConsumableId, Consumable> = {
     usageDescription: "Active until next word submission",
     cooldown: 300000 // 5 minutes in classic mode
   },
-  letter_shuffle: {
-    id: "letter_shuffle",
-    name: "Letter Shuffle", 
-    description: "Shuffles all letters while keeping special tiles",
-    icon: "🔄",
+  hammer: {
+    id: "hammer",
+    name: "Hammer", 
+    description: "Disables Stone tiles after they appear",
+    icon: "🔨",
     rarity: "common",
     category: "board_modifier",
-    usageDescription: "Refreshes the board layout",
+    usageDescription: "Breaks stone tiles on the board",
     cooldown: 0
   },
   extra_moves: {
@@ -88,7 +88,7 @@ export const RARITY_COLORS: Record<ConsumableRarity, string> = {
 export const ACHIEVEMENT_CONSUMABLE_REWARDS: Record<string, ConsumableReward[]> = {
   "first_bronze": [
     { id: "hint_revealer", quantity: 2 },
-    { id: "letter_shuffle", quantity: 1 }
+    { id: "hammer", quantity: 1 }
   ],
   "first_silver": [
     { id: "hint_revealer", quantity: 3 },
@@ -96,7 +96,7 @@ export const ACHIEVEMENT_CONSUMABLE_REWARDS: Record<string, ConsumableReward[]> 
   ],
   "gold_standard": [
     { id: "score_multiplier", quantity: 2 },
-    { id: "letter_shuffle", quantity: 2 }
+    { id: "hammer", quantity: 2 }
   ],
   "platinum_achiever": [
     { id: "extra_moves", quantity: 2 },
@@ -107,10 +107,10 @@ export const ACHIEVEMENT_CONSUMABLE_REWARDS: Record<string, ConsumableReward[]> 
 // Daily login rewards
 export const DAILY_LOGIN_REWARDS: Record<number, ConsumableReward[]> = {
   1: [{ id: "hint_revealer", quantity: 1 }],
-  2: [{ id: "letter_shuffle", quantity: 1 }],
+  2: [{ id: "hammer", quantity: 1 }],
   3: [{ id: "hint_revealer", quantity: 2 }],
   4: [{ id: "score_multiplier", quantity: 1 }],
-  5: [{ id: "hint_revealer", quantity: 1 }, { id: "letter_shuffle", quantity: 1 }],
+  5: [{ id: "hint_revealer", quantity: 1 }, { id: "hammer", quantity: 1 }],
   6: [{ id: "score_multiplier", quantity: 1 }],
   7: [
     { id: "hint_revealer", quantity: 3 },

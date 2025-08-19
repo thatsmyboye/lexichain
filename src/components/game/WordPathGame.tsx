@@ -1334,8 +1334,8 @@ const handleUseConsumable = async (consumableId: ConsumableId) => {
     case "score_multiplier":
       handleScoreMultiplier();
       break;
-    case "letter_shuffle":
-      handleLetterShuffle();
+    case "hammer":
+      handleHammer();
       break;
     case "extra_moves":
       handleExtraMoves();
@@ -1400,60 +1400,33 @@ const handleScoreMultiplier = () => {
   toast.success("Next word will have 2x score!");
 };
 
-const handleLetterShuffle = () => {
+const handleHammer = () => {
   if (path.length > 0) {
-    toast.error("Cannot shuffle while a word is in progress");
+    toast.error("Cannot use hammer while a word is in progress");
     return;
   }
   
-  // Reuse existing shuffle logic from shuffle tile
-  const letterCounts = new Map<string, number>();
-  const allLetters: string[] = [];
+  // Find and break all stone tiles
+  const newSpecialTiles = specialTiles.map(row => [...row]);
+  let stoneCount = 0;
   
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      if (specialTiles[r][c].type !== "stone") {
-        const letter = board[r][c];
-        const count = letterCounts.get(letter) || 0;
-        letterCounts.set(letter, count + 1);
-        allLetters.push(letter);
+  for (let row = 0; row < newSpecialTiles.length; row++) {
+    for (let col = 0; col < newSpecialTiles[row].length; col++) {
+      const tile = newSpecialTiles[row][col];
+      if (tile.type === "stone") {
+        newSpecialTiles[row][col] = { type: null };
+        stoneCount++;
       }
     }
   }
   
-  // Shuffle the letters array
-  for (let i = allLetters.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
+  if (stoneCount === 0) {
+    toast.error("No stone tiles found to break");
+    return;
   }
   
-  // Redistribute the shuffled letters
-  let letterIndex = 0;
-  const shuffledBoard = board.map(row => [...row]);
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      if (specialTiles[r][c].type !== "stone") {
-        shuffledBoard[r][c] = allLetters[letterIndex++];
-      }
-    }
-  }
-  
-  setBoard(shuffledBoard);
-  
-  // Set all tiles as affected for visual effect
-  const allTileKeys = new Set<string>();
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      allTileKeys.add(keyOf({ r, c }));
-    }
-  }
-  setAffectedTiles(allTileKeys);
-  
-  setTimeout(() => {
-    setAffectedTiles(new Set());
-  }, 1500);
-  
-  toast.success("Letters shuffled! Board refreshed!");
+  setSpecialTiles(newSpecialTiles);
+  toast.success(`Broke ${stoneCount} stone tile${stoneCount > 1 ? 's' : ''}!`);
 };
 
 const handleExtraMoves = () => {

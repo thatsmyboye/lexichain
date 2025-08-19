@@ -14,7 +14,7 @@ export function useConsumables(user: User | null) {
   const [inventory, setInventory] = useState<ConsumableInventory>({
     hint_revealer: { quantity: 0 },
     score_multiplier: { quantity: 0 },
-    letter_shuffle: { quantity: 0 },
+    hammer: { quantity: 0 },
     extra_moves: { quantity: 0 }
   });
   const [activeEffects, setActiveEffects] = useState<ActiveEffect[]>([]);
@@ -47,12 +47,12 @@ export function useConsumables(user: User | null) {
       }, {
         hint_revealer: { quantity: 0 },
         score_multiplier: { quantity: 0 },
-        letter_shuffle: { quantity: 0 },
+        hammer: { quantity: 0 },
         extra_moves: { quantity: 0 }
       } as ConsumableInventory) || {
         hint_revealer: { quantity: 0 },
         score_multiplier: { quantity: 0 },
-        letter_shuffle: { quantity: 0 },
+        hammer: { quantity: 0 },
         extra_moves: { quantity: 0 }
       };
       

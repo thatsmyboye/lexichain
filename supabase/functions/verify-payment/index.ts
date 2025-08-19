@@ -9,9 +9,9 @@ const corsHeaders = {
 
 // Bundle quantities mapping
 const BUNDLE_QUANTITIES = {
-  bundle_starter: { hint_revealer: 5, letter_shuffle: 2, score_multiplier: 1 },
-  bundle_power: { hint_revealer: 10, letter_shuffle: 5, score_multiplier: 3, extra_moves: 2 },
-  bundle_ultimate: { hint_revealer: 25, letter_shuffle: 15, score_multiplier: 10, extra_moves: 5 }
+  bundle_starter: { hint_revealer: 5, hammer: 2, score_multiplier: 1 },
+  bundle_power: { hint_revealer: 10, hammer: 5, score_multiplier: 3, extra_moves: 2 },
+  bundle_ultimate: { hint_revealer: 25, hammer: 15, score_multiplier: 10, extra_moves: 5 }
 };
 
 serve(async (req) => {
@@ -74,8 +74,14 @@ serve(async (req) => {
           }
         }
       } else {
-        // Single consumable
-        awards.push({ consumable_id: consumableId, quantity: 1 });
+        // Single consumable - award the pack quantity
+        const quantities = {
+          hint_revealer: 3,
+          score_multiplier: 2,
+          hammer: 3,
+          extra_moves: 1
+        };
+        awards.push({ consumable_id: consumableId, quantity: quantities[consumableId as keyof typeof quantities] || 1 });
       }
 
       // Award each consumable

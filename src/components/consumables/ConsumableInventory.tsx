@@ -95,12 +95,12 @@ export function QuickUseBar({
   const getRelevantConsumables = (): ConsumableId[] => {
     const relevant: ConsumableId[] = [];
     
-    // Always show hint revealer and letter shuffle if available
+    // Always show hint revealer and hammer if available
     if (inventory["hint_revealer"]?.quantity > 0) {
       relevant.push("hint_revealer");
     }
-    if (inventory["letter_shuffle"]?.quantity > 0) {
-      relevant.push("letter_shuffle");
+    if (inventory["hammer"]?.quantity > 0) {
+      relevant.push("hammer");
     }
     
     // Show score multiplier if player is doing well
