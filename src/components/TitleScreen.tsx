@@ -8,9 +8,10 @@ interface TitleScreenProps {
   onLoginClick: () => void;
   onRegisterClick: () => void;
   onStatsClick: () => void;
+  onStoreClick: () => void;
 }
 
-const TitleScreen = ({ onPlayClick, onLoginClick, onRegisterClick, onStatsClick }: TitleScreenProps) => {
+const TitleScreen = ({ onPlayClick, onLoginClick, onRegisterClick, onStatsClick, onStoreClick }: TitleScreenProps) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -56,18 +57,27 @@ const TitleScreen = ({ onPlayClick, onLoginClick, onRegisterClick, onStatsClick 
           </Button>
         </div>
         
-        {user && (
-          <div className="flex justify-center mt-4">
+        <div className="flex flex-col items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="lg"
+            onClick={onStoreClick}
+            className="px-8"
+          >
+            🛒 Store
+          </Button>
+          
+          {user && (
             <Button 
               variant="outline" 
               size="lg"
               onClick={onStatsClick}
               className="px-8"
             >
-              Stats
+              📊 Stats
             </Button>
-          </div>
-        )}
+          )}
+        </div>
         
         <div className="text-center">
           <button 
