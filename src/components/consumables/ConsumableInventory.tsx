@@ -11,13 +11,15 @@ interface ConsumableInventoryProps {
   onUseConsumable: (id: ConsumableId) => void;
   gameMode: string;
   disabled?: boolean;
+  activatedConsumables?: Set<ConsumableId>;
 }
 
 export function ConsumableInventoryPanel({ 
   inventory, 
   onUseConsumable, 
   gameMode,
-  disabled = false 
+  disabled = false,
+  activatedConsumables = new Set()
 }: ConsumableInventoryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -48,18 +50,25 @@ export function ConsumableInventoryPanel({
             const canUse = !disabled && 
               (!consumable.dailyModeOnly || gameMode === "daily") &&
               data.quantity > 0;
+            
+            const isActivated = activatedConsumables.has(id as ConsumableId);
 
             return (
               <Button
                 key={id}
                 variant="outline"
                 size="sm"
-                className={`h-16 p-2 flex flex-col items-center gap-1 relative ${RARITY_COLORS[consumable.rarity]}`}
+                className={`h-16 p-2 flex flex-col items-center gap-1 relative ${RARITY_COLORS[consumable.rarity]} ${
+                  isActivated ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950' : ''
+                }`}
                 onClick={() => canUse && onUseConsumable(id as ConsumableId)}
                 disabled={!canUse}
               >
                 <div className="text-lg leading-none">{consumable.icon}</div>
-                <div className="text-xs text-center leading-tight">{consumable.name}</div>
+                <div className="text-xs text-center leading-tight">
+                  {consumable.name}
+                  {isActivated && <div className="text-[10px] text-blue-600 dark:text-blue-400">ACTIVE</div>}
+                </div>
                 
                 <Badge 
                   variant="secondary" 

@@ -416,6 +416,9 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [showWildDialog, setShowWildDialog] = useState(false);
   const [wildTileInput, setWildTileInput] = useState('');
   const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
+  
+  // Consumable activation states
+  const [activatedConsumables, setActivatedConsumables] = useState<Set<ConsumableId>>(new Set());
 
   // Initialize user auth
   useEffect(() => {
@@ -1320,26 +1323,79 @@ const handleUseConsumable = async (consumableId: ConsumableId) => {
     return;
   }
 
-  // Use the consumable
-  const success = await useConsumable(consumableId);
-  if (!success) {
-    toast.error("Failed to use consumable");
-    return;
-  }
-
-  // Apply consumable effects
+  // Handle different consumable activation patterns
   switch (consumableId) {
     case "hint_revealer":
+      // Hint executes immediately on tap
+      const success = await useConsumable(consumableId);
+      if (!success) {
+        toast.error("Failed to use consumable");
+        return;
+      }
       handleHintRevealer();
       break;
-    case "score_multiplier":
-      handleScoreMultiplier();
-      break;
-    case "hammer":
-      handleHammer();
-      break;
+      
     case "extra_moves":
+      // Extra moves execute immediately on tap
+      const successMoves = await useConsumable(consumableId);
+      if (!successMoves) {
+        toast.error("Failed to use consumable");
+        return;
+      }
       handleExtraMoves();
+      break;
+      
+    case "hammer":
+      // Hammer activates/deactivates on tap, executes on stone tile tap
+      if (activatedConsumables.has(consumableId)) {
+        // Deactivate if already activated
+        setActivatedConsumables(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(consumableId);
+          return newSet;
+        });
+        toast.info("Hammer deactivated");
+      } else {
+        // Check if there are stone tiles to break
+        let hasStone = false;
+        for (let r = 0; r < size && !hasStone; r++) {
+          for (let c = 0; c < size && !hasStone; c++) {
+            if (specialTiles[r][c].type === "stone") {
+              hasStone = true;
+            }
+          }
+        }
+        
+        if (!hasStone) {
+          toast.error("No stone tiles available to break");
+          return;
+        }
+        
+        setActivatedConsumables(prev => new Set([...prev, consumableId]));
+        toast.info("Hammer activated! Tap a stone tile to break it.");
+      }
+      break;
+      
+    case "score_multiplier":
+      // Score multiplier activates/deactivates on tap, executes on word submission
+      if (activatedConsumables.has(consumableId)) {
+        // Deactivate if already activated
+        setActivatedConsumables(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(consumableId);
+          return newSet;
+        });
+        removeActiveEffect(consumableId);
+        toast.info("Score multiplier deactivated");
+      } else {
+        const successMultiplier = await useConsumable(consumableId);
+        if (!successMultiplier) {
+          toast.error("Failed to use consumable");
+          return;
+        }
+        setActivatedConsumables(prev => new Set([...prev, consumableId]));
+        handleScoreMultiplier();
+      }
       break;
   }
 };
@@ -1358,36 +1414,77 @@ const handleHintRevealer = () => {
     return;
   }
   
-  // Reveal 3-5 words by highlighting their tiles
-  const wordsToReveal = availableWords.slice(0, Math.min(5, availableWords.length));
+  // Find the first valid word and illuminate its first two letters
+  const wordToReveal = availableWords[0];
   const tilesToHighlight = new Set<string>();
   
-  // Simple highlighting - just highlight the first letters of words
-  wordsToReveal.forEach(word => {
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        if (board[r][c].toLowerCase() === word[0]) {
-          tilesToHighlight.add(keyOf({ r, c }));
-          return; // Only highlight first occurrence of first letter
+  // Find path for the word and highlight first two tiles
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (board[r][c].toLowerCase() === wordToReveal[0].toLowerCase()) {
+        // Found starting letter, now find the path for this word
+        const path = findWordPath(wordToReveal, { r, c });
+        if (path && path.length >= 2) {
+          tilesToHighlight.add(keyOf(path[0]));
+          tilesToHighlight.add(keyOf(path[1]));
+          break;
         }
       }
     }
-  });
+    if (tilesToHighlight.size >= 2) break;
+  }
   
   setAffectedTiles(tilesToHighlight);
   addActiveEffect({
     id: "hint_revealer",
     type: "hint_active",
-    duration: 10000,
-    expiresAt: new Date(Date.now() + 10000)
+    duration: 5000,
+    expiresAt: new Date(Date.now() + 5000)
   });
   
   setTimeout(() => {
     setAffectedTiles(new Set());
     removeActiveEffect("hint_revealer");
-  }, 10000);
+  }, 5000);
   
-  toast.success(`Revealed ${wordsToReveal.length} words for 10 seconds!`);
+  toast.success(`Hint: First two letters of "${wordToReveal.toUpperCase()}" revealed!`);
+};
+
+// Helper function to find the path for a specific word
+const findWordPath = (word: string, startPos: Pos): Pos[] | null => {
+  const visited = new Set<string>();
+  const path: Pos[] = [startPos];
+  
+  const dfs = (pos: Pos, wordIndex: number): boolean => {
+    if (wordIndex >= word.length) return true;
+    
+    const key = keyOf(pos);
+    if (visited.has(key)) return false;
+    if (board[pos.r][pos.c].toLowerCase() !== word[wordIndex].toLowerCase()) return false;
+    
+    visited.add(key);
+    
+    if (wordIndex === word.length - 1) return true;
+    
+    // Try all neighbors for next letter
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const newPos = { r: pos.r + dr, c: pos.c + dc };
+        if (!within(newPos.r, newPos.c, size)) continue;
+        if (visited.has(keyOf(newPos))) continue;
+        
+        path.push(newPos);
+        if (dfs(newPos, wordIndex + 1)) return true;
+        path.pop();
+      }
+    }
+    
+    visited.delete(key);
+    return false;
+  };
+  
+  return dfs(startPos, 0) ? path : null;
 };
 
 const handleScoreMultiplier = () => {
@@ -1401,43 +1498,43 @@ const handleScoreMultiplier = () => {
   toast.success("Next word will have 2x score!");
 };
 
-const handleHammer = () => {
+const handleHammer = (targetPos?: Pos) => {
   if (path.length > 0) {
     toast.error("Cannot use hammer while a word is in progress");
     return;
   }
   
-  // Find and break all stone tiles
-  const newSpecialTiles = specialTiles.map(row => [...row]);
-  let stoneCount = 0;
-  
-  for (let row = 0; row < newSpecialTiles.length; row++) {
-    for (let col = 0; col < newSpecialTiles[row].length; col++) {
-      const tile = newSpecialTiles[row][col];
-      if (tile.type === "stone") {
-        newSpecialTiles[row][col] = { type: null };
-        stoneCount++;
-      }
-    }
-  }
-  
-  if (stoneCount === 0) {
-    toast.error("No stone tiles found to break");
+  if (!targetPos) {
+    // This shouldn't happen with the new system, but handle gracefully
     return;
   }
   
+  // Check if the target position has a stone tile
+  const tile = specialTiles[targetPos.r][targetPos.c];
+  if (tile.type !== "stone") {
+    toast.error("Can only use hammer on stone tiles");
+    return;
+  }
+  
+  // Break the specific stone tile
+  const newSpecialTiles = specialTiles.map(row => [...row]);
+  newSpecialTiles[targetPos.r][targetPos.c] = { type: null };
+  
   setSpecialTiles(newSpecialTiles);
-  toast.success(`Broke ${stoneCount} stone tile${stoneCount > 1 ? 's' : ''}!`);
+  
+  // Deactivate hammer after use
+  setActivatedConsumables(prev => {
+    const newSet = new Set(prev);
+    newSet.delete("hammer");
+    return newSet;
+  });
+  
+  toast.success("Stone tile broken!");
 };
 
 const handleExtraMoves = () => {
   if (settings.mode !== "daily") {
     toast.error("Extra moves can only be used in Daily Challenge mode");
-    return;
-  }
-  
-  if (movesUsed < settings.dailyMovesLimit - 5) {
-    toast.error("You can only use this when you have 5 or fewer moves remaining");
     return;
   }
   
@@ -1633,6 +1730,12 @@ const handleExtraMoves = () => {
     // Remove score multiplier effect after use
     if (scoreMultiplierEffect) {
       removeActiveEffect("score_multiplier");
+      // Also remove from activated consumables
+      setActivatedConsumables(prev => {
+        const newSet = new Set(prev);
+        newSet.delete("score_multiplier");
+        return newSet;
+      });
     }
 
     const xFactorTiles = path.filter(p => specialTiles[p.r][p.c].type === "xfactor");
@@ -2377,7 +2480,9 @@ const handleExtraMoves = () => {
                 
                 // Special tile styling
                 if (special.type === "stone") {
-                  baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white ";
+                  baseClasses += activatedConsumables.has("hammer") 
+                    ? "bg-gradient-to-br from-gray-400 to-gray-600 text-white ring-2 ring-yellow-400 animate-pulse " 
+                    : "bg-gradient-to-br from-gray-400 to-gray-600 text-white ";
                 } else if (special.type === "wild") {
                   baseClasses += "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white ";
                 } else if (special.type === "xfactor") {
@@ -2622,6 +2727,7 @@ const handleExtraMoves = () => {
             onUseConsumable={handleUseConsumable}
             gameMode={settings.mode}
             disabled={gameOver || isGenerating}
+            activatedConsumables={activatedConsumables}
           />
 
         </aside>
