@@ -106,6 +106,8 @@ export function useConsumables(user: User | null) {
           consumable_id: consumableId,
           quantity: newQuantity,
           last_used: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,consumable_id'
         });
 
       if (inventoryError) {
@@ -173,6 +175,8 @@ export function useConsumables(user: User | null) {
             user_id: user.id,
             consumable_id: reward.id,
             quantity: currentQuantity + reward.quantity
+          }, {
+            onConflict: 'user_id,consumable_id'
           });
 
         if (inventoryError) {
