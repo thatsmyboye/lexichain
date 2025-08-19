@@ -7,15 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Consumable pricing in USD cents
-const CONSUMABLE_PRICES = {
-  hint_revealer: 99, // $0.99 for 3 pack
-  score_multiplier: 99, // $0.99 for 2 pack
-  hammer: 99, // $0.99 for 3 pack
-  extra_moves: 99, // $0.99 each
-  bundle_starter: 199, // $1.99 - 5 hints, 2 hammers, 1 multiplier
-  bundle_power: 599, // $5.99 - 10 hints, 5 hammers, 3 multipliers, 2 extra moves
-  bundle_ultimate: 1599 // $15.99 - 25 hints, 15 hammers, 10 multipliers, 5 extra moves
+// Stripe Product ID mapping
+const STRIPE_PRODUCT_IDS = {
+  hint_revealer: "prod_SthEhnHmdseZ0n", // Hint Revealer Pack
+  score_multiplier: "prod_SthFPxmVVjUmfD", // Score Multiplier Pack  
+  hammer: "prod_SthG4SRT642LLF", // Hammer Pack
+  extra_moves: "prod_SthGCLvy8W4Hud", // Extra Moves
+  bundle_starter: "prod_SthCxac579yETl", // Starter Bundle
+  bundle_power: "prod_SthDdoI1YZSCJ6", // Power Bundle
+  bundle_ultimate: "prod_SthDObEI5Zyo21" // Ultimate Bundle
 };
 
 const CONSUMABLE_QUANTITIES = {
@@ -39,7 +39,7 @@ serve(async (req) => {
     
     const { consumableId, guestEmail } = await req.json();
     
-    if (!consumableId || !CONSUMABLE_PRICES[consumableId as keyof typeof CONSUMABLE_PRICES]) {
+    if (!consumableId || !STRIPE_PRODUCT_IDS[consumableId as keyof typeof STRIPE_PRODUCT_IDS]) {
       throw new Error("Invalid consumable ID");
     }
 
@@ -85,11 +85,23 @@ serve(async (req) => {
       console.log("Found existing customer:", customerId);
     }
 
-    // Get product details
-    const price = CONSUMABLE_PRICES[consumableId as keyof typeof CONSUMABLE_PRICES];
-    const productName = consumableId.replace(/_/g, ' ').split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    // Get Stripe product ID
+    const productId = STRIPE_PRODUCT_IDS[consumableId as keyof typeof STRIPE_PRODUCT_IDS];
+    console.log("Using Stripe product:", productId);
+
+    // Get the default price for this product
+    const prices = await stripe.prices.list({
+      product: productId,
+      active: true,
+      limit: 1
+    });
+
+    if (prices.data.length === 0) {
+      throw new Error(`No active price found for product ${productId}`);
+    }
+
+    const priceId = prices.data[0].id;
+    console.log("Using price:", priceId);
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -97,14 +109,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : userEmail,
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            product_data: { 
-              name: `${productName} - Word Game Consumable`,
-              description: `Enhance your word game experience with ${productName.toLowerCase()}`
-            },
-            unit_amount: price,
-          },
+          price: priceId,
           quantity: 1,
         },
       ],
