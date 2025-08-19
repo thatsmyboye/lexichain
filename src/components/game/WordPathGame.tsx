@@ -2327,29 +2327,22 @@ const handleExtraMoves = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-lg">💡</span>
                     <div className="text-xs">
-                      <div className="font-medium">Hint</div>
-                      <div className="text-muted-foreground">Highlights possible word paths</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🔄</span>
-                    <div className="text-xs">
-                      <div className="font-medium">Letter Swap</div>
-                      <div className="text-muted-foreground">Change any tile's letter</div>
+                      <div className="font-medium">Hint Revealer</div>
+                      <div className="text-muted-foreground">Highlights 3-5 valid words for 10 seconds</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⚡</span>
                     <div className="text-xs">
-                      <div className="font-medium">Super Shuffle</div>
-                      <div className="text-muted-foreground">Randomize the entire board</div>
+                      <div className="font-medium">Score Multiplier</div>
+                      <div className="text-muted-foreground">Doubles the score of your next word</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">⭐</span>
+                    <span className="text-lg">🎯</span>
                     <div className="text-xs">
-                      <div className="font-medium">Wild Spawner</div>
-                      <div className="text-muted-foreground">Create wild tiles on the board</div>
+                      <div className="font-medium">Extra Moves</div>
+                      <div className="text-muted-foreground">Adds 3 extra moves (Daily Challenge only)</div>
                     </div>
                   </div>
                 </div>
