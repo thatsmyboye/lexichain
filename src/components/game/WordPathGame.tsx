@@ -2310,7 +2310,7 @@ const handleExtraMoves = () => {
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
                   <span className="text-muted-foreground mt-1">•</span>
-                  <span className="text-sm">Tap a consumable in your inventory (top-left) to use it</span>
+                  <span className="text-sm">Tap a consumable in your inventory to use it</span>
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center gap-2">
