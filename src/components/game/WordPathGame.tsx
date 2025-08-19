@@ -2304,6 +2304,57 @@ const handleExtraMoves = () => {
                   Special tiles appear after reaching Bronze level and expire after a few turns.
                 </div>
             </div>
+            
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Consumable Items</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-1">•</span>
+                  <span className="text-sm">Tap a consumable in your inventory (top-left) to use it</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-1">•</span>
+                  <span className="text-sm">Most consumables expire after a few turns</span>
+                </div>
+                <div className="grid gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🔨</span>
+                    <div className="text-xs">
+                      <div className="font-medium">Hammer</div>
+                      <div className="text-muted-foreground">Break stone tiles with a tap</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">💡</span>
+                    <div className="text-xs">
+                      <div className="font-medium">Hint</div>
+                      <div className="text-muted-foreground">Highlights possible word paths</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🔄</span>
+                    <div className="text-xs">
+                      <div className="font-medium">Letter Swap</div>
+                      <div className="text-muted-foreground">Change any tile's letter</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⚡</span>
+                    <div className="text-xs">
+                      <div className="font-medium">Super Shuffle</div>
+                      <div className="text-muted-foreground">Randomize the entire board</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⭐</span>
+                    <div className="text-xs">
+                      <div className="font-medium">Wild Spawner</div>
+                      <div className="text-muted-foreground">Create wild tiles on the board</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
