@@ -39,7 +39,7 @@ const TitleScreen = ({
   }, []);
   return <div className="h-screen flex flex-col items-center bg-gradient-to-br from-background to-muted relative px-4">
       {/* Mobile: Compact layout with justify-between */}
-      <div className="md:hidden h-full flex flex-col items-center justify-between py-6">
+      <div className="md:hidden h-full flex flex-col items-center justify-between py-[12px]">
         <div></div> {/* Top spacer */}
         
         <div className="text-center space-y-6 max-w-sm flex-shrink-0">
