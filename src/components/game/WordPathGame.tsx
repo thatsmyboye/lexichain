@@ -1605,16 +1605,16 @@ const handleExtraMoves = () => {
   toast.success("Added 3 extra moves to your daily challenge!");
 };
 
-function startBlitzGame() {
-  const difficulty = settings.difficulty;
-  const config = DIFFICULTY_CONFIG[difficulty];
-  const newSize = config.gridSize;
-  
-  setSettings(prev => ({ 
-    ...prev, 
-    gridSize: newSize, 
-    mode: "blitz"
-  }));
+  function startBlitzGame() {
+    const difficulty = settings.difficulty;
+    const config = DIFFICULTY_CONFIG[difficulty];
+    const newSize = config.gridSize;
+    
+    setSettings(prev => ({ 
+      ...prev, 
+      gridSize: newSize, 
+      mode: "blitz"
+    }));
   setSize(newSize);
   
   setGameOver(false);
@@ -2596,6 +2596,53 @@ function startBlitzGame() {
               />
             </div>
           )}
+          
+          {/* New Game Button for Blitz Mode */}
+          {settings.mode === "blitz" && (
+            <div className="flex justify-center mb-4">
+              <Button 
+                onClick={() => {
+                  // Reset blitz game state and start new game with current time limit
+                  setBlitzStarted(false);
+                  setBlitzPaused(false);
+                  setTimeRemaining(settings.blitzTimeLimit);
+                  setScore(0);
+                  setUsedWords([]);
+                  setLastWordTiles(new Set());
+                  setStreak(0);
+                  setGameOver(false);
+                  setPath([]);
+                  setDragging(false);
+                  setSpecialTiles(createEmptySpecialTilesGrid(size));
+                  
+                  if (dict && sorted) {
+                    setIsGenerating(true);
+                    try {
+                      const newBoard = generateSolvableBoard(size, dict, sorted);
+                      const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
+                      const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+                      setBoard(newBoard);
+                      setBenchmarks(bms);
+                      setDiscoverableCount(probe.words.size);
+                      setGameOver(false);
+                    } catch (error) {
+                      console.error("Failed to generate board:", error);
+                      toast.error("Failed to generate new board");
+                    } finally {
+                      setIsGenerating(false);
+                    }
+                  }
+                }}
+                variant="outline" 
+                size="sm"
+                disabled={isGenerating}
+                className="bg-background"
+              >
+                {isGenerating ? "Generating..." : "New Game"}
+              </Button>
+            </div>
+          )}
+          
           <div
             className="relative"
             onPointerUp={onPointerUp}
