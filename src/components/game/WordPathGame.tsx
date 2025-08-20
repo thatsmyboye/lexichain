@@ -2300,11 +2300,22 @@ function startBlitzGame() {
             How to Play
           </Button>
           
+          {settings.mode === "blitz" && blitzStarted && !gameOver && (
+            <Button 
+              variant="outline" 
+              onClick={() => setBlitzPaused(!blitzPaused)}
+              size="sm"
+              className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))] ml-3"
+            >
+              {blitzPaused ? "▶️ Resume" : "⏸️ Pause"}
+            </Button>
+          )}
+          
           <Button 
             variant="outline" 
             onClick={onBackToTitle} 
             size="sm"
-            className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+            className={`bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))] ${settings.mode === "blitz" && blitzStarted && !gameOver ? 'ml-3' : ''}`}
           >
             Back to Title
           </Button>
@@ -2589,7 +2600,7 @@ function startBlitzGame() {
           >
             {/* Blitz Mode Overlay */}
             {settings.mode === "blitz" && (!blitzStarted || blitzPaused) && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/95 backdrop-blur-lg rounded-lg">
                 <div className="text-center space-y-4 p-6">
                   {!blitzStarted ? (
                     <>
@@ -2805,16 +2816,6 @@ function startBlitzGame() {
                       <div className={`font-medium ${timeRemaining <= 10 ? 'text-red-500' : timeRemaining <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
                         ⏰ {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
                       </div>
-                      {blitzStarted && !gameOver && (
-                        <Button 
-                          onClick={() => setBlitzPaused(!blitzPaused)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                        >
-                          {blitzPaused ? "▶️" : "⏸️"}
-                        </Button>
-                      )}
                     </div>
                     {blitzMultiplier > 1 && (
                       <div className="text-xs text-green-500">
