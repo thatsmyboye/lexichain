@@ -37,13 +37,15 @@ const TitleScreen = ({
     });
     return () => subscription.unsubscribe();
   }, []);
-  return <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative px-4">
-      <div className="text-center space-y-4 md:space-y-8 max-w-sm md:max-w-none">
-        <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+  return <div className="h-screen flex flex-col items-center justify-between bg-gradient-to-br from-background to-muted px-4 py-6">
+      <div></div> {/* Spacer */}
+      
+      <div className="text-center space-y-6 max-w-sm md:max-w-none flex-shrink-0">
+        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
           Lexichain
         </h1>
         
-        <div className="flex items-center justify-center gap-3 md:gap-4">
+        <div className="flex items-center justify-center gap-3">
           <Button variant="outline" size="lg" onClick={onLoginClick} className={`px-6 md:px-8 ${user ? 'bg-gray-500/20 border-gray-500/30 text-muted-foreground cursor-not-allowed' : ''}`} disabled={!!user}>
             {user ? 'Logged In' : 'Login'}
           </Button>
@@ -52,7 +54,7 @@ const TitleScreen = ({
           </Button>
         </div>
         
-        <div className="flex flex-col items-center gap-2 md:gap-3">
+        <div className="flex flex-col items-center gap-2">
           <Button variant="outline" size="lg" onClick={onStoreClick} className="px-6 md:px-8">
             🛒 Store
           </Button>
