@@ -426,6 +426,8 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [timeRemaining, setTimeRemaining] = useState(60);
   const [timerInterval, setTimerInterval] = useState<number | null>(null);
   const [blitzMultiplier, setBlitzMultiplier] = useState(1);
+  const [blitzStarted, setBlitzStarted] = useState(false);
+  const [blitzPaused, setBlitzPaused] = useState(false);
 
   // Initialize user auth
   useEffect(() => {
@@ -448,6 +450,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
       startDailyChallenge().catch(console.error);
     } else if (initialMode === "blitz") {
       setSettings(prev => ({ ...prev, mode: "blitz" }));
+      setTimeRemaining(60); // Set initial time but don't start
     }
   }, [initialMode]);
 
@@ -457,9 +460,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   }, [board]);
 
   useEffect(() => {
-    if (settings.mode === "blitz" && !gameOver) {
-      setTimeRemaining(settings.blitzTimeLimit);
-      
+    if (settings.mode === "blitz" && blitzStarted && !blitzPaused && !gameOver) {
       const interval = setInterval(() => {
         setTimeRemaining(prev => {
           const newTime = prev - 1;
@@ -498,7 +499,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
         setTimerInterval(null);
       }
     }
-  }, [settings.mode, settings.blitzTimeLimit, gameOver, score, benchmarks]);
+  }, [settings.mode, blitzStarted, blitzPaused, gameOver, score, benchmarks]);
 
   // Save standard game result and update goals when game ends
   const saveGameResult = async () => {
@@ -1622,6 +1623,8 @@ function startBlitzGame() {
   setSpecialTiles(createEmptySpecialTilesGrid(newSize));
   setTimeRemaining(settings.blitzTimeLimit);
   setBlitzMultiplier(1);
+  setBlitzStarted(false);
+  setBlitzPaused(false);
   
   if (dict && sorted) {
     setIsGenerating(true);
@@ -1665,6 +1668,9 @@ function startBlitzGame() {
   }
 
   function onTilePointerDown(pos: Pos) {
+    // Disable input if blitz mode is not started or is paused
+    if (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) return;
+    
     setDragging(true);
     setPath([pos]);
   }
@@ -1720,6 +1726,9 @@ function startBlitzGame() {
 
   // Single tap handler for mobile
   function onTileTap(pos: Pos) {
+    // Disable input if blitz mode is not started or is paused
+    if (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) return;
+    
     // Check if hammer is activated and this is a stone tile - handle before path logic
     if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
       handleHammer(pos);
@@ -2572,11 +2581,51 @@ function startBlitzGame() {
             </div>
           )}
           <div
+            className="relative"
             onPointerUp={onPointerUp}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             style={{ touchAction: 'none' }} // Prevent page scrolling on touch
           >
+            {/* Blitz Mode Overlay */}
+            {settings.mode === "blitz" && (!blitzStarted || blitzPaused) && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                <div className="text-center space-y-4 p-6">
+                  {!blitzStarted ? (
+                    <>
+                      <div className="text-2xl font-bold text-foreground">Ready to Start?</div>
+                      <div className="text-muted-foreground">
+                        You have {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')} to find as many words as possible!
+                      </div>
+                      <Button 
+                        onClick={() => setBlitzStarted(true)}
+                        variant="hero"
+                        size="lg"
+                        className="px-8"
+                      >
+                        Start Game
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold text-foreground">⏸️ Paused</div>
+                      <div className="text-muted-foreground">
+                        Time remaining: {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                      </div>
+                      <Button 
+                        onClick={() => setBlitzPaused(false)}
+                        variant="hero"
+                        size="lg"
+                        className="px-8"
+                      >
+                        Resume
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            
             <div 
               className="grid gap-3 select-none max-w-md"
               style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
@@ -2751,9 +2800,21 @@ function startBlitzGame() {
                   </div>
                 )}
                 {settings.mode === "blitz" && (
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    <div className={`font-medium ${timeRemaining <= 10 ? 'text-red-500' : timeRemaining <= 30 ? 'text-orange-500' : ''}`}>
-                      {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                  <div className="mt-1 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className={`font-medium ${timeRemaining <= 10 ? 'text-red-500' : timeRemaining <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                        ⏰ {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                      </div>
+                      {blitzStarted && !gameOver && (
+                        <Button 
+                          onClick={() => setBlitzPaused(!blitzPaused)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                        >
+                          {blitzPaused ? "▶️" : "⏸️"}
+                        </Button>
+                      )}
                     </div>
                     {blitzMultiplier > 1 && (
                       <div className="text-xs text-green-500">
