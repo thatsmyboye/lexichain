@@ -756,12 +756,17 @@ useEffect(() => {
 
     setUsedWords(prev => [...prev, {word: actualWord, score: totalGain}]);
     
-    // Update the wild tile with the chosen letter
+    // Update the wild tile with the chosen letter permanently on the board
     const newBoard = board.map(row => [...row]);
     const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
     if (wildcardPositions.length === 1) {
       const wildPos = wildcardPositions[0];
       newBoard[wildPos.r][wildPos.c] = wildLetter.toUpperCase();
+      
+      // Remove the wild tile special type since it's now a regular letter
+      const newSpecialTiles = specialTiles.map(row => [...row]);
+      newSpecialTiles[wildPos.r][wildPos.c] = { type: null };
+      setSpecialTiles(newSpecialTiles);
     }
     setBoard(newBoard);
     
@@ -1771,7 +1776,7 @@ function startBlitzGame() {
     if (hasWildTile && dict) {
       const wildcardPositions = path.filter(p => specialTiles[p.r][p.c].type === "wild");
       if (wildcardPositions.length === 1) {
-        // Show dialog to let user choose the letter
+        // Show dialog to let user choose the letter - allow during blitz pause since user is mid-move
         setPendingWildPath(path);
         setShowWildDialog(true);
         return clearPath();
