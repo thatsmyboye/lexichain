@@ -29,7 +29,7 @@ type SpecialTile = {
   expiryTurns?: number;
 };
 
-type GameMode = "classic" | "target" | "daily";
+type GameMode = "classic" | "target" | "daily" | "blitz";
 
 type GameSettings = {
   scoreThreshold: number;
@@ -38,6 +38,7 @@ type GameSettings = {
   difficulty: "easy" | "medium" | "hard" | "expert";
   gridSize: number;
   dailyMovesLimit: number;
+  blitzTimeLimit: number;
 };
 
 // Letter frequencies for English to generate fun boards
@@ -405,7 +406,8 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     targetTier: "silver",
     difficulty: "medium",
     gridSize: 4,
-    dailyMovesLimit: getDailyMovesLimit()
+    dailyMovesLimit: getDailyMovesLimit(),
+    blitzTimeLimit: 60
   });
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
@@ -420,6 +422,10 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   
   // Consumable activation states
   const [activatedConsumables, setActivatedConsumables] = useState<Set<ConsumableId>>(new Set());
+  
+  const [timeRemaining, setTimeRemaining] = useState(60);
+  const [timerInterval, setTimerInterval] = useState<number | null>(null);
+  const [blitzMultiplier, setBlitzMultiplier] = useState(1);
 
   // Initialize user auth
   useEffect(() => {
@@ -447,6 +453,50 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   useEffect(() => {
     setGameStartTime(Date.now());
   }, [board]);
+
+  useEffect(() => {
+    if (settings.mode === "blitz" && !gameOver) {
+      setTimeRemaining(settings.blitzTimeLimit);
+      
+      const interval = setInterval(() => {
+        setTimeRemaining(prev => {
+          const newTime = prev - 1;
+          
+          // Update multiplier based on time remaining
+          if (newTime <= 10) {
+            setBlitzMultiplier(3);
+          } else if (newTime <= 30) {
+            setBlitzMultiplier(2);
+          } else {
+            setBlitzMultiplier(1);
+          }
+          
+          if (newTime <= 0) {
+            setGameOver(true);
+            setFinalGrade(score >= (benchmarks?.platinum || 4000) ? "Platinum"
+              : score >= (benchmarks?.gold || 2200) ? "Gold"
+              : score >= (benchmarks?.silver || 1200) ? "Silver"
+              : score >= (benchmarks?.bronze || 500) ? "Bronze"
+              : "None");
+            return 0;
+          }
+          
+          return newTime;
+        });
+      }, 1000);
+      
+      setTimerInterval(interval as unknown as number);
+      
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    } else {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        setTimerInterval(null);
+      }
+    }
+  }, [settings.mode, settings.blitzTimeLimit, gameOver, score, benchmarks]);
 
   // Save standard game result and update goals when game ends
   const saveGameResult = async () => {
@@ -736,7 +786,7 @@ useEffect(() => {
     const nextStreak = qualifies ? streak + 1 : 0;
     const chainBonus = 5 * nextStreak;
 
-    const timeBonus = 0;
+    const timeBonus = settings.mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
 
     const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
 
@@ -1547,6 +1597,56 @@ const handleExtraMoves = () => {
   toast.success("Added 3 extra moves to your daily challenge!");
 };
 
+function startBlitzGame() {
+  const difficulty = settings.difficulty;
+  const config = DIFFICULTY_CONFIG[difficulty];
+  const newSize = config.gridSize;
+  
+  setSettings(prev => ({ 
+    ...prev, 
+    gridSize: newSize, 
+    mode: "blitz"
+  }));
+  setSize(newSize);
+  
+  setGameOver(false);
+  setFinalGrade("None");
+  setUsedWords([]);
+  setLastWordTiles(new Set());
+  setScore(0);
+  setStreak(0);
+  setMovesUsed(0);
+  setUnlocked(new Set());
+  setSpecialTiles(createEmptySpecialTilesGrid(newSize));
+  setTimeRemaining(settings.blitzTimeLimit);
+  setBlitzMultiplier(1);
+  
+  if (dict && sorted) {
+    setIsGenerating(true);
+    setPath([]);
+    setDragging(false);
+    
+    try {
+      const newBoard = generateSolvableBoard(newSize, dict, sorted);
+      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
+      const adjustedWordCount = Math.floor(probe.words.size * config.scoreMultiplier);
+      const bms = computeBenchmarksFromWordCount(adjustedWordCount, config.minWords);
+      setBoard(newBoard);
+      setBenchmarks(bms);
+      setDiscoverableCount(probe.words.size);
+      toast.success(`Blitz mode started! ${settings.blitzTimeLimit} seconds to score as high as possible!`);
+    } finally {
+      setIsGenerating(false);
+    }
+  } else {
+    const nb = makeBoard(newSize);
+    setBoard(nb);
+    setBenchmarks(null);
+    setDiscoverableCount(0);
+    setPath([]);
+    setDragging(false);
+  }
+}
   function tryAddToPath(pos: Pos) {
     if (path.length && !neighbors(path[path.length - 1], pos)) return;
     const k = keyOf(pos);
@@ -1726,7 +1826,7 @@ const handleExtraMoves = () => {
     // RECALIBRATED: Linear streak bonus with cap to prevent runaway scoring
     const chainBonus = nextStreak > 0 ? Math.min(100, 5 + (nextStreak * 8)) : 0;
 
-    const timeBonus = 0;
+    const timeBonus = settings.mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
 
     // Apply consumable score multiplier if active
     const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
@@ -2648,6 +2748,18 @@ const handleExtraMoves = () => {
                     {settings.dailyMovesLimit - movesUsed} moves remaining
                   </div>
                 )}
+                {settings.mode === "blitz" && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    <div className={`font-medium ${timeRemaining <= 10 ? 'text-red-500' : timeRemaining <= 30 ? 'text-orange-500' : ''}`}>
+                      {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                    </div>
+                    {blitzMultiplier > 1 && (
+                      <div className="text-xs text-green-500">
+                        {blitzMultiplier}x multiplier active!
+                      </div>
+                    )}
+                  </div>
+                )}
                 {settings.mode === "daily" && gameOver && (
                   <Button 
                     variant="outline" 
@@ -2670,16 +2782,24 @@ const handleExtraMoves = () => {
                 <span className="text-muted-foreground">Mode</span>
                 <select
                   value={settings.mode}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const newMode = e.target.value as GameMode;
                     setSettings((prev) => ({
                       ...prev,
-                      mode: e.target.value as GameMode,
-                    }))
-                  }
+                      mode: newMode,
+                    }));
+                    
+                    if (newMode === "blitz") {
+                      startBlitzGame();
+                    } else if (newMode === "daily") {
+                      startDailyChallenge();
+                    }
+                  }}
                   className="bg-card border rounded px-2 py-1 text-sm"
                 >
                   <option value="classic">Classic</option>
                   <option value="target">Target Score</option>
+                  <option value="blitz">Blitz</option>
                 </select>
               </div>
               {settings.mode === "target" && benchmarks && (
@@ -2699,6 +2819,25 @@ const handleExtraMoves = () => {
                     <option value="silver">Silver ({benchmarks.silver})</option>
                     <option value="gold">Gold ({benchmarks.gold})</option>
                     <option value="platinum">Platinum ({benchmarks.platinum})</option>
+                  </select>
+                </div>
+              )}
+              {settings.mode === "blitz" && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Time Limit</span>
+                  <select
+                    value={settings.blitzTimeLimit}
+                    onChange={(e) =>
+                      setSettings((prev) => ({
+                        ...prev,
+                        blitzTimeLimit: parseInt(e.target.value),
+                      }))
+                    }
+                    className="bg-card border rounded px-2 py-1 text-sm"
+                  >
+                    <option value={60}>60 seconds</option>
+                    <option value={90}>90 seconds</option>
+                    <option value={120}>120 seconds</option>
                   </select>
                 </div>
               )}
