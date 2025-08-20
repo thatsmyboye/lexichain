@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"classic" | "daily">("classic");
+  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "blitz">("classic");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,7 +25,7 @@ const Index = () => {
     setShowModeSelection(true);
   };
 
-  const handleModeSelect = (mode: "classic" | "daily") => {
+  const handleModeSelect = (mode: "classic" | "daily" | "blitz") => {
     setSelectedMode(mode);
     setShowModeSelection(false);
     setShowGame(true);
@@ -98,8 +98,8 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 size="lg"
-                disabled
-                className="px-12 py-4 text-lg opacity-50 cursor-not-allowed"
+                onClick={() => handleModeSelect("blitz")}
+                className="px-12 py-4 text-lg"
               >
                 Blitz
               </Button>

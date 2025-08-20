@@ -365,7 +365,7 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
   return lastBoard;
 }
 
-export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" }) {
+export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" | "blitz" }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
   const { updateGoalProgress } = useGoals(user);
@@ -442,10 +442,12 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     return () => subscription.unsubscribe();
   }, []);
 
-  // Start daily challenge if initial mode is daily
+  // Start daily challenge if initial mode is daily, or start blitz mode if blitz
   useEffect(() => {
     if (initialMode === "daily") {
       startDailyChallenge().catch(console.error);
+    } else if (initialMode === "blitz") {
+      setSettings(prev => ({ ...prev, mode: "blitz" }));
     }
   }, [initialMode]);
 
