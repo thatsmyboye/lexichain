@@ -112,7 +112,7 @@ const TitleScreen = ({
       
       {/* Version and Copyright footer */}
       <footer className="absolute bottom-2 md:bottom-6 text-center text-xs text-muted-foreground space-y-1">
-        <div>v08.19.2025-002</div>
+        
         <div>© {new Date().getFullYear()} Banton Games. All rights reserved.</div>
       </footer>
     </div>;
