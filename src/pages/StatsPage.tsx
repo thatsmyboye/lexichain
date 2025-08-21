@@ -23,6 +23,12 @@ const StatsPage = () => {
     Platinum: 0
   });
   
+  const [dailyStats, setDailyStats] = useState({
+    totalChallenges: 0,
+    bestScore: 0,
+    currentStreak: 0
+  });
+  
   const { 
     activeGoals, 
     completedGoals, 
@@ -57,6 +63,40 @@ const StatsPage = () => {
       setAchievementCounts(counts);
     } catch (error) {
       console.error('Error fetching achievement counts:', error);
+    }
+  };
+
+  const fetchDailyStats = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('daily_challenge_results')
+        .select('score, achievement_level, challenge_date')
+        .eq('user_id', userId)
+        .order('challenge_date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching daily stats:', error);
+        return;
+      }
+
+      const totalChallenges = data?.length || 0;
+      const bestScore = Math.max(...(data?.map(d => d.score) || [0]), 0);
+      
+      // Calculate current streak (consecutive days with any achievement)
+      let currentStreak = 0;
+      if (data && data.length > 0) {
+        for (const result of data) {
+          if (result.achievement_level !== 'None') {
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+      }
+
+      setDailyStats({ totalChallenges, bestScore, currentStreak });
+    } catch (error) {
+      console.error('Error fetching daily stats:', error);
     }
   };
 
@@ -121,8 +161,11 @@ const StatsPage = () => {
       }
       setUser(session.user);
       
-      // Fetch achievement counts
-      await fetchAchievementCounts(session.user.id);
+      // Fetch achievement counts and daily stats
+      await Promise.all([
+        fetchAchievementCounts(session.user.id),
+        fetchDailyStats(session.user.id)
+      ]);
       setLoading(false);
     };
 
@@ -300,7 +343,7 @@ const StatsPage = () => {
                   <Target className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{dailyStats.totalChallenges}</div>
                   <p className="text-xs text-muted-foreground">Daily challenges</p>
                 </CardContent>
               </Card>
@@ -311,7 +354,7 @@ const StatsPage = () => {
                   <Trophy className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{dailyStats.bestScore}</div>
                   <p className="text-xs text-muted-foreground">Highest points</p>
                 </CardContent>
               </Card>
@@ -322,7 +365,7 @@ const StatsPage = () => {
                   <Zap className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{dailyStats.currentStreak}</div>
                   <p className="text-xs text-muted-foreground">Days in a row</p>
                 </CardContent>
               </Card>

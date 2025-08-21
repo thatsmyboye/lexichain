@@ -2937,74 +2937,6 @@ const handleExtraMoves = () => {
           </Card>
           
 
-          <Card className="p-3">
-            <div className="text-xs text-muted-foreground mb-2">Settings</div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Mode</span>
-                <select
-                  value={settings.mode}
-                  onChange={(e) => {
-                    const newMode = e.target.value as GameMode;
-                    setSettings((prev) => ({
-                      ...prev,
-                      mode: newMode,
-                    }));
-                    
-                    if (newMode === "blitz") {
-                      startBlitzGame();
-                    } else if (newMode === "daily") {
-                      startDailyChallenge();
-                    }
-                  }}
-                  className="bg-card border rounded px-2 py-1 text-sm"
-                >
-                  <option value="classic">Classic</option>
-                  <option value="target">Target Score</option>
-                  <option value="blitz">Blitz</option>
-                </select>
-              </div>
-              {settings.mode === "target" && benchmarks && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Target</span>
-                  <select
-                    value={settings.targetTier}
-                    onChange={(e) =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        targetTier: e.target.value as any,
-                      }))
-                    }
-                    className="bg-card border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="bronze">Bronze ({benchmarks.bronze})</option>
-                    <option value="silver">Silver ({benchmarks.silver})</option>
-                    <option value="gold">Gold ({benchmarks.gold})</option>
-                    <option value="platinum">Platinum ({benchmarks.platinum})</option>
-                  </select>
-                </div>
-              )}
-              {settings.mode === "blitz" && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Time Limit</span>
-                  <select
-                    value={settings.blitzTimeLimit}
-                    onChange={(e) =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        blitzTimeLimit: parseInt(e.target.value),
-                      }))
-                    }
-                    className="bg-card border rounded px-2 py-1 text-sm"
-                  >
-                    <option value={60}>60 seconds</option>
-                    <option value={90}>90 seconds</option>
-                    <option value={120}>120 seconds</option>
-                  </select>
-                </div>
-              )}
-            </div>
-          </Card>
  
           <Card className="p-3">
             <div className="flex items-center justify-between mb-2">
@@ -3057,20 +2989,6 @@ const handleExtraMoves = () => {
             </div>
           </Card>
 
-          <Card className="p-3">
-            <div className="text-xs text-muted-foreground mb-2">Achievements</div>
-            <div className="flex flex-wrap gap-1">
-              {Array.from(unlocked).length ? (
-                Array.from(unlocked).map((id: AchievementId) => (
-                  <span key={id} className="px-1.5 py-0.5 rounded text-xs bg-secondary">
-                    {ACHIEVEMENTS[id].label}
-                  </span>
-                ))
-              ) : (
-                <span className="text-muted-foreground text-xs">None yet</span>
-              )}
-            </div>
-          </Card>
 
           {/* Consumables Inventory */}
           <ConsumableInventoryPanel 
