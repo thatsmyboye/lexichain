@@ -60,13 +60,14 @@ function randomLetter() {
 
 function constrainedRandomLetter(letterCounts: Map<string, number>, seed?: string, seedCounter?: number) {
   const maxLetterInstances = 4;
-  let attempts = 0;
   const maxAttempts = 50; // Prevent infinite loops
   
-  while (attempts < maxAttempts) {
+  // For seeded generation, try different seed variations deterministically
+  for (let seedVariation = 0; seedVariation < maxAttempts; seedVariation++) {
     let letter: string;
     if (seed && seedCounter !== undefined) {
-      const rng = seedRandom(seed + seedCounter + attempts);
+      // Use position-based seed variation instead of attempts
+      const rng = seedRandom(seed + seedCounter + seedVariation);
       letter = seededRandomLetter(rng);
     } else {
       letter = randomLetter();
@@ -77,10 +78,9 @@ function constrainedRandomLetter(letterCounts: Map<string, number>, seed?: strin
       letterCounts.set(letter, currentCount + 1);
       return letter;
     }
-    attempts++;
   }
   
-  // Fallback: find any letter with less than max instances
+  // Deterministic fallback: find the first available letter in frequency order
   for (const [letter] of LETTERS) {
     const currentCount = letterCounts.get(letter) || 0;
     if (currentCount < maxLetterInstances) {
