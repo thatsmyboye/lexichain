@@ -647,34 +647,41 @@ useEffect(() => {
       arr.sort();
       setDict(s);
       setSorted(arr);
-      // Prepare a solvable board
-      setIsGenerating(true);
-      const newBoard = generateSolvableBoard(size, s, arr);
-      const probe = probeGrid(newBoard, s, arr, K_MIN_WORDS, MAX_DFS_NODES);
-      const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
-      if (!mounted) return;
-      setBoard(newBoard);
-      setBenchmarks(bms);
-      setDiscoverableCount(probe.words.size);
-      setUnlocked(new Set());
-      setGameOver(false);
-      setFinalGrade("None");
-      setPath([]);
-      setDragging(false);
-      setUsedWords([]);
-      setLastWordTiles(new Set());
-      setScore(0);
-      setStreak(0);
-      setIsGenerating(false);
+      
+      // Only generate a board for classic mode or when no specific mode is set
+      // Daily and blitz modes handle their own board generation
+      if (!initialMode || initialMode === "classic") {
+        setIsGenerating(true);
+        const newBoard = generateSolvableBoard(size, s, arr);
+        const probe = probeGrid(newBoard, s, arr, K_MIN_WORDS, MAX_DFS_NODES);
+        const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+        if (!mounted) return;
+        setBoard(newBoard);
+        setBenchmarks(bms);
+        setDiscoverableCount(probe.words.size);
+        setUnlocked(new Set());
+        setGameOver(false);
+        setFinalGrade("None");
+        setPath([]);
+        setDragging(false);
+        setUsedWords([]);
+        setLastWordTiles(new Set());
+        setScore(0);
+        setStreak(0);
+        setIsGenerating(false);
+        toast.success("Dictionary loaded. Board ready!");
+      } else {
+        toast.success("Dictionary loaded. Waiting for game mode initialization...");
+      }
+      
       setIsInitializing(false);
-      toast.success("Dictionary loaded. Board ready!");
     })
     .catch(() => {
       setIsInitializing(false);
       toast.error("Failed to load dictionary. Offline mode.");
     });
   return () => { mounted = false };
-  }, []);
+  }, [initialMode, size]);
 
   const wordFromPath = useMemo(() => path.map((p) => board[p.r][p.c]).join("").toLowerCase(), [path, board]);
   
@@ -1314,6 +1321,7 @@ async function startDailyChallenge() {
       setIsGenerating(false);
     }
   } else {
+    // Dictionary not loaded yet, generate board anyway and save it
     const nb = makeBoard(newSize, dailySeed);
     setBoard(nb);
     setBenchmarks(null);
@@ -1328,6 +1336,9 @@ async function startDailyChallenge() {
     setScore(0);
     setStreak(0);
     setMovesUsed(0);
+    
+    // Save the initial board even without dictionary
+    await saveDailyState(nb, true);
     setSpecialTiles(createEmptySpecialTilesGrid(newSize));
   }
 }
