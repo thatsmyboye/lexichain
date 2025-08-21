@@ -628,10 +628,10 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
 
   // Strategic save function that prevents saves during initialization
   const saveGameState = useCallback(() => {
-    if (settings.mode === "daily" && !isInitializing && board.length > 0) {
+    if (settings.mode === "daily" && !isInitializing && board && board.length > 0) {
       saveDailyState();
     }
-  }, [settings.mode, isInitializing, board.length, saveDailyState]);
+  }, [settings.mode, isInitializing, board, saveDailyState]);
 
 useEffect(() => {
   let mounted = true;
