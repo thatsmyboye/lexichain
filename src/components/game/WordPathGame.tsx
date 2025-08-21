@@ -449,8 +449,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     if (initialMode === "daily") {
       startDailyChallenge().catch(console.error);
     } else if (initialMode === "blitz") {
-      setSettings(prev => ({ ...prev, mode: "blitz" }));
-      setTimeRemaining(60); // Set initial time but don't start
+      startBlitzGame();
     }
   }, [initialMode]);
 
