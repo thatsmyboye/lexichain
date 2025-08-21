@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { AchievementId } from '@/lib/achievements';
 
@@ -19,26 +19,51 @@ export type DailyChallengeGameState = {
 
 export const useDailyChallengeState = (challengeDate: string) => {
   const [isLoading, setIsLoading] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const saveState = async (gameState: DailyChallengeGameState): Promise<void> => {
+  // Debounced save function to prevent rapid database operations
+  const debouncedSaveState = useCallback(async (gameState: DailyChallengeGameState): Promise<void> => {
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set a new timeout to debounce the save operation
+    saveTimeoutRef.current = setTimeout(async () => {
+      await immediatelyRleeHaveStateImpl(gameState);
+    }, 300); // 300ms debounce
+  }, [challengeDate]);
+
+  const immediatelyRleeHaveStateImpl = async (gameState: DailyChallengeGameState): Promise<void> => {
     setIsLoading(true);
     try {
+      // Validate state before saving
+      if (!gameState.seed || gameState.seed !== challengeDate) {
+        throw new Error('Invalid game state: seed mismatch');
+      }
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Save to database for logged-in users
+        // Use proper upsert with conflict resolution to handle unique constraint
         const { error } = await supabase
           .from('daily_challenge_states')
           .upsert({
             user_id: user.id,
             challenge_date: challengeDate,
             game_state: gameState
+          }, {
+            onConflict: 'user_id,challenge_date',
+            ignoreDuplicates: false
           });
         
         if (error) {
           console.error('Error saving daily challenge state to database:', error);
           // Fallback to localStorage
+          localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+        } else {
+          // Sync to localStorage for consistency
           localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
         }
       } else {
@@ -54,11 +79,22 @@ export const useDailyChallengeState = (challengeDate: string) => {
     }
   };
 
+  // Immediate save function for critical moments (game start, initial board creation)
+  const saveState = useCallback(async (gameState: DailyChallengeGameState, immediate = false): Promise<void> => {
+    if (immediate) {
+      await immediatelyRleeHaveStateImpl(gameState);
+    } else {
+      await debouncedSaveState(gameState);
+    }
+  }, [debouncedSaveState]);
+
   const loadState = async (): Promise<DailyChallengeGameState | null> => {
     setIsLoading(true);
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
+      
+      let loadedState: DailyChallengeGameState | null = null;
       
       if (user) {
         // Load from database for logged-in users
@@ -68,34 +104,42 @@ export const useDailyChallengeState = (challengeDate: string) => {
             .select('game_state')
             .eq('user_id', user.id)
             .eq('challenge_date', challengeDate)
-            .single();
+            .maybeSingle(); // Use maybeSingle to avoid errors when no data exists
           
           if (data && !error) {
             const gameState = data.game_state as DailyChallengeGameState;
-            if (gameState.seed === challengeDate) {
-              return gameState;
+            // Validate state before using it
+            if (gameState.seed === challengeDate && gameState.initialBoard && gameState.board) {
+              loadedState = gameState;
             }
           }
         } catch (e) {
           console.warn('Failed to load daily challenge state from database:', e);
-          // Fallback to localStorage
         }
       }
       
-      // Fallback to localStorage (for guests or if database fails)
-      const savedState = localStorage.getItem(`daily-challenge-${challengeDate}`);
-      if (savedState) {
-        try {
-          const gameState = JSON.parse(savedState) as DailyChallengeGameState;
-          if (gameState.seed === challengeDate) {
-            return gameState;
+      // Fallback to localStorage if database load failed or no user
+      if (!loadedState) {
+        const savedState = localStorage.getItem(`daily-challenge-${challengeDate}`);
+        if (savedState) {
+          try {
+            const gameState = JSON.parse(savedState) as DailyChallengeGameState;
+            // Validate state before using it
+            if (gameState.seed === challengeDate && gameState.initialBoard && gameState.board) {
+              loadedState = gameState;
+              
+              // Sync valid localStorage state to database if user is logged in
+              if (user) {
+                await immediatelyRleeHaveStateImpl(gameState);
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to load daily challenge state from localStorage:', e);
           }
-        } catch (e) {
-          console.warn('Failed to load daily challenge state from localStorage:', e);
         }
       }
       
-      return null;
+      return loadedState;
     } finally {
       setIsLoading(false);
     }
@@ -130,14 +174,16 @@ export const useDailyChallengeState = (challengeDate: string) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          // When user signs in, migrate localStorage state to database if it exists
+          // When user signs in, migrate localStorage state to database if it exists and is valid
           const localState = localStorage.getItem(`daily-challenge-${challengeDate}`);
           if (localState) {
             try {
               const gameState = JSON.parse(localState) as DailyChallengeGameState;
-              await saveState(gameState);
-              // Clear localStorage after successful migration
-              localStorage.removeItem(`daily-challenge-${challengeDate}`);
+              // Validate before migration
+              if (gameState.seed === challengeDate && gameState.initialBoard && gameState.board) {
+                await saveState(gameState, true); // Use immediate save for migration
+                // Keep localStorage as backup, don't remove it
+              }
             } catch (e) {
               console.error('Error migrating daily challenge state to database:', e);
             }
@@ -146,8 +192,14 @@ export const useDailyChallengeState = (challengeDate: string) => {
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [challengeDate]);
+    return () => {
+      subscription.unsubscribe();
+      // Clear timeout on cleanup
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [challengeDate, saveState]);
 
   return {
     saveState,

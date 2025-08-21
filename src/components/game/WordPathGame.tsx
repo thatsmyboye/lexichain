@@ -581,7 +581,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   }, [gameOver, user, settings.mode]);
 
   // Save and restore daily challenge state
-  const saveDailyState = async (initialBoardToSave?: string[][]) => {
+  const saveDailyState = async (initialBoardToSave?: string[][], immediate = false) => {
     if (settings.mode === "daily") {
       const gameState = {
         board,
@@ -598,7 +598,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
         seed: getDailySeed()
       };
 
-      await dailyChallengeState.saveState(gameState);
+      await dailyChallengeState.saveState(gameState, immediate);
     }
   };
 
@@ -621,10 +621,11 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     return false;
   };
 
-  // Save state whenever relevant data changes in daily mode
+  // Debounced save state whenever relevant data changes in daily mode
   useEffect(() => {
-    if (settings.mode === "daily") {
-      saveDailyState(); // No need to pass initialBoard in normal saves
+    if (settings.mode === "daily" && board.length > 0) {
+      // Use debounced save for regular gameplay changes
+      saveDailyState();
     }
   }, [board, specialTiles, usedWords, score, streak, movesUsed, unlocked, gameOver, finalGrade, lastWordTiles, settings.mode]);
 
@@ -1289,8 +1290,8 @@ async function startDailyChallenge() {
       setFinalGrade("None");
       toast.success(`Daily Challenge ${dailySeed} ready! ${settings.dailyMovesLimit} moves to make your best score.`);
       
-      // Save the initial state with the initial board preserved
-      await saveDailyState(newBoard);
+      // Save the initial state with the initial board preserved (immediate save)
+      await saveDailyState(newBoard, true);
     } finally {
       setIsGenerating(false);
     }
@@ -1379,8 +1380,8 @@ async function resetDailyChallenge() {
       setFinalGrade("None");
       setIsGenerating(false);
       
-      // Save the initial state with the initial board preserved
-      await saveDailyState(resetBoard);
+      // Save the initial state with the initial board preserved (immediate save)
+      await saveDailyState(resetBoard, true);
     } catch (error) {
       console.error("Error resetting daily board:", error);
       setIsGenerating(false);
