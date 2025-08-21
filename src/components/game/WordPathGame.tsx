@@ -581,10 +581,11 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   }, [gameOver, user, settings.mode]);
 
   // Save and restore daily challenge state
-  const saveDailyState = async () => {
+  const saveDailyState = async (initialBoardToSave?: string[][]) => {
     if (settings.mode === "daily") {
       const gameState = {
         board,
+        initialBoard: initialBoardToSave || board, // Use provided initial board or current board
         specialTiles,
         usedWords,
         score,
@@ -615,7 +616,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
       setFinalGrade(gameState.finalGrade);
       // Restore last word tiles to show shaded tiles from previous attempt
       setLastWordTiles(new Set(gameState.lastWordTiles || []));
-      return true;
+      return { gameState, hasInitialBoard: !!gameState.initialBoard };
     }
     return false;
   };
@@ -623,7 +624,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   // Save state whenever relevant data changes in daily mode
   useEffect(() => {
     if (settings.mode === "daily") {
-      saveDailyState();
+      saveDailyState(); // No need to pass initialBoard in normal saves
     }
   }, [board, specialTiles, usedWords, score, streak, movesUsed, unlocked, gameOver, finalGrade, lastWordTiles, settings.mode]);
 
@@ -1230,7 +1231,8 @@ async function startDailyChallenge() {
   const dailySeed = getDailySeed();
   
   // Try to load existing daily state first
-  if (await loadDailyState()) {
+  const loadResult = await loadDailyState();
+  if (loadResult && loadResult.gameState) {
     setSettings(prev => ({ 
       ...prev, 
       difficulty, 
@@ -1286,6 +1288,9 @@ async function startDailyChallenge() {
       setGameOver(false);
       setFinalGrade("None");
       toast.success(`Daily Challenge ${dailySeed} ready! ${settings.dailyMovesLimit} moves to make your best score.`);
+      
+      // Save the initial state with the initial board preserved
+      await saveDailyState(newBoard);
     } finally {
       setIsGenerating(false);
     }
@@ -1309,14 +1314,21 @@ async function startDailyChallenge() {
 }
 
 async function resetDailyChallenge() {
+  // Try to get the saved initial board from the current state
+  const savedState = await dailyChallengeState.loadState();
+  let initialBoard: string[][] | null = null;
+  
+  if (savedState && savedState.initialBoard) {
+    initialBoard = savedState.initialBoard;
+  }
+  
   // Clear saved daily state from both database and localStorage
   await dailyChallengeState.clearState();
   
-  // Reset to initial state with same daily seed (same letters)
+  // Reset to initial state
   const difficulty = "medium";
   const config = DIFFICULTY_CONFIG[difficulty];
   const newSize = config.gridSize;
-  const dailySeed = getDailySeed(); // Same seed = same letters every time
   
   setSettings(prev => ({ 
     ...prev, 
@@ -1344,8 +1356,19 @@ async function resetDailyChallenge() {
     setIsGenerating(true);
     
     try {
-      // Regenerate the same board (same seed = same letters)
-      const resetBoard = makeBoard(newSize, dailySeed);
+      let resetBoard: string[][];
+      
+      if (initialBoard) {
+        // Use the saved initial board to ensure same letters
+        resetBoard = initialBoard.map(row => [...row]);
+        toast.success("Daily Challenge reset! Same letters, fresh start.");
+      } else {
+        // Fallback: generate new board with daily seed (this should only happen on first play)
+        const dailySeed = getDailySeed();
+        resetBoard = makeBoard(newSize, dailySeed);
+        toast.success("Daily Challenge started! Fresh board generated.");
+      }
+      
       const probe = probeGrid(resetBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
       const bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
       setBoard(resetBoard);
@@ -1355,7 +1378,9 @@ async function resetDailyChallenge() {
       setGameOver(false);
       setFinalGrade("None");
       setIsGenerating(false);
-      toast.success("Daily Challenge reset! Same letters, fresh start.");
+      
+      // Save the initial state with the initial board preserved
+      await saveDailyState(resetBoard);
     } catch (error) {
       console.error("Error resetting daily board:", error);
       setIsGenerating(false);

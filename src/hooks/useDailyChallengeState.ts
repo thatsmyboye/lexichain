@@ -4,6 +4,7 @@ import type { AchievementId } from '@/lib/achievements';
 
 export type DailyChallengeGameState = {
   board: any[][];
+  initialBoard: any[][]; // Store the initial board state
   specialTiles: any[][];
   usedWords: any[];
   score: number;
