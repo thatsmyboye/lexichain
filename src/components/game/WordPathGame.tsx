@@ -381,7 +381,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const isMobile = useIsMobile();
   
   const [size, setSize] = useState(4);
-  const [board, setBoard] = useState<string[][]>(() => makeBoard(size));
+  const [board, setBoard] = useState<string[][] | null>(null);
   const [specialTiles, setSpecialTiles] = useState<SpecialTile[][]>(() => 
     Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null })))
   );
@@ -683,7 +683,7 @@ useEffect(() => {
   return () => { mounted = false };
   }, [initialMode, size]);
 
-  const wordFromPath = useMemo(() => path.map((p) => board[p.r][p.c]).join("").toLowerCase(), [path, board]);
+  const wordFromPath = useMemo(() => board ? path.map((p) => board[p.r][p.c]).join("").toLowerCase() : "", [path, board]);
   
   // Display version that shows ? for Wild tiles during selection
   const displayWordFromPath = useMemo(() => {
@@ -1515,7 +1515,7 @@ const handleUseConsumable = async (consumableId: ConsumableId) => {
 };
 
 const handleHintRevealer = () => {
-  if (!dict || !sorted) return;
+  if (!dict || !sorted || !board) return;
   
   // Use existing probeGrid logic to find words
   const probe = probeGrid(board, dict, sorted, 3, MAX_DFS_NODES);
@@ -1566,6 +1566,7 @@ const handleHintRevealer = () => {
 
 // Helper function to find the path for a specific word
 const findWordPath = (word: string, startPos: Pos): Pos[] | null => {
+  if (!board) return null;
   const visited = new Set<string>();
   const path: Pos[] = [startPos];
   
@@ -2795,7 +2796,7 @@ const handleExtraMoves = () => {
               className="grid gap-3 select-none max-w-md"
               style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
             >
-            {board.map((row, r) => row.map((ch, c) => {
+            {board && board.map((row, r) => row.map((ch, c) => {
               const k = keyOf({ r, c });
               const idx = path.findIndex((p) => p.r === r && p.c === c);
               const selected = idx !== -1;
@@ -2912,6 +2913,14 @@ const handleExtraMoves = () => {
                 </Card>
               );
             }))}
+            {!board && (
+              <div className="col-span-full flex items-center justify-center p-8">
+                <div className="text-center">
+                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-muted-foreground">Loading game...</p>
+                </div>
+              </div>
+            )}
            </div>
 
            <div className="mt-3 flex items-center gap-3">
