@@ -2392,7 +2392,7 @@ const handleExtraMoves = () => {
 
       {/* How to Play Modal */}
       <Dialog open={showHowToPlay} onOpenChange={setShowHowToPlay}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="w-[95vw] max-w-[425px] max-h-[90vh] overflow-y-auto sm:max-w-lg sm:max-h-[85vh] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>How to play</DialogTitle>
           </DialogHeader>
