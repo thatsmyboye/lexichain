@@ -1312,11 +1312,11 @@ async function resetDailyChallenge() {
   // Clear saved daily state from both database and localStorage
   await dailyChallengeState.clearState();
   
-  // Start fresh daily challenge
+  // Reset to initial state with same daily seed (same letters)
   const difficulty = "medium";
   const config = DIFFICULTY_CONFIG[difficulty];
   const newSize = config.gridSize;
-  const dailySeed = getDailySeed();
+  const dailySeed = getDailySeed(); // Same seed = same letters every time
   
   setSettings(prev => ({ 
     ...prev, 
@@ -1327,36 +1327,37 @@ async function resetDailyChallenge() {
   }));
   setSize(newSize);
   
-  // Reset all state for fresh daily challenge
+  // Reset all game state to initial values
   setGameOver(false);
   setFinalGrade("None");
   setUsedWords([]);
   setLastWordTiles(new Set());
   setScore(0);
   setStreak(0);
-  setMovesUsed(0);
+  setMovesUsed(0); // Reset moves to 0 as requested
   setUnlocked(new Set());
-  setSpecialTiles(createEmptySpecialTilesGrid(newSize));
+  setSpecialTiles(createEmptySpecialTilesGrid(newSize)); // Reset to initial grid state
+  setPath([]);
+  setDragging(false);
   
   if (dict && sorted) {
     setIsGenerating(true);
-    setPath([]);
-    setDragging(false);
     
     try {
-      const newBoard = makeBoard(newSize, dailySeed);
-      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
+      // Regenerate the same board (same seed = same letters)
+      const resetBoard = makeBoard(newSize, dailySeed);
+      const probe = probeGrid(resetBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
       const bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
-      setBoard(newBoard);
+      setBoard(resetBoard);
       setBenchmarks(bms);
       setDiscoverableCount(probe.words.size);
       setUnlocked(new Set());
       setGameOver(false);
       setFinalGrade("None");
       setIsGenerating(false);
-      toast.success("Daily Challenge reset to new board!");
+      toast.success("Daily Challenge reset! Same letters, fresh start.");
     } catch (error) {
-      console.error("Error generating daily board:", error);
+      console.error("Error resetting daily board:", error);
       setIsGenerating(false);
       toast.error("Failed to generate daily board");
     }
