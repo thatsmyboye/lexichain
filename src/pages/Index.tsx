@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
-import WordPathGame from "@/components/game/WordPathGame";
 import TitleScreen from "@/components/TitleScreen";
 import { Button } from "@/components/ui/button";
+
+// Lazy load game component
+const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
 
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
@@ -60,7 +62,13 @@ const Index = () => {
           <p className="mt-2 text-muted-foreground max-w-2xl">Make as many valid words as you can by drawing paths through the letter grid. Each new word must reuse at least one tile from the previous word.</p>
           <p className="mt-1 text-muted-foreground max-w-2xl text-sm">This game is in early development, and will undergo frequent changes.</p>
         </header>
-        <WordPathGame onBackToTitle={handleBackToTitle} initialMode={selectedMode} />
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+          </div>
+        }>
+          <WordPathGame onBackToTitle={handleBackToTitle} initialMode={selectedMode} />
+        </Suspense>
       </main>
     );
   }
