@@ -1699,14 +1699,30 @@ const handleExtraMoves = () => {
 
   // Touch event handlers for mobile support
   function onTouchStart(e: React.TouchEvent, pos: Pos) {
-    e.preventDefault(); // Prevent page scrolling
+    // Only prevent scrolling when game is active
+    if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
+      e.preventDefault(); // Prevent page scrolling
+    } else if (settings.mode !== "blitz") {
+      e.preventDefault(); // Prevent page scrolling for non-blitz modes
+    }
+    
     const touch = e.touches[0];
     setTouchStartPos({ x: touch.clientX, y: touch.clientY });
-    onTilePointerDown(pos);
+    
+    // Only start dragging if game is active
+    if (settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) {
+      onTilePointerDown(pos);
+    }
   }
 
   function onTouchMove(e: React.TouchEvent) {
-    e.preventDefault(); // Prevent page scrolling
+    // Only prevent scrolling when game is active
+    if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
+      e.preventDefault(); // Prevent page scrolling
+    } else if (settings.mode !== "blitz") {
+      e.preventDefault(); // Prevent page scrolling for non-blitz modes
+    }
+    
     if (!dragging || !touchStartPos) return;
     
     const touch = e.touches[0];
@@ -1723,9 +1739,19 @@ const handleExtraMoves = () => {
   }
 
   function onTouchEnd(e: React.TouchEvent) {
-    e.preventDefault(); // Prevent page scrolling
+    // Only prevent scrolling when game is active
+    if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
+      e.preventDefault(); // Prevent page scrolling
+    } else if (settings.mode !== "blitz") {
+      e.preventDefault(); // Prevent page scrolling for non-blitz modes
+    }
+    
     setTouchStartPos(null);
-    onPointerUp();
+    
+    // Only submit word if game is active
+    if (settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) {
+      onPointerUp();
+    }
   }
 
   // Single tap handler for mobile
@@ -2647,7 +2673,9 @@ const handleExtraMoves = () => {
             onPointerUp={onPointerUp}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
-            style={{ touchAction: 'none' }} // Prevent page scrolling on touch
+            style={{ 
+              touchAction: (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) ? 'auto' : 'none'
+            }}
           >
             {/* Blitz Mode Overlay */}
             {settings.mode === "blitz" && (!blitzStarted || blitzPaused) && (
@@ -2660,10 +2688,26 @@ const handleExtraMoves = () => {
                         You have {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')} to find as many words as possible!
                       </div>
                       <Button 
-                        onClick={() => setBlitzStarted(true)}
+                        onClick={() => {
+                          setBlitzStarted(true);
+                          // Center grid on mobile when game starts
+                          if (window.innerWidth <= 768) {
+                            setTimeout(() => {
+                              const gridElement = document.querySelector('[data-grid-container]');
+                              if (gridElement) {
+                                gridElement.scrollIntoView({ 
+                                  behavior: 'smooth', 
+                                  block: 'center',
+                                  inline: 'center'
+                                });
+                              }
+                            }, 100);
+                          }
+                        }}
                         variant="hero"
                         size="lg"
                         className="px-8"
+                        style={{ touchAction: 'manipulation' }}
                       >
                         Start Game
                       </Button>
@@ -2771,7 +2815,9 @@ const handleExtraMoves = () => {
                   onTouchStart={(e) => onTouchStart(e, { r, c })}
                   onClick={() => onTileTap({ r, c })}
                   className={getTileClasses()}
-                  style={{ touchAction: 'none' }} // Prevent page scrolling on individual tiles
+                  style={{ 
+                    touchAction: (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) ? 'auto' : 'none'
+                  }}
                 >
                   <div className="text-3xl font-semibold tracking-wide">
                     {special.type === "wild" ? "?" : ch}
