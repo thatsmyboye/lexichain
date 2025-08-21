@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -399,6 +399,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [finalGrade, setFinalGrade] = useState<"None" | "Bronze" | "Silver" | "Gold" | "Platinum">("None");
   const [streak, setStreak] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
     scoreThreshold: benchmarks?.bronze || 100, // Use Bronze threshold
@@ -473,14 +474,18 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
             setBlitzMultiplier(1);
           }
           
-          if (newTime <= 0) {
-            setGameOver(true);
-            setFinalGrade(score >= (benchmarks?.platinum || 4000) ? "Platinum"
-              : score >= (benchmarks?.gold || 2200) ? "Gold"
-              : score >= (benchmarks?.silver || 1200) ? "Silver"
-              : score >= (benchmarks?.bronze || 500) ? "Bronze"
-              : "None");
-            return 0;
+            if (newTime <= 0) {
+              setGameOver(true);
+              setFinalGrade(score >= (benchmarks?.platinum || 4000) ? "Platinum"
+                : score >= (benchmarks?.gold || 2200) ? "Gold"
+                : score >= (benchmarks?.silver || 1200) ? "Silver"
+                : score >= (benchmarks?.bronze || 500) ? "Bronze"
+                : "None");
+              
+              // Save state when blitz game ends
+              saveGameState();
+              
+              return 0;
           }
           
           return newTime;
@@ -621,16 +626,16 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     return false;
   };
 
-  // Debounced save state whenever relevant data changes in daily mode
-  useEffect(() => {
-    if (settings.mode === "daily" && board.length > 0) {
-      // Use debounced save for regular gameplay changes
+  // Strategic save function that prevents saves during initialization
+  const saveGameState = useCallback(() => {
+    if (settings.mode === "daily" && !isInitializing && board.length > 0) {
       saveDailyState();
     }
-  }, [board, specialTiles, usedWords, score, streak, movesUsed, unlocked, gameOver, finalGrade, lastWordTiles, settings.mode]);
+  }, [settings.mode, isInitializing, board.length, saveDailyState]);
 
 useEffect(() => {
   let mounted = true;
+  setIsInitializing(true);
   fetch("/words.txt")
     .then((r) => r.text())
     .then((txt) => {
@@ -661,9 +666,13 @@ useEffect(() => {
       setScore(0);
       setStreak(0);
       setIsGenerating(false);
+      setIsInitializing(false);
       toast.success("Dictionary loaded. Board ready!");
     })
-    .catch(() => toast.error("Failed to load dictionary. Offline mode."));
+    .catch(() => {
+      setIsInitializing(false);
+      toast.error("Failed to load dictionary. Offline mode.");
+    });
   return () => { mounted = false };
   }, []);
 
@@ -756,6 +765,9 @@ useEffect(() => {
     }
 
     setUsedWords(prev => [...prev, {word: actualWord, score: totalGain}]);
+    
+    // Save state after successful word submission
+    saveGameState();
     
     // Update the wild tile with the chosen letter permanently on the board
     const newBoard = board.map(row => [...row]);
@@ -1066,6 +1078,9 @@ useEffect(() => {
             setFinalGrade(grade === "None" ? "None" : grade);
             setGameOver(true);
             
+            // Save state when game ends
+            saveGameState();
+            
             if (dailyMovesExceeded) {
               toast.info(`Daily Challenge complete! Final score: ${finalScore} (${grade})`);
             } else if (grade !== "None") {
@@ -1106,6 +1121,9 @@ useEffect(() => {
               toast.info("No valid words remain. Game over!");
             }
             setGameOver(true);
+            
+            // Save state when game ends
+            saveGameState();
           }
         }
       }
@@ -1866,6 +1884,9 @@ const handleExtraMoves = () => {
     }
 
     setUsedWords(prev => [...prev, {word: actualWord, score: totalGain}]);
+    
+    // Save state after successful word submission
+    saveGameState();
     
     // Increment moves for daily challenge
     if (settings.mode === "daily") {
