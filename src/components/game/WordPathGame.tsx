@@ -3171,9 +3171,12 @@ const handleExtraMoves = () => {
               </div>
             </div>
             <div 
-              className={`transition-all duration-300 ease-out overflow-hidden ${
-                usedWordsExpanded ? 'max-h-none' : sortAlphabetically ? 'max-h-16' : 'max-h-24'
+              className={`transition-all duration-300 ease-out ${
+                sortAlphabetically && !usedWordsExpanded ? 'max-h-16 overflow-hidden' : 'overflow-visible'
               }`}
+              style={{
+                maxHeight: sortAlphabetically && !usedWordsExpanded ? '4rem' : 'none'
+              }}
             >
               {(() => {
                 if (!usedWords.length) {
