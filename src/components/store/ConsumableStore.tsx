@@ -200,21 +200,21 @@ export function ConsumableStore({ user, onPurchaseComplete }: ConsumableStorePro
               const consumable = CONSUMABLES[id as ConsumableId];
               
               return (
-                <Card key={id} className={`p-3 ${consumable ? RARITY_COLORS[consumable.rarity] : ''}`}>
-                  <div className="space-y-2">
-                    <div className="text-center">
-                      <div className="text-2xl mb-1">{item.icon}</div>
-                      <h4 className="font-medium text-sm">{item.name}</h4>
-                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                <Card key={id} className={`p-3 h-full ${consumable ? RARITY_COLORS[consumable.rarity] : ''}`}>
+                  <div className="flex flex-col h-full">
+                    <div className="text-center flex-1">
+                      <div className="text-2xl mb-2">{item.icon}</div>
+                      <h4 className="font-medium text-sm mb-1">{item.name}</h4>
+                      <p className="text-xs text-muted-foreground mb-3">{item.description}</p>
                     </div>
                     
-                    <div className="text-center">
-                      <div className="text-lg font-bold">${item.price.toFixed(2)}</div>
+                    <div className="text-center mt-auto">
+                      <div className="text-lg font-bold mb-2">${item.price.toFixed(2)}</div>
                       <Button 
                         size="sm" 
                         onClick={() => handlePurchase(id)}
                         disabled={isLoading}
-                        className="w-full mt-2"
+                        className="w-full"
                       >
                         Buy
                       </Button>
