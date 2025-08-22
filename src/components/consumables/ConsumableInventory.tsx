@@ -26,7 +26,7 @@ export function ConsumableInventoryPanel({
   activatedConsumables = new Set(),
   user = null
 }: ConsumableInventoryProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showStore, setShowStore] = useState(false);
 
   const availableConsumables = Object.entries(inventory).filter(([_, data]) => data.quantity > 0);

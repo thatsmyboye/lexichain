@@ -16,6 +16,7 @@ import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "
 import type { User } from "@supabase/supabase-js";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { ChevronDown } from "lucide-react";
 
 
 type Pos = { r: number; c: number };
@@ -496,6 +497,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
+  const [usedWordsExpanded, setUsedWordsExpanded] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
     scoreThreshold: benchmarks?.bronze || 100, // Use Bronze threshold
     mode: "classic",
@@ -3149,18 +3151,28 @@ const handleExtraMoves = () => {
           <Card className="p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs text-muted-foreground">Used words ({usedWords.length})</div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setSortAlphabetically(!sortAlphabetically)}
-                className="h-5 px-2 text-xs"
-              >
-                {sortAlphabetically ? "A-Z" : "Latest"}
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSortAlphabetically(!sortAlphabetically)}
+                  className="h-5 px-2 text-xs"
+                >
+                  {sortAlphabetically ? "A-Z" : "Latest"}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setUsedWordsExpanded(!usedWordsExpanded)}
+                  className="h-5 w-5 p-0"
+                >
+                  <ChevronDown className={`h-3 w-3 transition-transform ${usedWordsExpanded ? 'rotate-180' : ''}`} />
+                </Button>
+              </div>
             </div>
             <div 
               className={`transition-all duration-300 ease-out overflow-hidden ${
-                sortAlphabetically ? 'max-h-64' : 'max-h-24'
+                usedWordsExpanded ? 'max-h-none' : sortAlphabetically ? 'max-h-16' : 'max-h-24'
               }`}
             >
               {(() => {
@@ -3184,7 +3196,7 @@ const handleExtraMoves = () => {
                   const latestWords = usedWords.slice(-15).reverse();
                   return (
                     <div className="space-y-1">
-                      <Accordion type="single" collapsible className="w-full">
+                      <Accordion type="multiple" className="w-full">
                         {latestWords.map((entry, index) => (
                           <AccordionItem key={`${entry.word}-${index}`} value={`${entry.word}-${index}`} className="border-b-0">
                             <AccordionTrigger className="py-1 hover:no-underline">
