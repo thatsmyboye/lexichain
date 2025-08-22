@@ -7,10 +7,43 @@
     <meta name="description" content="Lovable Generated Project" />
     <meta name="author" content="Lovable" />
 
+    <!-- Critical CSS inlined to prevent render blocking -->
+    <style>
+      :root {
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
+        --primary: 222.2 47.4% 11.2%;
+        --primary-foreground: 210 40% 98%;
+        --brand-500: 265 84% 54%;
+        --border: 214.3 31.8% 91.4%;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: 222.2 84% 4.9%;
+          --foreground: 210 40% 98%;
+          --primary: 210 40% 98%;
+          --primary-foreground: 222.2 47.4% 11.2%;
+          --brand-500: 265 84% 66%;
+          --border: 217.2 32.6% 17.5%;
+        }
+      }
+      * { border-color: hsl(var(--border)); }
+      body { 
+        background-color: hsl(var(--background)); 
+        color: hsl(var(--foreground)); 
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      #root { min-height: 100vh; }
+    </style>
+
+    <!-- Preload main CSS for faster loading -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
+
     <meta property="og:title" content="chain-word-connect" />
     <meta property="og:description" content="Lovable Generated Project" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pg.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
