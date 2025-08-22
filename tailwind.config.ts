@@ -6,6 +6,7 @@ export default {
 		"./src/**/*.{ts,tsx}",
 		"./index.html",
 	],
+	safelist: [],
 	prefix: "",
 	theme: {
 		container: {
