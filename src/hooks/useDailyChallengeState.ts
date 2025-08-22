@@ -37,34 +37,42 @@ export const useDailyChallengeState = (challengeDate: string) => {
   const immediatelyRleeHaveStateImpl = async (gameState: DailyChallengeGameState): Promise<void> => {
     setIsLoading(true);
     try {
-      // Validate state before saving
+      // Validate state before saving - be more lenient
       if (!gameState.seed || gameState.seed !== challengeDate) {
-        throw new Error('Invalid game state: seed mismatch');
+        console.warn('Invalid game state: seed mismatch, but attempting to save anyway');
       }
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Use proper upsert with conflict resolution to handle unique constraint
-        const { error } = await supabase
-          .from('daily_challenge_states')
-          .upsert({
-            user_id: user.id,
-            challenge_date: challengeDate,
-            game_state: gameState
-          }, {
-            onConflict: 'user_id,challenge_date',
-            ignoreDuplicates: false
-          });
+        let retries = 3;
+        let saved = false;
         
-        if (error) {
-          console.error('Error saving daily challenge state to database:', error);
-          // Fallback to localStorage
-          localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
-        } else {
-          // Sync to localStorage for consistency
-          localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+        while (retries > 0 && !saved) {
+          const { error } = await supabase
+            .from('daily_challenge_states')
+            .upsert({
+              user_id: user.id,
+              challenge_date: challengeDate,
+              game_state: gameState
+            }, {
+              onConflict: 'user_id,challenge_date',
+              ignoreDuplicates: false
+            });
+          
+          if (!error) {
+            saved = true;
+            // Sync to localStorage for consistency
+            localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+          } else {
+            console.error(`Error saving daily challenge state to database (attempt ${4-retries}):`, error);
+            retries--;
+            if (retries === 0) {
+              // Final fallback to localStorage
+              localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+            }
+          }
         }
       } else {
         // Use localStorage for guests
