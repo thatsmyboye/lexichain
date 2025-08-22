@@ -15,6 +15,8 @@ import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/
 import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+
 
 type Pos = { r: number; c: number };
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
@@ -241,6 +243,97 @@ function letterRarity(ch: string): number {
   const f = FREQ_MAP.get(up) ?? 10;
   return f < 2 ? 1 : 0; // rare if frequency < 2%
 }
+type ScoreBreakdown = {
+  base: number;
+  rarity: { sum: number; ultraCount: number; bonus: number };
+  linkBonus: number;
+  chainBonus: number;
+  timeBonus: number;
+  multipliers: { tileMultiplier: number; consumableMultiplier: number; combinedApplied: number; capped: boolean; cap: number };
+  totalBeforeMultipliers: number;
+  total: number;
+};
+
+const MULTIPLIER_CAP = 8;
+
+function computeScoreBreakdown(params: {
+  actualWord: string;
+  wordPath: Pos[];
+  board: string[][];
+  specialTiles: SpecialTile[][];
+  lastWordTiles: Set<string>;
+  streak: number;
+  mode: "classic" | "daily" | "target" | "blitz";
+  blitzMultiplier: number;
+  activeEffects: Array<{ id: string; data?: Record<string, unknown> }>;
+  baseMode?: "hybrid" | "square";
+  chainMode?: "cappedLinear" | "linear";
+}): ScoreBreakdown {
+  const {
+    actualWord,
+    wordPath,
+    board,
+    specialTiles,
+    lastWordTiles,
+    streak,
+    mode,
+    blitzMultiplier,
+    activeEffects,
+    baseMode = "hybrid",
+    chainMode = "cappedLinear",
+  } = params;
+
+  const wordLen = actualWord.length;
+  const base = baseMode === "hybrid" ? (wordLen * 8) + (wordLen * wordLen * 2) : (wordLen * wordLen);
+
+  let tileMultiplier = 1;
+  for (const p of wordPath) {
+    const tile = specialTiles[p.r][p.c];
+    if (tile.type === "multiplier" && tile.value) tileMultiplier *= tile.value;
+  }
+
+  const sharedTilesCount = lastWordTiles.size ? wordPath.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
+  const linkBonus = 2 * sharedTilesCount;
+
+  const raritySum = wordPath.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
+  const ultraRareCount = wordPath.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+  const rarityBonus = (RARITY_MULTIPLIER * raritySum) + (ultraRareCount * ULTRA_RARE_MULTIPLIER * 10);
+
+  const qualifies = actualWord.length >= STREAK_TARGET_LEN;
+  const nextStreak = qualifies ? streak + 1 : 0;
+
+  let chainBonus = 0;
+  if (nextStreak > 0) {
+    chainBonus = chainMode === "cappedLinear" ? Math.min(100, 5 + (nextStreak * 8)) : (5 * nextStreak);
+  }
+
+  const timeBonus = mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
+
+  const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
+  let consumableMultiplier = 1;
+  if (scoreMultiplierEffect && typeof scoreMultiplierEffect.data?.multiplier === "number") {
+    consumableMultiplier = scoreMultiplierEffect.data.multiplier as number;
+  }
+
+  const combinedMultiplierRaw = tileMultiplier * consumableMultiplier;
+  const combinedApplied = Math.min(MULTIPLIER_CAP, combinedMultiplierRaw);
+  const capped = combinedApplied !== combinedMultiplierRaw;
+
+  const totalBeforeMultipliers = base + rarityBonus + chainBonus + linkBonus + timeBonus;
+  const total = Math.round(totalBeforeMultipliers * combinedApplied);
+
+  return {
+    base,
+    rarity: { sum: raritySum, ultraCount: ultraRareCount, bonus: rarityBonus },
+    linkBonus,
+    chainBonus,
+    timeBonus,
+    multipliers: { tileMultiplier, consumableMultiplier, combinedApplied, capped, cap: MULTIPLIER_CAP as number },
+    totalBeforeMultipliers,
+    total,
+  };
+}
+
 
 function pickWeighted(pool: Array<[string, number]>) {
   const total = pool.reduce((a, [, f]) => a + f, 0);
@@ -347,6 +440,7 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
   let lastBoard = makeBoard(size);
   while (attempts < MAX_ATTEMPTS) {
     let board = makeBoard(size);
+
     let probe = probeGrid(board, wordSet, sortedArr, K_MIN_WORDS, MAX_DFS_NODES);
     if (probe.words.size >= K_MIN_WORDS && probe.linkFound) return board;
 
@@ -388,7 +482,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [dailyChallengeInitialized, setDailyChallengeInitialized] = useState(false);
   const [path, setPath] = useState<Pos[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [usedWords, setUsedWords] = useState<{word: string, score: number}[]>([]);
+  const [usedWords, setUsedWords] = useState<{word: string, score: number, breakdown?: ScoreBreakdown}[]>([]);
   const [lastWordTiles, setLastWordTiles] = useState<Set<string>>(new Set());
   const [dict, setDict] = useState<Set<string> | null>(null);
   const [sorted, setSorted] = useState<string[] | null>(null);
@@ -773,7 +867,22 @@ useEffect(() => {
       }
     }
 
-    setUsedWords(prev => [...prev, {word: actualWord, score: totalGain}]);
+    const breakdown = computeScoreBreakdown({
+      actualWord,
+      wordPath,
+      board,
+      specialTiles,
+      lastWordTiles,
+      streak,
+      mode: settings.mode,
+      blitzMultiplier,
+      activeEffects: activeEffects.filter(e => e.id !== "score_multiplier"),
+      baseMode: "square",
+      chainMode: "linear",
+    });
+    const totalGain = breakdown.total;
+
+    setUsedWords(prev => [...prev, {word: actualWord, score: totalGain, breakdown}]);
     
     // Save state after successful word submission
     saveGameState();
@@ -797,7 +906,7 @@ useEffect(() => {
       setMovesUsed(prev => prev + 1);
     }
 
-    let base = actualWord.length * actualWord.length;
+    const base = actualWord.length * actualWord.length;
 
     const multiplierTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "multiplier");
     let multiplier = 1;
@@ -818,7 +927,7 @@ useEffect(() => {
 
     const timeBonus = settings.mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
 
-    const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
+    const totalGainLegacy = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
 
     const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
     let xChanged = 0;
@@ -1838,8 +1947,8 @@ const handleExtraMoves = () => {
       toast.error("Daily move limit reached!");
       return clearPath();
     }
-    let actualWord = wordFromPath;
-    let wildUsed = false;
+    const actualWord = wordFromPath;
+    const wildUsed = false;
 
     const hasWildTile = path.some(p => specialTiles[p.r][p.c].type === "wild");
     if (hasWildTile && dict) {
@@ -1882,7 +1991,22 @@ const handleExtraMoves = () => {
       }
     }
 
-    setUsedWords(prev => [...prev, {word: actualWord, score: totalGain}]);
+    const breakdown = computeScoreBreakdown({
+      actualWord,
+      wordPath: path,
+      board,
+      specialTiles,
+      lastWordTiles,
+      streak,
+      mode: settings.mode,
+      blitzMultiplier,
+      activeEffects,
+      baseMode: "hybrid",
+      chainMode: "cappedLinear",
+    });
+    const totalGain = breakdown.total;
+
+    setUsedWords(prev => [...prev, {word: actualWord, score: totalGain, breakdown}]);
     
     // Save state after successful word submission
     saveGameState();
@@ -1893,7 +2017,7 @@ const handleExtraMoves = () => {
     }
 
     // RECALIBRATED: Hybrid scoring formula
-    let base = (actualWord.length * 8) + (actualWord.length * actualWord.length * 2);
+    const base = (actualWord.length * 8) + (actualWord.length * actualWord.length * 2);
 
     const multiplierTiles = path.filter(p => specialTiles[p.r][p.c].type === "multiplier");
     let multiplier = 1;
@@ -1920,7 +2044,7 @@ const handleExtraMoves = () => {
     const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
     const consumableMultiplier = scoreMultiplierEffect?.data?.multiplier || 1;
     
-    const totalGain = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier * consumableMultiplier);
+    const totalGainLegacy = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier * consumableMultiplier);
     
     // Remove score multiplier effect after use
     if (scoreMultiplierEffect) {
@@ -2988,6 +3112,36 @@ const handleExtraMoves = () => {
                 )}
           </div>
         </div>
+          {usedWords.length > 0 && (() => {
+            const last = usedWords[usedWords.length - 1];
+            const bd = last.breakdown;
+            if (!bd) return null;
+            return (
+              <Card className="p-3 mb-3">
+                <div className="text-xs text-muted-foreground mb-1">Last word breakdown</div>
+                <div className="text-sm font-medium mb-2">{last.word.toUpperCase()} <span className="text-muted-foreground">+{last.score}</span></div>
+                <div className="grid grid-cols-2 gap-y-1 text-xs">
+                  <div>Base</div><div className="text-right">+{bd.base}</div>
+                  <div>Rarity</div><div className="text-right">+{Math.round(bd.rarity.bonus)}{bd.rarity.ultraCount > 0 ? <span className="ml-1 text-[10px] opacity-70">(ultra {bd.rarity.ultraCount})</span> : null}</div>
+                  <div>Link</div><div className="text-right">+{bd.linkBonus}</div>
+                  <div>Streak</div><div className="text-right">+{bd.chainBonus}</div>
+                  {bd.timeBonus > 0 ? (<><div>Blitz time</div><div className="text-right">+{bd.timeBonus}</div></>) : null}
+                  <div className="col-span-2 border-t my-1" />
+                  <div>Subtotal</div><div className="text-right">+{bd.totalBeforeMultipliers}</div>
+                  <div>Multipliers</div>
+                  <div className="text-right">
+                    {bd.multipliers.tileMultiplier}x tile {bd.multipliers.consumableMultiplier > 1 ? `· ${bd.multipliers.consumableMultiplier}x consumable` : ""}
+                    <div className="text-[10px] text-muted-foreground">
+                      Applied: {bd.multipliers.combinedApplied}x{bd.multipliers.capped ? <span className="ml-1 px-1 py-[1px] rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200">capped at {bd.multipliers.cap}x</span> : null}
+                    </div>
+                  </div>
+                  <div className="col-span-2 border-t my-1" />
+                  <div className="font-semibold">Total</div><div className="text-right font-semibold">+{bd.total}</div>
+                </div>
+              </Card>
+            );
+          })()}
+
           </Card>
           
 
@@ -3030,12 +3184,42 @@ const handleExtraMoves = () => {
                   const latestWords = usedWords.slice(-15).reverse();
                   return (
                     <div className="space-y-1">
-                      {latestWords.map((entry, index) => (
-                        <div key={`${entry.word}-${index}`} className="flex justify-between items-center text-xs">
-                          <span className="font-medium">{entry.word.toUpperCase()}</span>
-                          <span className="text-muted-foreground">+{entry.score}</span>
-                        </div>
-                      ))}
+                      <Accordion type="single" collapsible className="w-full">
+                        {latestWords.map((entry, index) => (
+                          <AccordionItem key={`${entry.word}-${index}`} value={`${entry.word}-${index}`} className="border-b-0">
+                            <AccordionTrigger className="py-1 hover:no-underline">
+                              <div className="w-full flex justify-between items-center text-xs">
+                                <span className="font-medium">{entry.word.toUpperCase()}</span>
+                                <span className="text-muted-foreground">+{entry.score}</span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-2">
+                              {entry.breakdown ? (
+                                <div className="grid grid-cols-2 gap-y-1 text-[11px]">
+                                  <div>Base</div><div className="text-right">+{entry.breakdown.base}</div>
+                                  <div>Rarity</div><div className="text-right">+{Math.round(entry.breakdown.rarity.bonus)}</div>
+                                  <div>Link</div><div className="text-right">+{entry.breakdown.linkBonus}</div>
+                                  <div>Streak</div><div className="text-right">+{entry.breakdown.chainBonus}</div>
+                                  {entry.breakdown.timeBonus > 0 ? (<><div>Blitz time</div><div className="text-right">+{entry.breakdown.timeBonus}</div></>) : null}
+                                  <div className="col-span-2 border-t my-1" />
+                                  <div>Subtotal</div><div className="text-right">+{entry.breakdown.totalBeforeMultipliers}</div>
+                                  <div>Multipliers</div>
+                                  <div className="text-right">
+                                    {entry.breakdown.multipliers.tileMultiplier}x tile {entry.breakdown.multipliers.consumableMultiplier > 1 ? `· ${entry.breakdown.multipliers.consumableMultiplier}x consumable` : ""}
+                                    <div className="text-[10px] text-muted-foreground">
+                                      Applied: {entry.breakdown.multipliers.combinedApplied}x{entry.breakdown.multipliers.capped ? <span className="ml-1 px-1 py-[1px] rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200">capped</span> : null}
+                                    </div>
+                                  </div>
+                                  <div className="col-span-2 border-t my-1" />
+                                  <div className="font-semibold">Total</div><div className="text-right font-semibold">+{entry.breakdown.total}</div>
+                                </div>
+                              ) : (
+                                <div className="text-muted-foreground">No breakdown available</div>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
                     </div>
                   );
                 }
