@@ -528,7 +528,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [blitzPaused, setBlitzPaused] = useState(false);
   
   // Tap-to-select functionality
-  const [isTapMode, setIsTapMode] = useState(false);
+  const [isTapMode, setIsTapMode] = useState(isMobile);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [lastTapPos, setLastTapPos] = useState<Pos | null>(null);
 
@@ -817,7 +817,6 @@ useEffect(() => {
     
     // Validate the word
     if (testWord.length < 3) {
-      toast.warning("Words must be at least 3 letters");
       return;
     }
     
@@ -2017,9 +2016,6 @@ const handleExtraMoves = () => {
       return clearPath();
     }
     if (actualWord.length < 3) {
-      if (!isTapMode) {
-        toast.warning("Words must be at least 3 letters");
-      }
       return clearPath();
     }
     if (!dict.has(actualWord)) {
@@ -3093,7 +3089,7 @@ const handleExtraMoves = () => {
             </div>
 
             {/* Submit Button for Tap Mode */}
-            {isTapMode && (
+            {(isTapMode || isMobile) && (
               <div className="mt-2">
                 <Button
                   onClick={submitTapWord}
