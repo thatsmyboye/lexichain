@@ -3093,7 +3093,7 @@ const handleExtraMoves = () => {
             </div>
 
             {/* Submit Button for Tap Mode */}
-            {isTapMode && path.length > 0 && (
+            {isTapMode && (
               <div className="mt-2">
                 <Button
                   onClick={submitTapWord}
@@ -3106,7 +3106,7 @@ const handleExtraMoves = () => {
                       : "opacity-50 cursor-not-allowed"
                   }`}
                 >
-                  Submit ({path.length} letters)
+                  Submit
                 </Button>
               </div>
             )}
