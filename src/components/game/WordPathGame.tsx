@@ -1857,7 +1857,10 @@ const handleExtraMoves = () => {
   function onPointerUp() {
     if (!dragging) return;
     setDragging(false);
-    setIsTapMode(false); // Reset tap mode when dragging ends
+    // Only reset tap mode if we're not on mobile or if this was actually a drag gesture
+    if (!isMobile) {
+      setIsTapMode(false);
+    }
     submitWord();
   }
 
@@ -1873,9 +1876,15 @@ const handleExtraMoves = () => {
     const touch = e.touches[0];
     setTouchStartPos({ x: touch.clientX, y: touch.clientY });
     
-    // Only start dragging if game is active and not in tap mode
-    if ((settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) && !isTapMode) {
-      onTilePointerDown(pos);
+    // On mobile, don't immediately start dragging - let gesture detection decide
+    if (isMobile) {
+      // Ensure tap mode is active on mobile
+      setIsTapMode(true);
+    } else {
+      // On desktop, start dragging if not in tap mode
+      if ((settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) && !isTapMode) {
+        onTilePointerDown(pos);
+      }
     }
   }
 
@@ -1887,9 +1896,25 @@ const handleExtraMoves = () => {
       e.preventDefault(); // Prevent page scrolling for non-blitz modes
     }
     
-    if (!dragging || !touchStartPos) return;
+    if (!touchStartPos) return;
     
     const touch = e.touches[0];
+    const currentPos = { x: touch.clientX, y: touch.clientY };
+    
+    // Calculate movement distance to detect swipe gesture
+    const deltaX = Math.abs(currentPos.x - touchStartPos.x);
+    const deltaY = Math.abs(currentPos.y - touchStartPos.y);
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    // If significant movement detected on mobile and in tap mode, switch to drag mode
+    if (isMobile && distance > 15 && isTapMode && !dragging) {
+      setIsTapMode(false);
+      setDragging(true);
+    }
+    
+    // Only process move events if we're dragging
+    if (!dragging) return;
+    
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
     
     if (element && element.closest('[data-tile-pos]')) {
@@ -1912,8 +1937,8 @@ const handleExtraMoves = () => {
     
     setTouchStartPos(null);
     
-    // Only submit word if game is active
-    if (settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) {
+    // Only submit word if game is active and we're in drag mode
+    if ((settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) && dragging) {
       onPointerUp();
     }
   }
