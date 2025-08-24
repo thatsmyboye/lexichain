@@ -531,6 +531,10 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [isTapMode, setIsTapMode] = useState(isMobile);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [lastTapPos, setLastTapPos] = useState<Pos | null>(null);
+  
+  // Touch action control for blitz mode
+  const [touchActionBlocked, setTouchActionBlocked] = useState(false);
+  const [gridCentering, setGridCentering] = useState(false);
 
   // Initialize user auth
   useEffect(() => {
@@ -1866,6 +1870,12 @@ const handleExtraMoves = () => {
 
   // Touch event handlers for mobile support
   function onTouchStart(e: React.TouchEvent, pos: Pos) {
+    // Prevent default if touch action is blocked to avoid scroll conflicts
+    if (touchActionBlocked || gridCentering) {
+      e.preventDefault();
+      return;
+    }
+    
     // Only prevent scrolling when game is active
     if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
       e.preventDefault(); // Prevent page scrolling
@@ -1945,6 +1955,9 @@ const handleExtraMoves = () => {
 
   // Single tap handler for tile selection
   function onTileTap(pos: Pos) {
+    // Don't process events during grid centering animation
+    if (gridCentering) return;
+    
     // Disable input if blitz mode is not started or is paused
     if (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) return;
     
@@ -2915,11 +2928,12 @@ const handleExtraMoves = () => {
           
           <div
             className="relative"
+            data-game-container
             onPointerUp={onPointerUp}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             style={{ 
-              touchAction: (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) ? 'auto' : 'none'
+              touchAction: touchActionBlocked ? 'none' : (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) ? 'auto' : 'none'
             }}
           >
             {/* Blitz Mode Overlay */}
@@ -2934,7 +2948,18 @@ const handleExtraMoves = () => {
                       </div>
                       <Button 
                         onClick={() => {
+                          // Immediately block touch actions to prevent conflicts
+                          setTouchActionBlocked(true);
+                          setGridCentering(true);
+                          
+                          // Force immediate CSS touch-action update
+                          const gameContainer = document.querySelector('[data-game-container]');
+                          if (gameContainer) {
+                            (gameContainer as HTMLElement).style.touchAction = 'none';
+                          }
+                          
                           setBlitzStarted(true);
+                          
                           // Center grid on mobile when game starts
                           if (window.innerWidth <= 768) {
                             setTimeout(() => {
@@ -2944,8 +2969,20 @@ const handleExtraMoves = () => {
                                   behavior: 'smooth', 
                                   block: 'center',
                                   inline: 'center'
-                                });
+                                 });
+                                
+                                // Re-enable touch events after animation completes
+                                setTimeout(() => {
+                                  setGridCentering(false);
+                                  setTouchActionBlocked(false);
+                                }, 600); // Slightly longer than smooth scroll animation
                               }
+                            }, 100);
+                          } else {
+                            // For desktop, just re-enable immediately
+                            setTimeout(() => {
+                              setGridCentering(false);
+                              setTouchActionBlocked(false);
                             }, 100);
                           }
                         }}
@@ -2979,6 +3016,7 @@ const handleExtraMoves = () => {
             
             <div 
               className="grid gap-3 select-none max-w-md"
+              data-grid-container
               style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
             >
             {board && board.map((row, r) => row.map((ch, c) => {
