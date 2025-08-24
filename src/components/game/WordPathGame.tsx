@@ -526,6 +526,11 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [blitzMultiplier, setBlitzMultiplier] = useState(1);
   const [blitzStarted, setBlitzStarted] = useState(false);
   const [blitzPaused, setBlitzPaused] = useState(false);
+  
+  // Tap-to-select functionality
+  const [isTapMode, setIsTapMode] = useState(false);
+  const [lastTapTime, setLastTapTime] = useState(0);
+  const [lastTapPos, setLastTapPos] = useState<Pos | null>(null);
 
   // Initialize user auth
   useEffect(() => {
@@ -1253,6 +1258,7 @@ useEffect(() => {
   function clearPath() {
     setPath([]);
     setDragging(false);
+    setIsTapMode(false);
   }
 
 // Special tile generation functions
@@ -1830,8 +1836,11 @@ const handleExtraMoves = () => {
     // Disable input if blitz mode is not started or is paused
     if (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) return;
     
-    setDragging(true);
-    setPath([pos]);
+    // Only start dragging if not in tap mode
+    if (!isTapMode) {
+      setDragging(true);
+      setPath([pos]);
+    }
   }
   function onTilePointerEnter(pos: Pos) {
     if (!dragging) return;
@@ -1849,6 +1858,7 @@ const handleExtraMoves = () => {
   function onPointerUp() {
     if (!dragging) return;
     setDragging(false);
+    setIsTapMode(false); // Reset tap mode when dragging ends
     submitWord();
   }
 
@@ -1864,8 +1874,8 @@ const handleExtraMoves = () => {
     const touch = e.touches[0];
     setTouchStartPos({ x: touch.clientX, y: touch.clientY });
     
-    // Only start dragging if game is active
-    if (settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) {
+    // Only start dragging if game is active and not in tap mode
+    if ((settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) && !isTapMode) {
       onTilePointerDown(pos);
     }
   }
@@ -1909,7 +1919,7 @@ const handleExtraMoves = () => {
     }
   }
 
-  // Single tap handler for mobile
+  // Single tap handler for tile selection
   function onTileTap(pos: Pos) {
     // Disable input if blitz mode is not started or is paused
     if (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) return;
@@ -1920,21 +1930,60 @@ const handleExtraMoves = () => {
       return;
     }
 
+    const currentTime = Date.now();
+    const isDoubleTap = 
+      lastTapPos && 
+      lastTapPos.r === pos.r && 
+      lastTapPos.c === pos.c && 
+      currentTime - lastTapTime < 300;
+
+    // Set tap mode when user taps (not during drag)
+    if (!dragging) {
+      setIsTapMode(true);
+    }
+
+    if (isDoubleTap && path.length >= 3) {
+      // Double tap to submit (only if we have 3+ letters)
+      submitWord();
+      return;
+    }
+
+    // Handle single tap logic
     if (path.length === 0) {
       // Start new path with tap
-      setDragging(true);
       setPath([pos]);
-    } else if (path.length === 1 && path[0].r === pos.r && path[0].c === pos.c) {
-      // Double tap on same tile to submit single letter (if valid)
-      submitWord();
     } else {
-      // Try to add to path or submit if tapping the same tile again
-      const isLastTile = path.length > 0 && path[path.length - 1].r === pos.r && path[path.length - 1].c === pos.c;
-      if (isLastTile) {
-        submitWord();
+      // Check if tile is already in path
+      const existingIndex = path.findIndex(p => p.r === pos.r && p.c === pos.c);
+      
+      if (existingIndex !== -1) {
+        // If tapping a tile already in path, remove it and all tiles after it
+        setPath(path.slice(0, existingIndex));
       } else {
-        tryAddToPath(pos);
+        // Try to add to path (must be adjacent to last tile)
+        if (path.length && neighbors(path[path.length - 1], pos)) {
+          // Check if this is a stone tile and it's blocked
+          const specialTile = specialTiles[pos.r][pos.c];
+          if (specialTile.type === "stone") {
+            toast.warning("Stone tile is blocked!");
+            return;
+          }
+          setPath([...path, pos]);
+        } else if (path.length) {
+          // Not adjacent - show warning
+          toast.warning("Must select adjacent tiles");
+        }
       }
+    }
+
+    setLastTapTime(currentTime);
+    setLastTapPos(pos);
+  }
+
+  // Submit word function for tap mode
+  function submitTapWord() {
+    if (path.length >= 3) {
+      submitWord();
     }
   }
 
@@ -3036,12 +3085,31 @@ const handleExtraMoves = () => {
             )}
            </div>
 
-           <div className="mt-3 flex items-center gap-3">
-             <span className="text-sm text-muted-foreground">Current:</span>
-             <span className="text-lg font-semibold flex-1">{displayWordFromPath}</span>
+            <div className="mt-3 flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">Current:</span>
+              <span className="text-lg font-semibold flex-1">{displayWordFromPath}</span>
+            </div>
+
+            {/* Submit Button for Tap Mode */}
+            {isTapMode && path.length > 0 && (
+              <div className="mt-3 flex justify-end">
+                <Button
+                  onClick={submitTapWord}
+                  disabled={path.length < 3}
+                  variant={path.length >= 3 ? "default" : "outline"}
+                  size="sm"
+                  className={`transition-all duration-200 ${
+                    path.length >= 3 
+                      ? "bg-green-600 hover:bg-green-700 text-white" 
+                      : "opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  Submit ({path.length} letters)
+                </Button>
+              </div>
+            )}
+            
            </div>
-           
-          </div>
         </div>
         
         <aside className="space-y-2 lg:space-y-3">
