@@ -510,7 +510,7 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number; timestamp?: number } | null>(null);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [movesUsed, setMovesUsed] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -1880,14 +1880,6 @@ const handleExtraMoves = () => {
 
   // Touch event handlers for mobile support
   function onTouchStart(e: React.TouchEvent, pos: Pos) {
-    // Check if this is a hammer interaction with a stone tile - don't prevent default so onClick can fire
-    if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
-      // Let the click event fire for hammer functionality
-      const touch = e.touches[0];
-      setTouchStartPos({ x: touch.clientX, y: touch.clientY });
-      return;
-    }
-    
     // Only prevent scrolling when game is active
     if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
       e.preventDefault(); // Prevent page scrolling
@@ -1896,11 +1888,10 @@ const handleExtraMoves = () => {
     }
     
     const touch = e.touches[0];
-    setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+    setTouchStartPos({ x: touch.clientX, y: touch.clientY, timestamp: Date.now() });
     
-    // On mobile, don't immediately start dragging - let gesture detection decide
+    // On mobile, always start in tap mode - let gesture detection decide if it becomes a swipe
     if (isMobile) {
-      // Ensure tap mode is active on mobile
       setIsTapMode(true);
     } else {
       // On desktop, start dragging if not in tap mode
@@ -1908,6 +1899,9 @@ const handleExtraMoves = () => {
         onTilePointerDown(pos);
       }
     }
+    
+    // For hammer interactions with stone tiles, we still need to set up touch tracking
+    // but we'll handle the hammer logic in onTouchEnd if it remains a tap
   }
 
   function onTouchMove(e: React.TouchEvent) {
@@ -1928,8 +1922,15 @@ const handleExtraMoves = () => {
     const deltaY = Math.abs(currentPos.y - touchStartPos.y);
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    // If significant movement detected on mobile and in tap mode, switch to drag mode
-    if (isMobile && distance > 15 && isTapMode && !dragging) {
+    // More forgiving threshold and time-based detection for swipe vs tap
+    const currentTime = Date.now();
+    const touchDuration = touchStartPos.timestamp ? currentTime - touchStartPos.timestamp : 0;
+    const MOVEMENT_THRESHOLD = 30; // Increased from 15px to 30px
+    const MIN_SWIPE_TIME = 100; // Must be touching for at least 100ms to be considered a swipe
+    
+    // Only convert to swipe if significant movement AND sufficient time has passed
+    if (isMobile && distance > MOVEMENT_THRESHOLD && touchDuration > MIN_SWIPE_TIME && isTapMode && !dragging) {
+      console.log(`Converting tap to swipe: distance=${distance}px, duration=${touchDuration}ms`);
       setIsTapMode(false);
       setDragging(true);
     }
@@ -1957,11 +1958,41 @@ const handleExtraMoves = () => {
       e.preventDefault(); // Prevent page scrolling for non-blitz modes
     }
     
+    const wasInTapMode = isTapMode;
     setTouchStartPos(null);
     
-    // Only submit word if game is active and we're in drag mode
+    // Handle drag mode - submit word if we were dragging
     if ((settings.mode !== "blitz" || (blitzStarted && !blitzPaused)) && dragging) {
       onPointerUp();
+      return;
+    }
+    
+    // Handle tap mode - this was a tap, not a swipe
+    if (wasInTapMode && touchStartPos && !dragging) {
+      // Find which tile was tapped by getting the element at the touch position
+      const touch = e.changedTouches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      
+      if (element && element.closest('[data-tile-pos]')) {
+        const tileElement = element.closest('[data-tile-pos]') as HTMLElement;
+        const posStr = tileElement.getAttribute('data-tile-pos');
+        if (posStr) {
+          const [r, c] = posStr.split(',').map(Number);
+          const pos = { r, c };
+          
+          console.log(`Processing tap on tile ${r},${c}`);
+          
+          // Check for hammer interaction with stone tile
+          if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
+            console.log("Hammer interaction detected in onTouchEnd");
+            handleHammer(pos);
+            return;
+          }
+          
+          // Otherwise, handle as normal tile tap
+          onTileTap(pos);
+        }
+      }
     }
   }
 
