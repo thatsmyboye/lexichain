@@ -2017,7 +2017,9 @@ const handleExtraMoves = () => {
       return clearPath();
     }
     if (actualWord.length < 3) {
-      toast.warning("Words must be at least 3 letters");
+      if (!isTapMode) {
+        toast.warning("Words must be at least 3 letters");
+      }
       return clearPath();
     }
     if (!dict.has(actualWord)) {
@@ -3092,7 +3094,7 @@ const handleExtraMoves = () => {
 
             {/* Submit Button for Tap Mode */}
             {isTapMode && path.length > 0 && (
-              <div className="mt-3 flex justify-end">
+              <div className="mt-2">
                 <Button
                   onClick={submitTapWord}
                   disabled={path.length < 3}
