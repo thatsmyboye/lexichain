@@ -1880,6 +1880,14 @@ const handleExtraMoves = () => {
 
   // Touch event handlers for mobile support
   function onTouchStart(e: React.TouchEvent, pos: Pos) {
+    // Check if this is a hammer interaction with a stone tile - don't prevent default so onClick can fire
+    if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
+      // Let the click event fire for hammer functionality
+      const touch = e.touches[0];
+      setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+      return;
+    }
+    
     // Only prevent scrolling when game is active
     if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
       e.preventDefault(); // Prevent page scrolling
