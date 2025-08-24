@@ -1543,7 +1543,15 @@ const handleUseConsumable = async (consumableId: ConsumableId) => {
   // Handle different consumable activation patterns
   switch (consumableId) {
     case "hint_revealer":
-      // Hint executes immediately on tap
+      // Check if there are words available before consuming
+      const availableWords = getAvailableWordsForHint();
+      if (availableWords.length === 0) {
+        // No words available, end the game
+        setGameOver(true);
+        return;
+      }
+      
+      // Words are available, consume the item and activate hint
       const success = await useConsumable(consumableId);
       if (!success) {
         toast.error("Failed to use consumable");
@@ -1617,17 +1625,23 @@ const handleUseConsumable = async (consumableId: ConsumableId) => {
   }
 };
 
+// Helper function to get available words for hinting
+const getAvailableWordsForHint = () => {
+  if (!dict || !sorted || !board) return [];
+  
+  const probe = probeGrid(board, dict, sorted, 3, MAX_DFS_NODES);
+  return Array.from(probe.words).filter(word => 
+    !usedWords.some(used => used.word === word) && word.length >= 3
+  );
+};
+
 const handleHintRevealer = () => {
   if (!dict || !sorted || !board) return;
   
-  // Use existing probeGrid logic to find words
-  const probe = probeGrid(board, dict, sorted, 3, MAX_DFS_NODES);
-  const availableWords = Array.from(probe.words).filter(word => 
-    !usedWords.some(used => used.word === word) && word.length >= 3
-  );
+  const availableWords = getAvailableWordsForHint();
   
   if (availableWords.length === 0) {
-    toast.info("No more words to reveal!");
+    setGameOver(true);
     return;
   }
   
