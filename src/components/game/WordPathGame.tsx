@@ -793,7 +793,9 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
         gameOver,
         finalGrade,
         lastWordTiles: Array.from(lastWordTiles),
-        seed: getDailySeed()
+        seed: getDailySeed(),
+        benchmarks,
+        discoverableCount
       };
 
       await dailyChallengeState.saveState(gameState, immediate);
@@ -814,6 +816,22 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
       setFinalGrade(gameState.finalGrade);
       // Restore last word tiles to show shaded tiles from previous attempt
       setLastWordTiles(new Set(gameState.lastWordTiles || []));
+      
+      // Restore benchmarks and discoverable count, with fallback for backward compatibility
+      if (gameState.benchmarks && gameState.discoverableCount !== undefined) {
+        setBenchmarks(gameState.benchmarks);
+        setDiscoverableCount(gameState.discoverableCount);
+      } else if (dict && sorted && gameState.initialBoard) {
+        // Fallback: recalculate benchmarks for existing saves without them
+        const config = DIFFICULTY_CONFIG["medium"];
+        const probe = probeGrid(gameState.initialBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
+        const bms = probe.analysis ? 
+          computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) :
+          computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+        setBenchmarks(bms);
+        setDiscoverableCount(probe.words.size);
+      }
+      
       return { gameState, hasInitialBoard: !!gameState.initialBoard };
     }
     return false;

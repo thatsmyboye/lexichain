@@ -15,6 +15,8 @@ export type DailyChallengeGameState = {
   finalGrade: any;
   lastWordTiles?: string[];
   seed: string;
+  benchmarks?: any; // Store benchmark thresholds
+  discoverableCount?: number; // Store total discoverable words
 };
 
 export const useDailyChallengeState = (challengeDate: string) => {
