@@ -248,6 +248,7 @@ type ScoreBreakdown = {
   base: number;
   rarity: { sum: number; ultraCount: number; bonus: number };
   linkBonus: number;
+  linkMultiplier: number;
   lengthBonus: number;
   timeBonus: number;
   multipliers: { tileMultiplier: number; consumableMultiplier: number; combinedApplied: number; capped: boolean; cap: number };
@@ -295,11 +296,16 @@ function computeScoreBreakdown(params: {
   }
 
   const sharedTilesCount = lastWordTiles.size ? wordPath.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
-  const linkBonus = 2 * sharedTilesCount;
+  
+  // NEW: Multiplicative link bonus with diminishing returns
+  const linkMultiplier = 1 + (sharedTilesCount * 0.15 / (1 + sharedTilesCount * 0.05));
+  const linkBonus = 0; // Keep for backward compatibility in UI
 
   const raritySum = wordPath.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
   const ultraRareCount = wordPath.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
-  const rarityBonus = (RARITY_MULTIPLIER * raritySum) + (ultraRareCount * ULTRA_RARE_MULTIPLIER * 10);
+  
+  // NEW: Percentage-based rarity system
+  const rarityBonus = Math.round(base * (raritySum * 0.08)) + Math.round(base * (ultraRareCount * 0.12));
 
   // NEW: Length-based bonus system (replaces streak-based chain bonus)
   let lengthBonus = 0;
@@ -320,13 +326,14 @@ function computeScoreBreakdown(params: {
   const combinedApplied = Math.min(MULTIPLIER_CAP, combinedMultiplierRaw);
   const capped = combinedApplied !== combinedMultiplierRaw;
 
-  const totalBeforeMultipliers = base + rarityBonus + lengthBonus + linkBonus + timeBonus;
+  const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + timeBonus) * linkMultiplier);
   const total = Math.round(totalBeforeMultipliers * combinedApplied);
 
   return {
     base,
     rarity: { sum: raritySum, ultraCount: ultraRareCount, bonus: rarityBonus },
     linkBonus,
+    linkMultiplier,
     lengthBonus,
     timeBonus,
     multipliers: { tileMultiplier, consumableMultiplier, combinedApplied, capped, cap: MULTIPLIER_CAP as number },
@@ -893,6 +900,10 @@ useEffect(() => {
     // Save state after successful word submission
     saveGameState();
     
+    // Legacy variables needed for achievements and toasts
+    const sharedTilesCount = lastWordTiles.size ? wordPath.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
+    const multiplier = breakdown.multipliers.combinedApplied;
+    
     // Update the wild tile with the chosen letter permanently on the board
     const newBoard = board.map(row => [...row]);
     const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
@@ -911,32 +922,6 @@ useEffect(() => {
     if (settings.mode === "daily") {
       setMovesUsed(prev => prev + 1);
     }
-
-    const base = actualWord.length * actualWord.length;
-
-    const multiplierTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "multiplier");
-    let multiplier = 1;
-    multiplierTiles.forEach(p => {
-      const tile = specialTiles[p.r][p.c];
-      if (tile.value) multiplier *= tile.value;
-    });
-
-    const sharedTilesCount = lastWordTiles.size ? wordPath.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
-    const linkBonus = 2 * sharedTilesCount;
-
-    const raritySum = wordPath.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
-    const rarityBonus = RARITY_MULTIPLIER * raritySum;
-
-    // NEW: Length-based bonus system (replaces streak system)
-    let lengthBonus = 0;
-    if (actualWord.length >= 7) lengthBonus += 25;
-    if (actualWord.length >= 8) lengthBonus += 50;
-    if (actualWord.length >= 9) lengthBonus += 100;
-    if (actualWord.length >= 10) lengthBonus += 150;
-
-    const timeBonus = settings.mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
-
-    const totalGainLegacy = Math.round((base + rarityBonus + lengthBonus + linkBonus + timeBonus) * multiplier);
 
     const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
     let xChanged = 0;
@@ -2148,44 +2133,19 @@ const handleExtraMoves = () => {
     // Save state after successful word submission
     saveGameState();
     
+    // Legacy variables needed for achievements, toasts, and other legacy code
+    const sharedTilesCount = lastWordTiles.size ? path.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
+    const multiplier = breakdown.multipliers.combinedApplied;
+    
     // Increment moves for daily challenge
     if (settings.mode === "daily") {
       setMovesUsed(prev => prev + 1);
     }
 
-    // RECALIBRATED: Hybrid scoring formula
-    const base = (actualWord.length * 8) + (actualWord.length * actualWord.length * 2);
-
-    const multiplierTiles = path.filter(p => specialTiles[p.r][p.c].type === "multiplier");
-    let multiplier = 1;
-    multiplierTiles.forEach(p => {
-      const tile = specialTiles[p.r][p.c];
-      if (tile.value) multiplier *= tile.value;
-    });
-
-    const sharedTilesCount = lastWordTiles.size ? path.filter((p) => lastWordTiles.has(keyOf(p))).length : 0;
-    const linkBonus = 2 * sharedTilesCount;
-
-    const raritySum = path.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
-    const ultraRareCount = path.reduce((acc, p) => acc + (VERY_RARE.has(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
-    const rarityBonus = (RARITY_MULTIPLIER * raritySum) + (ultraRareCount * ULTRA_RARE_MULTIPLIER * 10);
-
-    // NEW: Length-based bonus system (replaces streak system)
-    let lengthBonus = 0;
-    if (actualWord.length >= 7) lengthBonus += 25;
-    if (actualWord.length >= 8) lengthBonus += 50;
-    if (actualWord.length >= 9) lengthBonus += 100;
-    if (actualWord.length >= 10) lengthBonus += 150;
-
-    const timeBonus = settings.mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
-
-    // Apply consumable score multiplier if active
+    // Legacy scoring removed - now using breakdown.total
+    
+    // Remove score multiplier effect after use if it was active
     const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
-    const consumableMultiplier = scoreMultiplierEffect?.data?.multiplier || 1;
-    
-    const totalGainLegacy = Math.round((base + rarityBonus + lengthBonus + linkBonus + timeBonus) * multiplier * consumableMultiplier);
-    
-    // Remove score multiplier effect after use
     if (scoreMultiplierEffect) {
       removeActiveEffect("score_multiplier");
       // Also remove from activated consumables
@@ -3144,6 +3104,17 @@ const handleExtraMoves = () => {
                   <div className="text-3xl font-semibold tracking-wide">
                     {special.type === "wild" ? "?" : ch}
                   </div>
+                  {/* Rarity indicators */}
+                  {special.type !== "wild" && letterRarity(ch) === 1 && (
+                    <div className="absolute top-0.5 right-0.5 text-xs font-bold text-orange-600 dark:text-orange-400">
+                      +
+                    </div>
+                  )}
+                  {special.type !== "wild" && letterRarity(ch) === 2 && (
+                    <div className="absolute top-0.5 right-0.5 text-xs font-bold text-purple-600 dark:text-purple-400">
+                      ★
+                    </div>
+                  )}
                   {selected && (
                     <div className="absolute top-1 right-2 text-xs font-medium text-muted-foreground">{idx + 1}</div>
                   )}
