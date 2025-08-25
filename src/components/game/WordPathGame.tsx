@@ -3309,7 +3309,7 @@ const handleExtraMoves = () => {
                 <div className="grid grid-cols-2 gap-y-1 text-xs">
                   <div>Base</div><div className="text-right">+{bd.base}</div>
                   <div>Rarity</div><div className="text-right">+{Math.round(bd.rarity.bonus)}{bd.rarity.ultraCount > 0 ? <span className="ml-1 text-[10px] opacity-70">(ultra {bd.rarity.ultraCount})</span> : null}</div>
-                  <div>Link</div><div className="text-right">+{bd.linkBonus}</div>
+                  <div>Link</div><div className="text-right">×{bd.linkMultiplier.toFixed(1)}</div>
                   <div>Length</div><div className="text-right">+{bd.lengthBonus}</div>
                   {bd.timeBonus > 0 ? (<><div>Blitz time</div><div className="text-right">+{bd.timeBonus}</div></>) : null}
                   <div className="col-span-2 border-t my-1" />
