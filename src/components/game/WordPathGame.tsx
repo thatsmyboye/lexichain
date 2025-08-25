@@ -478,9 +478,33 @@ function computeBoardAnalysis(
   const uniqueLetters = letterFreq.size;
   const connectivityScore = Math.min(1.5, uniqueLetters / 8); // Higher diversity = better connectivity
   
-  // Estimate maximum scoring potential 
-  const avgRarityPerWord = wordCount > 0 ? totalRarityScore / wordCount : 10;
-  const estimatedMaxScore = wordCount * avgWordLength * 15 + totalRarityScore * 2;
+  // Realistic maximum scoring potential using actual game scoring formula
+  // Use quadratic base scoring: (length² * 4) + (length * 12)
+  let estimatedMaxScore = 0;
+  words.forEach(word => {
+    const len = word.length;
+    const baseScore = (len * len * 4) + (len * 12);
+    
+    // Add realistic rarity bonus (8-20% of base score based on rare letters)
+    const rarityCount = word.split('').reduce((count, char) => {
+      return count + letterRarity(char);
+    }, 0);
+    const ultraRareCount = word.split('').reduce((count, char) => {
+      return count + (["J","Q","X","Z"].includes(char.toUpperCase()) ? 1 : 0);
+    }, 0);
+    const rarityBonus = Math.round(baseScore * (rarityCount * 0.08)) + Math.round(baseScore * (ultraRareCount * 0.12));
+    
+    // Add length bonuses for longer words
+    let lengthBonus = 0;
+    if (len >= 7) lengthBonus += 25;
+    if (len >= 8) lengthBonus += 50;
+    if (len >= 9) lengthBonus += 100;
+    if (len >= 10) lengthBonus += 150;
+    
+    // Assume potential 1.3x multiplier from links and special tiles
+    const wordScore = Math.round((baseScore + rarityBonus + lengthBonus) * 1.3);
+    estimatedMaxScore += wordScore;
+  });
   
   return {
     rarityScorePotential: totalRarityScore,
@@ -492,15 +516,29 @@ function computeBoardAnalysis(
 }
 
 function calculateWordScore(word: string, path: Pos[], grid: string[][]): number {
-  const baseScore = word.length * 10;
-  const rarityBonus = getRarityScore(word);
-  return baseScore + rarityBonus;
+  // Use the same quadratic formula as the actual game scoring
+  const len = word.length;
+  const baseScore = (len * len * 4) + (len * 12);
+  
+  // Calculate rarity bonus using actual game logic
+  const rarityCount = path.reduce((acc, p) => acc + letterRarity(grid[p.r][p.c]), 0);
+  const ultraRareCount = path.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(grid[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+  const rarityBonus = Math.round(baseScore * (rarityCount * 0.08)) + Math.round(baseScore * (ultraRareCount * 0.12));
+  
+  // Add length bonuses
+  let lengthBonus = 0;
+  if (len >= 7) lengthBonus += 25;
+  if (len >= 8) lengthBonus += 50;
+  if (len >= 9) lengthBonus += 100;
+  if (len >= 10) lengthBonus += 150;
+  
+  return baseScore + rarityBonus + lengthBonus;
 }
 
 function getRarityScore(word: string): number {
-  const rareLetters = new Set(['j', 'q', 'x', 'z', 'k']);
+  // Updated to match actual game rarity calculation
   return word.split('').reduce((score, char) => {
-    return score + (rareLetters.has(char.toLowerCase()) ? 50 : 0);
+    return score + letterRarity(char);
   }, 0);
 }
 

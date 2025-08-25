@@ -22,11 +22,12 @@ export function computeBenchmarksFromWordCount(wordCount: number, kMin: number):
   // Enhanced grid difficulty scaling - larger grids get significantly higher multipliers
   const gridScale = kMin <= 12 ? 1.0 : kMin <= 20 ? 1.4 : 2.0;
   
-  // SIGNIFICANTLY RECALIBRATED: Much higher thresholds for the generous scoring system
-  const bronze = Math.round(500 * scale * gridScale);
-  const silver = Math.round(1200 * scale * gridScale);
-  const gold = Math.round(2200 * scale * gridScale);
-  const platinum = Math.round(4000 * scale * gridScale);
+  // RECALIBRATED: Much higher thresholds to match quadratic scoring system
+  // These should align with what players can realistically achieve with the new scoring
+  const bronze = Math.round(1000 * scale * gridScale);
+  const silver = Math.round(2400 * scale * gridScale);
+  const gold = Math.round(4500 * scale * gridScale);
+  const platinum = Math.round(8000 * scale * gridScale);
   
   // For standard 4x4 grids (kMin = 12), ensure it shows as Medium by default
   const rating = kMin === 12 && wordCount >= 10 ? "Medium" : 
@@ -44,30 +45,30 @@ export function computeBoardSpecificBenchmarks(
   const richness = Math.max(1, wordCount) / Math.max(1, kMin);
   const gridScale = kMin <= 12 ? 1.0 : kMin <= 20 ? 1.4 : 2.0;
   
-  // Board-specific difficulty modifiers
-  const rarityModifier = Math.max(0.7, Math.min(1.5, analysis.rarityScorePotential / 1000));
-  const lengthModifier = Math.max(0.8, Math.min(1.3, analysis.avgWordLength / 5.5));
-  const connectivityModifier = Math.max(0.75, Math.min(1.4, analysis.connectivityScore));
+  // Board-specific difficulty modifiers (more conservative ranges)
+  const rarityModifier = Math.max(0.85, Math.min(1.25, analysis.rarityScorePotential / 800));
+  const lengthModifier = Math.max(0.9, Math.min(1.2, analysis.avgWordLength / 5.0));
+  const connectivityModifier = Math.max(0.9, Math.min(1.15, analysis.connectivityScore));
   
-  // Combined difficulty scale - emphasizes actual scoring potential
-  const boardDifficultyScale = rarityModifier * lengthModifier * connectivityModifier;
-  const potentialScale = Math.max(0.6, Math.min(2.0, analysis.maxScorePotential / 8000));
+  // Use actual scoring potential as primary scaling factor
+  const potentialScale = Math.max(0.15, Math.min(0.4, analysis.maxScorePotential / 15000));
   
-  // Dynamic thresholds based on actual board scoring potential
-  const baseBronze = 400;
-  const baseSilver = 900;
-  const baseGold = 1800;
-  const basePlatinum = 3200;
+  // RECALIBRATED: Much higher base thresholds to match actual scoring system
+  // Bronze: 6-8 basic words, Silver: requires strategy, Gold: good play, Platinum: excellent play
+  const baseBronze = 1200;
+  const baseSilver = 2800; 
+  const baseGold = 5200;
+  const basePlatinum = 9000;
   
-  const bronze = Math.round(baseBronze * boardDifficultyScale * gridScale * potentialScale);
-  const silver = Math.round(baseSilver * boardDifficultyScale * gridScale * potentialScale);
-  const gold = Math.round(baseGold * boardDifficultyScale * gridScale * potentialScale);
-  const platinum = Math.round(basePlatinum * boardDifficultyScale * gridScale * potentialScale);
+  const bronze = Math.round(baseBronze * potentialScale * gridScale);
+  const silver = Math.round(baseSilver * potentialScale * gridScale);
+  const gold = Math.round(baseGold * potentialScale * gridScale);
+  const platinum = Math.round(basePlatinum * potentialScale * gridScale);
   
-  // More sophisticated difficulty rating based on multiple factors
-  const complexityScore = (rarityModifier + lengthModifier + connectivityModifier) / 3;
-  const rating = complexityScore >= 1.2 ? "Easy" : 
-                 complexityScore >= 0.95 ? "Medium" : "Hard";
+  // Difficulty rating based on scoring potential relative to thresholds
+  const scoreRatio = analysis.maxScorePotential / Math.max(1, bronze);
+  const rating = scoreRatio >= 8 ? "Easy" : 
+                 scoreRatio >= 5 ? "Medium" : "Hard";
   
   return { bronze, silver, gold, platinum, rating, wordCount };
 }
