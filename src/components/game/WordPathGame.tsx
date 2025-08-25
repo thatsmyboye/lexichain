@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { computeBenchmarksFromWordCount, type Benchmarks } from "@/lib/benchmarks";
+import { computeBenchmarksFromWordCount, computeBoardSpecificBenchmarks, type Benchmarks, type BoardAnalysis } from "@/lib/benchmarks";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
 import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
@@ -360,14 +360,20 @@ function countVowelRatio(grid: string[][]) {
   return t ? v / t : 0.5;
 }
 
-type ProbeResult = { words: Set<string>; linkFound: boolean; usage: Map<string, number> };
+type ProbeResult = { 
+  words: Set<string>; 
+  linkFound: boolean; 
+  usage: Map<string, number>;
+  analysis?: BoardAnalysis;
+};
 
 function probeGrid(
   grid: string[][],
   wordSet: Set<string>,
   sortedArr: string[],
   K: number,
-  maxNodes: number
+  maxNodes: number,
+  includeAnalysis: boolean = false
 ): ProbeResult {
   const N = grid.length;
   let nodes = 0;
@@ -376,6 +382,22 @@ function probeGrid(
   let linkFound = false;
   const pathSets: Array<Set<string>> = [];
   const dirs = [-1, 0, 1];
+
+  // Analysis tracking
+  const letterFreq = new Map<string, number>();
+  let totalWordLength = 0;
+  let maxWordScore = 0;
+  let totalRarityScore = 0;
+
+  // Initialize letter frequency map for the board
+  if (includeAnalysis) {
+    for (let r = 0; r < N; r++) {
+      for (let c = 0; c < N; c++) {
+        const letter = grid[r][c].toLowerCase();
+        letterFreq.set(letter, (letterFreq.get(letter) || 0) + 1);
+      }
+    }
+  }
 
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
     const stack: { pos: Pos; path: Pos[]; word: string }[] = [
@@ -389,20 +411,37 @@ function probeGrid(
       const nextPath = [...pp, pos];
       const nextWord = word + grid[pos.r][pos.c].toLowerCase();
       nodes++;
-      if (nodes > maxNodes) return { words, linkFound, usage };
+      if (nodes > maxNodes) {
+        return includeAnalysis ? 
+          { words, linkFound, usage, analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, maxWordScore, totalRarityScore, N) } : 
+          { words, linkFound, usage };
+      }
 
       if (nextWord.length >= 3 && wordSet.has(nextWord)) {
         if (!words.has(nextWord)) {
           words.add(nextWord);
           const set = new Set(nextPath.map(keyOf));
           for (const kk of set) usage.set(kk, (usage.get(kk) ?? 0) + 1);
+          
+          // Analysis calculations
+          if (includeAnalysis) {
+            totalWordLength += nextWord.length;
+            const wordScore = calculateWordScore(nextWord, nextPath, grid);
+            maxWordScore = Math.max(maxWordScore, wordScore);
+            totalRarityScore += getRarityScore(nextWord);
+          }
+          
           for (const s of pathSets) {
             let overlaps = false;
             for (const kk of set) { if (s.has(kk)) { overlaps = true; break; } }
             if (overlaps) { linkFound = true; break; }
           }
           pathSets.push(set);
-          if (words.size >= K && linkFound) return { words, linkFound, usage };
+          if (words.size >= K && linkFound) {
+            return includeAnalysis ?
+              { words, linkFound, usage, analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, maxWordScore, totalRarityScore, N) } :
+              { words, linkFound, usage };
+          }
         }
       }
 
@@ -418,7 +457,51 @@ function probeGrid(
     }
   }
 
-  return { words, linkFound, usage };
+  return includeAnalysis ?
+    { words, linkFound, usage, analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, maxWordScore, totalRarityScore, N) } :
+    { words, linkFound, usage };
+}
+
+function computeBoardAnalysis(
+  words: Set<string>, 
+  letterFreq: Map<string, number>, 
+  totalWordLength: number, 
+  maxWordScore: number, 
+  totalRarityScore: number, 
+  gridSize: number
+): BoardAnalysis {
+  const wordCount = words.size;
+  const avgWordLength = wordCount > 0 ? totalWordLength / wordCount : 4;
+  
+  // Connectivity score based on letter distribution evenness
+  const totalLetters = gridSize * gridSize;
+  const uniqueLetters = letterFreq.size;
+  const connectivityScore = Math.min(1.5, uniqueLetters / 8); // Higher diversity = better connectivity
+  
+  // Estimate maximum scoring potential 
+  const avgRarityPerWord = wordCount > 0 ? totalRarityScore / wordCount : 10;
+  const estimatedMaxScore = wordCount * avgWordLength * 15 + totalRarityScore * 2;
+  
+  return {
+    rarityScorePotential: totalRarityScore,
+    avgWordLength,
+    connectivityScore,
+    letterDistribution: letterFreq,
+    maxScorePotential: estimatedMaxScore
+  };
+}
+
+function calculateWordScore(word: string, path: Pos[], grid: string[][]): number {
+  const baseScore = word.length * 10;
+  const rarityBonus = getRarityScore(word);
+  return baseScore + rarityBonus;
+}
+
+function getRarityScore(word: string): number {
+  const rareLetters = new Set(['j', 'q', 'x', 'z', 'k']);
+  return word.split('').reduce((score, char) => {
+    return score + (rareLetters.has(char.toLowerCase()) ? 50 : 0);
+  }, 0);
 }
 
 function mutateGrid(
@@ -1415,8 +1498,10 @@ async function startDailyChallenge() {
     setIsGenerating(true);
     
     try {
-      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
-      const bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
+      const bms = probe.analysis ? 
+        computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) :
+        computeBenchmarksFromWordCount(probe.words.size, config.minWords);
       setBenchmarks(bms);
       setDiscoverableCount(probe.words.size);
       toast.success(`Daily Challenge ${dailySeed} ready! ${settings.dailyMovesLimit} moves to make your best score.`);
@@ -1497,8 +1582,10 @@ async function resetDailyChallenge() {
         }
       }
       
-      const probe = probeGrid(resetBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
-      const bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      const probe = probeGrid(resetBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
+      const bms = probe.analysis ? 
+        computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) :
+        computeBenchmarksFromWordCount(probe.words.size, config.minWords);
       setBoard(resetBoard);
       setBenchmarks(bms);
       setDiscoverableCount(probe.words.size);
