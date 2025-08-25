@@ -3189,7 +3189,7 @@ const handleExtraMoves = () => {
               <div>
                 <div className="text-xs text-muted-foreground">Score</div>
                 <div className="text-2xl font-bold">{score}</div>
-                {benchmarks && settings.mode === "daily" && (
+                {benchmarks && (
                   <div className="mt-2 space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Daily Challenge Tiers</div>
                     <div className="space-y-1">
@@ -3234,7 +3234,7 @@ const handleExtraMoves = () => {
                     </div>
                   </div>
                 )}
-                {benchmarks && settings.mode !== "daily" && (
+                {false && (
                   <div className="mt-1 text-xs text-muted-foreground">
                     {(() => {
                       const grade = score >= benchmarks.platinum ? "Platinum"
