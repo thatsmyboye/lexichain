@@ -1,7 +1,7 @@
 export type AchievementId =
-  | "streak3"
-  | "streak5"
-  | "streak8"
+  | "wordArtisan"
+  | "lengthMaster"
+  | "epicWordsmith"
   | "link2"
   | "link3"
   | "link4"
@@ -23,10 +23,10 @@ export type AchievementId =
 export type Achievement = { id: AchievementId; label: string; scoreBonus: number; rarity: "common" | "rare" | "epic" | "legendary" };
 
 export const ACHIEVEMENTS: Record<AchievementId, Achievement> = {
-  // RECALIBRATED: Normalized achievement tiers
-  streak3: { id: "streak3", label: "Streak 3", scoreBonus: 20, rarity: "common" },
-  streak5: { id: "streak5", label: "Streak 5", scoreBonus: 50, rarity: "rare" },
-  streak8: { id: "streak8", label: "Streak 8", scoreBonus: 120, rarity: "epic" },
+  // NEW: Length-focused achievement system (replaces streak-based)
+  wordArtisan: { id: "wordArtisan", label: "Word Artisan (3 words of 6+ letters)", scoreBonus: 20, rarity: "common" },
+  lengthMaster: { id: "lengthMaster", label: "Length Master (5 words of 7+ letters)", scoreBonus: 50, rarity: "rare" },
+  epicWordsmith: { id: "epicWordsmith", label: "Epic Wordsmith (3 words of 8+ letters)", scoreBonus: 120, rarity: "epic" },
   link2: { id: "link2", label: "Tight Link (2+ shared)", scoreBonus: 15, rarity: "common" },
   link3: { id: "link3", label: "Bound Together (3+ shared)", scoreBonus: 40, rarity: "rare" },
   link4: { id: "link4", label: "Perfect Interlock (4+ shared)", scoreBonus: 80, rarity: "epic" },

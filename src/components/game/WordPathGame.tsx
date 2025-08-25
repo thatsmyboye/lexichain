@@ -248,7 +248,7 @@ type ScoreBreakdown = {
   base: number;
   rarity: { sum: number; ultraCount: number; bonus: number };
   linkBonus: number;
-  chainBonus: number;
+  lengthBonus: number;
   timeBonus: number;
   multipliers: { tileMultiplier: number; consumableMultiplier: number; combinedApplied: number; capped: boolean; cap: number };
   totalBeforeMultipliers: number;
@@ -285,7 +285,8 @@ function computeScoreBreakdown(params: {
   } = params;
 
   const wordLen = actualWord.length;
-  const base = baseMode === "hybrid" ? (wordLen * 8) + (wordLen * wordLen * 2) : (wordLen * wordLen);
+  // NEW: Enhanced word length scoring - quadratic emphasis on length
+  const base = baseMode === "hybrid" ? (wordLen * wordLen * 4) + (wordLen * 12) : (wordLen * wordLen);
 
   let tileMultiplier = 1;
   for (const p of wordPath) {
@@ -300,13 +301,12 @@ function computeScoreBreakdown(params: {
   const ultraRareCount = wordPath.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
   const rarityBonus = (RARITY_MULTIPLIER * raritySum) + (ultraRareCount * ULTRA_RARE_MULTIPLIER * 10);
 
-  const qualifies = actualWord.length >= STREAK_TARGET_LEN;
-  const nextStreak = qualifies ? streak + 1 : 0;
-
-  let chainBonus = 0;
-  if (nextStreak > 0) {
-    chainBonus = chainMode === "cappedLinear" ? Math.min(100, 5 + (nextStreak * 8)) : (5 * nextStreak);
-  }
+  // NEW: Length-based bonus system (replaces streak-based chain bonus)
+  let lengthBonus = 0;
+  if (wordLen >= 7) lengthBonus += 25;
+  if (wordLen >= 8) lengthBonus += 50;
+  if (wordLen >= 9) lengthBonus += 100;
+  if (wordLen >= 10) lengthBonus += 150;
 
   const timeBonus = mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
 
@@ -320,14 +320,14 @@ function computeScoreBreakdown(params: {
   const combinedApplied = Math.min(MULTIPLIER_CAP, combinedMultiplierRaw);
   const capped = combinedApplied !== combinedMultiplierRaw;
 
-  const totalBeforeMultipliers = base + rarityBonus + chainBonus + linkBonus + timeBonus;
+  const totalBeforeMultipliers = base + rarityBonus + lengthBonus + linkBonus + timeBonus;
   const total = Math.round(totalBeforeMultipliers * combinedApplied);
 
   return {
     base,
     rarity: { sum: raritySum, ultraCount: ultraRareCount, bonus: rarityBonus },
     linkBonus,
-    chainBonus,
+    lengthBonus,
     timeBonus,
     multipliers: { tileMultiplier, consumableMultiplier, combinedApplied, capped, cap: MULTIPLIER_CAP as number },
     totalBeforeMultipliers,
@@ -927,13 +927,16 @@ useEffect(() => {
     const raritySum = wordPath.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
     const rarityBonus = RARITY_MULTIPLIER * raritySum;
 
-    const qualifies = actualWord.length >= STREAK_TARGET_LEN;
-    const nextStreak = qualifies ? streak + 1 : 0;
-    const chainBonus = 5 * nextStreak;
+    // NEW: Length-based bonus system (replaces streak system)
+    let lengthBonus = 0;
+    if (actualWord.length >= 7) lengthBonus += 25;
+    if (actualWord.length >= 8) lengthBonus += 50;
+    if (actualWord.length >= 9) lengthBonus += 100;
+    if (actualWord.length >= 10) lengthBonus += 150;
 
     const timeBonus = settings.mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
 
-    const totalGainLegacy = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier);
+    const totalGainLegacy = Math.round((base + rarityBonus + lengthBonus + linkBonus + timeBonus) * multiplier);
 
     const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
     let xChanged = 0;
@@ -1074,9 +1077,16 @@ useEffect(() => {
       }
     };
 
-    if (nextStreak >= 3) checkAndAdd(true, "streak3");
-    if (nextStreak >= 5) checkAndAdd(true, "streak5");
-    if (nextStreak >= 8) checkAndAdd(true, "streak8");
+    // NEW: Length-based achievement checking system (replaces streak-based)
+    // Track words by length for new achievements
+    const currentGameWords = [...usedWords, { word: actualWord, path: wordPath, breakdown }];
+    const sixPlusWords = currentGameWords.filter(w => w.word.length >= 6).length;
+    const sevenPlusWords = currentGameWords.filter(w => w.word.length >= 7).length;
+    const eightPlusWords = currentGameWords.filter(w => w.word.length >= 8).length;
+
+    if (sixPlusWords >= 3) checkAndAdd(true, "wordArtisan");
+    if (sevenPlusWords >= 5) checkAndAdd(true, "lengthMaster");
+    if (eightPlusWords >= 3) checkAndAdd(true, "epicWordsmith");
     if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
     if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
     if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
@@ -1104,7 +1114,7 @@ useEffect(() => {
     const finalScore = score + totalGain + achievementBonus;
     
     setScore(finalScore);
-    setStreak(nextStreak);
+    // Remove streak dependency - no longer needed in length-based system
 
     setUnlocked(prev => {
       const next = new Set(prev);
@@ -2160,10 +2170,12 @@ const handleExtraMoves = () => {
     const ultraRareCount = path.reduce((acc, p) => acc + (VERY_RARE.has(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
     const rarityBonus = (RARITY_MULTIPLIER * raritySum) + (ultraRareCount * ULTRA_RARE_MULTIPLIER * 10);
 
-    const qualifies = actualWord.length >= STREAK_TARGET_LEN;
-    const nextStreak = qualifies ? streak + 1 : 0;
-    // RECALIBRATED: Linear streak bonus with cap to prevent runaway scoring
-    const chainBonus = nextStreak > 0 ? Math.min(100, 5 + (nextStreak * 8)) : 0;
+    // NEW: Length-based bonus system (replaces streak system)
+    let lengthBonus = 0;
+    if (actualWord.length >= 7) lengthBonus += 25;
+    if (actualWord.length >= 8) lengthBonus += 50;
+    if (actualWord.length >= 9) lengthBonus += 100;
+    if (actualWord.length >= 10) lengthBonus += 150;
 
     const timeBonus = settings.mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
 
@@ -2171,7 +2183,7 @@ const handleExtraMoves = () => {
     const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
     const consumableMultiplier = scoreMultiplierEffect?.data?.multiplier || 1;
     
-    const totalGainLegacy = Math.round((base + rarityBonus + chainBonus + linkBonus + timeBonus) * multiplier * consumableMultiplier);
+    const totalGainLegacy = Math.round((base + rarityBonus + lengthBonus + linkBonus + timeBonus) * multiplier * consumableMultiplier);
     
     // Remove score multiplier effect after use
     if (scoreMultiplierEffect) {
@@ -2323,9 +2335,16 @@ const handleExtraMoves = () => {
       }
     };
 
-    if (nextStreak >= 3) checkAndAdd(true, "streak3");
-    if (nextStreak >= 5) checkAndAdd(true, "streak5");
-    if (nextStreak >= 8) checkAndAdd(true, "streak8");
+    // NEW: Length-based achievement checking system (replaces streak-based)
+    // Track words by length for new achievements
+    const currentGameWords = [...usedWords, { word: actualWord, path, breakdown }];
+    const sixPlusWords = currentGameWords.filter(w => w.word.length >= 6).length;
+    const sevenPlusWords = currentGameWords.filter(w => w.word.length >= 7).length;
+    const eightPlusWords = currentGameWords.filter(w => w.word.length >= 8).length;
+
+    if (sixPlusWords >= 3) checkAndAdd(true, "wordArtisan");
+    if (sevenPlusWords >= 5) checkAndAdd(true, "lengthMaster");
+    if (eightPlusWords >= 3) checkAndAdd(true, "epicWordsmith");
     if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
     if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
     if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
@@ -2353,7 +2372,7 @@ const handleExtraMoves = () => {
     const finalScore = score + totalGain + achievementBonus;
     
     setScore(finalScore);
-    setStreak(nextStreak);
+    // Remove streak dependency - no longer needed in length-based system
 
     setUnlocked(prev => {
       const next = new Set(prev);
@@ -3199,7 +3218,52 @@ const handleExtraMoves = () => {
               <div>
                 <div className="text-xs text-muted-foreground">Score</div>
                 <div className="text-2xl font-bold">{score}</div>
-                {benchmarks && (
+                {benchmarks && settings.mode === "daily" && (
+                  <div className="mt-2 space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">Daily Challenge Tiers</div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className={`flex items-center gap-1 ${score >= benchmarks.bronze ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
+                          🥉 Bronze
+                        </span>
+                        <span className={score >= benchmarks.bronze ? 'font-medium' : ''}>{benchmarks.bronze}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className={`flex items-center gap-1 ${score >= benchmarks.silver ? 'text-gray-500 font-medium' : 'text-muted-foreground'}`}>
+                          🥈 Silver
+                        </span>
+                        <span className={score >= benchmarks.silver ? 'font-medium' : ''}>{benchmarks.silver}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className={`flex items-center gap-1 ${score >= benchmarks.gold ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
+                          🥇 Gold
+                        </span>
+                        <span className={score >= benchmarks.gold ? 'font-medium' : ''}>{benchmarks.gold}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className={`flex items-center gap-1 ${score >= benchmarks.platinum ? 'text-blue-600 font-medium' : 'text-muted-foreground'}`}>
+                          💎 Platinum
+                        </span>
+                        <span className={score >= benchmarks.platinum ? 'font-medium' : ''}>{benchmarks.platinum}</span>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full bg-secondary/20 rounded-full h-2 mt-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.min(100, (score / benchmarks.platinum) * 100)}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-center text-muted-foreground">
+                      {score >= benchmarks.platinum ? 'Platinum Achieved!' : 
+                       score >= benchmarks.gold ? `${benchmarks.platinum - score} to Platinum` :
+                       score >= benchmarks.silver ? `${benchmarks.gold - score} to Gold` :
+                       score >= benchmarks.bronze ? `${benchmarks.silver - score} to Silver` :
+                       `${benchmarks.bronze - score} to Bronze`}
+                    </div>
+                  </div>
+                )}
+                {benchmarks && settings.mode !== "daily" && (
                   <div className="mt-1 text-xs text-muted-foreground">
                     {(() => {
                       const grade = score >= benchmarks.platinum ? "Platinum"
@@ -3275,7 +3339,7 @@ const handleExtraMoves = () => {
                   <div>Base</div><div className="text-right">+{bd.base}</div>
                   <div>Rarity</div><div className="text-right">+{Math.round(bd.rarity.bonus)}{bd.rarity.ultraCount > 0 ? <span className="ml-1 text-[10px] opacity-70">(ultra {bd.rarity.ultraCount})</span> : null}</div>
                   <div>Link</div><div className="text-right">+{bd.linkBonus}</div>
-                  <div>Streak</div><div className="text-right">+{bd.chainBonus}</div>
+                  <div>Length</div><div className="text-right">+{bd.lengthBonus}</div>
                   {bd.timeBonus > 0 ? (<><div>Blitz time</div><div className="text-right">+{bd.timeBonus}</div></>) : null}
                   <div className="col-span-2 border-t my-1" />
                   <div>Subtotal</div><div className="text-right">+{bd.totalBeforeMultipliers}</div>
@@ -3363,7 +3427,7 @@ const handleExtraMoves = () => {
                                   <div>Base</div><div className="text-right">+{entry.breakdown.base}</div>
                                   <div>Rarity</div><div className="text-right">+{Math.round(entry.breakdown.rarity.bonus)}</div>
                                   <div>Link</div><div className="text-right">+{entry.breakdown.linkBonus}</div>
-                                  <div>Streak</div><div className="text-right">+{entry.breakdown.chainBonus}</div>
+                                  <div>Length</div><div className="text-right">+{entry.breakdown.lengthBonus}</div>
                                   {entry.breakdown.timeBonus > 0 ? (<><div>Blitz time</div><div className="text-right">+{entry.breakdown.timeBonus}</div></>) : null}
                                   <div className="col-span-2 border-t my-1" />
                                   <div>Subtotal</div><div className="text-right">+{entry.breakdown.totalBeforeMultipliers}</div>
