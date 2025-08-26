@@ -68,6 +68,8 @@ const StatsPage = () => {
 
   const fetchDailyStats = async (userId: string) => {
     try {
+      console.log('Fetching daily stats for user:', userId);
+      
       const { data, error } = await supabase
         .from('daily_challenge_results')
         .select('score, achievement_level, challenge_date')
@@ -79,24 +81,85 @@ const StatsPage = () => {
         return;
       }
 
-      const totalChallenges = data?.length || 0;
-      const bestScore = Math.max(...(data?.map(d => d.score) || [0]), 0);
-      
-      // Calculate current streak (consecutive days with any achievement)
-      let currentStreak = 0;
-      if (data && data.length > 0) {
-        for (const result of data) {
-          if (result.achievement_level !== 'None') {
-            currentStreak++;
-          } else {
-            break;
-          }
-        }
+      console.log('Daily challenge data:', data);
+
+      // Handle empty data case
+      if (!data || data.length === 0) {
+        console.log('No daily challenge data found');
+        setDailyStats({ totalChallenges: 0, bestScore: 0, currentStreak: 0 });
+        return;
       }
 
+      const totalChallenges = data.length;
+      
+      // Safe calculation of best score
+      const scores = data.map(d => d.score).filter(score => score != null);
+      const bestScore = scores.length > 0 ? Math.max(...scores) : 0;
+      
+      // Calculate current streak (consecutive days of participation)
+      let currentStreak = 0;
+      
+      // Sort data by date descending to start from most recent
+      const sortedData = [...data].sort((a, b) => 
+        new Date(b.challenge_date).getTime() - new Date(a.challenge_date).getTime()
+      );
+      
+      console.log('Calculating streak from sorted data:', sortedData);
+      
+      // Check if user played today or yesterday to start counting streak
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      let expectedDate = new Date(today);
+      let foundToday = false;
+      
+      // Check if user played today
+      const todayStr = today.toISOString().split('T')[0];
+      const hasPlayedToday = sortedData.some(result => result.challenge_date === todayStr);
+      
+      if (hasPlayedToday) {
+        foundToday = true;
+        currentStreak = 1;
+        expectedDate = new Date(yesterday);
+      } else {
+        // If not played today, start checking from yesterday
+        expectedDate = new Date(yesterday);
+      }
+      
+      console.log('Starting streak calculation:', { hasPlayedToday, foundToday, expectedDate: expectedDate.toISOString().split('T')[0] });
+      
+      // Count consecutive days of participation (skip first if already counted today)
+      const startIndex = foundToday && sortedData[0]?.challenge_date === todayStr ? 1 : 0;
+      
+      for (let i = startIndex; i < sortedData.length; i++) {
+        const resultDate = new Date(sortedData[i].challenge_date);
+        const expectedDateStr = expectedDate.toISOString().split('T')[0];
+        const resultDateStr = resultDate.toISOString().split('T')[0];
+        
+        console.log('Checking date:', { expected: expectedDateStr, actual: resultDateStr });
+        
+        if (resultDateStr === expectedDateStr) {
+          // Found participation for expected date - count it regardless of achievement level
+          currentStreak++;
+          console.log('Streak continued, now:', currentStreak);
+          
+          // Move to previous day
+          expectedDate.setDate(expectedDate.getDate() - 1);
+        } else {
+          // Gap found - streak is broken
+          console.log('Gap found, streak broken at:', currentStreak);
+          break;
+        }
+      }
+      
+      console.log('Final daily stats:', { totalChallenges, bestScore, currentStreak });
       setDailyStats({ totalChallenges, bestScore, currentStreak });
+      
     } catch (error) {
       console.error('Error fetching daily stats:', error);
+      // Set safe fallback values
+      setDailyStats({ totalChallenges: 0, bestScore: 0, currentStreak: 0 });
     }
   };
 
