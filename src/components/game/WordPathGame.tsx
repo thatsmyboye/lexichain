@@ -32,7 +32,7 @@ type SpecialTile = {
   expiryTurns?: number;
 };
 
-type GameMode = "classic" | "target" | "daily" | "practice";
+type GameMode = "classic" | "target" | "daily" | "practice" | "blitz";
 
 type GameSettings = {
   scoreThreshold: number;
@@ -265,7 +265,7 @@ function computeScoreBreakdown(params: {
   specialTiles: SpecialTile[][];
   lastWordTiles: Set<string>;
   streak: number;
-  mode: "classic" | "daily" | "target" | "practice";
+  mode: "classic" | "daily" | "target" | "practice" | "blitz";
   blitzMultiplier: number;
   activeEffects: Array<{ id: string; data?: Record<string, unknown> }>;
   baseMode?: "hybrid" | "square";
@@ -588,7 +588,7 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
   return lastBoard;
 }
 
-export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" | "practice" }) {
+export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" | "practice" | "blitz" }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
   const { updateGoalProgress } = useGoals(user);
@@ -3114,7 +3114,8 @@ const handleExtraMoves = () => {
             </div>
           )}
           
-          {/* Temporarily disabled blitz mode */}
+          {/* Temporarily disabled blitz mode 
+          {settings.mode === "practice" && (
             <div className="flex justify-center mb-4">
               <Button 
                 onClick={() => {
@@ -3158,6 +3159,7 @@ const handleExtraMoves = () => {
               </Button>
             </div>
           )}
+          */}
           
           <div
             className="relative"
@@ -3168,7 +3170,7 @@ const handleExtraMoves = () => {
               touchAction: 'auto'
             }}
           >
-            {/* Temporarily disabled blitz overlay */}
+            {/* Temporarily disabled blitz overlay
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/95 backdrop-blur-lg rounded-lg">
                 <div className="text-center space-y-4 p-6">
                   {!blitzStarted ? (
@@ -3221,7 +3223,7 @@ const handleExtraMoves = () => {
                   )}
                 </div>
               </div>
-            )}
+            */}
             
             <div 
               className="grid gap-3 select-none max-w-md"
@@ -3485,7 +3487,8 @@ const handleExtraMoves = () => {
                     {settings.dailyMovesLimit - movesUsed} moves remaining
                   </div>
                 )}
-                {/* Temporarily disabled blitz timer */}
+                {/* Temporarily disabled blitz timer 
+                {settings.mode === "blitz" && (
                   <div className="mt-1 text-xs">
                     <div className="flex items-center gap-2">
                       <div className={`font-medium ${timeRemaining <= 10 ? 'text-red-500' : timeRemaining <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
@@ -3499,6 +3502,7 @@ const handleExtraMoves = () => {
                     )}
                   </div>
                 )}
+                */}
                 {settings.mode === "daily" && gameOver && (
                   <Button 
                     variant="outline" 

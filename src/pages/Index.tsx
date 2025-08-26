@@ -8,7 +8,7 @@ const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice">("classic");
+  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz">("classic");
   const navigate = useNavigate();
   useEffect(() => {
     document.title = "Lexichain | Build word chains by reusing tiles";
@@ -23,7 +23,7 @@ const Index = () => {
   const handlePlayClick = () => {
     setShowModeSelection(true);
   };
-  const handleModeSelect = (mode: "classic" | "daily" | "practice") => {
+  const handleModeSelect = (mode: "classic" | "daily" | "practice" | "blitz") => {
     setSelectedMode(mode);
     setShowModeSelection(false);
     setShowGame(true);
