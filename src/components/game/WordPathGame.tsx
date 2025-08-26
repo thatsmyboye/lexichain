@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { computeBenchmarksFromWordCount, computeBoardSpecificBenchmarks, type Benchmarks, type BoardAnalysis } from "@/lib/benchmarks";
+import { computeBenchmarksFromWordCount, computeBoardSpecificBenchmarks, computeDynamicBenchmarks, type Benchmarks, type BoardAnalysis } from "@/lib/benchmarks";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
 import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
@@ -1588,9 +1588,28 @@ async function startDailyChallenge() {
     
     try {
       const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
-      const bms = probe.analysis ? 
-        computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) :
-        computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      // Try to compute dynamic benchmarks first, fallback to static if needed
+      let bms: Benchmarks;
+      try {
+        if (probe.analysis && user) {
+          bms = await computeDynamicBenchmarks(
+            dailySeed, 
+            probe.words.size, 
+            config.minWords, 
+            probe.analysis, 
+            supabase
+          );
+        } else if (probe.analysis) {
+          bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
+        } else {
+          bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+        }
+      } catch (error) {
+        console.error('Error computing benchmarks, falling back to static:', error);
+        bms = probe.analysis 
+          ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis)
+          : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      }
       setBenchmarks(bms);
       setDiscoverableCount(probe.words.size);
       toast.success(`Daily Challenge ${dailySeed} ready! ${settings.dailyMovesLimit} moves to make your best score.`);
@@ -1672,9 +1691,28 @@ async function resetDailyChallenge() {
       }
       
       const probe = probeGrid(resetBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
-      const bms = probe.analysis ? 
-        computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) :
-        computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      // Try to compute dynamic benchmarks first, fallback to static if needed
+      let bms: Benchmarks;
+      try {
+        if (probe.analysis && user) {
+          bms = await computeDynamicBenchmarks(
+            getDailySeed(), 
+            probe.words.size, 
+            config.minWords, 
+            probe.analysis, 
+            supabase
+          );
+        } else if (probe.analysis) {
+          bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
+        } else {
+          bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+        }
+      } catch (error) {
+        console.error('Error computing benchmarks, falling back to static:', error);
+        bms = probe.analysis 
+          ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis)
+          : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      }
       setBoard(resetBoard);
       setBenchmarks(bms);
       setDiscoverableCount(probe.words.size);
@@ -1764,6 +1802,12 @@ const handleUseConsumable = async (consumableId: ConsumableId) => {
         
         if (!hasStone) {
           toast.error("No stone tiles available to break");
+          return;
+        }
+        
+        // Check if user has hammer consumables in inventory
+        if (!consumableInventory.hammer || consumableInventory.hammer.quantity <= 0) {
+          toast.error("No hammer consumables available");
           return;
         }
         
@@ -1901,14 +1945,14 @@ const handleScoreMultiplier = () => {
   toast.success("Next word will have 2x score!");
 };
 
-const handleHammer = (targetPos?: Pos) => {
+const handleHammer = async (targetPos?: Pos) => {
   if (path.length > 0) {
     toast.error("Cannot use hammer while a word is in progress");
     return;
   }
   
   if (!targetPos) {
-    // This shouldn't happen with the new system, but handle gracefully
+    console.error("handleHammer called without target position");
     return;
   }
   
@@ -1916,6 +1960,12 @@ const handleHammer = (targetPos?: Pos) => {
   const tile = specialTiles[targetPos.r][targetPos.c];
   if (tile.type !== "stone") {
     toast.error("Can only use hammer on stone tiles");
+    return;
+  }
+  
+  const success = await useConsumable("hammer");
+  if (!success) {
+    toast.error("Failed to use hammer consumable");
     return;
   }
   
@@ -1932,6 +1982,7 @@ const handleHammer = (targetPos?: Pos) => {
     return newSet;
   });
   
+  console.log(`Successfully broke stone tile at ${targetPos.r},${targetPos.c}`);
   toast.success("Stone tile broken!");
 };
 
@@ -2153,12 +2204,6 @@ const handleExtraMoves = () => {
           
           console.log(`Processing tap on tile ${r},${c}`);
           
-          // Check for hammer interaction with stone tile
-          if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
-            console.log("Hammer interaction detected in onTouchEnd");
-            handleHammer(pos);
-            return;
-          }
           
           // Otherwise, handle as normal tile tap
           onTileTap(pos);
@@ -2174,6 +2219,7 @@ const handleExtraMoves = () => {
     
     // Check if hammer is activated and this is a stone tile - handle before path logic
     if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
+      console.log(`Hammer interaction detected on stone tile at ${pos.r},${pos.c}`);
       handleHammer(pos);
       return;
     }
