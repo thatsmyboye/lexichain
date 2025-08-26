@@ -386,8 +386,8 @@ const StatsPage = () => {
               </Card>
             </div>
 
-            {/* Goals Section */}
-            <div className="space-y-4">
+            {/* Goals Section - TEMPORARILY DISABLED */}
+            {/* <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Your Goals</h3>
                 <GoalSelector 
@@ -414,7 +414,7 @@ const StatsPage = () => {
               
               {completedGoals.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Completed Goals</h4>
+                  <h4 className="text-sm font-medium text-muted-foregorund mb-3">Completed Goals</h4>
                   <div className="grid gap-3 md:grid-cols-2">
                     {completedGoals.slice(0, 6).map((goal) => (
                       <GoalCard
@@ -438,7 +438,7 @@ const StatsPage = () => {
                   </CardContent>
                 </Card>
               )}
-            </div>
+            </div> */}
 
             <Card>
               <CardHeader>

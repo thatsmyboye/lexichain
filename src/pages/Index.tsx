@@ -8,7 +8,7 @@ const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "blitz">("classic");
+  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice">("classic");
   const navigate = useNavigate();
   useEffect(() => {
     document.title = "Lexichain | Build word chains by reusing tiles";
@@ -23,7 +23,7 @@ const Index = () => {
   const handlePlayClick = () => {
     setShowModeSelection(true);
   };
-  const handleModeSelect = (mode: "classic" | "daily" | "blitz") => {
+  const handleModeSelect = (mode: "classic" | "daily" | "practice") => {
     setSelectedMode(mode);
     setShowModeSelection(false);
     setShowGame(true);
@@ -73,12 +73,12 @@ const Index = () => {
                 Daily Challenge
               </Button>
               
-              <Button variant="outline" size="lg" onClick={() => handleModeSelect("classic")} className="px-12 py-4 text-lg">
-                Classic
+              <Button variant="outline" size="lg" onClick={() => handleModeSelect("practice")} className="px-12 py-4 text-lg">
+                Challenge Practice
               </Button>
               
-              <Button variant="outline" size="lg" onClick={() => handleModeSelect("blitz")} className="px-12 py-4 text-lg">
-                Blitz
+              <Button variant="outline" size="lg" onClick={() => handleModeSelect("classic")} className="px-12 py-4 text-lg">
+                Classic
               </Button>
             </div>
             

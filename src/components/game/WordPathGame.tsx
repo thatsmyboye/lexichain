@@ -32,7 +32,7 @@ type SpecialTile = {
   expiryTurns?: number;
 };
 
-type GameMode = "classic" | "target" | "daily" | "blitz";
+type GameMode = "classic" | "target" | "daily" | "practice";
 
 type GameSettings = {
   scoreThreshold: number;
@@ -265,7 +265,7 @@ function computeScoreBreakdown(params: {
   specialTiles: SpecialTile[][];
   lastWordTiles: Set<string>;
   streak: number;
-  mode: "classic" | "daily" | "target" | "blitz";
+  mode: "classic" | "daily" | "target" | "practice";
   blitzMultiplier: number;
   activeEffects: Array<{ id: string; data?: Record<string, unknown> }>;
   baseMode?: "hybrid" | "square";
@@ -314,7 +314,7 @@ function computeScoreBreakdown(params: {
   if (wordLen >= 9) lengthBonus += 100;
   if (wordLen >= 10) lengthBonus += 150;
 
-  const timeBonus = mode === "blitz" ? Math.round(base * (blitzMultiplier - 1)) : 0;
+  const timeBonus = 0; // Removed blitz functionality
 
   const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
   let consumableMultiplier = 1;
@@ -588,7 +588,7 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
   return lastBoard;
 }
 
-export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" | "blitz" }) {
+export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" | "practice" }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
   const { updateGoalProgress } = useGoals(user);
@@ -677,11 +677,9 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
 
   // Start daily challenge if initial mode is daily, or start blitz mode if blitz
   useEffect(() => {
-    if (initialMode === "daily" && !dailyChallengeInitialized) {
+    if (initialMode === "daily" || initialMode === "practice") {
       setDailyChallengeInitialized(true);
       startDailyChallenge().catch(console.error);
-    } else if (initialMode === "blitz") {
-      startBlitzGame();
     }
   }, [initialMode, dailyChallengeInitialized]);
 
@@ -690,55 +688,56 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     setGameStartTime(Date.now());
   }, [board]);
 
-  useEffect(() => {
-    if (settings.mode === "blitz" && blitzStarted && !blitzPaused && !gameOver) {
-      const interval = setInterval(() => {
-        setTimeRemaining(prev => {
-          const newTime = prev - 1;
-          
-          // Update multiplier based on time remaining
-          if (newTime <= 10) {
-            setBlitzMultiplier(3);
-          } else if (newTime <= 30) {
-            setBlitzMultiplier(2);
-          } else {
-            setBlitzMultiplier(1);
-          }
-          
-            if (newTime <= 0) {
-              setGameOver(true);
-              setFinalGrade(score >= (benchmarks?.platinum || 4000) ? "Platinum"
-                : score >= (benchmarks?.gold || 2200) ? "Gold"
-                : score >= (benchmarks?.silver || 1200) ? "Silver"
-                : score >= (benchmarks?.bronze || 500) ? "Bronze"
-                : "None");
-              
-              // Save state when blitz game ends
-              saveGameState();
-              
-              return 0;
-          }
-          
-          return newTime;
-        });
-      }, 1000);
-      
-      setTimerInterval(interval as unknown as number);
-      
-      return () => {
-        if (interval) clearInterval(interval);
-      };
-    } else {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        setTimerInterval(null);
-      }
-    }
-  }, [settings.mode, blitzStarted, blitzPaused, gameOver, score, benchmarks]);
+  // Removed blitz timer functionality - TEMPORARILY DISABLED
+  // useEffect(() => {
+  //   if (settings.mode === "blitz" && blitzStarted && !blitzPaused && !gameOver) {
+  //     const interval = setInterval(() => {
+  //       setTimeRemaining(prev => {
+  //         const newTime = prev - 1;
+  //         
+  //         // Update multiplier based on time remaining
+  //         if (newTime <= 10) {
+  //           setBlitzMultiplier(3);
+  //         } else if (newTime <= 30) {
+  //           setBlitzMultiplier(2);
+  //         } else {
+  //           setBlitzMultiplier(1);
+  //         }
+  //         
+  //           if (newTime <= 0) {
+  //             setGameOver(true);
+  //             setFinalGrade(score >= (benchmarks?.platinum || 4000) ? "Platinum"
+  //               : score >= (benchmarks?.gold || 2200) ? "Gold"
+  //               : score >= (benchmarks?.silver || 1200) ? "Silver"
+  //               : score >= (benchmarks?.bronze || 500) ? "Bronze"
+  //               : "None");
+  //             
+  //             // Save state when blitz game ends
+  //             saveGameState();
+  //             
+  //             return 0;
+  //         }
+  //         
+  //         return newTime;
+  //       });
+  //     }, 1000);
+  //     
+  //     setTimerInterval(interval as unknown as number);
+  //     
+  //     return () => {
+  //       if (interval) clearInterval(interval);
+  //     };
+  //   } else {
+  //     if (timerInterval) {
+  //       clearInterval(timerInterval);
+  //       setTimerInterval(null);
+  //     }
+  //   }
+  // }, [settings.mode, blitzStarted, blitzPaused, gameOver, score, benchmarks]);
 
   // Save standard game result and update goals when game ends
   const saveGameResult = async () => {
-    if (!user || settings.mode === "daily" || !gameOver) return;
+    if (!user || settings.mode === "daily" || settings.mode === "practice" || !gameOver) return;
 
     const longestWord = usedWords.reduce((longest, wordEntry) => 
       wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
@@ -766,16 +765,16 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
 
       if (error) throw error;
 
-      // Update goal progress
-      if (data) {
-        await updateGoalProgress({
-          score: score,
-          words_found: usedWords.length,
-          longest_word: longestWord,
-          achievement_grade: finalGrade,
-          game_id: data.id
-        });
-      }
+      // Update goal progress - TEMPORARILY DISABLED
+      // if (data) {
+      //   await updateGoalProgress({
+      //     score: score,
+      //     words_found: usedWords.length,
+      //     longest_word: longestWord,
+      //     achievement_grade: finalGrade,
+      //     game_id: data.id
+      //   });
+      // }
     } catch (error) {
       console.error("Error saving game result:", error);
     }
@@ -2068,9 +2067,6 @@ const handleExtraMoves = () => {
   }
 
   function onTilePointerDown(pos: Pos) {
-    // Disable input if blitz mode is not started or is paused
-    if (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) return;
-    
     // Only start dragging if not in tap mode
     if (!isTapMode) {
       setDragging(true);
@@ -2214,9 +2210,6 @@ const handleExtraMoves = () => {
 
   // Single tap handler for tile selection
   function onTileTap(pos: Pos) {
-    // Disable input if blitz mode is not started or is paused
-    if (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) return;
-    
     // Check if hammer is activated and this is a stone tile - handle before path logic
     if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
       console.log(`Hammer interaction detected on stone tile at ${pos.r},${pos.c}`);
@@ -2844,7 +2837,7 @@ const handleExtraMoves = () => {
             variant="outline" 
             onClick={onBackToTitle} 
             size="sm"
-            className={`bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))] ${settings.mode === "blitz" && blitzStarted && !gameOver ? 'ml-3' : ''}`}
+            className={`bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]]`}
           >
             Back to Title
           </Button>
@@ -3121,8 +3114,7 @@ const handleExtraMoves = () => {
             </div>
           )}
           
-          {/* New Game Button for Blitz Mode */}
-          {settings.mode === "blitz" && (
+          {/* Temporarily disabled blitz mode */}
             <div className="flex justify-center mb-4">
               <Button 
                 onClick={() => {
@@ -3173,11 +3165,10 @@ const handleExtraMoves = () => {
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             style={{ 
-              touchAction: (settings.mode === "blitz" && blitzStarted && !blitzPaused) ? 'none' : 'auto'
+              touchAction: 'auto'
             }}
           >
-            {/* Blitz Mode Overlay */}
-            {settings.mode === "blitz" && (!blitzStarted || blitzPaused) && (
+            {/* Temporarily disabled blitz overlay */}
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/95 backdrop-blur-lg rounded-lg">
                 <div className="text-center space-y-4 p-6">
                   {!blitzStarted ? (
@@ -3237,7 +3228,7 @@ const handleExtraMoves = () => {
               data-grid-container
               style={{ 
                 gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
-                touchAction: (settings.mode === "blitz" && blitzStarted && !blitzPaused) ? 'none' : 'auto'
+                touchAction: 'auto'
               }}
             >
             {board && board.map((row, r) => row.map((ch, c) => {
@@ -3320,7 +3311,7 @@ const handleExtraMoves = () => {
                   onClick={() => onTileTap({ r, c })}
                   className={getTileClasses()}
                   style={{ 
-                    touchAction: (settings.mode === "blitz" && (!blitzStarted || blitzPaused)) ? 'auto' : 'none'
+                    touchAction: 'none'
                   }}
                 >
                   <div className="text-3xl font-semibold tracking-wide">
@@ -3494,7 +3485,7 @@ const handleExtraMoves = () => {
                     {settings.dailyMovesLimit - movesUsed} moves remaining
                   </div>
                 )}
-                {settings.mode === "blitz" && (
+                {/* Temporarily disabled blitz timer */}
                   <div className="mt-1 text-xs">
                     <div className="flex items-center gap-2">
                       <div className={`font-medium ${timeRemaining <= 10 ? 'text-red-500' : timeRemaining <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
