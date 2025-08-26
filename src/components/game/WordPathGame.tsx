@@ -1534,6 +1534,87 @@ function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "exper
   }
 }
 
+async function startNewPracticeGame() {
+  const difficulty = "medium"; // Challenge Practice uses same config as Daily Challenge
+  const config = DIFFICULTY_CONFIG[difficulty];
+  const newSize = config.gridSize;
+  
+  setSettings(prev => ({ 
+    ...prev, 
+    difficulty, 
+    gridSize: newSize, 
+    mode: "practice",
+    dailyMovesLimit: getDailyMovesLimit() // Use same 10-move limit as Daily Challenge
+  }));
+  setSize(newSize);
+  
+  if (dict && sorted) {
+    setIsGenerating(true);
+    setPath([]);
+    setDragging(false);
+    setUsedWords([]);
+    setLastWordTiles(new Set());
+    setScore(0);
+    setStreak(0);
+    setMovesUsed(0);
+    setSpecialTiles(createEmptySpecialTilesGrid(newSize));
+    setGameOver(false);
+    setFinalGrade("None");
+    setUnlocked(new Set());
+    
+    try {
+      const newBoard = generateSolvableBoard(newSize, dict, sorted);
+      const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
+      
+      // Use same benchmark calculation as Daily Challenge
+      let bms: Benchmarks;
+      try {
+        if (probe.analysis && user) {
+          const { supabase } = await import('@/integrations/supabase/client');
+          bms = await computeDynamicBenchmarks(
+            `practice-${Date.now()}`, // Unique seed for practice
+            probe.words.size, 
+            config.minWords, 
+            probe.analysis,
+            supabase
+          );
+        } else {
+          bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+        }
+      } catch (error) {
+        console.warn("Failed to compute dynamic benchmarks, falling back to static:", error);
+        bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+      }
+      
+      setBoard(newBoard);
+      setBenchmarks(bms);
+      setDiscoverableCount(probe.words.size);
+      toast.success("New practice board ready!");
+    } catch (error) {
+      console.error("Failed to generate practice board:", error);
+      toast.error("Failed to generate new practice board");
+    } finally {
+      setIsGenerating(false);
+    }
+  } else {
+    const nb = makeBoard(newSize);
+    setBoard(nb);
+    setBenchmarks(null);
+    setDiscoverableCount(0);
+    setUnlocked(new Set());
+    setGameOver(false);
+    setFinalGrade("None");
+    setPath([]);
+    setDragging(false);
+    setUsedWords([]);
+    setLastWordTiles(new Set());
+    setScore(0);
+    setStreak(0);
+    setMovesUsed(0);
+    setSpecialTiles(createEmptySpecialTilesGrid(newSize));
+  }
+}
+
 async function startDailyChallenge() {
   const difficulty = "medium"; // Daily challenges use medium difficulty
   const config = DIFFICULTY_CONFIG[difficulty];
@@ -2810,6 +2891,20 @@ const handleExtraMoves = () => {
               className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
             >
               Reset Daily
+            </Button>
+          )}
+          
+          {settings.mode === "practice" && (
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                startNewPracticeGame().catch(console.error);
+              }} 
+              disabled={!isGameReady || isGenerating} 
+              size="sm"
+              className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]"
+            >
+              {isGenerating ? "Generating..." : "New Game"}
             </Button>
           )}
           
