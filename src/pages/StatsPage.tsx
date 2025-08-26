@@ -28,6 +28,13 @@ const StatsPage = () => {
     bestScore: 0,
     currentStreak: 0
   });
+
+  const [challengeHistory, setChallengeHistory] = useState<Array<{
+    challenge_date: string;
+    score: number;
+    achievement_level: string;
+    created_at: string;
+  }>>([]);
   
   const { 
     activeGoals, 
@@ -42,6 +49,31 @@ const StatsPage = () => {
 
   const fetchAchievementCounts = async (userId: string) => {
     try {
+      console.log('Fetching achievement counts for user:', userId);
+      
+      // First, let's see ALL achievement levels including 'None'
+      const { data: allData, error: allError } = await supabase
+        .from('daily_challenge_results')
+        .select('achievement_level, score, challenge_date')
+        .eq('user_id', userId)
+        .order('challenge_date', { ascending: false });
+
+      if (allError) {
+        console.error('Error fetching all achievement data:', allError);
+        return;
+      }
+
+      console.log('All achievement data:', allData);
+      
+      // Log achievement level distribution
+      const allLevels = allData?.reduce((acc, result) => {
+        acc[result.achievement_level] = (acc[result.achievement_level] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      console.log('Achievement level distribution:', allLevels);
+      
+      // Now get only non-None achievements for the counts
       const { data, error } = await supabase
         .from('daily_challenge_results')
         .select('achievement_level')
@@ -53,6 +85,8 @@ const StatsPage = () => {
         return;
       }
 
+      console.log('Non-None achievements:', data);
+
       const counts = { Bronze: 0, Silver: 0, Gold: 0, Platinum: 0 };
       data?.forEach((result) => {
         if (result.achievement_level in counts) {
@@ -60,9 +94,33 @@ const StatsPage = () => {
         }
       });
 
+      console.log('Final achievement counts:', counts);
       setAchievementCounts(counts);
     } catch (error) {
       console.error('Error fetching achievement counts:', error);
+    }
+  };
+
+  const fetchChallengeHistory = async (userId: string) => {
+    try {
+      console.log('Fetching challenge history for user:', userId);
+      
+      const { data, error } = await supabase
+        .from('daily_challenge_results')
+        .select('challenge_date, score, achievement_level, created_at')
+        .eq('user_id', userId)
+        .order('challenge_date', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching challenge history:', error);
+        return;
+      }
+
+      console.log('Challenge history data:', data);
+      setChallengeHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching challenge history:', error);
     }
   };
 
@@ -224,10 +282,11 @@ const StatsPage = () => {
       }
       setUser(session.user);
       
-      // Fetch achievement counts and daily stats
+      // Fetch achievement counts, daily stats, and challenge history
       await Promise.all([
         fetchAchievementCounts(session.user.id),
-        fetchDailyStats(session.user.id)
+        fetchDailyStats(session.user.id),
+        fetchChallengeHistory(session.user.id)
       ]);
       setLoading(false);
     };
@@ -481,15 +540,53 @@ const StatsPage = () => {
               <CardHeader>
                 <CardTitle>Challenge History</CardTitle>
                 <CardDescription>
-                  Your recent daily challenge results will appear here once you start playing.
+                  Your recent daily challenge results
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center text-muted-foreground py-8">
-                  <Medal className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No daily challenges played yet</p>
-                  <p className="text-sm">Complete a daily challenge to see your results!</p>
-                </div>
+                {challengeHistory.length > 0 ? (
+                  <div className="space-y-3">
+                    {challengeHistory.map((challenge, index) => (
+                      <div key={`${challenge.challenge_date}-${index}`} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card/50">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
+                            <Medal className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">
+                              {new Date(challenge.challenge_date).toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(challenge.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-sm">{challenge.score.toLocaleString()} pts</p>
+                          <p className={`text-xs font-medium ${
+                            challenge.achievement_level === 'Platinum' ? 'text-purple-600' :
+                            challenge.achievement_level === 'Gold' ? 'text-yellow-600' :
+                            challenge.achievement_level === 'Silver' ? 'text-gray-600' :
+                            challenge.achievement_level === 'Bronze' ? 'text-orange-600' :
+                            'text-muted-foreground'
+                          }`}>
+                            {challenge.achievement_level}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <Medal className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No daily challenges played yet</p>
+                    <p className="text-sm">Complete a daily challenge to see your results!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
