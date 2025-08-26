@@ -857,17 +857,22 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
       
       // Restore benchmarks and discoverable count, with fallback for backward compatibility
       if (gameState.benchmarks && gameState.discoverableCount !== undefined) {
+        console.log("📊 Benchmarks restored from saved state:", gameState.benchmarks);
         setBenchmarks(gameState.benchmarks);
         setDiscoverableCount(gameState.discoverableCount);
       } else if (dict && sorted && gameState.initialBoard) {
         // Fallback: recalculate benchmarks for existing saves without them
+        console.log("📊 Dictionary loaded, recalculating benchmarks from initialBoard...");
         const config = DIFFICULTY_CONFIG["medium"];
         const probe = probeGrid(gameState.initialBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
         const bms = probe.analysis ? 
           computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) :
           computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+        console.log("📊 Benchmarks recalculated from initialBoard:", bms);
         setBenchmarks(bms);
         setDiscoverableCount(probe.words.size);
+      } else {
+        console.log("📊 No benchmarks in saved state, dictionary status:", { dict: !!dict, sorted: !!sorted, hasInitialBoard: !!gameState.initialBoard });
       }
       
       return { gameState, hasInitialBoard: !!gameState.initialBoard };
@@ -931,6 +936,34 @@ useEffect(() => {
     });
   return () => { mounted = false };
   }, [initialMode, size]);
+
+  // Dictionary-ready benchmark calculation for daily challenges
+  useEffect(() => {
+    if (dict && sorted && settings.mode === "daily" && board && !benchmarks && !isGenerating) {
+      console.log("📊 Dictionary loaded, recalculating benchmarks for resumed daily challenge...");
+      setIsGenerating(true);
+      
+      try {
+        const difficulty = settings.difficulty || "medium";
+        const config = DIFFICULTY_CONFIG[difficulty];
+        const probe = probeGrid(board, dict, sorted, config.minWords, MAX_DFS_NODES, true);
+        const bms = probe.analysis ? 
+          computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) :
+          computeBenchmarksFromWordCount(probe.words.size, config.minWords);
+        
+        console.log("📊 Benchmarks recalculated:", bms);
+        setBenchmarks(bms);
+        setDiscoverableCount(probe.words.size);
+        
+        toast.success("Daily Challenge benchmarks loaded!");
+      } catch (error) {
+        console.error("Failed to recalculate benchmarks:", error);
+        toast.error("Failed to load challenge benchmarks");
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+  }, [dict, sorted, settings.mode, board, benchmarks, isGenerating, settings.difficulty]);
 
   const wordFromPath = useMemo(() => board ? path.map((p) => board[p.r][p.c]).join("").toLowerCase() : "", [path, board]);
   
