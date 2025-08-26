@@ -675,11 +675,14 @@ export default function WordPathGame({ onBackToTitle, initialMode = "classic" }:
     return () => subscription.unsubscribe();
   }, []);
 
-  // Start daily challenge if initial mode is daily, or start blitz mode if blitz
+  // Start daily challenge if initial mode is daily, start practice if practice mode
   useEffect(() => {
-    if (initialMode === "daily" || initialMode === "practice") {
+    if (initialMode === "daily") {
       setDailyChallengeInitialized(true);
       startDailyChallenge().catch(console.error);
+    } else if (initialMode === "practice") {
+      setDailyChallengeInitialized(true);
+      startNewPracticeGame().catch(console.error);
     }
   }, [initialMode, dailyChallengeInitialized]);
 
