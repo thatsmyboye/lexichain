@@ -1363,55 +1363,6 @@ export default function WordPathGame({
       setBoard, 
       setAffectedTiles
     );
-      for (const [letter, count] of letterCounts) {
-        if (count > 4) {
-          const excess = count - 4;
-          // Find positions with this letter and replace excess ones
-          let replaced = 0;
-          for (let i = 0; i < allLetters.length && replaced < excess; i++) {
-            if (allLetters[i] === letter) {
-              // Replace with a constrained random letter
-              const tempCounts = new Map(letterCounts);
-              tempCounts.set(letter, tempCounts.get(letter)! - 1);
-              allLetters[i] = constrainedRandomLetter(tempCounts);
-              replaced++;
-            }
-          }
-        }
-      }
-      
-      // Shuffle the letters array
-      for (let i = allLetters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
-      }
-      
-      // Redistribute the shuffled letters
-      let letterIndex = 0;
-      const shuffledBoard = currentBoard.map(row => [...row]);
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          shuffledBoard[r][c] = allLetters[letterIndex++];
-        }
-      }
-      
-      setBoard(shuffledBoard);
-      
-      // Set all tiles as affected for visual effect
-      const allTileKeys = new Set<string>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          allTileKeys.add(keyOf({ r, c }));
-        }
-      }
-      setAffectedTiles(allTileKeys);
-      
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1500);
-      
-      toast.success("Shuffle activated! All letters repositioned!");
-    }
 
       // Count current letters on the board for constraint enforcement
       const currentLetterCounts = new Map<string, number>();
