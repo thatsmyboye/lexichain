@@ -309,10 +309,10 @@ function computeScoreBreakdown(params: {
 
   // NEW: Length-based bonus system (replaces streak-based chain bonus)
   let lengthBonus = 0;
-  if (wordLen >= 7) lengthBonus += 25;
-  if (wordLen >= 8) lengthBonus += 50;
-  if (wordLen >= 9) lengthBonus += 100;
-  if (wordLen >= 10) lengthBonus += 150;
+  if (wordLen >= 5) lengthBonus += 25;
+  if (wordLen >= 6) lengthBonus += 50;
+  if (wordLen >= 7) lengthBonus += 100;
+  if (wordLen >= 8) lengthBonus += 150;
 
   const timeBonus = 0; // Removed blitz functionality
 
@@ -496,10 +496,10 @@ function computeBoardAnalysis(
     
     // Add length bonuses for longer words
     let lengthBonus = 0;
-    if (len >= 7) lengthBonus += 25;
-    if (len >= 8) lengthBonus += 50;
-    if (len >= 9) lengthBonus += 100;
-    if (len >= 10) lengthBonus += 150;
+    if (len >= 5) lengthBonus += 25;
+    if (len >= 6) lengthBonus += 50;
+    if (len >= 7) lengthBonus += 100;
+    if (len >= 8) lengthBonus += 150;
     
     // Assume potential 1.3x multiplier from links and special tiles
     const wordScore = Math.round((baseScore + rarityBonus + lengthBonus) * 1.3);
