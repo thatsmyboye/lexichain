@@ -3449,16 +3449,19 @@ function WordPathGame({
               if (sortAlphabetically) {
                 const sortedWords = [...usedWords].sort((a, b) => a.word.localeCompare(b.word));
                 return <div className="flex flex-wrap gap-1">
-                      {sortedWords.map((entry, index) => <span key={`${entry.word}-${index}`} className="px-1.5 py-0.5 rounded text-xs bg-secondary">
+                      {sortedWords.map((entry, index) => (
+                        <span key={`${entry.word}-${index}`} className="px-1.5 py-0.5 rounded text-xs bg-secondary">
                           {entry.word.toUpperCase()}
-                        </span>)}
+                        </span>
+                      ))}
                     </div>;
               } else {
                 // Latest sort - 2-column format
                 const latestWords = usedWords.slice(-15).reverse();
                 return <div className="space-y-1">
                       <Accordion type="multiple" className="w-full">
-                        {latestWords.map((entry, index) => <AccordionItem key={`${entry.word}-${index}`} value={`${entry.word}-${index}`} className="border-b-0">
+                        {latestWords.map((entry, index) => (
+                          <AccordionItem key={`${entry.word}-${index}`} value={`${entry.word}-${index}`} className="border-b-0">
                             <AccordionTrigger className="py-1 hover:no-underline">
                               <div className="w-full flex justify-between items-center text-xs">
                                 <span className="font-medium">{entry.word.toUpperCase()}</span>
@@ -3466,26 +3469,37 @@ function WordPathGame({
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pb-2">
-                              {entry.breakdown ? <div className="grid grid-cols-2 gap-y-1 text-[11px]">
+                              {entry.breakdown ? (
+                                <div className="grid grid-cols-2 gap-y-1 text-[11px]">
                                   <div>Base</div><div className="text-right">+{entry.breakdown.base}</div>
                                   <div>Rarity</div><div className="text-right">+{Math.round(entry.breakdown.rarity.bonus)}</div>
                                   <div>Link</div><div className="text-right">+{entry.breakdown.linkBonus}</div>
                                   <div>Length</div><div className="text-right">+{entry.breakdown.lengthBonus}</div>
-                                  {entry.breakdown.timeBonus > 0 ? <><div>Blitz time</div><div className="text-right">+{entry.breakdown.timeBonus}</div></> : null}
+                                  {entry.breakdown.timeBonus > 0 ? (
+                                    <>
+                                      <div>Blitz time</div><div className="text-right">+{entry.breakdown.timeBonus}</div>
+                                    </>
+                                  ) : null}
                                   <div className="col-span-2 border-t my-1" />
                                   <div>Subtotal</div><div className="text-right">+{entry.breakdown.totalBeforeMultipliers}</div>
                                   <div>Multipliers</div>
                                   <div className="text-right">
                                     {entry.breakdown.multipliers.tileMultiplier}x tile {entry.breakdown.multipliers.consumableMultiplier > 1 ? `· ${entry.breakdown.multipliers.consumableMultiplier}x consumable` : ""}
                                     <div className="text-[10px] text-muted-foreground">
-                                      Applied: {entry.breakdown.multipliers.combinedApplied}x{entry.breakdown.multipliers.capped ? <span className="ml-1 px-1 py-[1px] rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200">capped</span> : null}
+                                      Applied: {entry.breakdown.multipliers.combinedApplied}x{entry.breakdown.multipliers.capped ? (
+                                        <span className="ml-1 px-1 py-[1px] rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200">capped</span>
+                                      ) : null}
                                     </div>
                                   </div>
                                   <div className="col-span-2 border-t my-1" />
                                   <div className="font-semibold">Total</div><div className="text-right font-semibold">+{entry.breakdown.total}</div>
-                                </div> : <div className="text-muted-foreground">No breakdown available</div>}
+                                </div>
+                              ) : (
+                                <div className="text-muted-foreground">No breakdown available</div>
+                              )}
                             </AccordionContent>
-                          </AccordionItem>)}
+                          </AccordionItem>
+                        ))}
                       </Accordion>
                     </div>;
               }
