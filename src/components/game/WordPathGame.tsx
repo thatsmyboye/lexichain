@@ -527,10 +527,10 @@ function calculateWordScore(word: string, path: Pos[], grid: string[][]): number
   
   // Add length bonuses
   let lengthBonus = 0;
-  if (len >= 7) lengthBonus += 25;
-  if (len >= 8) lengthBonus += 50;
-  if (len >= 9) lengthBonus += 100;
-  if (len >= 10) lengthBonus += 150;
+  if (len >= 5) lengthBonus += 25;
+  if (len >= 6) lengthBonus += 50;
+  if (len >= 7) lengthBonus += 100;
+  if (len >= 8) lengthBonus += 150;
   
   return baseScore + rarityBonus + lengthBonus;
 }
