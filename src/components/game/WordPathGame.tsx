@@ -2561,75 +2561,28 @@ function WordPathGame({
     setLastWordTiles(new Set(path.map(keyOf)));
 
     // Check for new achievements using shared function
-    const { newAchievements, achievementBonus } = checkAndAwardAchievements(
+    const { newAchievements: newAchievements2, achievementBonus: achievementBonus2 } = checkAndAwardAchievements(
       actualWord,
       path,
-      sharedTilesCount,
-      usedWords,
-      multiplier,
-      totalGain,
       board,
       specialTiles,
-      setUnlockedAchievements,
-      awardConsumables
+      lastWordTiles,
+      streak,
+      usedWords,
+      unlocked
     );
 
-    // NEW: Length-based achievement checking system (replaces streak-based)
-    // Track words by length for new achievements
-    const currentGameWords = [...usedWords, { word: actualWord, path, breakdown }];
-    const sixPlusWords = currentGameWords.filter(w => w.word.length >= 6).length;
-    const sevenPlusWords = currentGameWords.filter(w => w.word.length >= 7).length;
-    const eightPlusWords = currentGameWords.filter(w => w.word.length >= 8).length;
-
-    if (sixPlusWords >= 3) checkAndAdd(true, "wordArtisan");
-    if (sevenPlusWords >= 5) checkAndAdd(true, "lengthMaster");
-    if (eightPlusWords >= 3) checkAndAdd(true, "epicWordsmith");
-    if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
-    if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
-    if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
-    if (actualWord.length >= 7) checkAndAdd(true, "long7");
-    if (actualWord.length >= 8) checkAndAdd(true, "epic8");
-    const ultraCount = path.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
-    if (ultraCount >= 2) checkAndAdd(true, "rare2");
-    if (multiplier >= 3) checkAndAdd(true, "combo3x");
-    if (xChanged >= 3) checkAndAdd(true, "chaos3");
-    const ratio = vowelRatioOfWord(actualWord);
-    if (actualWord.length >= 6 && ratio >= 0.6) checkAndAdd(true, "vowelStorm");
-    if (actualWord.length >= 6 && ratio <= 0.2) checkAndAdd(true, "consonantCrunch");
-    if (wildUsed) checkAndAdd(true, "wildWizard");
-    const nextUsedCount = usedWords.length + 1;
-    if (nextUsedCount >= 10) checkAndAdd(true, "cartographer10");
-    if (nextUsedCount >= 15) checkAndAdd(true, "collector15");
-    if (discoverableCount > 0) {
-      const pct = (nextUsedCount / discoverableCount) * 100;
-      if (pct >= 80) checkAndAdd(true, "completionist80");
-      if (nextUsedCount >= discoverableCount) checkAndAdd(true, "completionist100");
-    }
-
-    // Calculate achievement bonus
-    const achievementBonus = newAchievements.reduce((total, id) => total + ACHIEVEMENTS[id].scoreBonus, 0);
-    const finalScore = score + totalGain + achievementBonus;
-    setScore(finalScore);
-    // Remove streak dependency - no longer needed in length-based system
-
+    setScore(prev => prev + totalGain + achievementBonus2);
+    newAchievements2.forEach(id => {
+      const rarityEmoji = achievements[id].rarity === "legendary" ? "🏆" : 
+                         achievements[id].rarity === "epic" ? "💎" : 
+                         achievements[id].rarity === "rare" ? "⭐" : "🎯";
+      toast.success(`${rarityEmoji} Achievement: ${achievements[id].label}!`);
+    });
     setUnlocked(prev => {
       const next = new Set(prev);
-      newAchievements.forEach(id => next.add(id));
+      newAchievements2.forEach(id => next.add(id));
       return next;
-    });
-
-    // Show achievement toasts
-    newAchievements.forEach(id => {
-      const achievement = ACHIEVEMENTS[id];
-      const rarityEmoji = {
-        common: "🏆",
-        rare: "⭐",
-        epic: "💎",
-        legendary: "👑"
-      }[achievement.rarity];
-      toast.success(`${rarityEmoji} ${achievement.label} (+${achievement.scoreBonus} pts)`, {
-        duration: 4000
-      });
     });
     if (benchmarks && settings.mode === "target") {
       const targetScore = benchmarks[settings.targetTier];
