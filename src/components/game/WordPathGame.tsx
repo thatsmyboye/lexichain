@@ -1445,7 +1445,7 @@ useEffect(() => {
       if (sorted && dict) {
         // Check if daily challenge is out of moves
         const dailyMovesExceeded = settings.mode === "daily" && (movesUsed + 1) >= settings.dailyMovesLimit;
-        const any = hasAnyValidMove(newBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
+        const any = hasAnyValidMove(updatedBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
