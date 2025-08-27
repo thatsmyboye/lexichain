@@ -2255,6 +2255,9 @@ function WordPathGame({
   }
 
   // Touch event handlers for mobile support
+  // Store initial touch tile for hammer-aware gesture detection
+  const [initialTouchTile, setInitialTouchTile] = useState<{pos: Pos, isStone: boolean} | null>(null);
+
   function onTouchStart(e: React.TouchEvent, pos: Pos) {
     // Only prevent scrolling when game is active
     if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
@@ -2268,6 +2271,10 @@ function WordPathGame({
       y: touch.clientY,
       timestamp: Date.now()
     });
+
+    // Store initial touch tile type for hammer-aware gesture detection
+    const isStone = specialTiles[pos.r][pos.c].type === "stone";
+    setInitialTouchTile({ pos, isStone });
 
     // On mobile, always start in tap mode - let gesture detection decide if it becomes a swipe
     if (isMobile) {
@@ -2307,11 +2314,19 @@ function WordPathGame({
     const MOVEMENT_THRESHOLD = 30; // Increased from 15px to 30px
     const MIN_SWIPE_TIME = 100; // Must be touching for at least 100ms to be considered a swipe
 
-    // Only convert to swipe if significant movement AND sufficient time has passed
-    if (isMobile && distance > MOVEMENT_THRESHOLD && touchDuration > MIN_SWIPE_TIME && isTapMode && !dragging) {
+    // Check if hammer is active and initial touch was on stone tile - if so, prioritize hammer over swipe
+    const isHammerActiveOnStone = activatedConsumables.has("hammer") && initialTouchTile?.isStone;
+    
+    // Only convert to swipe if significant movement AND sufficient time has passed AND not hammer interaction
+    if (isMobile && distance > MOVEMENT_THRESHOLD && touchDuration > MIN_SWIPE_TIME && isTapMode && !dragging && !isHammerActiveOnStone) {
       console.log(`Converting tap to swipe: distance=${distance}px, duration=${touchDuration}ms`);
       setIsTapMode(false);
       setDragging(true);
+    }
+
+    // Log hammer priority when preventing swipe conversion
+    if (isHammerActiveOnStone && distance > MOVEMENT_THRESHOLD) {
+      console.log(`Hammer active on stone tile - preventing tap-to-swipe conversion (distance=${distance}px)`);
     }
 
     // Only process move events if we're dragging
@@ -2338,6 +2353,7 @@ function WordPathGame({
     }
     const wasInTapMode = isTapMode;
     setTouchStartPos(null);
+    setInitialTouchTile(null); // Clean up initial touch tile tracking
 
     // Handle drag mode - submit word if we were dragging
     if ((settings.mode !== "blitz" || blitzStarted && !blitzPaused) && dragging) {
