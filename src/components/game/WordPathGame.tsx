@@ -588,6 +588,219 @@ function generateSolvableBoard(size: number, wordSet: Set<string>, sortedArr: st
   return lastBoard;
 }
 
+// Shared utility functions for word submission
+function handleShuffleTiles(
+  wordPath: Pos[], 
+  specialTiles: SpecialTile[][], 
+  currentBoard: string[][], 
+  size: number,
+  setBoard: (board: string[][]) => void,
+  setAffectedTiles: (tiles: Set<string>) => void
+): void {
+  const shuffleTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "shuffle");
+  if (shuffleTiles.length > 0) {
+    // Get all letters from the board and ensure max 4 of each letter
+    const allLetters: string[] = [];
+    const letterCounts = new Map<string, number>();
+    
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const letter = currentBoard[r][c];
+        const count = letterCounts.get(letter) || 0;
+        letterCounts.set(letter, count + 1);
+        allLetters.push(letter);
+      }
+    }
+    
+    // Check if any letter exceeds 4 instances and replace extras
+    for (const [letter, count] of letterCounts) {
+      if (count > 4) {
+        const excess = count - 4;
+        // Find positions with this letter and replace excess ones
+        let replaced = 0;
+        for (let i = 0; i < allLetters.length && replaced < excess; i++) {
+          if (allLetters[i] === letter) {
+            // Replace with a constrained random letter
+            const tempCounts = new Map(letterCounts);
+            tempCounts.set(letter, tempCounts.get(letter)! - 1);
+            allLetters[i] = constrainedRandomLetter(tempCounts);
+            replaced++;
+          }
+        }
+      }
+    }
+    
+    // Shuffle the letters array
+    for (let i = allLetters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
+    }
+    
+    // Redistribute the shuffled letters
+    let letterIndex = 0;
+    const shuffledBoard = currentBoard.map(row => [...row]);
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        shuffledBoard[r][c] = allLetters[letterIndex++];
+      }
+    }
+    
+    setBoard(shuffledBoard);
+    
+    // Set all tiles as affected for visual effect
+    const allTileKeys = new Set<string>();
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        allTileKeys.add(keyOf({ r, c }));
+      }
+    }
+    setAffectedTiles(allTileKeys);
+    
+    setTimeout(() => {
+      setAffectedTiles(new Set());
+    }, 1500);
+    
+    toast.success("Shuffle activated! All letters repositioned!");
+  }
+}
+
+function handleXFactorTiles(
+  wordPath: Pos[],
+  specialTiles: SpecialTile[][],
+  currentBoard: string[][],
+  size: number,
+  setBoard: (board: string[][]) => void,
+  setSpecialTiles: (tiles: SpecialTile[][]) => void,
+  setAffectedTiles: (tiles: Set<string>) => void
+): number {
+  const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
+  let xChanged = 0;
+  
+  if (xFactorTiles.length > 0) {
+    const newBoard = currentBoard.map(row => [...row]);
+    const newSpecialTiles = specialTiles.map(row => [...row]);
+    const changedTileKeys = new Set<string>();
+
+    // Count current letters on the board for constraint enforcement
+    const currentLetterCounts = new Map<string, number>();
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const letter = newBoard[r][c];
+        currentLetterCounts.set(letter, (currentLetterCounts.get(letter) || 0) + 1);
+      }
+    }
+
+    xFactorTiles.forEach(xfPos => {
+      const diagonals = [
+        { r: xfPos.r - 1, c: xfPos.c - 1 },
+        { r: xfPos.r - 1, c: xfPos.c + 1 },
+        { r: xfPos.r + 1, c: xfPos.c - 1 },
+        { r: xfPos.r + 1, c: xfPos.c + 1 }
+      ];
+      
+      diagonals.forEach(pos => {
+        if (within(pos.r, pos.c, size)) {
+          // Reduce count of old letter
+          const oldLetter = newBoard[pos.r][pos.c];
+          currentLetterCounts.set(oldLetter, (currentLetterCounts.get(oldLetter) || 0) - 1);
+          
+          // Generate new constrained letter
+          newBoard[pos.r][pos.c] = constrainedRandomLetter(currentLetterCounts);
+          newSpecialTiles[pos.r][pos.c] = { type: null };
+          changedTileKeys.add(keyOf(pos));
+        }
+      });
+    });
+
+    setBoard(newBoard);
+    setSpecialTiles(newSpecialTiles);
+    setAffectedTiles(changedTileKeys);
+    xChanged = changedTileKeys.size;
+
+    setTimeout(() => {
+      setAffectedTiles(new Set());
+    }, 1000);
+
+    toast.info("X-Factor activated! Adjacent tiles transformed!");
+  }
+  
+  return xChanged;
+}
+
+function checkAndAwardAchievements(
+  actualWord: string,
+  wordPath: Pos[],
+  usedWords: Array<{word: string, score: number, breakdown: any}>,
+  unlocked: Set<AchievementId>,
+  discoverableCount: number,
+  sharedTilesCount: number,
+  multiplier: number,
+  xChanged: number,
+  wildUsed: boolean,
+  board: string[][]
+): { newAchievements: AchievementId[], achievementBonus: number } {
+  const newAchievements: AchievementId[] = [];
+  const checkAndAdd = (condition: boolean, achievement: AchievementId) => {
+    if (condition && !unlocked.has(achievement)) {
+      newAchievements.push(achievement);
+    }
+  };
+
+  // NEW: Length-based achievement checking system (replaces streak-based)
+  // Track words by length for new achievements
+  const currentGameWords = [...usedWords, { word: actualWord, path: wordPath, breakdown: {} }];
+  const sixPlusWords = currentGameWords.filter(w => w.word.length >= 6).length;
+  const sevenPlusWords = currentGameWords.filter(w => w.word.length >= 7).length;
+  const eightPlusWords = currentGameWords.filter(w => w.word.length >= 8).length;
+
+  // Length-based achievements
+  if (sixPlusWords >= 3) checkAndAdd(true, "wordArtisan");
+  if (sevenPlusWords >= 5) checkAndAdd(true, "lengthMaster");
+  if (eightPlusWords >= 3) checkAndAdd(true, "epicWordsmith");
+  
+  // Link achievements
+  if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
+  if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
+  if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
+  
+  // Word length achievements
+  if (actualWord.length >= 7) checkAndAdd(true, "long7");
+  if (actualWord.length >= 8) checkAndAdd(true, "epic8");
+  
+  // Ultra rare letter achievements
+  const ultraCount = wordPath.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+  if (ultraCount >= 2) checkAndAdd(true, "rare2");
+  
+  // Multiplier and special tile achievements
+  if (multiplier >= 3) checkAndAdd(true, "combo3x");
+  if (xChanged >= 3) checkAndAdd(true, "chaos3");
+  
+  // Vowel/consonant achievements
+  const ratio = vowelRatioOfWord(actualWord);
+  if (actualWord.length >= 6 && ratio >= 0.6) checkAndAdd(true, "vowelStorm");
+  if (actualWord.length >= 6 && ratio <= 0.2) checkAndAdd(true, "consonantCrunch");
+  
+  // Wild card achievement
+  if (wildUsed) checkAndAdd(true, "wildWizard");
+
+  // Word count achievements
+  const nextUsedCount = usedWords.length + 1;
+  if (nextUsedCount >= 10) checkAndAdd(true, "cartographer10");
+  if (nextUsedCount >= 15) checkAndAdd(true, "collector15");
+
+  // Completion achievements
+  if (discoverableCount > 0) {
+    const pct = (nextUsedCount / discoverableCount) * 100;
+    if (pct >= 80) checkAndAdd(true, "completionist80");
+    if (nextUsedCount >= discoverableCount) checkAndAdd(true, "completionist100");
+  }
+
+  // Calculate achievement bonus
+  const achievementBonus = newAchievements.reduce((total, id) => total + ACHIEVEMENTS[id].scoreBonus, 0);
+  
+  return { newAchievements, achievementBonus };
+}
+
 export default function WordPathGame({ onBackToTitle, initialMode = "classic" }: { onBackToTitle?: () => void; initialMode?: "classic" | "daily" | "practice" | "blitz" }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
@@ -1079,143 +1292,46 @@ useEffect(() => {
     const multiplier = breakdown.multipliers.combinedApplied;
     
     // Update the wild tile with the chosen letter permanently on the board
-    const newBoard = board.map(row => [...row]);
+    const updatedBoard = board.map(row => [...row]);
     const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
     if (wildcardPositions.length === 1) {
       const wildPos = wildcardPositions[0];
-      newBoard[wildPos.r][wildPos.c] = wildLetter.toUpperCase();
+      updatedBoard[wildPos.r][wildPos.c] = wildLetter.toUpperCase();
       
       // Remove the wild tile special type since it's now a regular letter
       const newSpecialTiles = specialTiles.map(row => [...row]);
       newSpecialTiles[wildPos.r][wildPos.c] = { type: null };
       setSpecialTiles(newSpecialTiles);
     }
-    setBoard(newBoard);
+    setBoard(updatedBoard);
     
     // Increment moves for daily challenge
     if (settings.mode === "daily") {
       setMovesUsed(prev => prev + 1);
     }
 
-    const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
-    let xChanged = 0;
-    if (xFactorTiles.length > 0) {
-      const newBoardAfterX = newBoard.map(row => [...row]);
-      const newSpecialTiles = specialTiles.map(row => [...row]);
-      const changedTileKeys = new Set<string>();
+    // Handle X-Factor tiles first
+    const currentBoardForXFactor = updatedBoard.map(row => [...row]);
+    const xChanged = handleXFactorTiles(
+      wordPath, 
+      specialTiles, 
+      currentBoardForXFactor, 
+      size, 
+      setBoard, 
+      setSpecialTiles, 
+      setAffectedTiles
+    );
 
-      // Count current letters on the board for constraint enforcement
-      const currentLetterCounts = new Map<string, number>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = newBoardAfterX[r][c];
-          currentLetterCounts.set(letter, (currentLetterCounts.get(letter) || 0) + 1);
-        }
-      }
-
-      xFactorTiles.forEach(xfPos => {
-        const diagonals = [
-          { r: xfPos.r - 1, c: xfPos.c - 1 },
-          { r: xfPos.r - 1, c: xfPos.c + 1 },
-          { r: xfPos.r + 1, c: xfPos.c - 1 },
-          { r: xfPos.r + 1, c: xfPos.c + 1 }
-        ];
-
-        diagonals.forEach(pos => {
-          if (within(pos.r, pos.c, size)) {
-            // Reduce count of old letter
-            const oldLetter = newBoardAfterX[pos.r][pos.c];
-            currentLetterCounts.set(oldLetter, (currentLetterCounts.get(oldLetter) || 0) - 1);
-            
-            // Generate new constrained letter
-            newBoardAfterX[pos.r][pos.c] = constrainedRandomLetter(currentLetterCounts);
-            newSpecialTiles[pos.r][pos.c] = { type: null };
-            changedTileKeys.add(keyOf(pos));
-          }
-        });
-      });
-
-      setBoard(newBoardAfterX);
-      setSpecialTiles(newSpecialTiles);
-      setAffectedTiles(changedTileKeys);
-      xChanged = changedTileKeys.size;
-
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1000);
-
-      toast.info("X-Factor activated! Adjacent tiles transformed!");
-    }
-
-    // Handle shuffle tiles
-    const shuffleTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "shuffle");
-    if (shuffleTiles.length > 0) {
-      // Create a copy of the current board
-      const currentBoard = (xFactorTiles.length > 0 ? newBoard : board).map(row => [...row]);
-      
-      // Get all letters from the board and ensure max 4 of each letter
-      const allLetters: string[] = [];
-      const letterCounts = new Map<string, number>();
-      
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = currentBoard[r][c];
-          const count = letterCounts.get(letter) || 0;
-          letterCounts.set(letter, count + 1);
-          allLetters.push(letter);
-        }
-      }
-      
-      // Check if any letter exceeds 4 instances and replace extras
-      for (const [letter, count] of letterCounts) {
-        if (count > 4) {
-          const excess = count - 4;
-          // Find positions with this letter and replace excess ones
-          let replaced = 0;
-          for (let i = 0; i < allLetters.length && replaced < excess; i++) {
-            if (allLetters[i] === letter) {
-              // Replace with a constrained random letter
-              const tempCounts = new Map(letterCounts);
-              tempCounts.set(letter, tempCounts.get(letter)! - 1);
-              allLetters[i] = constrainedRandomLetter(tempCounts);
-              replaced++;
-            }
-          }
-        }
-      }
-      
-      // Shuffle the letters array
-      for (let i = allLetters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
-      }
-      
-      // Redistribute the shuffled letters
-      let letterIndex = 0;
-      const shuffledBoard = currentBoard.map(row => [...row]);
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          shuffledBoard[r][c] = allLetters[letterIndex++];
-        }
-      }
-      
-      setBoard(shuffledBoard);
-      
-      // Set all tiles as affected for visual effect
-      const allTileKeys = new Set<string>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          allTileKeys.add(keyOf({ r, c }));
-        }
-      }
-      setAffectedTiles(allTileKeys);
-      
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1500);
-      
-      toast.success("Shuffle activated! All letters repositioned!");
-    }
+    // Handle shuffle tiles (use updated board if X-factor was triggered)
+    const currentBoard = xChanged > 0 ? updatedBoard : currentBoardForXFactor;
+    handleShuffleTiles(
+      wordPath, 
+      specialTiles, 
+      currentBoard, 
+      size, 
+      setBoard, 
+      setAffectedTiles
+    );
 
     let newSpecialTiles = specialTiles.map(row => [...row]);
     wordPath.forEach(p => {
@@ -1228,48 +1344,19 @@ useEffect(() => {
 
     setLastWordTiles(new Set(wordPath.map(keyOf)));
     
-    // Check for new achievements (same logic as original submitWord)
-    const newAchievements: AchievementId[] = [];
-    const checkAndAdd = (condition: boolean, achievement: AchievementId) => {
-      if (condition && !unlocked.has(achievement)) {
-        newAchievements.push(achievement);
-      }
-    };
-
-    // NEW: Length-based achievement checking system (replaces streak-based)
-    // Track words by length for new achievements
-    const currentGameWords = [...usedWords, { word: actualWord, path: wordPath, breakdown }];
-    const sixPlusWords = currentGameWords.filter(w => w.word.length >= 6).length;
-    const sevenPlusWords = currentGameWords.filter(w => w.word.length >= 7).length;
-    const eightPlusWords = currentGameWords.filter(w => w.word.length >= 8).length;
-
-    if (sixPlusWords >= 3) checkAndAdd(true, "wordArtisan");
-    if (sevenPlusWords >= 5) checkAndAdd(true, "lengthMaster");
-    if (eightPlusWords >= 3) checkAndAdd(true, "epicWordsmith");
-    if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
-    if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
-    if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
-    if (actualWord.length >= 7) checkAndAdd(true, "long7");
-    if (actualWord.length >= 8) checkAndAdd(true, "epic8");
-    const ultraCount = wordPath.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
-    if (ultraCount >= 2) checkAndAdd(true, "rare2");
-    if (multiplier >= 3) checkAndAdd(true, "combo3x");
-    if (xChanged >= 3) checkAndAdd(true, "chaos3");
-    const ratio = vowelRatioOfWord(actualWord);
-    if (actualWord.length >= 6 && ratio >= 0.6) checkAndAdd(true, "vowelStorm");
-    if (actualWord.length >= 6 && ratio <= 0.2) checkAndAdd(true, "consonantCrunch");
-    if (wildUsed) checkAndAdd(true, "wildWizard");
-    const nextUsedCount = usedWords.length + 1;
-    if (nextUsedCount >= 10) checkAndAdd(true, "cartographer10");
-    if (nextUsedCount >= 15) checkAndAdd(true, "collector15");
-    if (discoverableCount > 0) {
-      const pct = (nextUsedCount / discoverableCount) * 100;
-      if (pct >= 80) checkAndAdd(true, "completionist80");
-      if (nextUsedCount >= discoverableCount) checkAndAdd(true, "completionist100");
-    }
-
-    // Calculate achievement bonus
-    const achievementBonus = newAchievements.reduce((total, id) => total + ACHIEVEMENTS[id].scoreBonus, 0);
+    // Check for new achievements using shared function
+    const { newAchievements, achievementBonus } = checkAndAwardAchievements(
+      actualWord,
+      wordPath,
+      usedWords,
+      unlocked,
+      discoverableCount,
+      sharedTilesCount,
+      multiplier,
+      xChanged,
+      wildUsed,
+      board
+    );
     const finalScore = score + totalGain + achievementBonus;
     
     setScore(finalScore);
@@ -2461,125 +2548,28 @@ const handleExtraMoves = () => {
       });
     }
 
-    const xFactorTiles = path.filter(p => specialTiles[p.r][p.c].type === "xfactor");
-    let xChanged = 0;
-    if (xFactorTiles.length > 0) {
-      const newBoard = board.map(row => [...row]);
-      const newSpecialTiles = specialTiles.map(row => [...row]);
-      const changedTileKeys = new Set<string>();
+    // Handle X-Factor tiles first
+    const currentBoardForXFactor = board.map(row => [...row]);
+    const xChanged = handleXFactorTiles(
+      path, 
+      specialTiles, 
+      currentBoardForXFactor, 
+      size, 
+      setBoard, 
+      setSpecialTiles, 
+      setAffectedTiles
+    );
 
-      // Count current letters on the board for constraint enforcement
-      const currentLetterCounts = new Map<string, number>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = newBoard[r][c];
-          currentLetterCounts.set(letter, (currentLetterCounts.get(letter) || 0) + 1);
-        }
-      }
-
-      xFactorTiles.forEach(xfPos => {
-        const diagonals = [
-          { r: xfPos.r - 1, c: xfPos.c - 1 },
-          { r: xfPos.r - 1, c: xfPos.c + 1 },
-          { r: xfPos.r + 1, c: xfPos.c - 1 },
-          { r: xfPos.r + 1, c: xfPos.c + 1 }
-        ];
-
-        diagonals.forEach(pos => {
-          if (within(pos.r, pos.c, size)) {
-            // Reduce count of old letter
-            const oldLetter = newBoard[pos.r][pos.c];
-            currentLetterCounts.set(oldLetter, (currentLetterCounts.get(oldLetter) || 0) - 1);
-            
-            // Generate new constrained letter
-            newBoard[pos.r][pos.c] = constrainedRandomLetter(currentLetterCounts);
-            newSpecialTiles[pos.r][pos.c] = { type: null };
-            changedTileKeys.add(keyOf(pos));
-          }
-        });
-      });
-
-      setBoard(newBoard);
-      setSpecialTiles(newSpecialTiles);
-      setAffectedTiles(changedTileKeys);
-      xChanged = changedTileKeys.size;
-
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1000);
-
-      toast.info("X-Factor activated! Adjacent tiles transformed!");
-    }
-
-    // Handle shuffle tiles
-    const shuffleTiles = path.filter(p => specialTiles[p.r][p.c].type === "shuffle");
-    if (shuffleTiles.length > 0) {
-      // Create a copy of the current board (use updated board if X-factor was triggered)
-      const currentBoard = board.map(row => [...row]);
-      
-      // Get all letters from the board and ensure max 4 of each letter
-      const allLetters: string[] = [];
-      const letterCounts = new Map<string, number>();
-      
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = currentBoard[r][c];
-          const count = letterCounts.get(letter) || 0;
-          letterCounts.set(letter, count + 1);
-          allLetters.push(letter);
-        }
-      }
-      
-      // Check if any letter exceeds 4 instances and replace extras
-      for (const [letter, count] of letterCounts) {
-        if (count > 4) {
-          const excess = count - 4;
-          // Find positions with this letter and replace excess ones
-          let replaced = 0;
-          for (let i = 0; i < allLetters.length && replaced < excess; i++) {
-            if (allLetters[i] === letter) {
-              // Replace with a constrained random letter
-              const tempCounts = new Map(letterCounts);
-              tempCounts.set(letter, tempCounts.get(letter)! - 1);
-              allLetters[i] = constrainedRandomLetter(tempCounts);
-              replaced++;
-            }
-          }
-        }
-      }
-      
-      // Shuffle the letters array
-      for (let i = allLetters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
-      }
-      
-      // Redistribute the shuffled letters
-      let letterIndex = 0;
-      const shuffledBoard = currentBoard.map(row => [...row]);
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          shuffledBoard[r][c] = allLetters[letterIndex++];
-        }
-      }
-      
-      setBoard(shuffledBoard);
-      
-      // Set all tiles as affected for visual effect
-      const allTileKeys = new Set<string>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          allTileKeys.add(keyOf({ r, c }));
-        }
-      }
-      setAffectedTiles(allTileKeys);
-      
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1500);
-      
-      toast.success("Shuffle activated! All letters repositioned!");
-    }
+    // Handle shuffle tiles (use updated board if X-factor was triggered)
+    const currentBoard = xChanged > 0 ? board : currentBoardForXFactor;
+    handleShuffleTiles(
+      path, 
+      specialTiles, 
+      currentBoard, 
+      size, 
+      setBoard, 
+      setAffectedTiles
+    );
 
     let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
@@ -2592,48 +2582,19 @@ const handleExtraMoves = () => {
 
     setLastWordTiles(new Set(path.map(keyOf)));
     
-    // Check for new achievements
-    const newAchievements: AchievementId[] = [];
-    const checkAndAdd = (condition: boolean, achievement: AchievementId) => {
-      if (condition && !unlocked.has(achievement)) {
-        newAchievements.push(achievement);
-      }
-    };
-
-    // NEW: Length-based achievement checking system (replaces streak-based)
-    // Track words by length for new achievements
-    const currentGameWords = [...usedWords, { word: actualWord, path, breakdown }];
-    const sixPlusWords = currentGameWords.filter(w => w.word.length >= 6).length;
-    const sevenPlusWords = currentGameWords.filter(w => w.word.length >= 7).length;
-    const eightPlusWords = currentGameWords.filter(w => w.word.length >= 8).length;
-
-    if (sixPlusWords >= 3) checkAndAdd(true, "wordArtisan");
-    if (sevenPlusWords >= 5) checkAndAdd(true, "lengthMaster");
-    if (eightPlusWords >= 3) checkAndAdd(true, "epicWordsmith");
-    if (sharedTilesCount >= 2) checkAndAdd(true, "link2");
-    if (sharedTilesCount >= 3) checkAndAdd(true, "link3");
-    if (sharedTilesCount >= 4) checkAndAdd(true, "link4");
-    if (actualWord.length >= 7) checkAndAdd(true, "long7");
-    if (actualWord.length >= 8) checkAndAdd(true, "epic8");
-    const ultraCount = path.reduce((acc, p) => acc + (["J","Q","X","Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
-    if (ultraCount >= 2) checkAndAdd(true, "rare2");
-    if (multiplier >= 3) checkAndAdd(true, "combo3x");
-    if (xChanged >= 3) checkAndAdd(true, "chaos3");
-    const ratio = vowelRatioOfWord(actualWord);
-    if (actualWord.length >= 6 && ratio >= 0.6) checkAndAdd(true, "vowelStorm");
-    if (actualWord.length >= 6 && ratio <= 0.2) checkAndAdd(true, "consonantCrunch");
-    if (wildUsed) checkAndAdd(true, "wildWizard");
-    const nextUsedCount = usedWords.length + 1;
-    if (nextUsedCount >= 10) checkAndAdd(true, "cartographer10");
-    if (nextUsedCount >= 15) checkAndAdd(true, "collector15");
-    if (discoverableCount > 0) {
-      const pct = (nextUsedCount / discoverableCount) * 100;
-      if (pct >= 80) checkAndAdd(true, "completionist80");
-      if (nextUsedCount >= discoverableCount) checkAndAdd(true, "completionist100");
-    }
-
-    // Calculate achievement bonus
-    const achievementBonus = newAchievements.reduce((total, id) => total + ACHIEVEMENTS[id].scoreBonus, 0);
+    // Check for new achievements using shared function
+    const { newAchievements, achievementBonus } = checkAndAwardAchievements(
+      actualWord,
+      path,
+      usedWords,
+      unlocked,
+      discoverableCount,
+      sharedTilesCount,
+      multiplier,
+      xChanged,
+      wildUsed,
+      board
+    );
     const finalScore = score + totalGain + achievementBonus;
     
     setScore(finalScore);
