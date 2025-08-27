@@ -1962,37 +1962,22 @@ function WordPathGame({
         handleExtraMoves();
         break;
       case "hammer":
-        // Hammer activates/deactivates on tap, executes on stone tile tap
-        if (activatedConsumables.has(consumableId)) {
-          // Deactivate if already activated
-          setActivatedConsumables(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(consumableId);
-            return newSet;
-          });
-          toast.info("Hammer deactivated");
-        } else {
-          // Check if there are stone tiles to break
-          let hasStone = false;
-          for (let r = 0; r < size && !hasStone; r++) {
-            for (let c = 0; c < size && !hasStone; c++) {
-              if (specialTiles[r][c].type === "stone") {
-                hasStone = true;
-              }
-            }
-          }
-          if (!hasStone) {
-            toast.error("No stone tiles available to break");
-            return;
-          }
+        // Hammer immediately breaks all stone tiles on the grid
+        if (path.length > 0) {
+          toast.error("Cannot use hammer while a word is in progress");
+          return;
+        }
+        
+        // Check if user has hammer consumables in inventory
+        if (!consumableInventory.hammer || consumableInventory.hammer.quantity <= 0) {
+          toast.error("No hammer consumables available");
+          return;
+        }
 
-          // Check if user has hammer consumables in inventory
-          if (!consumableInventory.hammer || consumableInventory.hammer.quantity <= 0) {
-            toast.error("No hammer consumables available");
-            return;
-          }
-          setActivatedConsumables(prev => new Set([...prev, consumableId]));
-          toast.info("Hammer activated! Tap a stone tile to break it.");
+        const brokenCount = await breakAllStoneTiles();
+        if (brokenCount === 0) {
+          toast.error("No stone tiles to break!");
+          return;
         }
         break;
       case "score_multiplier":
@@ -2114,43 +2099,40 @@ function WordPathGame({
     });
     toast.success("Next word will have 2x score!");
   };
-  const handleHammer = async (targetPos?: Pos) => {
-    if (path.length > 0) {
-      toast.error("Cannot use hammer while a word is in progress");
-      return;
-    }
-    if (!targetPos) {
-      console.error("handleHammer called without target position");
-      return;
+  // New function to break all stone tiles at once
+  const breakAllStoneTiles = async (): Promise<number> => {
+    // Scan entire grid for stone tiles
+    let stonePositions: Pos[] = [];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (specialTiles[r][c].type === "stone") {
+          stonePositions.push({ r, c });
+        }
+      }
     }
 
-    // Check if the target position has a stone tile
-    const tile = specialTiles[targetPos.r][targetPos.c];
-    if (tile.type !== "stone") {
-      toast.error("Can only use hammer on stone tiles");
-      return;
+    if (stonePositions.length === 0) {
+      return 0;
     }
+
+    // Use one hammer consumable
     const success = await useConsumable("hammer");
     if (!success) {
       toast.error("Failed to use hammer consumable");
-      return;
+      return 0;
     }
 
-    // Break the specific stone tile
+    // Break all stone tiles at once
     const newSpecialTiles = specialTiles.map(row => [...row]);
-    newSpecialTiles[targetPos.r][targetPos.c] = {
-      type: null
-    };
+    stonePositions.forEach(pos => {
+      newSpecialTiles[pos.r][pos.c] = { type: null };
+    });
     setSpecialTiles(newSpecialTiles);
 
-    // Deactivate hammer after use
-    setActivatedConsumables(prev => {
-      const newSet = new Set(prev);
-      newSet.delete("hammer");
-      return newSet;
-    });
-    console.log(`Successfully broke stone tile at ${targetPos.r},${targetPos.c}`);
-    toast.success("Stone tile broken!");
+    const count = stonePositions.length;
+    toast.success(`Broke ${count} stone tile${count > 1 ? 's' : ''}!`);
+    console.log(`Successfully broke ${count} stone tiles`);
+    return count;
   };
   const handleExtraMoves = () => {
     if (settings.mode !== "daily") {
@@ -2314,19 +2296,11 @@ function WordPathGame({
     const MOVEMENT_THRESHOLD = 30; // Increased from 15px to 30px
     const MIN_SWIPE_TIME = 100; // Must be touching for at least 100ms to be considered a swipe
 
-    // Check if hammer is active - if so, disable ALL swipe detection to ensure tap-only interaction
-    const isHammerActive = activatedConsumables.has("hammer");
-    
-    // Only convert to swipe if significant movement AND sufficient time has passed AND hammer is not active
-    if (isMobile && distance > MOVEMENT_THRESHOLD && touchDuration > MIN_SWIPE_TIME && isTapMode && !dragging && !isHammerActive) {
+    // Only convert to swipe if significant movement AND sufficient time has passed
+    if (isMobile && distance > MOVEMENT_THRESHOLD && touchDuration > MIN_SWIPE_TIME && isTapMode && !dragging) {
       console.log(`Converting tap to swipe: distance=${distance}px, duration=${touchDuration}ms`);
       setIsTapMode(false);
       setDragging(true);
-    }
-
-    // Log when hammer prevents swipe conversion
-    if (isHammerActive && distance > MOVEMENT_THRESHOLD) {
-      console.log(`Hammer active - preventing all swipe detection (distance=${distance}px)`);
     }
 
     // Only process move events if we're dragging
@@ -2387,18 +2361,6 @@ function WordPathGame({
 
   // Single tap handler for tile selection
   function onTileTap(pos: Pos) {
-    // Check if hammer is activated - handle before any path logic
-    if (activatedConsumables.has("hammer")) {
-      if (specialTiles[pos.r][pos.c].type === "stone") {
-        console.log(`Hammer interaction detected on stone tile at ${pos.r},${pos.c}`);
-        handleHammer(pos);
-        return;
-      } else {
-        // Hammer is active but this isn't a stone tile - show feedback and return
-        toast.warning("Hammer only works on stone tiles!");
-        return;
-      }
-    }
     const currentTime = Date.now();
     const isDoubleTap = lastTapPos && lastTapPos.r === pos.r && lastTapPos.c === pos.c && currentTime - lastTapTime < 300;
 
@@ -3250,7 +3212,7 @@ function WordPathGame({
 
                 // Special tile styling
                 if (special.type === "stone") {
-                  baseClasses += activatedConsumables.has("hammer") ? "bg-gradient-to-br from-gray-400 to-gray-600 text-white ring-2 ring-yellow-400 animate-pulse " : "bg-gradient-to-br from-gray-400 to-gray-600 text-white ";
+                  baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white ";
                 } else if (special.type === "wild") {
                   baseClasses += "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white ";
                 } else if (special.type === "xfactor") {
