@@ -2294,11 +2294,17 @@ const handleExtraMoves = () => {
 
   // Single tap handler for tile selection
   function onTileTap(pos: Pos) {
-    // Check if hammer is activated and this is a stone tile - handle before path logic
-    if (activatedConsumables.has("hammer") && specialTiles[pos.r][pos.c].type === "stone") {
-      console.log(`Hammer interaction detected on stone tile at ${pos.r},${pos.c}`);
-      handleHammer(pos);
-      return;
+    // Check if hammer is activated - handle before any path logic
+    if (activatedConsumables.has("hammer")) {
+      if (specialTiles[pos.r][pos.c].type === "stone") {
+        console.log(`Hammer interaction detected on stone tile at ${pos.r},${pos.c}`);
+        handleHammer(pos);
+        return;
+      } else {
+        // Hammer is active but this isn't a stone tile - show feedback and return
+        toast.warning("Hammer only works on stone tiles!");
+        return;
+      }
     }
 
     const currentTime = Date.now();
