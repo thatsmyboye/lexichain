@@ -760,7 +760,7 @@ function handleXFactorTiles(
 function checkAndAwardAchievements(
   actualWord: string,
   wordPath: Pos[],
-  usedWords: Array<{word: string, score: number, breakdown: any}>,
+  usedWords: Array<{word: string, score: number, breakdown?: any}>,
   unlocked: Set<AchievementId>,
   discoverableCount: number,
   sharedTilesCount: number,
@@ -778,7 +778,7 @@ function checkAndAwardAchievements(
 
   // NEW: Length-based achievement checking system (replaces streak-based)
   // Track words by length for new achievements
-  const currentGameWords = [...usedWords, { word: actualWord, path: wordPath, breakdown: {} }];
+  const currentGameWords = [...usedWords, { word: actualWord, score: 0, breakdown: {} }];
   const sixPlusWords = currentGameWords.filter(w => w.word.length >= 6).length;
   const sevenPlusWords = currentGameWords.filter(w => w.word.length >= 7).length;
   const eightPlusWords = currentGameWords.filter(w => w.word.length >= 8).length;
@@ -1379,12 +1379,14 @@ function WordPathGame({
     const { newAchievements, achievementBonus } = checkAndAwardAchievements(
       actualWord,
       wordPath,
-      board,
-      specialTiles,
-      lastWordTiles,
-      streak,
       usedWords,
-      unlocked
+      unlocked,
+      0,
+      sharedTilesCount,
+      multiplier,
+      xChanged,
+      true,
+      board
     );
 
     const finalScore = score + totalGain + achievementBonus;
@@ -2564,20 +2566,23 @@ function WordPathGame({
     const { newAchievements: newAchievements2, achievementBonus: achievementBonus2 } = checkAndAwardAchievements(
       actualWord,
       path,
-      board,
-      specialTiles,
-      lastWordTiles,
-      streak,
       usedWords,
-      unlocked
+      unlocked,
+      0,
+      sharedTilesCount,
+      multiplier,
+      xChanged,
+      false,
+      board
     );
 
-    setScore(prev => prev + totalGain + achievementBonus2);
+    const finalScore = score + totalGain + achievementBonus2;
+    setScore(finalScore);
     newAchievements2.forEach(id => {
-      const rarityEmoji = achievements[id].rarity === "legendary" ? "🏆" : 
-                         achievements[id].rarity === "epic" ? "💎" : 
-                         achievements[id].rarity === "rare" ? "⭐" : "🎯";
-      toast.success(`${rarityEmoji} Achievement: ${achievements[id].label}!`);
+      const rarityEmoji = ACHIEVEMENTS[id].rarity === "legendary" ? "🏆" : 
+                         ACHIEVEMENTS[id].rarity === "epic" ? "💎" : 
+                         ACHIEVEMENTS[id].rarity === "rare" ? "⭐" : "🎯";
+      toast.success(`${rarityEmoji} Achievement: ${ACHIEVEMENTS[id].label}!`);
     });
     setUnlocked(prev => {
       const next = new Set(prev);
