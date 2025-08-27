@@ -831,7 +831,7 @@ function checkAndAwardAchievements(
   return { newAchievements, achievementBonus };
 }
 
-export default function WordPathGame({
+function WordPathGame({
   onBackToTitle,
   initialMode = "classic"
 }: {
@@ -1363,122 +1363,6 @@ export default function WordPathGame({
       setBoard, 
       setAffectedTiles
     );
-
-      // Count current letters on the board for constraint enforcement
-      const currentLetterCounts = new Map<string, number>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = newBoardAfterX[r][c];
-          currentLetterCounts.set(letter, (currentLetterCounts.get(letter) || 0) + 1);
-        }
-      }
-      xFactorTiles.forEach(xfPos => {
-        const diagonals = [{
-          r: xfPos.r - 1,
-          c: xfPos.c - 1
-        }, {
-          r: xfPos.r - 1,
-          c: xfPos.c + 1
-        }, {
-          r: xfPos.r + 1,
-          c: xfPos.c - 1
-        }, {
-          r: xfPos.r + 1,
-          c: xfPos.c + 1
-        }];
-        diagonals.forEach(pos => {
-          if (within(pos.r, pos.c, size)) {
-            // Reduce count of old letter
-            const oldLetter = newBoardAfterX[pos.r][pos.c];
-            currentLetterCounts.set(oldLetter, (currentLetterCounts.get(oldLetter) || 0) - 1);
-
-            // Generate new constrained letter
-            newBoardAfterX[pos.r][pos.c] = constrainedRandomLetter(currentLetterCounts);
-            newSpecialTiles[pos.r][pos.c] = {
-              type: null
-            };
-            changedTileKeys.add(keyOf(pos));
-          }
-        });
-      });
-      setBoard(newBoardAfterX);
-      setSpecialTiles(newSpecialTiles);
-      setAffectedTiles(changedTileKeys);
-      xChanged = changedTileKeys.size;
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1000);
-      toast.info("X-Factor activated! Adjacent tiles transformed!");
-    }
-
-    // Handle shuffle tiles
-    const shuffleTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "shuffle");
-    if (shuffleTiles.length > 0) {
-      // Create a copy of the current board
-      const currentBoard = (xFactorTiles.length > 0 ? newBoard : board).map(row => [...row]);
-
-      // Get all letters from the board and ensure max 4 of each letter
-      const allLetters: string[] = [];
-      const letterCounts = new Map<string, number>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = currentBoard[r][c];
-          const count = letterCounts.get(letter) || 0;
-          letterCounts.set(letter, count + 1);
-          allLetters.push(letter);
-        }
-      }
-
-      // Check if any letter exceeds 4 instances and replace extras
-      for (const [letter, count] of letterCounts) {
-        if (count > 4) {
-          const excess = count - 4;
-          // Find positions with this letter and replace excess ones
-          let replaced = 0;
-          for (let i = 0; i < allLetters.length && replaced < excess; i++) {
-            if (allLetters[i] === letter) {
-              // Replace with a constrained random letter
-              const tempCounts = new Map(letterCounts);
-              tempCounts.set(letter, tempCounts.get(letter)! - 1);
-              allLetters[i] = constrainedRandomLetter(tempCounts);
-              replaced++;
-            }
-          }
-        }
-      }
-
-      // Shuffle the letters array
-      for (let i = allLetters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
-      }
-
-      // Redistribute the shuffled letters
-      let letterIndex = 0;
-      const shuffledBoard = currentBoard.map(row => [...row]);
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          shuffledBoard[r][c] = allLetters[letterIndex++];
-        }
-      }
-      setBoard(shuffledBoard);
-
-      // Set all tiles as affected for visual effect
-      const allTileKeys = new Set<string>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          allTileKeys.add(keyOf({
-            r,
-            c
-          }));
-        }
-      }
-      setAffectedTiles(allTileKeys);
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1500);
-      toast.success("Shuffle activated! All letters repositioned!");
-    }
     let newSpecialTiles = specialTiles.map(row => [...row]);
     wordPath.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
@@ -1495,14 +1379,12 @@ export default function WordPathGame({
     const { newAchievements, achievementBonus } = checkAndAwardAchievements(
       actualWord,
       wordPath,
-      sharedTilesCount,
-      usedWords,
-      multiplier,
-      totalGain,
       board,
       specialTiles,
-      setUnlockedAchievements,
-      awardConsumables
+      lastWordTiles,
+      streak,
+      usedWords,
+      unlocked
     );
 
     const finalScore = score + totalGain + achievementBonus;
@@ -2666,121 +2548,6 @@ export default function WordPathGame({
       setAffectedTiles
     );
 
-      // Count current letters on the board for constraint enforcement
-      const currentLetterCounts = new Map<string, number>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = newBoard[r][c];
-          currentLetterCounts.set(letter, (currentLetterCounts.get(letter) || 0) + 1);
-        }
-      }
-      xFactorTiles.forEach(xfPos => {
-        const diagonals = [{
-          r: xfPos.r - 1,
-          c: xfPos.c - 1
-        }, {
-          r: xfPos.r - 1,
-          c: xfPos.c + 1
-        }, {
-          r: xfPos.r + 1,
-          c: xfPos.c - 1
-        }, {
-          r: xfPos.r + 1,
-          c: xfPos.c + 1
-        }];
-        diagonals.forEach(pos => {
-          if (within(pos.r, pos.c, size)) {
-            // Reduce count of old letter
-            const oldLetter = newBoard[pos.r][pos.c];
-            currentLetterCounts.set(oldLetter, (currentLetterCounts.get(oldLetter) || 0) - 1);
-
-            // Generate new constrained letter
-            newBoard[pos.r][pos.c] = constrainedRandomLetter(currentLetterCounts);
-            newSpecialTiles[pos.r][pos.c] = {
-              type: null
-            };
-            changedTileKeys.add(keyOf(pos));
-          }
-        });
-      });
-      setBoard(newBoard);
-      setSpecialTiles(newSpecialTiles);
-      setAffectedTiles(changedTileKeys);
-      xChanged = changedTileKeys.size;
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1000);
-      toast.info("X-Factor activated! Adjacent tiles transformed!");
-    }
-
-    // Handle shuffle tiles
-    const shuffleTiles = path.filter(p => specialTiles[p.r][p.c].type === "shuffle");
-    if (shuffleTiles.length > 0) {
-      // Create a copy of the current board (use updated board if X-factor was triggered)
-      const currentBoard = board.map(row => [...row]);
-
-      // Get all letters from the board and ensure max 4 of each letter
-      const allLetters: string[] = [];
-      const letterCounts = new Map<string, number>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const letter = currentBoard[r][c];
-          const count = letterCounts.get(letter) || 0;
-          letterCounts.set(letter, count + 1);
-          allLetters.push(letter);
-        }
-      }
-
-      // Check if any letter exceeds 4 instances and replace extras
-      for (const [letter, count] of letterCounts) {
-        if (count > 4) {
-          const excess = count - 4;
-          // Find positions with this letter and replace excess ones
-          let replaced = 0;
-          for (let i = 0; i < allLetters.length && replaced < excess; i++) {
-            if (allLetters[i] === letter) {
-              // Replace with a constrained random letter
-              const tempCounts = new Map(letterCounts);
-              tempCounts.set(letter, tempCounts.get(letter)! - 1);
-              allLetters[i] = constrainedRandomLetter(tempCounts);
-              replaced++;
-            }
-          }
-        }
-      }
-
-      // Shuffle the letters array
-      for (let i = allLetters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
-      }
-
-      // Redistribute the shuffled letters
-      let letterIndex = 0;
-      const shuffledBoard = currentBoard.map(row => [...row]);
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          shuffledBoard[r][c] = allLetters[letterIndex++];
-        }
-      }
-      setBoard(shuffledBoard);
-
-      // Set all tiles as affected for visual effect
-      const allTileKeys = new Set<string>();
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          allTileKeys.add(keyOf({
-            r,
-            c
-          }));
-        }
-      }
-      setAffectedTiles(allTileKeys);
-      setTimeout(() => {
-        setAffectedTiles(new Set());
-      }, 1500);
-      toast.success("Shuffle activated! All letters repositioned!");
-    }
     let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
@@ -3782,3 +3549,5 @@ export default function WordPathGame({
     </section>
   );
 }
+
+export default WordPathGame;
