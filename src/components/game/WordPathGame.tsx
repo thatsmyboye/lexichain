@@ -2780,7 +2780,8 @@ function WordPathGame({
       toast.success("Copied to clipboard!");
     }
   };
-  return <section className="container mx-auto py-4 max-w-7xl">
+  return (
+    <section className="container mx-auto py-4 max-w-7xl">
       <Dialog open={showDifficultyDialog} onOpenChange={setShowDifficultyDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
