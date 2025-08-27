@@ -2363,22 +2363,23 @@ function WordPathGame({
 
     // Handle tap mode - this was a tap, not a swipe
     if (wasInTapMode && touchStartPos && !dragging) {
-      // Find which tile was tapped by getting the element at the touch position
-      const touch = e.changedTouches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (element && element.closest('[data-tile-pos]')) {
-        const tileElement = element.closest('[data-tile-pos]') as HTMLElement;
-        const posStr = tileElement.getAttribute('data-tile-pos');
-        if (posStr) {
-          const [r, c] = posStr.split(',').map(Number);
-          const pos = {
-            r,
-            c
-          };
-          console.log(`Processing tap on tile ${r},${c}`);
-
-          // Otherwise, handle as normal tile tap
-          onTileTap(pos);
+      // Use stored initial tile position for reliable tap detection (especially important for hammer)
+      if (initialTouchTile) {
+        console.log(`Processing tap on stored tile ${initialTouchTile.pos.r},${initialTouchTile.pos.c}`);
+        onTileTap(initialTouchTile.pos);
+      } else {
+        // Fallback to coordinate detection if stored position is unavailable
+        const touch = e.changedTouches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element && element.closest('[data-tile-pos]')) {
+          const tileElement = element.closest('[data-tile-pos]') as HTMLElement;
+          const posStr = tileElement.getAttribute('data-tile-pos');
+          if (posStr) {
+            const [r, c] = posStr.split(',').map(Number);
+            const pos = { r, c };
+            console.log(`Processing tap on fallback tile ${r},${c}`);
+            onTileTap(pos);
+          }
         }
       }
     }
