@@ -2314,19 +2314,19 @@ function WordPathGame({
     const MOVEMENT_THRESHOLD = 30; // Increased from 15px to 30px
     const MIN_SWIPE_TIME = 100; // Must be touching for at least 100ms to be considered a swipe
 
-    // Check if hammer is active and initial touch was on stone tile - if so, prioritize hammer over swipe
-    const isHammerActiveOnStone = activatedConsumables.has("hammer") && initialTouchTile?.isStone;
+    // Check if hammer is active - if so, disable ALL swipe detection to ensure tap-only interaction
+    const isHammerActive = activatedConsumables.has("hammer");
     
-    // Only convert to swipe if significant movement AND sufficient time has passed AND not hammer interaction
-    if (isMobile && distance > MOVEMENT_THRESHOLD && touchDuration > MIN_SWIPE_TIME && isTapMode && !dragging && !isHammerActiveOnStone) {
+    // Only convert to swipe if significant movement AND sufficient time has passed AND hammer is not active
+    if (isMobile && distance > MOVEMENT_THRESHOLD && touchDuration > MIN_SWIPE_TIME && isTapMode && !dragging && !isHammerActive) {
       console.log(`Converting tap to swipe: distance=${distance}px, duration=${touchDuration}ms`);
       setIsTapMode(false);
       setDragging(true);
     }
 
-    // Log hammer priority when preventing swipe conversion
-    if (isHammerActiveOnStone && distance > MOVEMENT_THRESHOLD) {
-      console.log(`Hammer active on stone tile - preventing tap-to-swipe conversion (distance=${distance}px)`);
+    // Log when hammer prevents swipe conversion
+    if (isHammerActive && distance > MOVEMENT_THRESHOLD) {
+      console.log(`Hammer active - preventing all swipe detection (distance=${distance}px)`);
     }
 
     // Only process move events if we're dragging
