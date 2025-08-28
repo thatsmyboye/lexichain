@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { validateEmail, validateConsumableId, checkRateLimit, createErrorResponse, logSecurityEvent } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,13 +35,30 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+  
   try {
-    console.log("Processing payment request");
+    // Rate limiting by IP
+    if (!checkRateLimit(`payment-${clientIP}`, 5, 300000)) { // 5 requests per 5 minutes
+      logSecurityEvent("RATE_LIMIT_EXCEEDED", { ip: clientIP, endpoint: "create-payment" }, "WARN");
+      return createErrorResponse("Too many requests. Please try again later.", 429, corsHeaders);
+    }
+
+    logSecurityEvent("PAYMENT_REQUEST_STARTED", { ip: clientIP }, "INFO");
     
-    const { consumableId, guestEmail } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { consumableId, guestEmail } = body;
     
-    if (!consumableId || !STRIPE_PRODUCT_IDS[consumableId as keyof typeof STRIPE_PRODUCT_IDS]) {
-      throw new Error("Invalid consumable ID");
+    // Validate consumable ID
+    if (!validateConsumableId(consumableId)) {
+      logSecurityEvent("INVALID_CONSUMABLE_ID", { consumableId: consumableId?.substring(0, 20), ip: clientIP }, "WARN");
+      return createErrorResponse("Invalid consumable ID", 400, corsHeaders);
+    }
+
+    // Validate Stripe product mapping
+    if (!STRIPE_PRODUCT_IDS[consumableId as keyof typeof STRIPE_PRODUCT_IDS]) {
+      logSecurityEvent("MISSING_STRIPE_PRODUCT", { consumableId, ip: clientIP }, "ERROR");
+      return createErrorResponse("Product not available", 400, corsHeaders);
     }
 
     // Initialize Stripe
@@ -56,6 +74,7 @@ serve(async (req) => {
 
     let userEmail = guestEmail;
     let userId = null;
+    let isAuthenticated = false;
 
     // Check if user is authenticated
     const authHeader = req.headers.get("Authorization");
@@ -66,15 +85,28 @@ serve(async (req) => {
         if (data.user?.email) {
           userEmail = data.user.email;
           userId = data.user.id;
-          console.log("Authenticated user:", userEmail);
+          isAuthenticated = true;
+          logSecurityEvent("AUTHENTICATED_PURCHASE", { userId, ip: clientIP }, "INFO");
         }
       } catch (error) {
-        console.log("No valid auth token, proceeding as guest");
+        logSecurityEvent("INVALID_AUTH_TOKEN", { ip: clientIP }, "WARN");
       }
     }
 
-    if (!userEmail) {
-      throw new Error("Email is required for purchase");
+    // Validate email for guest purchases
+    if (!isAuthenticated) {
+      if (!guestEmail) {
+        return createErrorResponse("Email is required for guest purchases", 400, corsHeaders);
+      }
+      
+      const emailValidation = validateEmail(guestEmail);
+      if (!emailValidation.isValid) {
+        logSecurityEvent("INVALID_GUEST_EMAIL", { email: guestEmail?.substring(0, 10), ip: clientIP }, "WARN");
+        return createErrorResponse("Invalid email format", 400, corsHeaders);
+      }
+      
+      userEmail = emailValidation.sanitized;
+      logSecurityEvent("GUEST_PURCHASE", { email: userEmail, ip: clientIP }, "INFO");
     }
 
     // Check if Stripe customer exists
@@ -123,17 +155,26 @@ serve(async (req) => {
       }
     });
 
-    console.log("Created checkout session:", session.id);
+    logSecurityEvent("CHECKOUT_SESSION_CREATED", { 
+      sessionId: session.id, 
+      userId, 
+      consumableId, 
+      isAuthenticated, 
+      ip: clientIP 
+    }, "INFO");
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Payment creation error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    logSecurityEvent("PAYMENT_CREATION_ERROR", { 
+      error: error.message?.substring(0, 100),
+      userId,
+      consumableId,
+      ip: clientIP
+    }, "ERROR");
+    
+    return createErrorResponse("Unable to process payment request", 500, corsHeaders);
   }
 });
