@@ -3008,6 +3008,7 @@ ainsells
 aioli
 aiolis
 air
+airbnb
 airboat
 airboats
 airborne
@@ -7131,6 +7132,7 @@ apotheosizes
 apotheosizing
 apotropaic
 apotropaically
+app
 appal
 appall
 appalled
@@ -9511,6 +9513,7 @@ audiles
 auding
 audings
 audio
+audiobook
 audiocassette
 audiocassettes
 audiogenic
@@ -15023,6 +15026,7 @@ bitchiness
 bitchinesses
 bitching
 bitchy
+bitcoin
 bite
 biteable
 biter
@@ -15648,6 +15652,7 @@ blockbuster
 blockbusters
 blockbusting
 blockbustings
+blockchain
 blocked
 blocker
 blockers
@@ -15662,6 +15667,8 @@ blockish
 blocks
 blocky
 blocs
+blog
+blogger
 bloke
 blokes
 blond
@@ -18215,6 +18222,7 @@ brollies
 brolly
 bromal
 bromals
+bromance
 bromate
 bromated
 bromates
@@ -26428,6 +26436,7 @@ cliche
 cliched
 cliches
 click
+clickbait
 clicked
 clicker
 clickers
@@ -32314,6 +32323,9 @@ cosmopolitism
 cosmopolitisms
 cosmos
 cosmoses
+cosplay
+cosplayer
+cosplayers
 cosponsor
 cosponsored
 cosponsoring
@@ -33230,6 +33242,7 @@ cowman
 cowmen
 coworker
 coworkers
+coworking
 cowpat
 cowpats
 cowpea
@@ -34350,6 +34363,8 @@ crowdedness
 crowdednesses
 crowder
 crowders
+crowdfund
+crowdfunding
 crowdie
 crowdies
 crowding
@@ -34627,6 +34642,7 @@ cryptarithm
 cryptarithms
 cryptic
 cryptically
+cryptid
 crypto
 cryptococcal
 cryptococci
@@ -44172,6 +44188,8 @@ doomsayer
 doomsayers
 doomsaying
 doomsayings
+doomscroll
+doomscrolling
 doomsday
 doomsdayer
 doomsdayers
@@ -46305,6 +46323,7 @@ ebonizes
 ebonizing
 ebons
 ebony
+ebook
 ebullience
 ebulliences
 ebulliencies
@@ -46453,6 +46472,7 @@ ecologies
 ecologist
 ecologists
 ecology
+ecommerce
 econobox
 econoboxes
 econometric
@@ -47598,6 +47618,7 @@ emaciates
 emaciating
 emaciation
 emaciations
+email
 emalangeni
 emanate
 emanated
@@ -47998,6 +48019,8 @@ emmet
 emmets
 emodin
 emodins
+emoji
+emojis
 emollient
 emollients
 emolument
@@ -50914,6 +50937,7 @@ etherealizing
 ethereally
 etherealness
 etherealnesses
+ethereum
 etheric
 etherified
 etherifies
@@ -53167,6 +53191,7 @@ facade
 facades
 face
 faceable
+facebook
 facecloth
 facecloths
 faced
@@ -53578,6 +53603,7 @@ famousnesses
 famuli
 famulus
 fan
+fanart
 fanatic
 fanatical
 fanatically
@@ -55201,6 +55227,7 @@ fighters
 fighting
 fightings
 fights
+figma
 figment
 figments
 figs
@@ -55552,6 +55579,7 @@ finochio
 finochios
 finos
 fins
+fintech
 fiord
 fiords
 fioritura
@@ -62106,6 +62134,8 @@ gists
 git
 gitano
 gitanos
+github
+gitlab
 gits
 gittern
 gitterns
@@ -62234,6 +62264,7 @@ glamourizing
 glamourless
 glamourous
 glamours
+glamping
 glance
 glanced
 glancer
@@ -62741,6 +62772,7 @@ glutei
 glutelin
 glutelins
 gluten
+glutenfree
 glutenous
 glutens
 glutethimide
@@ -66311,6 +66343,7 @@ hangout
 hangouts
 hangover
 hangovers
+hangry
 hangs
 hangtag
 hangtags
@@ -66727,6 +66760,9 @@ hashheads
 hashing
 hashish
 hashishes
+hashtag
+hashtagged
+hashtags
 haslet
 haslets
 hasp
@@ -68913,6 +68949,7 @@ histrionically
 histrionics
 hists
 hit
+hitbox
 hitch
 hitched
 hitcher
@@ -69054,6 +69091,7 @@ hoddin
 hoddins
 hodgepodge
 hodgepodges
+hodl
 hodoscope
 hodoscopes
 hods
@@ -70171,6 +70209,7 @@ hotrods
 hots
 hotshot
 hotshots
+hotspot
 hotspur
 hotspurs
 hotted
@@ -70830,6 +70869,7 @@ hybridizing
 hybridoma
 hybridomas
 hybrids
+hybridwork
 hybris
 hybrises
 hydathode
@@ -75124,6 +75164,7 @@ inflows
 influence
 influenceable
 influenced
+influencer
 influences
 influencing
 influent
@@ -76024,6 +76065,7 @@ inspissators
 instabilities
 instability
 instable
+instagram
 instal
 install
 installation
@@ -76966,6 +77008,7 @@ interned
 internee
 internees
 internes
+internet
 interneuron
 interneuronal
 interneurons
@@ -78049,6 +78092,7 @@ iontophoreses
 iontophoresis
 iontophoretic
 iontophoretically
+ios
 iota
 iotacism
 iotacisms
@@ -78057,6 +78101,7 @@ ipecac
 ipecacs
 ipecacuanha
 ipecacuanhas
+iphone
 ipomoea
 ipomoeas
 iproniazid
@@ -83225,6 +83270,7 @@ leadenly
 leadenness
 leadennesses
 leader
+leaderboard
 leaderless
 leaders
 leadership
@@ -85292,6 +85338,7 @@ lives
 livest
 livestock
 livestocks
+livestream
 livetrap
 livetrapped
 livetrapping
@@ -86750,6 +86797,7 @@ lyddite
 lyddites
 lye
 lyes
+lyft
 lying
 lyingly
 lyings
@@ -88170,6 +88218,8 @@ manslaughter
 manslaughters
 manslayer
 manslayers
+mansplain
+mansplaining
 mansuetude
 mansuetudes
 manta
@@ -89273,6 +89323,7 @@ mealier
 mealies
 mealiest
 mealless
+mealprep
 meals
 mealtime
 mealtimes
@@ -89872,6 +89923,7 @@ membraned
 membranes
 membranous
 membranously
+meme
 memento
 mementoes
 mementos
@@ -90470,6 +90522,7 @@ metafictions
 metagalactic
 metagalaxies
 metagalaxy
+metagame
 metage
 metageneses
 metagenesis
@@ -90817,6 +90870,7 @@ metrists
 metritis
 metritises
 metro
+metroidvania
 metrological
 metrologies
 metrologist
@@ -91038,6 +91092,8 @@ microdensitometries
 microdensitometry
 microdissection
 microdissections
+microdose
+microdosing
 microdot
 microdots
 microearthquake
@@ -97540,6 +97596,7 @@ nereid
 nereides
 nereids
 nereis
+nerf
 neritic
 nerol
 neroli
@@ -97601,6 +97658,7 @@ nestor
 nestors
 nests
 net
+netflix
 nether
 nethermost
 netherworld
@@ -97971,6 +98029,7 @@ next
 nextdoor
 nexus
 nexuses
+nft
 ngultrum
 ngultrums
 ngwee
@@ -103679,6 +103738,57 @@ outcoach
 outcoached
 outcoaches
 outcoaching
+outcom
 outcome
 outcomes
-outcom
+photobomb
+plantbased
+podcast
+podcaster
+podcasting
+post
+questing
+quests
+quote
+raid
+raids
+reddit
+refollow
+retweet
+roguelike
+sandbox
+screenshot
+screenshots
+selfie
+selfies
+slack
+smartphone
+social
+speedrun
+speedrunner
+spoiler
+spoilers
+spotify
+stablecoin
+staycation
+stream
+streamer
+subtweet
+tablet
+texting
+tiktok
+tweet
+twitter
+uber
+unfollow
+unspoiled
+username
+vegan
+viral
+vlog
+vlogger
+wfh
+wifi
+workfromhome
+youtuber
+zoom
