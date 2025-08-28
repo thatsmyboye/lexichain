@@ -36,8 +36,8 @@
       #root { min-height: 100vh; }
     </style>
 
-    <!-- Preload main CSS for faster loading -->
-    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- Load main CSS non-render-blocking using media attribute trick -->
+    <link rel="stylesheet" href="/src/index.css" media="print" onload="this.media='all'; this.onload=null;">
     <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
 
     <meta property="og:title" content="chain-word-connect" />
