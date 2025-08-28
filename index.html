@@ -126,6 +126,10 @@
       .border-brand-500 { border-color: hsl(var(--brand-500)); }
     </style>
 
+    <!-- Preload critical resources to reduce dependency chains -->
+    <link rel="modulepreload" href="/src/main.tsx">
+    <link rel="preload" href="/src/index.css" as="style">
+    
     <!-- Load main CSS non-render-blocking using media attribute trick -->
     <link rel="stylesheet" href="/src/index.css" media="print" onload="this.media='all'; this.onload=null;">
     <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
