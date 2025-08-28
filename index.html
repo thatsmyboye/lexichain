@@ -14,7 +14,11 @@
         --foreground: 222.2 84% 4.9%;
         --primary: 222.2 47.4% 11.2%;
         --primary-foreground: 210 40% 98%;
+        --brand-400: 265 84% 60%;
         --brand-500: 265 84% 54%;
+        --brand-600: 265 84% 48%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215.4 16.3% 46.9%;
         --border: 214.3 31.8% 91.4%;
       }
       @media (prefers-color-scheme: dark) {
@@ -23,17 +27,103 @@
           --foreground: 210 40% 98%;
           --primary: 210 40% 98%;
           --primary-foreground: 222.2 47.4% 11.2%;
+          --brand-400: 265 84% 70%;
           --brand-500: 265 84% 66%;
+          --brand-600: 265 84% 62%;
+          --muted: 217.2 32.6% 17.5%;
+          --muted-foreground: 215 20.2% 65.1%;
           --border: 217.2 32.6% 17.5%;
         }
       }
-      * { border-color: hsl(var(--border)); }
+      
+      /* Critical above-the-fold styles */
+      * { 
+        box-sizing: border-box;
+        border-color: hsl(var(--border)); 
+      }
+      
       body { 
+        margin: 0;
         background-color: hsl(var(--background)); 
         color: hsl(var(--foreground)); 
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
-      #root { min-height: 100vh; }
+      
+      #root { 
+        min-height: 100vh; 
+      }
+      
+      /* Critical layout utilities for title screen */
+      .h-screen { height: 100vh; }
+      .flex { display: flex; }
+      .flex-col { flex-direction: column; }
+      .items-center { align-items: center; }
+      .justify-center { justify-content: center; }
+      .justify-between { justify-content: space-between; }
+      .text-center { text-align: center; }
+      .relative { position: relative; }
+      .absolute { position: absolute; }
+      .px-4 { padding-left: 1rem; padding-right: 1rem; }
+      .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+      .space-y-6 > * + * { margin-top: 1.5rem; }
+      .space-y-8 > * + * { margin-top: 2rem; }
+      .gap-3 { gap: 0.75rem; }
+      .gap-4 { gap: 1rem; }
+      .bottom-2 { bottom: 0.5rem; }
+      .bottom-6 { bottom: 1.5rem; }
+      
+      /* Critical gradient background */
+      .bg-gradient-to-br { 
+        background-image: linear-gradient(to bottom right, hsl(var(--background)), hsl(var(--muted))); 
+      }
+      
+      /* Critical typography */
+      .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+      .text-6xl { font-size: 3.75rem; line-height: 1; }
+      .text-xs { font-size: 0.75rem; line-height: 1rem; }
+      .font-extrabold { font-weight: 800; }
+      .tracking-tight { letter-spacing: -0.025em; }
+      
+      /* Critical gradient text */
+      .bg-clip-text { 
+        background-clip: text; 
+        -webkit-background-clip: text; 
+      }
+      .text-transparent { color: transparent; }
+      .bg-gradient-to-r { 
+        background-image: linear-gradient(to right, hsl(var(--brand-400)), hsl(var(--brand-600))); 
+      }
+      
+      /* Critical text colors */
+      .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+      
+      /* Critical responsive utilities */
+      .hidden { display: none; }
+      @media (min-width: 768px) {
+        .md\\:flex { display: flex; }
+        .md\\:hidden { display: none; }
+        .md\\:bottom-6 { bottom: 1.5rem; }
+      }
+      @media (min-width: 1024px) {
+        .lg\\:text-8xl { font-size: 6rem; line-height: 1; }
+      }
+      
+      /* Loading spinner for suspense fallback */
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .rounded-full { border-radius: 9999px; }
+      .h-8 { height: 2rem; }
+      .w-8 { width: 2rem; }
+      .border-b-2 { border-bottom-width: 2px; }
+      .border-brand-500 { border-color: hsl(var(--brand-500)); }
     </style>
 
     <!-- Load main CSS non-render-blocking using media attribute trick -->
