@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { validateSessionId, checkRateLimit, createErrorResponse, logSecurityEvent } from "../_shared/validation.ts";
+import { validateSessionId, validateConsumableId, checkRateLimit, createErrorResponse, logSecurityEvent } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,31 +32,41 @@ serve(async (req) => {
   }
 
   const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+  const userAgent = req.headers.get("user-agent") || "unknown";
+
+  // Initialize Supabase with service role for writing and logging
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
+  let sessionId: string | undefined = undefined;
 
   try {
     // Rate limiting
     if (!checkRateLimit(`verify-${clientIP}`, 10, 300000)) { // 10 verifications per 5 minutes
-      logSecurityEvent("RATE_LIMIT_EXCEEDED", { ip: clientIP, endpoint: "verify-payment" }, "WARN");
+      await logSecurityEvent("RATE_LIMIT_EXCEEDED", { ip: clientIP, endpoint: "verify-payment" }, "WARN", supabase, clientIP, userAgent);
       return createErrorResponse("Too many verification attempts", 429, corsHeaders);
     }
 
-    logSecurityEvent("PAYMENT_VERIFICATION_STARTED", { ip: clientIP }, "INFO");
+    await logSecurityEvent("PAYMENT_VERIFICATION_STARTED", { ip: clientIP }, "INFO", supabase, clientIP, userAgent);
     
     const body = await req.json().catch(() => ({}));
-    const { sessionId } = body;
+    sessionId = body.sessionId;
     
     // Validate session ID format
     if (!validateSessionId(sessionId)) {
-      logSecurityEvent("INVALID_SESSION_ID_FORMAT", { 
+      await logSecurityEvent("INVALID_SESSION_ID_FORMAT", { 
         sessionId: sessionId?.substring(0, 20), 
         ip: clientIP 
-      }, "WARN");
+      }, "WARN", supabase, clientIP, userAgent);
       return createErrorResponse("Invalid session ID format", 400, corsHeaders);
     }
 
     // Check for replay attacks
     if (processedSessions.has(sessionId)) {
-      logSecurityEvent("REPLAY_ATTACK_DETECTED", { sessionId, ip: clientIP }, "ERROR");
+      await logSecurityEvent("REPLAY_ATTACK_DETECTED", { sessionId, ip: clientIP }, "ERROR", supabase, clientIP, userAgent);
       return createErrorResponse("Session already processed", 400, corsHeaders);
     }
 
@@ -65,28 +75,21 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Initialize Supabase with service role for writing
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
     // Get session details from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     
-    logSecurityEvent("STRIPE_SESSION_RETRIEVED", { 
+    await logSecurityEvent("STRIPE_SESSION_RETRIEVED", { 
       sessionId: session.id, 
       status: session.payment_status,
       ip: clientIP 
-    }, "INFO");
+    }, "INFO", supabase, clientIP, userAgent);
 
     if (session.payment_status !== "paid") {
-      logSecurityEvent("UNPAID_SESSION_VERIFICATION", { 
+      await logSecurityEvent("UNPAID_SESSION_VERIFICATION", { 
         sessionId, 
         status: session.payment_status,
         ip: clientIP 
-      }, "WARN");
+      }, "WARN", supabase, clientIP, userAgent);
       return new Response(JSON.stringify({ success: false, message: "Payment not completed" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -96,17 +99,17 @@ serve(async (req) => {
     const { consumableId, userId, userEmail } = session.metadata || {};
     
     if (!consumableId || !userEmail) {
-      logSecurityEvent("MISSING_SESSION_METADATA", { sessionId, ip: clientIP }, "ERROR");
+      await logSecurityEvent("MISSING_SESSION_METADATA", { sessionId, ip: clientIP }, "ERROR", supabase, clientIP, userAgent);
       return createErrorResponse("Invalid session metadata", 400, corsHeaders);
     }
 
     // Validate consumable ID from session metadata
     if (!validateConsumableId(consumableId)) {
-      logSecurityEvent("INVALID_CONSUMABLE_IN_SESSION", { 
+      await logSecurityEvent("INVALID_CONSUMABLE_IN_SESSION", { 
         consumableId, 
         sessionId, 
         ip: clientIP 
-      }, "ERROR");
+      }, "ERROR", supabase, clientIP, userAgent);
       return createErrorResponse("Invalid consumable in session", 400, corsHeaders);
     }
 
@@ -141,14 +144,14 @@ serve(async (req) => {
         // Validate quantity limits
         const maxAllowed = MAX_CONSUMABLE_QUANTITIES[award.consumable_id as keyof typeof MAX_CONSUMABLE_QUANTITIES] || 10;
         if (award.quantity > maxAllowed) {
-          logSecurityEvent("EXCESSIVE_QUANTITY_DETECTED", {
+          await logSecurityEvent("EXCESSIVE_QUANTITY_DETECTED", {
             consumableId: award.consumable_id,
             quantity: award.quantity,
             maxAllowed,
             sessionId,
             userId,
             ip: clientIP
-          }, "ERROR");
+          }, "ERROR", supabase, clientIP, userAgent);
           continue; // Skip this award
         }
 
@@ -193,20 +196,20 @@ serve(async (req) => {
           });
       }
 
-      logSecurityEvent("CONSUMABLES_AWARDED", { 
+      await logSecurityEvent("CONSUMABLES_AWARDED", { 
         userId, 
         awards: awards.length, 
         consumableId, 
         sessionId,
         ip: clientIP 
-      }, "INFO");
+      }, "INFO", supabase, clientIP, userAgent);
     } else {
-      logSecurityEvent("GUEST_PURCHASE_VERIFIED", { 
+      await logSecurityEvent("GUEST_PURCHASE_VERIFIED", { 
         userEmail, 
         consumableId, 
         sessionId,
         ip: clientIP 
-      }, "INFO");
+      }, "INFO", supabase, clientIP, userAgent);
     }
 
     // Mark session as processed to prevent replay attacks
@@ -223,11 +226,11 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    logSecurityEvent("PAYMENT_VERIFICATION_ERROR", { 
+    await logSecurityEvent("PAYMENT_VERIFICATION_ERROR", { 
       error: error.message?.substring(0, 100),
-      sessionId,
+      sessionId: sessionId || "unknown",
       ip: clientIP
-    }, "ERROR");
+    }, "ERROR", supabase, clientIP, userAgent);
     
     return createErrorResponse("Payment verification failed", 500, corsHeaders);
   }

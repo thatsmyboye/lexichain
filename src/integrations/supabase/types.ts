@@ -253,6 +253,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          client_ip: unknown | null
+          created_at: string
+          event_details: Json | null
+          event_level: string
+          event_type: string
+          id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_ip?: unknown | null
+          created_at?: string
+          event_details?: Json | null
+          event_level: string
+          event_type: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_ip?: unknown | null
+          created_at?: string
+          event_details?: Json | null
+          event_level?: string
+          event_type?: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       standard_game_results: {
         Row: {
           achievement_grade: string | null
@@ -381,6 +414,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      validate_admin_action: {
+        Args: { action_type: string; target_user_id?: string }
         Returns: boolean
       }
     }

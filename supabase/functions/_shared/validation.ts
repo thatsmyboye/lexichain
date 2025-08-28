@@ -82,8 +82,15 @@ export function createErrorResponse(message: string, status: number = 400, corsH
   );
 }
 
-// Security audit logging
-export function logSecurityEvent(event: string, details: Record<string, any>, level: 'INFO' | 'WARN' | 'ERROR' = 'INFO') {
+// Security audit logging - now using database
+export async function logSecurityEvent(
+  event: string, 
+  details: Record<string, any>, 
+  level: 'INFO' | 'WARN' | 'ERROR' = 'INFO',
+  supabase?: any,
+  clientIP?: string,
+  userAgent?: string
+) {
   const timestamp = new Date().toISOString();
   const sanitizedDetails = Object.fromEntries(
     Object.entries(details).map(([key, value]) => [
@@ -92,5 +99,24 @@ export function logSecurityEvent(event: string, details: Record<string, any>, le
     ])
   );
   
+  // Always log to console for immediate debugging
   console.log(`[SECURITY-${level}] ${timestamp} - ${event}`, sanitizedDetails);
+  
+  // If supabase client is provided, log to database
+  if (supabase) {
+    try {
+      await supabase
+        .from('security_audit_log')
+        .insert({
+          event_type: event,
+          event_level: level,
+          event_details: sanitizedDetails,
+          user_id: details.userId || null,
+          client_ip: clientIP || null,
+          user_agent: userAgent || null
+        });
+    } catch (error) {
+      console.error('Failed to log security event to database:', error);
+    }
+  }
 }
