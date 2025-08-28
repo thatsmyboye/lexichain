@@ -118,7 +118,7 @@ serve(async (req) => {
       console.log("Awarding consumables to user:", userId);
       
       // Determine what to award
-      let awards = [];
+      const awards = [];
       
       if (consumableId.startsWith('bundle_')) {
         // Handle bundles

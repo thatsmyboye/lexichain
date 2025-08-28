@@ -760,7 +760,7 @@ function handleXFactorTiles(
 function checkAndAwardAchievements(
   actualWord: string,
   wordPath: Pos[],
-  usedWords: Array<{word: string, score: number, breakdown?: any}>,
+  usedWords: Array<{word: string, score: number, breakdown?: object}>,
   unlocked: Set<AchievementId>,
   discoverableCount: number,
   sharedTilesCount: number,
@@ -847,7 +847,7 @@ function WordPathGame({
   const {
     inventory: consumableInventory,
     activeEffects,
-    useConsumable,
+    useConsumable: consumeItem,
     awardConsumables,
     addActiveEffect,
     removeActiveEffect
@@ -1917,7 +1917,7 @@ function WordPathGame({
   }
 
   // Consumable handlers
-  const handleUseConsumable = async (consumableId: ConsumableId) => {
+  const handleUseConsumable = useCallback(async (consumableId: ConsumableId) => {
     if (!user || gameOver) return;
     const consumable = CONSUMABLES[consumableId];
 
@@ -1935,7 +1935,7 @@ function WordPathGame({
 
     // Handle different consumable activation patterns
     switch (consumableId) {
-      case "hint_revealer":
+      case "hint_revealer": {
         // Check if there are words available before consuming
         const availableWords = getAvailableWordsForHint();
         if (availableWords.length === 0) {
@@ -1945,23 +1945,33 @@ function WordPathGame({
         }
 
         // Words are available, consume the item and activate hint
-        const success = await useConsumable(consumableId);
-        if (!success) {
+        try {
+          const success = await consumeItem(consumableId);
+          if (!success) {
+            toast.error("Failed to use consumable");
+            return;
+          }
+          handleHintRevealer();
+        } catch (error) {
           toast.error("Failed to use consumable");
-          return;
         }
-        handleHintRevealer();
         break;
-      case "extra_moves":
+      }
+      case "extra_moves": {
         // Extra moves execute immediately on tap
-        const successMoves = await useConsumable(consumableId);
-        if (!successMoves) {
+        try {
+          const successMoves = await consumeItem(consumableId);
+          if (!successMoves) {
+            toast.error("Failed to use consumable");
+            return;
+          }
+          handleExtraMoves();
+        } catch (error) {
           toast.error("Failed to use consumable");
-          return;
         }
-        handleExtraMoves();
         break;
-      case "hammer":
+      }
+      case "hammer": {
         // Hammer immediately breaks all stone tiles on the grid
         if (path.length > 0) {
           toast.error("Cannot use hammer while a word is in progress");
@@ -1980,6 +1990,7 @@ function WordPathGame({
           return;
         }
         break;
+      }
       case "score_multiplier":
         // Score multiplier activates/deactivates on tap, executes on word submission
         if (activatedConsumables.has(consumableId)) {
@@ -1992,17 +2003,21 @@ function WordPathGame({
           removeActiveEffect(consumableId);
           toast.info("Score multiplier deactivated");
         } else {
-          const successMultiplier = await useConsumable(consumableId);
-          if (!successMultiplier) {
+          try {
+            const successMultiplier = await consumeItem(consumableId);
+            if (!successMultiplier) {
+              toast.error("Failed to use consumable");
+              return;
+            }
+            setActivatedConsumables(prev => new Set([...prev, consumableId]));
+            handleScoreMultiplier();
+          } catch (error) {
             toast.error("Failed to use consumable");
-            return;
           }
-          setActivatedConsumables(prev => new Set([...prev, consumableId]));
-          handleScoreMultiplier();
         }
         break;
     }
-  };
+  }, [user, gameOver, consumableInventory, settings.mode, path.length, specialTiles, size, consumeItem, setSpecialTiles, setActivatedConsumables, removeActiveEffect, addActiveEffect]);
 
   // Helper function to get available words for hinting
   const getAvailableWordsForHint = () => {
@@ -2099,10 +2114,22 @@ function WordPathGame({
     });
     toast.success("Next word will have 2x score!");
   };
-  // New function to break all stone tiles at once
+  const handleExtraMoves = () => {
+    if (settings.mode !== "daily") {
+      toast.error("Extra moves can only be used in Daily Challenge mode");
+      return;
+    }
+    setSettings(prev => ({
+      ...prev,
+      dailyMovesLimit: prev.dailyMovesLimit + 3
+    }));
+    toast.success("Added 3 extra moves to your daily challenge!");
+  };
+
+  // Function to break all stone tiles at once
   const breakAllStoneTiles = async (): Promise<number> => {
     // Scan entire grid for stone tiles
-    let stonePositions: Pos[] = [];
+    const stonePositions: Pos[] = [];
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         if (specialTiles[r][c].type === "stone") {
@@ -2116,7 +2143,7 @@ function WordPathGame({
     }
 
     // Use one hammer consumable
-    const success = await useConsumable("hammer");
+    const success = await consumeItem("hammer");
     if (!success) {
       toast.error("Failed to use hammer consumable");
       return 0;
@@ -2133,17 +2160,6 @@ function WordPathGame({
     toast.success(`Broke ${count} stone tile${count > 1 ? 's' : ''}!`);
     console.log(`Successfully broke ${count} stone tiles`);
     return count;
-  };
-  const handleExtraMoves = () => {
-    if (settings.mode !== "daily") {
-      toast.error("Extra moves can only be used in Daily Challenge mode");
-      return;
-    }
-    setSettings(prev => ({
-      ...prev,
-      dailyMovesLimit: prev.dailyMovesLimit + 3
-    }));
-    toast.success("Added 3 extra moves to your daily challenge!");
   };
   function startBlitzGame() {
     const difficulty = settings.difficulty;
@@ -2767,7 +2783,7 @@ function WordPathGame({
             <DialogTitle>Select Difficulty</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3">
-            {Object.entries(DIFFICULTY_CONFIG).map(([diff, config]) => <Button key={diff} variant="outline" onClick={() => startGameWithDifficulty(diff as any)} className="justify-between p-4 h-auto">
+            {Object.entries(DIFFICULTY_CONFIG).map(([diff, config]) => <Button key={diff} variant="outline" onClick={() => startGameWithDifficulty(diff as keyof typeof DIFFICULTY_CONFIG)} className="justify-between p-4 h-auto">
                 <div className="text-left">
                   <div className="font-semibold capitalize">{diff}</div>
                   <div className="text-sm text-muted-foreground">
@@ -3335,17 +3351,6 @@ function WordPathGame({
                     <div className="text-xs text-center text-muted-foreground">
                       {score >= benchmarks.platinum ? 'Platinum Achieved!' : score >= benchmarks.gold ? `${benchmarks.platinum - score} to Platinum` : score >= benchmarks.silver ? `${benchmarks.gold - score} to Gold` : score >= benchmarks.bronze ? `${benchmarks.silver - score} to Silver` : `${benchmarks.bronze - score} to Bronze`}
                     </div>
-                  </div>}
-                {false && <div className="mt-1 text-xs text-muted-foreground">
-                    {(() => {
-                  const grade = score >= benchmarks.platinum ? "Platinum" : score >= benchmarks.gold ? "Gold" : score >= benchmarks.silver ? "Silver" : score >= benchmarks.bronze ? "Bronze" : "None";
-                  const nextTarget = score < benchmarks.bronze ? ["Bronze", benchmarks.bronze] : score < benchmarks.silver ? ["Silver", benchmarks.silver] : score < benchmarks.gold ? ["Gold", benchmarks.gold] : score < benchmarks.platinum ? ["Platinum", benchmarks.platinum] : null;
-                  return <>
-                          <span>Grade: {grade}</span>
-                          {nextTarget && <span className="ml-2">• {(nextTarget[1] as number) - score} to {nextTarget[0] as string}</span>}
-                          <span className="ml-2">• Board: {benchmarks.rating}</span>
-                        </>;
-                })()}
                   </div>}
               </div>
               <div className="text-xs text-muted-foreground text-right">
