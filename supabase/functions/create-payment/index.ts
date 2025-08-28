@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { validateEmail, validateConsumableId, checkRateLimit, createErrorResponse, logSecurityEvent } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,38 +34,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
-  const userAgent = req.headers.get("user-agent") || "unknown";
-  
-  // Initialize Supabase client first for logging
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-  
   try {
-    // Rate limiting by IP
-    if (!checkRateLimit(`payment-${clientIP}`, 5, 300000)) { // 5 requests per 5 minutes
-      await logSecurityEvent("RATE_LIMIT_EXCEEDED", { ip: clientIP, endpoint: "create-payment" }, "WARN", supabaseClient, clientIP, userAgent);
-      return createErrorResponse("Too many requests. Please try again later.", 429, corsHeaders);
-    }
-
-    await logSecurityEvent("PAYMENT_REQUEST_STARTED", { ip: clientIP }, "INFO", supabaseClient, clientIP, userAgent);
+    console.log("Processing payment request");
     
-    const body = await req.json().catch(() => ({}));
-    const { consumableId, guestEmail } = body;
+    const { consumableId, guestEmail } = await req.json();
     
-    // Validate consumable ID
-    if (!validateConsumableId(consumableId)) {
-      await logSecurityEvent("INVALID_CONSUMABLE_ID", { consumableId: consumableId?.substring(0, 20), ip: clientIP }, "WARN", supabaseClient, clientIP, userAgent);
-      return createErrorResponse("Invalid consumable ID", 400, corsHeaders);
-    }
-
-    // Validate Stripe product mapping
-    if (!STRIPE_PRODUCT_IDS[consumableId as keyof typeof STRIPE_PRODUCT_IDS]) {
-      await logSecurityEvent("MISSING_STRIPE_PRODUCT", { consumableId, ip: clientIP }, "ERROR", supabaseClient, clientIP, userAgent);
-      return createErrorResponse("Product not available", 400, corsHeaders);
+    if (!consumableId || !STRIPE_PRODUCT_IDS[consumableId as keyof typeof STRIPE_PRODUCT_IDS]) {
+      throw new Error("Invalid consumable ID");
     }
 
     // Initialize Stripe
@@ -74,47 +48,33 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Create Supabase client for auth check (anon key for auth only)
-    const supabaseAuthClient = createClient(
+    // Create Supabase client for auth check
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
     let userEmail = guestEmail;
     let userId = null;
-    let isAuthenticated = false;
 
     // Check if user is authenticated
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
       try {
         const token = authHeader.replace("Bearer ", "");
-        const { data } = await supabaseAuthClient.auth.getUser(token);
+        const { data } = await supabaseClient.auth.getUser(token);
         if (data.user?.email) {
           userEmail = data.user.email;
           userId = data.user.id;
-          isAuthenticated = true;
-          await logSecurityEvent("AUTHENTICATED_PURCHASE", { userId, ip: clientIP }, "INFO", supabaseClient, clientIP, userAgent);
+          console.log("Authenticated user:", userEmail);
         }
       } catch (error) {
-        await logSecurityEvent("INVALID_AUTH_TOKEN", { ip: clientIP }, "WARN", supabaseClient, clientIP, userAgent);
+        console.log("No valid auth token, proceeding as guest");
       }
     }
 
-    // Validate email for guest purchases
-    if (!isAuthenticated) {
-      if (!guestEmail) {
-        return createErrorResponse("Email is required for guest purchases", 400, corsHeaders);
-      }
-      
-      const emailValidation = validateEmail(guestEmail);
-      if (!emailValidation.isValid) {
-        await logSecurityEvent("INVALID_GUEST_EMAIL", { email: guestEmail?.substring(0, 10), ip: clientIP }, "WARN", supabaseClient, clientIP, userAgent);
-        return createErrorResponse("Invalid email format", 400, corsHeaders);
-      }
-      
-      userEmail = emailValidation.sanitized;
-      await logSecurityEvent("GUEST_PURCHASE", { email: userEmail, ip: clientIP }, "INFO", supabaseClient, clientIP, userAgent);
+    if (!userEmail) {
+      throw new Error("Email is required for purchase");
     }
 
     // Check if Stripe customer exists
@@ -163,26 +123,17 @@ serve(async (req) => {
       }
     });
 
-    await logSecurityEvent("CHECKOUT_SESSION_CREATED", { 
-      sessionId: session.id, 
-      userId, 
-      consumableId, 
-      isAuthenticated, 
-      ip: clientIP 
-    }, "INFO", supabaseClient, clientIP, userAgent);
+    console.log("Created checkout session:", session.id);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    await logSecurityEvent("PAYMENT_CREATION_ERROR", { 
-      error: error.message?.substring(0, 100),
-      userId,
-      consumableId,
-      ip: clientIP
-    }, "ERROR", supabaseClient, clientIP, userAgent);
-    
-    return createErrorResponse("Unable to process payment request", 500, corsHeaders);
+    console.error("Payment creation error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });

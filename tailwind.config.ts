@@ -6,42 +6,7 @@ export default {
 		"./src/**/*.{ts,tsx}",
 		"./index.html",
 	],
-	safelist: [
-		// Critical button variants and sizes used on initial page
-		"bg-gradient-to-r", "from-[hsl(var(--brand-500))]", "to-[hsl(var(--brand-600))]",
-		"text-[hsl(var(--hero-foreground))]", "shadow-[var(--shadow-soft)]",
-		"hover:brightness-110", "focus-visible:ring-[hsl(var(--brand-500))]",
-		
-		// Essential responsive utilities
-		"md:hidden", "hidden", "md:flex", "lg:text-8xl", "md:text-8xl",
-		"md:text-5xl", "text-4xl", "text-6xl",
-		
-		// Critical layout and spacing
-		"h-screen", "min-h-screen", "flex", "flex-col", "items-center", "justify-center",
-		"justify-between", "space-y-6", "space-y-8", "gap-3", "gap-4",
-		
-		// Animation classes
-		"animate-spin", "rounded-full", "border-b-2", "border-brand-500",
-		
-		// Brand colors and gradients used in components
-		"bg-clip-text", "text-transparent", "bg-gradient-to-br",
-		"from-background", "to-muted", "from-[hsl(var(--brand-400))]",
-		"to-[hsl(var(--brand-600))]",
-		
-		// Essential typography
-		"font-extrabold", "tracking-tight", "text-muted-foreground",
-		"text-foreground", "text-sm", "text-xs",
-		
-		// Critical interactive states
-		"hover:text-foreground", "hover:underline", "underline-offset-4",
-		"transition-colors", "cursor-not-allowed",
-		
-		// Position utilities for footer
-		"absolute", "bottom-2", "md:bottom-6", "text-center",
-		
-		// Padding and margins used frequently
-		"px-4", "px-6", "px-8", "py-4", "pt-10", "pb-4", "py-[24px]"
-	],
+	safelist: [],
 	prefix: "",
 	theme: {
 		container: {
