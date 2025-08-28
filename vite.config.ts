@@ -23,20 +23,44 @@ export default defineConfig(({ mode }) => ({
     // Optimize asset generation for better caching
     rollupOptions: {
       output: {
-        // Ensure consistent chunk naming for better caching
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-        // Split vendor chunks for better caching
+        // Use content-based hashes for long-term caching
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: ({ name }) => {
+          if (/\.(gif|jpe?g|png|svg)$/.test(name ?? '')) {
+            return 'assets/images/[name]-[hash][extname]';
+          }
+          if (/\.css$/.test(name ?? '')) {
+            return 'assets/css/[name]-[hash][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        },
+        // Enhanced manual chunks for optimal caching
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-accordion', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          // Core React libraries (rarely change)
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          // UI library components (stable)
+          ui: [
+            '@radix-ui/react-accordion', 
+            '@radix-ui/react-dialog', 
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-select',
+            '@radix-ui/react-toast'
+          ],
+          // Utility libraries (stable)
+          utils: ['clsx', 'class-variance-authority', 'tailwind-merge', 'date-fns', 'zod'],
+          // Supabase and data fetching (stable API)
+          data: ['@supabase/supabase-js', '@tanstack/react-query'],
         },
       },
     },
-    // Enable source maps for better debugging while maintaining performance
+    // Optimize for production caching
     sourcemap: false,
-    // Optimize chunk size
+    minify: 'esbuild',
+    target: 'esnext',
     chunkSizeWarningLimit: 1000,
+    // Enable asset inlining for small files
+    assetsInlineLimit: 4096,
   },
 }));
