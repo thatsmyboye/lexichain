@@ -1984,41 +1984,10 @@ function WordPathGame({
           return;
         }
 
-        // Scan entire grid for stone tiles
-        const stonePositions: Pos[] = [];
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            if (specialTiles[r][c].type === "stone") {
-              stonePositions.push({ r, c });
-            }
-          }
-        }
-
-        if (stonePositions.length === 0) {
+        const brokenCount = await breakAllStoneTiles();
+        if (brokenCount === 0) {
           toast.error("No stone tiles to break!");
           return;
-        }
-
-        // Use hammer consumable
-        try {
-          const success = await consumeItem("hammer");
-          if (!success) {
-            toast.error("Failed to use hammer consumable");
-            return;
-          }
-
-          // Break all stone tiles at once
-          const newSpecialTiles = specialTiles.map(row => [...row]);
-          stonePositions.forEach(pos => {
-            newSpecialTiles[pos.r][pos.c] = { type: null };
-          });
-          setSpecialTiles(newSpecialTiles);
-
-          const count = stonePositions.length;
-          toast.success(`Broke ${count} stone tile${count > 1 ? 's' : ''}!`);
-          console.log(`Successfully broke ${count} stone tiles`);
-        } catch (error) {
-          toast.error("Failed to use hammer consumable");
         }
         break;
       }
@@ -2155,6 +2124,42 @@ function WordPathGame({
       dailyMovesLimit: prev.dailyMovesLimit + 3
     }));
     toast.success("Added 3 extra moves to your daily challenge!");
+  };
+
+  // Function to break all stone tiles at once
+  const breakAllStoneTiles = async (): Promise<number> => {
+    // Scan entire grid for stone tiles
+    const stonePositions: Pos[] = [];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (specialTiles[r][c].type === "stone") {
+          stonePositions.push({ r, c });
+        }
+      }
+    }
+
+    if (stonePositions.length === 0) {
+      return 0;
+    }
+
+    // Use one hammer consumable
+    const success = await consumeItem("hammer");
+    if (!success) {
+      toast.error("Failed to use hammer consumable");
+      return 0;
+    }
+
+    // Break all stone tiles at once
+    const newSpecialTiles = specialTiles.map(row => [...row]);
+    stonePositions.forEach(pos => {
+      newSpecialTiles[pos.r][pos.c] = { type: null };
+    });
+    setSpecialTiles(newSpecialTiles);
+
+    const count = stonePositions.length;
+    toast.success(`Broke ${count} stone tile${count > 1 ? 's' : ''}!`);
+    console.log(`Successfully broke ${count} stone tiles`);
+    return count;
   };
   function startBlitzGame() {
     const difficulty = settings.difficulty;
