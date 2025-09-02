@@ -28,12 +28,12 @@ export function computeBenchmarksFromWordCount(wordCount: number, kMin: number):
   // Enhanced grid difficulty scaling - larger grids get significantly higher multipliers
   const gridScale = kMin <= 12 ? 1.0 : kMin <= 20 ? 1.4 : 2.0;
   
-  // RECALIBRATED: Much higher thresholds to match quadratic scoring system
-  // These should align with what players can realistically achieve with the new scoring
+  // RECALIBRATED: Align with new percentile distribution targets
+  // Bronze: 30th percentile, Silver: 50th percentile (median), Gold: 85th percentile, Platinum: 98th percentile
   const bronze = Math.round(1000 * scale * gridScale);
-  const silver = Math.round(2400 * scale * gridScale);
-  const gold = Math.round(4500 * scale * gridScale);
-  const platinum = Math.round(8000 * scale * gridScale);
+  const silver = Math.round(1750 * scale * gridScale);   // Closer to Bronze (median)
+  const gold = Math.round(5400 * scale * gridScale);     // Significantly higher for 85th percentile
+  const platinum = Math.round(10000 * scale * gridScale); // Much higher for 98th percentile
   
   // For standard 4x4 grids (kMin = 12), ensure it shows as Medium by default
   const rating = kMin === 12 && wordCount >= 10 ? "Medium" : 
@@ -59,12 +59,12 @@ export function computeBoardSpecificBenchmarks(
   // Use actual scoring potential as primary scaling factor
   const potentialScale = Math.max(0.15, Math.min(0.4, analysis.maxScorePotential / 15000));
   
-  // RECALIBRATED: Much higher base thresholds to match actual scoring system
-  // Bronze: 6-8 basic words, Silver: requires strategy, Gold: good play, Platinum: excellent play
-  const baseBronze = 1200;
-  const baseSilver = 2800; 
-  const baseGold = 5200;
-  const basePlatinum = 9000;
+  // RECALIBRATED: Align with new percentile targets for better distribution
+  // Bronze: 30th percentile, Silver: 50th percentile, Gold: 85th percentile, Platinum: 98th percentile
+  const baseBronze = 1200;    // Accessible threshold
+  const baseSilver = 2100;    // Median performance (reduced gap from Bronze)
+  const baseGold = 6500;      // Above average strategic play (increased for 85th percentile)
+  const basePlatinum = 12000; // Exceptional performance (significantly increased for 98th percentile)
   
   const bronze = Math.round(baseBronze * potentialScale * gridScale);
   const silver = Math.round(baseSilver * potentialScale * gridScale);
@@ -123,12 +123,12 @@ export async function computeDynamicBenchmarks(
       return computeBoardSpecificBenchmarks(wordCount, kMin, analysis);
     }
 
-    // Calculate percentile-based thresholds
+    // Calculate percentile-based thresholds - RECALIBRATED for better distribution
     const sortedScores = validScores.sort((a, b) => a - b);
-    const bronzePercentile = getPercentile(sortedScores, 30);
-    const silverPercentile = getPercentile(sortedScores, 60);
-    const goldPercentile = getPercentile(sortedScores, 80);
-    const platinumPercentile = getPercentile(sortedScores, 95);
+    const bronzePercentile = getPercentile(sortedScores, 30);  // Keep accessible
+    const silverPercentile = getPercentile(sortedScores, 50);  // Median performance
+    const goldPercentile = getPercentile(sortedScores, 85);   // Above average, strategic play
+    const platinumPercentile = getPercentile(sortedScores, 98); // Exceptional performance
 
     const gridScale = kMin <= 12 ? 1.0 : kMin <= 20 ? 1.4 : 2.0;
     const potentialScale = Math.max(0.15, Math.min(0.4, analysis.maxScorePotential / 15000));
@@ -142,10 +142,12 @@ export async function computeDynamicBenchmarks(
     const gold = Math.round(goldPercentile * boardModifier);
     const platinum = Math.round(platinumPercentile * boardModifier);
 
-    const safeBronze = Math.max(100, Math.min(bronze, 2000));
-    const safeSilver = Math.max(safeBronze + 100, Math.min(silver, 4000));
-    const safeGold = Math.max(safeSilver + 200, Math.min(gold, 8000));
-    const safePlatinum = Math.max(safeGold + 500, Math.min(platinum, 15000));
+    // Enhanced safeguards for recalibrated distribution
+    // Ensure proper progression with appropriate gaps for new percentile targets
+    const safeBronze = Math.max(100, Math.min(bronze, 2500));
+    const safeSilver = Math.max(safeBronze + 150, Math.min(silver, 5000));   // Closer to Bronze (median)
+    const safeGold = Math.max(safeSilver + 400, Math.min(gold, 12000));     // Larger gap for 85th percentile
+    const safePlatinum = Math.max(safeGold + 800, Math.min(platinum, 20000)); // Much larger gap for 98th percentile
 
     const scoreRatio = analysis.maxScorePotential / Math.max(1, safeBronze);
     const rating: "Easy" | "Medium" | "Hard" = scoreRatio >= 8 ? "Easy" : 
