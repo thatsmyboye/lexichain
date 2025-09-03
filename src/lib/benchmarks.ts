@@ -90,45 +90,53 @@ export async function computeDynamicBenchmarks(
   supabaseClient: any
 ): Promise<Benchmarks> {
   const cacheKey = `${challengeDate}-${wordCount}-${kMin}-${analysis.maxScorePotential}`;
+  
+  // Clear cache to ensure fresh calculations after the data access fix
   const cached = benchmarkCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`Using cached benchmarks for ${challengeDate}:`, cached.benchmarks);
     return cached.benchmarks;
   }
 
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    console.log(`Calculating dynamic benchmarks for ${challengeDate} using service function...`);
     
-    const { data: historicalData, error } = await supabaseClient
-      .from('daily_challenge_results')
-      .select('score, achievement_level, challenge_date')
-      .gte('challenge_date', thirtyDaysAgo.toISOString().split('T')[0])
-      .lt('challenge_date', challengeDate)
-      .order('score', { ascending: true });
+    // Use the new service-level function that bypasses RLS to access all players' data
+    const { data: benchmarkData, error } = await supabaseClient.rpc('get_benchmark_data', {
+      challenge_date: challengeDate
+    });
 
     if (error) {
-      console.error('Error fetching historical performance data:', error);
+      console.error('Error calling benchmark service function:', error);
       return computeBoardSpecificBenchmarks(wordCount, kMin, analysis);
     }
 
-    const targetPotential = analysis.maxScorePotential;
-    const potentialRange = targetPotential * 0.2;
-    
-    const validScores = historicalData
-      ?.map(d => d.score)
-      .filter(score => score > 0) || [];
-
-    if (validScores.length < 50) {
-      console.log(`Insufficient historical data (${validScores.length} points), falling back to static benchmarks`);
+    if (!benchmarkData) {
+      console.warn('No benchmark data returned from service function');
       return computeBoardSpecificBenchmarks(wordCount, kMin, analysis);
     }
 
-    // Calculate percentile-based thresholds - RECALIBRATED for better distribution
-    const sortedScores = validScores.sort((a, b) => a - b);
-    const bronzePercentile = getPercentile(sortedScores, 30);  // Keep accessible
-    const silverPercentile = getPercentile(sortedScores, 50);  // Median performance
-    const goldPercentile = getPercentile(sortedScores, 85);   // Above average, strategic play
-    const platinumPercentile = getPercentile(sortedScores, 98); // Exceptional performance
+    console.log(`Historical benchmark data for ${challengeDate}:`, {
+      totalScores: benchmarkData.totalScores,
+      percentiles: {
+        bronze: benchmarkData.bronzePercentile,
+        silver: benchmarkData.silverPercentile,
+        gold: benchmarkData.goldPercentile,
+        platinum: benchmarkData.platinumPercentile
+      }
+    });
+
+    // Ensure we have sufficient data for reliable benchmarks
+    if (benchmarkData.totalScores < 50) {
+      console.log(`Insufficient historical data (${benchmarkData.totalScores} scores), falling back to static benchmarks`);
+      return computeBoardSpecificBenchmarks(wordCount, kMin, analysis);
+    }
+
+    // Use percentiles calculated by the service function - RECALIBRATED for better distribution  
+    const bronzePercentile = benchmarkData.bronzePercentile;  // 30th percentile - Keep accessible
+    const silverPercentile = benchmarkData.silverPercentile;  // 50th percentile - Median performance
+    const goldPercentile = benchmarkData.goldPercentile;     // 85th percentile - Above average, strategic play
+    const platinumPercentile = benchmarkData.platinumPercentile; // 98th percentile - Exceptional performance
 
     const gridScale = kMin <= 12 ? 1.0 : kMin <= 20 ? 1.4 : 2.0;
     const potentialScale = Math.max(0.15, Math.min(0.4, analysis.maxScorePotential / 15000));

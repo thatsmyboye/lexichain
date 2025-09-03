@@ -253,6 +253,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          client_ip: unknown | null
+          created_at: string
+          event_details: Json | null
+          event_level: string
+          event_type: string
+          id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_ip?: unknown | null
+          created_at?: string
+          event_details?: Json | null
+          event_level: string
+          event_type: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_ip?: unknown | null
+          created_at?: string
+          event_details?: Json | null
+          event_level?: string
+          event_type?: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       standard_game_results: {
         Row: {
           achievement_grade: string | null
@@ -360,6 +393,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_daily_challenge_benchmarks: {
+        Args: { days_back?: number; target_challenge_date: string }
+        Returns: {
+          avg_score: number
+          bronze_percentile: number
+          gold_percentile: number
+          max_score: number
+          min_score: number
+          platinum_percentile: number
+          silver_percentile: number
+          total_scores: number
+        }[]
+      }
       cleanup_unconfirmed_users: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -367,6 +413,10 @@ export type Database = {
       current_user_has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
+      }
+      get_benchmark_data: {
+        Args: { challenge_date: string }
+        Returns: Json
       }
       grant_admin_role: {
         Args: { target_user_id: string }
@@ -381,6 +431,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      validate_admin_action: {
+        Args: { action_type: string; target_user_id?: string }
         Returns: boolean
       }
     }
