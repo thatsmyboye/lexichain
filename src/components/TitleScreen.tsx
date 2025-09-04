@@ -23,6 +23,17 @@ const TitleScreen = ({
   user: propUser
 }: TitleScreenProps) => {
   const [user, setUser] = useState<User | null>(propUser || null);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+      }
+    } catch (error) {
+      console.error('Unexpected logout error:', error);
+    }
+  };
   useEffect(() => {
     if (propUser !== undefined) {
       setUser(propUser);
@@ -65,11 +76,11 @@ const TitleScreen = ({
             )}
           
           <div className="flex items-center justify-center gap-3">
-            <Button variant="outline" size="lg" onClick={onLoginClick} className={`px-6 ${user ? 'bg-gray-500/20 border-gray-500/30 text-muted-foreground cursor-not-allowed' : ''}`} disabled={!!user}>
-              {user ? 'Logged In' : 'Login'}
-            </Button>
             <Button variant="hero" size="lg" onClick={onPlayClick} className="px-6">
               Play
+            </Button>
+            <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-6">
+              {user ? 'Log Out' : 'Login'}
             </Button>
           </div>
           
@@ -83,11 +94,13 @@ const TitleScreen = ({
               </Button>}
           </div>
           
-          <div className="text-center">
-            <button onClick={onRegisterClick} className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline">
-              Register
-            </button>
-          </div>
+          {!user && (
+            <div className="text-center">
+              <button onClick={onRegisterClick} className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline">
+                Register
+              </button>
+            </div>
+          )}
         </div>
         
         <div></div> {/* Bottom spacer for footer */}
@@ -107,11 +120,11 @@ const TitleScreen = ({
             )}
           
           <div className="flex items-center justify-center gap-4">
-            <Button variant="outline" size="lg" onClick={onLoginClick} className={`px-8 ${user ? 'bg-gray-500/20 border-gray-500/30 text-muted-foreground cursor-not-allowed' : ''}`} disabled={!!user}>
-              {user ? 'Logged In' : 'Login'}
-            </Button>
             <Button variant="hero" size="lg" onClick={onPlayClick} className="px-8">
               Play
+            </Button>
+            <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-8">
+              {user ? 'Log Out' : 'Login'}
             </Button>
           </div>
           
@@ -125,11 +138,13 @@ const TitleScreen = ({
               </Button>}
           </div>
           
-          <div className="text-center">
-            <button onClick={onRegisterClick} className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline">
-              Register
-            </button>
-          </div>
+          {!user && (
+            <div className="text-center">
+              <button onClick={onRegisterClick} className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline">
+                Register
+              </button>
+            </div>
+          )}
         </div>
       </div>
       
