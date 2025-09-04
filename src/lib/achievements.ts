@@ -17,8 +17,11 @@ export type AchievementId =
   | "collector15"
   | "completionist80"
   | "completionist100"
-  | "firstWin"
-  | "clutch";
+  | "clutch"
+  | "streak3"
+  | "streak7"
+  | "streak14"
+  | "streak30";
 
 export type Achievement = { id: AchievementId; label: string; scoreBonus: number; rarity: "common" | "rare" | "epic" | "legendary" };
 
@@ -42,8 +45,11 @@ export const ACHIEVEMENTS: Record<AchievementId, Achievement> = {
   collector15: { id: "collector15", label: "Collector (15 words)", scoreBonus: 150, rarity: "epic" },
   completionist80: { id: "completionist80", label: "Completionist 80%", scoreBonus: 200, rarity: "epic" },
   completionist100: { id: "completionist100", label: "One With the Board (100%)", scoreBonus: 500, rarity: "legendary" },
-  firstWin: { id: "firstWin", label: "First Win", scoreBonus: 100, rarity: "epic" },
-  clutch: { id: "clutch", label: "Clutch Finish", scoreBonus: 180, rarity: "epic" }
+  clutch: { id: "clutch", label: "Clutch Finish", scoreBonus: 180, rarity: "epic" },
+  streak3: { id: "streak3", label: "Dedicated (3 days)", scoreBonus: 30, rarity: "common" },
+  streak7: { id: "streak7", label: "Committed (7 days)", scoreBonus: 75, rarity: "rare" },
+  streak14: { id: "streak14", label: "Devoted (14 days)", scoreBonus: 150, rarity: "epic" },
+  streak30: { id: "streak30", label: "Legendary Streaker (30 days)", scoreBonus: 300, rarity: "legendary" }
 };
 
 export function vowelRatioOfWord(word: string) {

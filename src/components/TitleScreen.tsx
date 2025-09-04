@@ -2,22 +2,33 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from '@supabase/supabase-js';
+import type { LoginStreakData } from "@/hooks/useLoginStreak";
+
 interface TitleScreenProps {
   onPlayClick: () => void;
   onLoginClick: () => void;
   onRegisterClick: () => void;
   onStatsClick: () => void;
   onStoreClick: () => void;
+  streakData?: LoginStreakData | null;
+  user?: User | null;
 }
 const TitleScreen = ({
   onPlayClick,
   onLoginClick,
   onRegisterClick,
   onStatsClick,
-  onStoreClick
+  onStoreClick,
+  streakData,
+  user: propUser
 }: TitleScreenProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(propUser || null);
   useEffect(() => {
+    if (propUser !== undefined) {
+      setUser(propUser);
+      return;
+    }
+
     // Set up auth state listener
     const {
       data: {
@@ -36,16 +47,22 @@ const TitleScreen = ({
       setUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [propUser]);
   return <div className="h-screen flex flex-col items-center bg-gradient-to-br from-background to-muted relative px-4">
       {/* Mobile: Compact layout with justify-between */}
       <div className="md:hidden h-full flex flex-col items-center justify-between py-[24px]">
         <div></div> {/* Top spacer */}
         
-        <div className="text-center space-y-6 max-w-sm flex-shrink-0">
-          <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
-            Lexichain
-          </h1>
+          <div className="text-center space-y-6 max-w-sm flex-shrink-0">
+            <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+              Lexichain
+            </h1>
+            
+            {user && streakData && (
+              <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                🔥 {streakData.currentStreak} day streak!
+              </div>
+            )}
           
           <div className="flex items-center justify-center gap-3">
             <Button variant="outline" size="lg" onClick={onLoginClick} className={`px-6 ${user ? 'bg-gray-500/20 border-gray-500/30 text-muted-foreground cursor-not-allowed' : ''}`} disabled={!!user}>
@@ -78,10 +95,16 @@ const TitleScreen = ({
 
       {/* Desktop: Centered layout with generous spacing */}
       <div className="hidden md:flex h-full flex-col items-center justify-center">
-        <div className="text-center space-y-8 max-w-none">
-          <h1 className="text-6xl lg:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
-            Lexichain
-          </h1>
+          <div className="text-center space-y-8 max-w-none">
+            <h1 className="text-6xl lg:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+              Lexichain
+            </h1>
+            
+            {user && streakData && (
+              <div className="text-lg text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+                🔥 {streakData.currentStreak} day streak!
+              </div>
+            )}
           
           <div className="flex items-center justify-center gap-4">
             <Button variant="outline" size="lg" onClick={onLoginClick} className={`px-8 ${user ? 'bg-gray-500/20 border-gray-500/30 text-muted-foreground cursor-not-allowed' : ''}`} disabled={!!user}>

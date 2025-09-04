@@ -2,6 +2,9 @@ import { useEffect, useState, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import TitleScreen from "@/components/TitleScreen";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useLoginStreak } from "@/hooks/useLoginStreak";
+import type { User } from "@supabase/supabase-js";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
@@ -9,7 +12,24 @@ const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
   const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz">("classic");
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+
+  // Initialize login streak tracking
+  const { streakData } = useLoginStreak(user);
+
+  useEffect(() => {
+    // Get current user and set up auth state listener
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   useEffect(() => {
     document.title = "Lexichain | Build word chains by reusing tiles";
     const desc = "Draw paths to make words. Each new word must reuse at least one tile. Keep chaining until no valid word remains.";
@@ -89,6 +109,14 @@ const Index = () => {
         </div>
       </div>;
   }
-  return <TitleScreen onPlayClick={handlePlayClick} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} onStoreClick={handleStoreClick} />;
+  return <TitleScreen 
+    onPlayClick={handlePlayClick} 
+    onLoginClick={handleLoginClick} 
+    onRegisterClick={handleRegisterClick} 
+    onStatsClick={handleStatsClick} 
+    onStoreClick={handleStoreClick}
+    streakData={streakData}
+    user={user}
+  />;
 };
 export default Index;

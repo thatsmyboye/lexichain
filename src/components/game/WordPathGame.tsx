@@ -1419,19 +1419,7 @@ function WordPathGame({
         const grade = settings.targetTier[0].toUpperCase() + settings.targetTier.slice(1) as "Bronze" | "Silver" | "Gold" | "Platinum";
         setFinalGrade(grade);
 
-        // Check for firstWin achievement
-        if ((grade === "Gold" || grade === "Platinum") && !unlocked.has("firstWin")) {
-          const achievement = ACHIEVEMENTS.firstWin;
-          setScore(prev => prev + achievement.scoreBonus);
-          setUnlocked(prev => {
-            const next = new Set(prev);
-            next.add("firstWin");
-            return next;
-          });
-          toast.success(`💎 ${achievement.label} (+${achievement.scoreBonus} pts)`, {
-            duration: 4000
-          });
-        }
+        // Target reached, no firstWin achievement
         toast.success(`Target reached: ${grade}`);
       }
     }
@@ -1494,13 +1482,6 @@ function WordPathGame({
             setUnlocked(prev => {
               const next = new Set(prev);
               let bonusScore = 0;
-              if ((grade === "Gold" || grade === "Platinum") && !prev.has("firstWin")) {
-                next.add("firstWin");
-                bonusScore += ACHIEVEMENTS.firstWin.scoreBonus;
-                toast.success(`💎 ${ACHIEVEMENTS.firstWin.label} (+${ACHIEVEMENTS.firstWin.scoreBonus} pts)`, {
-                  duration: 4000
-                });
-              }
               if (!dailyMovesExceeded && !prev.has("clutch")) {
                 next.add("clutch");
                 bonusScore += ACHIEVEMENTS.clutch.scoreBonus;
@@ -2004,11 +1985,13 @@ function WordPathGame({
     }
   };
 
-  // Helper function to get available words for hinting
+  // Helper function to get available words for hinting (4 letters or fewer)
   const getAvailableWordsForHint = () => {
     if (!dict || !sorted || !board) return [];
     const probe = probeGrid(board, dict, sorted, 3, MAX_DFS_NODES);
-    return Array.from(probe.words).filter(word => !usedWords.some(used => used.word === word) && word.length >= 3);
+    return Array.from(probe.words)
+      .filter(word => !usedWords.some(used => used.word === word) && word.length >= 3 && word.length <= 4)
+      .sort((a, b) => a.length - b.length); // Prefer shorter words
   };
   const handleHintRevealer = () => {
     if (!dict || !sorted || !board) return;
@@ -2018,27 +2001,29 @@ function WordPathGame({
       return;
     }
 
-    // Find the first valid word and illuminate its first two letters
+    // Find the first valid word and illuminate its complete path
     const wordToReveal = availableWords[0];
     const tilesToHighlight = new Set<string>();
 
-    // Find path for the word and highlight first two tiles
+    // Find path for the word and highlight all tiles in the path
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         if (board[r][c].toLowerCase() === wordToReveal[0].toLowerCase()) {
-          // Found starting letter, now find the path for this word
+          // Found starting letter, now find the complete path for this word
           const path = findWordPath(wordToReveal, {
             r,
             c
           });
-          if (path && path.length >= 2) {
-            tilesToHighlight.add(keyOf(path[0]));
-            tilesToHighlight.add(keyOf(path[1]));
+          if (path && path.length === wordToReveal.length) {
+            // Highlight the entire word path
+            path.forEach(pos => {
+              tilesToHighlight.add(keyOf(pos));
+            });
             break;
           }
         }
       }
-      if (tilesToHighlight.size >= 2) break;
+      if (tilesToHighlight.size > 0) break;
     }
     setAffectedTiles(tilesToHighlight);
     addActiveEffect({
@@ -2051,7 +2036,7 @@ function WordPathGame({
       setAffectedTiles(new Set());
       removeActiveEffect("hint_revealer");
     }, 5000);
-    toast.success(`Hint: First two letters of "${wordToReveal.toUpperCase()}" revealed!`);
+    toast.success(`Hint: Complete path for "${wordToReveal.toUpperCase()}" revealed!`);
   };
 
   // Helper function to find the path for a specific word
@@ -2575,19 +2560,7 @@ function WordPathGame({
         const grade = settings.targetTier[0].toUpperCase() + settings.targetTier.slice(1) as "Bronze" | "Silver" | "Gold" | "Platinum";
         setFinalGrade(grade);
 
-        // Check for firstWin achievement
-        if ((grade === "Gold" || grade === "Platinum") && !unlocked.has("firstWin")) {
-          const achievement = ACHIEVEMENTS.firstWin;
-          setScore(prev => prev + achievement.scoreBonus);
-          setUnlocked(prev => {
-            const next = new Set(prev);
-            next.add("firstWin");
-            return next;
-          });
-          toast.success(`💎 ${achievement.label} (+${achievement.scoreBonus} pts)`, {
-            duration: 4000
-          });
-        }
+        // Target reached, no firstWin achievement
         toast.success(`Target reached: ${grade}`);
       }
     }
@@ -2648,13 +2621,6 @@ function WordPathGame({
             setUnlocked(prev => {
               const next = new Set(prev);
               let bonusScore = 0;
-              if ((grade === "Gold" || grade === "Platinum") && !prev.has("firstWin")) {
-                next.add("firstWin");
-                bonusScore += ACHIEVEMENTS.firstWin.scoreBonus;
-                toast.success(`💎 ${ACHIEVEMENTS.firstWin.label} (+${ACHIEVEMENTS.firstWin.scoreBonus} pts)`, {
-                  duration: 4000
-                });
-              }
               if (!dailyMovesExceeded && !prev.has("clutch")) {
                 next.add("clutch");
                 bonusScore += ACHIEVEMENTS.clutch.scoreBonus;

@@ -37,11 +37,11 @@ export const CONSUMABLES: Record<ConsumableId, Consumable> = {
   hint_revealer: {
     id: "hint_revealer",
     name: "Hint Revealer",
-    description: "Highlights 3-5 valid words on the board for 10 seconds",
+    description: "Reveals the complete path of a valid word (4 letters or fewer)",
     icon: "💡",
     rarity: "common",
     category: "powerup",
-    usageDescription: "Tap to reveal hidden words",
+    usageDescription: "Tap to reveal a short word path",
     cooldown: 0
   },
   score_multiplier: {
