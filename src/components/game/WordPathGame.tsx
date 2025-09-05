@@ -1517,10 +1517,20 @@ function WordPathGame({
   }
 
   // Special tile generation functions
-  function generateSpecialTile(): SpecialTile {
+  function generateSpecialTile(currentScore: number = 0, gameMode: string = "classic"): SpecialTile {
     const rand = Math.random();
     let cumulative = 0;
-    for (const [type, rarity] of Object.entries(SPECIAL_TILE_RARITIES)) {
+    
+    // Progressive stone spawning for classic mode
+    const modifiedRarities = { ...SPECIAL_TILE_RARITIES };
+    if (gameMode === "classic") {
+      // Progressive stone spawn rate: base 0.05 + (score/1000) * 0.10, capped at 0.35
+      const baseStoneRate = 0.05;
+      const progressiveRate = Math.min(0.25, (currentScore / 1000) * 0.10);
+      modifiedRarities.stone = baseStoneRate + progressiveRate;
+    }
+    
+    for (const [type, rarity] of Object.entries(modifiedRarities)) {
       cumulative += rarity;
       if (rand <= cumulative) {
         const expiryTurns = Math.floor(Math.random() * 5) + 1; // Random 1-5 turns
@@ -2598,6 +2608,29 @@ function WordPathGame({
       }
     }
     clearPath();
+    
+    // Check if game over due to stone tiles blocking all valid words (Classic mode only)
+    if (settings.mode === "classic" && dict && sorted) {
+      // Create a test grid with stone tiles marked as blocked
+      const testGrid = board.map((row, r) => 
+        row.map((letter, c) => 
+          specialTiles[r][c].type === "stone" ? "" : letter
+        )
+      );
+      
+      // Check if any valid words can still be formed
+      const probe = probeGrid(testGrid, dict, sorted, 1, 100);
+      if (probe.words.size === 0) {
+        setGameOver(true);
+        setFinalGrade("None");
+        toast.error("Game Over! Stone tiles have blocked all possible words.");
+        
+        // Record the final score
+        if (user) {
+          // Game over, record result will be handled by existing game over logic
+        }
+      }
+    }
     setTimeout(() => {
       if (sorted && dict) {
         // Check if daily challenge is out of moves

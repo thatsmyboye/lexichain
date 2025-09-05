@@ -7,6 +7,7 @@ import { Suspense, lazy } from "react";
 import Index from "./pages/Index";
 
 // Lazy load non-critical pages
+const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/stats" element={<StatsPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/store" element={<StorePage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
