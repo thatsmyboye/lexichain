@@ -4,6 +4,7 @@ import { useConsumables } from "./useConsumables";
 import type { User } from "@supabase/supabase-js";
 import type { ConsumableReward } from "@/lib/consumables";
 import { toast } from "@/hooks/use-toast";
+import { toZonedTime, format } from 'date-fns-tz';
 
 export interface LoginStreakData {
   currentStreak: number;
@@ -62,7 +63,8 @@ export function useLoginStreak(user: User | null) {
   const initializeStreak = async () => {
     if (!user) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const easternTimeZone = 'America/New_York';
+    const today = format(toZonedTime(new Date(), easternTimeZone), 'yyyy-MM-dd');
     try {
       const { data, error } = await supabase
         .from("daily_login_streaks")
@@ -94,7 +96,8 @@ export function useLoginStreak(user: User | null) {
   const updateStreak = async () => {
     if (!user || !streakData) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const easternTimeZone = 'America/New_York';
+    const today = format(toZonedTime(new Date(), easternTimeZone), 'yyyy-MM-dd');
     const lastLogin = new Date(streakData.lastLoginDate);
     const todayDate = new Date(today);
     const diffDays = Math.floor((todayDate.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));

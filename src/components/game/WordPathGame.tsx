@@ -2419,7 +2419,6 @@ function WordPathGame({
       }
     }
     if (!dict) {
-      toast("Loading dictionary...");
       return clearPath();
     }
     if (actualWord.length < 3) {
@@ -2751,11 +2750,6 @@ function WordPathGame({
               {isGenerating ? "Generating..." : "New Game"}
             </Button>}
           
-          {settings.mode === "daily" && <Button variant="outline" onClick={() => {
-          resetDailyChallenge().catch(console.error);
-        }} disabled={!isGameReady || isGenerating} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
-              Reset Daily
-            </Button>}
           
           {settings.mode === "practice" && <Button variant="outline" onClick={() => {
           startNewPracticeGame().catch(console.error);
