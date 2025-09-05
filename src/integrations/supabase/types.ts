@@ -418,6 +418,37 @@ export type Database = {
         Args: { challenge_date: string }
         Returns: Json
       }
+      get_daily_leaderboard: {
+        Args: { challenge_date: string }
+        Returns: {
+          display_name: string
+          rank: number
+          score: number
+          user_id: string
+        }[]
+      }
+      get_monthly_leaderboard: {
+        Args: { month: number; year: number }
+        Returns: {
+          best_score: number
+          display_name: string
+          rank: number
+          user_id: string
+        }[]
+      }
+      get_week_start: {
+        Args: { input_date?: string }
+        Returns: string
+      }
+      get_weekly_leaderboard: {
+        Args: { week_start: string }
+        Returns: {
+          best_score: number
+          display_name: string
+          rank: number
+          user_id: string
+        }[]
+      }
       grant_admin_role: {
         Args: { target_user_id: string }
         Returns: undefined
