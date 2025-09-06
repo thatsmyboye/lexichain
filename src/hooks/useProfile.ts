@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { validateDisplayName } from "@/lib/contentFilter";
 import type { User } from "@supabase/supabase-js";
 
 interface Profile {
@@ -58,13 +59,24 @@ export function useProfile(user: User | null) {
   const updateDisplayName = async (displayName: string) => {
     if (!user) return false;
 
+    // Validate display name before saving
+    const validation = validateDisplayName(displayName);
+    if (!validation.isValid) {
+      toast({
+        title: "Invalid Display Name",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
         .upsert({
           user_id: user.id,
-          display_name: displayName,
+          display_name: displayName.trim(),
         })
         .select()
         .single();

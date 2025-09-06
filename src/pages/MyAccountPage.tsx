@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { validateDisplayName } from "@/lib/contentFilter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import type { User } from "@supabase/supabase-js";
 export default function MyAccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState("");
+  const [validationError, setValidationError] = useState<string>("");
   const navigate = useNavigate();
   const { profile, loading, getDisplayName, updateDisplayName } = useProfile(user);
 
@@ -45,10 +47,24 @@ export default function MyAccountPage() {
     }
   }, [profile]);
 
+  // Validate display name as user types
+  const handleDisplayNameChange = (value: string) => {
+    setDisplayName(value);
+    if (value.trim()) {
+      const validation = validateDisplayName(value);
+      setValidationError(validation.isValid ? "" : validation.error || "");
+    } else {
+      setValidationError("");
+    }
+  };
+
   const handleSaveDisplayName = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (validationError) return;
+    
     const success = await updateDisplayName(displayName.trim());
     if (success) {
+      setValidationError("");
       // Keep the form in sync with the saved value
       setDisplayName(profile?.display_name || "");
     }
@@ -106,23 +122,32 @@ export default function MyAccountPage() {
                     id="display-name"
                     type="text"
                     value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    onChange={(e) => handleDisplayNameChange(e.target.value)}
                     placeholder={user.email ? user.email.split('@')[0] : "Enter display name"}
-                    maxLength={50}
+                    maxLength={30}
+                    className={validationError ? "border-destructive" : ""}
                   />
                 )}
+                {validationError && (
+                  <p className="text-sm text-destructive mt-1">{validationError}</p>
+                )}
                 <p className="text-sm text-muted-foreground">
-                  {profile?.display_name 
-                    ? "This name will appear on leaderboards"
-                    : `Without a display name, "${user.email?.split('@')[0] || 'Anonymous'}" will be used`
-                  }
+                  {displayName.length}/30 characters
+                  {!validationError && (
+                    <span className="block">
+                      {profile?.display_name 
+                        ? "This name will appear on leaderboards"
+                        : `Without a display name, "${user.email?.split('@')[0] || 'Anonymous'}" will be used`
+                      }
+                    </span>
+                  )}
                 </p>
               </div>
 
               <div className="flex gap-3">
                 <Button
                   type="submit"
-                  disabled={loading || displayName.trim() === (profile?.display_name || "")}
+                  disabled={loading || validationError !== "" || displayName.trim() === (profile?.display_name || "")}
                 >
                   {loading ? "Saving..." : "Save Changes"}
                 </Button>
