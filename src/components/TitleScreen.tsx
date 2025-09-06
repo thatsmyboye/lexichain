@@ -10,6 +10,7 @@ interface TitleScreenProps {
   onRegisterClick: () => void;
   onStatsClick: () => void;
   onStoreClick: () => void;
+  onLeaderboardClick: () => void;
   streakData?: LoginStreakData | null;
   user?: User | null;
 }
@@ -19,6 +20,7 @@ const TitleScreen = ({
   onRegisterClick,
   onStatsClick,
   onStoreClick,
+  onLeaderboardClick,
   streakData,
   user: propUser
 }: TitleScreenProps) => {
@@ -89,9 +91,16 @@ const TitleScreen = ({
               🛒 Store
             </Button>
             
-            {user && <Button variant="outline" size="lg" onClick={onStatsClick} className="px-6">
-                📊 Stats
-              </Button>}
+            {user && (
+              <>
+                <Button variant="outline" size="lg" onClick={onStatsClick} className="px-6">
+                  📊 Stats
+                </Button>
+                <Button variant="outline" size="lg" onClick={onLeaderboardClick} className="px-6">
+                  🏆 Leaderboards
+                </Button>
+              </>
+            )}
           </div>
           
           {!user && (
@@ -133,9 +142,16 @@ const TitleScreen = ({
               🛒 Store
             </Button>
             
-            {user && <Button variant="outline" size="lg" onClick={onStatsClick} className="px-8">
-                📊 Stats
-              </Button>}
+            {user && (
+              <>
+                <Button variant="outline" size="lg" onClick={onStatsClick} className="px-8">
+                  📊 Stats
+                </Button>
+                <Button variant="outline" size="lg" onClick={onLeaderboardClick} className="px-8">
+                  🏆 Leaderboards
+                </Button>
+              </>
+            )}
           </div>
           
           {!user && (

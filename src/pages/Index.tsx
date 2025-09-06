@@ -64,6 +64,9 @@ const Index = () => {
   const handleStoreClick = () => {
     navigate("/store");
   };
+  const handleLeaderboardClick = () => {
+    navigate("/leaderboard");
+  };
   if (showGame) {
     return <main>
         <header className="container mx-auto pt-10 pb-4">
@@ -115,6 +118,7 @@ const Index = () => {
     onRegisterClick={handleRegisterClick} 
     onStatsClick={handleStatsClick} 
     onStoreClick={handleStoreClick}
+    onLeaderboardClick={handleLeaderboardClick}
     streakData={streakData}
     user={user}
   />;

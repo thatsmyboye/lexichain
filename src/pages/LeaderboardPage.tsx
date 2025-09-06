@@ -1,10 +1,13 @@
 import { DailyChallengeLeaderboard } from "@/components/leaderboard/DailyChallengeLeaderboard";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import type { User } from "@supabase/supabase-js";
 
 export default function LeaderboardPage() {
   const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Get current user
@@ -33,6 +36,14 @@ export default function LeaderboardPage() {
         </div>
         
         <DailyChallengeLeaderboard currentUser={user} />
+        
+        {user && (
+          <div className="text-center mt-8">
+            <Button variant="outline" onClick={() => navigate("/account")}>
+              👤 My Account
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

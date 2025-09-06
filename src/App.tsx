@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 
 // Lazy load non-critical pages
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
+const MyAccountPage = lazy(() => import("./pages/MyAccountPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/account" element={<MyAccountPage />} />
             <Route path="/store" element={<StorePage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
