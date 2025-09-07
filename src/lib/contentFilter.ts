@@ -53,6 +53,7 @@ function containsInappropriateContent(text: string): boolean {
   });
 }
 
+// Fix content filter - too strict on common words
 export function validateDisplayName(displayName: string): ValidationResult {
   // Basic validation
   if (!displayName || displayName.trim().length === 0) {
@@ -67,14 +68,18 @@ export function validateDisplayName(displayName: string): ValidationResult {
     return { isValid: false, error: "Display name cannot be longer than 30 characters" };
   }
   
-  // Check for inappropriate content
-  if (containsInappropriateContent(displayName)) {
+  // More lenient content check - only block truly inappropriate content
+  const normalized = normalizeText(displayName);
+  const severeWords = ['fuck', 'shit', 'nazi', 'hitler', 'nigger', 'faggot', 'retard'];
+  const hasSevereContent = severeWords.some(word => normalized.includes(word));
+  
+  if (hasSevereContent) {
     return { isValid: false, error: "Display name contains inappropriate content. Please choose a different name." };
   }
   
   // Check for excessive special characters or numbers
   const specialCharCount = (displayName.match(/[^a-zA-Z0-9\s]/g) || []).length;
-  if (specialCharCount > displayName.length * 0.3) {
+  if (specialCharCount > displayName.length * 0.5) {
     return { isValid: false, error: "Display name contains too many special characters" };
   }
   

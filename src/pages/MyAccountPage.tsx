@@ -144,15 +144,29 @@ export default function MyAccountPage() {
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2 mt-4 sm:flex-row flex-col">
                 <Button
                   type="submit"
                   disabled={loading || validationError !== "" || displayName.trim() === (profile?.display_name || "")}
+                  className="sm:flex-1"
                 >
                   {loading ? "Saving..." : "Save Changes"}
                 </Button>
-                <Button type="button" variant="outline" onClick={handleBack}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleBack}
+                  className="sm:flex-1"
+                >
                   Back to Leaderboards
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => navigate("/")}
+                  className="sm:flex-1"
+                >
+                  🏠 Back to Home
                 </Button>
               </div>
             </form>

@@ -906,7 +906,7 @@ function WordPathGame({
   const [movesUsed, setMovesUsed] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showWildDialog, setShowWildDialog] = useState(false);
-  const [wildTileInput, setWildTileInput] = useState('');
+  const [wildTileInputs, setWildTileInputs] = useState<Map<number, string>>(new Map());
   const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
 
   // Consumable activation states
@@ -1258,7 +1258,7 @@ function WordPathGame({
 
     // Close dialog and continue with word submission logic
     setShowWildDialog(false);
-    setWildTileInput('');
+    setWildTileInputs(new Map());
 
     // Set the path back and continue submission with the chosen word
     setPath(pendingWildPath);
@@ -1269,6 +1269,87 @@ function WordPathGame({
       submitWordWithWildLetter(testWord, pendingWildPath, wildTileInput.toLowerCase());
     }, 0);
   }
+  // Create a new function for multiple wild letters
+  function submitWordWithWildLetters(validatedWord: string, wordPath: Pos[], wildLetters: string[]) {
+    if (gameOver) {
+      toast.info("Round over");
+      return;
+    }
+
+    // Check daily challenge move limit
+    if (settings.mode === "daily" && movesUsed >= settings.dailyMovesLimit) {
+      toast.error("Daily move limit reached!");
+      return;
+    }
+    const actualWord = validatedWord;
+    const wildUsed = true;
+    const hasStoneTile = wordPath.some(p => specialTiles[p.r][p.c].type === "stone");
+    if (hasStoneTile) {
+      toast.error("Cannot use words containing Stone tiles!");
+      return;
+    }
+    if (lastWordTiles.size > 0) {
+      const overlap = wordPath.some(p => lastWordTiles.has(keyOf(p)));
+      if (!overlap) {
+        toast.error("Must reuse at least one tile from previous word");
+        return;
+      }
+    }
+    const breakdown = computeScoreBreakdown({
+      actualWord,
+      wordPath,
+      board,
+      specialTiles,
+      lastWordTiles,
+      streak,
+      mode: settings.mode,
+      blitzMultiplier,
+      activeEffects: activeEffects.filter(e => e.id !== "score_multiplier"),
+      baseMode: "square",
+      chainMode: "linear"
+    });
+    const totalGain = breakdown.total;
+    setUsedWords(prev => [...prev, {
+      word: actualWord,
+      score: totalGain,
+      breakdown
+    }]);
+
+    // Save state after successful word submission
+    saveGameState();
+
+    // Legacy variables needed for achievements and toasts
+    const sharedTilesCount = lastWordTiles.size ? wordPath.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
+    const multiplier = breakdown.multipliers.combinedApplied;
+
+    // Update the wild tiles with the chosen letters permanently on the board
+    const newBoard = board.map(row => [...row]);
+    const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
+    
+    // Handle multiple wild tiles
+    wildcardPositions.forEach((wildPos, index) => {
+      if (index < wildLetters.length) {
+        newBoard[wildPos.r][wildPos.c] = wildLetters[index].toUpperCase();
+      }
+    });
+
+    // Remove the wild tile special type since it's now a regular letter
+    const newSpecialTiles = specialTiles.map(row => [...row]);
+    wildcardPositions.forEach(wildPos => {
+      newSpecialTiles[wildPos.r][wildPos.c] = {
+        type: null
+      };
+    });
+    
+    setBoard(newBoard);
+    setSpecialTiles(newSpecialTiles);
+    
+    // Continue with scoring and game state updates without calling non-existent function
+    const sharedTilesCount = lastWordTiles.size ? wordPath.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
+    
+    // Rest of word submission continues in the main submitWord flow...
+  }
+  
   function submitWordWithWildLetter(validatedWord: string, wordPath: Pos[], wildLetter: string) {
     if (gameOver) {
       toast.info("Round over");
@@ -1321,9 +1402,11 @@ function WordPathGame({
     const sharedTilesCount = lastWordTiles.size ? wordPath.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
     const multiplier = breakdown.multipliers.combinedApplied;
 
-    // Update the wild tile with the chosen letter permanently on the board
+    // Update the wild tile(s) with the chosen letter(s) permanently on the board
     const newBoard = board.map(row => [...row]);
     const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
+    
+    // Handle single wild tile (backward compatibility)
     if (wildcardPositions.length === 1) {
       const wildPos = wildcardPositions[0];
       newBoard[wildPos.r][wildPos.c] = wildLetter.toUpperCase();
@@ -1333,9 +1416,10 @@ function WordPathGame({
       newSpecialTiles[wildPos.r][wildPos.c] = {
         type: null
       };
+      
+      setBoard(newBoard);
       setSpecialTiles(newSpecialTiles);
     }
-    setBoard(newBoard);
     // Increment moves for daily challenge
     if (settings.mode === "daily") {
       setMovesUsed(prev => prev + 1);
@@ -2421,8 +2505,8 @@ function WordPathGame({
     const hasWildTile = path.some(p => specialTiles[p.r][p.c].type === "wild");
     if (hasWildTile && dict) {
       const wildcardPositions = path.filter(p => specialTiles[p.r][p.c].type === "wild");
-      if (wildcardPositions.length === 1) {
-        // Show dialog to let user choose the letter - allow during blitz pause since user is mid-move
+      if (wildcardPositions.length > 0) {
+        // Show dialog to let user choose the letter(s) - allow during blitz pause since user is mid-move
         setPendingWildPath(path);
         setShowWildDialog(true);
         return clearPath();

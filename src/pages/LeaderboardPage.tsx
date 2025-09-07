@@ -37,13 +37,16 @@ export default function LeaderboardPage() {
         
         <DailyChallengeLeaderboard currentUser={user} />
         
-        {user && (
-          <div className="text-center mt-8">
+        <div className="text-center mt-8 space-y-4 sm:space-y-0 sm:flex sm:gap-4 sm:justify-center">
+          {user && (
             <Button variant="outline" onClick={() => navigate("/account")}>
               👤 My Account
             </Button>
-          </div>
-        )}
+          )}
+          <Button variant="secondary" onClick={() => navigate("/")}>
+            🏠 Back to Home
+          </Button>
+        </div>
       </div>
     </div>
   );
