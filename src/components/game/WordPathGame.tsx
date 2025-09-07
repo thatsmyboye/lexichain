@@ -906,7 +906,7 @@ function WordPathGame({
   const [movesUsed, setMovesUsed] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showWildDialog, setShowWildDialog] = useState(false);
-  const [wildTileInputs, setWildTileInputs] = useState<Map<number, string>>(new Map());
+  const [wildTileInputs, setWildTileInputs] = useState<Map<string, string>>(new Map());
   const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
 
   // Consumable activation states
@@ -1229,7 +1229,7 @@ function WordPathGame({
     }).join("").toUpperCase();
   }, [path, board, specialTiles]);
   function handleWildSubmit() {
-    if (!pendingWildPath || !wildTileInput || !dict) return;
+    if (!pendingWildPath || !wildTileInputs.size || !dict) return;
     const wildcardPositions = pendingWildPath.filter(p => specialTiles[p.r][p.c].type === "wild");
     if (wildcardPositions.length !== 1) return;
     const wildPos = wildcardPositions[0];
@@ -1238,7 +1238,8 @@ function WordPathGame({
     // Create the word with the user's chosen letter
     const testWord = pendingWildPath.map((p, i) => {
       if (i === wildIndex) {
-        return wildTileInput.toLowerCase();
+        const wildKey = `${wildPos.r}-${wildPos.c}`;
+        return (wildTileInputs.get(wildKey) || '').toLowerCase();
       }
       return board[p.r][p.c];
     }).join("").toLowerCase();
@@ -1266,7 +1267,9 @@ function WordPathGame({
 
     // Now continue with the normal submission process using the validated word
     setTimeout(() => {
-      submitWordWithWildLetter(testWord, pendingWildPath, wildTileInput.toLowerCase());
+      const wildKey = `${wildPos.r}-${wildPos.c}`;
+      const wildLetter = wildTileInputs.get(wildKey) || '';
+      submitWordWithWildLetter(testWord, pendingWildPath, wildLetter.toLowerCase());
     }, 0);
   }
   // Create a new function for multiple wild letters
@@ -1345,7 +1348,6 @@ function WordPathGame({
     setSpecialTiles(newSpecialTiles);
     
     // Continue with scoring and game state updates without calling non-existent function
-    const sharedTilesCount = lastWordTiles.size ? wordPath.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
     
     // Rest of word submission continues in the main submitWord flow...
   }
@@ -3041,7 +3043,8 @@ function WordPathGame({
               <div className="text-lg font-mono bg-muted p-2 rounded">
                 {pendingWildPath?.map((p, i) => {
                 const isWild = specialTiles[p.r][p.c].type === "wild";
-                const letter = isWild ? wildTileInput.toUpperCase() || "?" : board[p.r][p.c];
+                const wildKey = `${p.r}-${p.c}`;
+                const letter = isWild ? (wildTileInputs.get(wildKey) || "?").toUpperCase() : board[p.r][p.c];
                 return <span key={i} className={isWild ? "text-purple-500 font-bold" : ""}>
                       {letter}
                     </span>;
@@ -3049,8 +3052,18 @@ function WordPathGame({
               </div>
             </div>
             <div>
-              <Input type="text" value={wildTileInput} onChange={e => setWildTileInput(e.target.value.slice(0, 1).toUpperCase())} onKeyDown={e => {
-              if (e.key === 'Enter' && wildTileInput) {
+              <Input type="text" value={(wildTileInputs.get(`${pendingWildPath?.find(p => specialTiles[p.r][p.c].type === "wild")?.r}-${pendingWildPath?.find(p => specialTiles[p.r][p.c].type === "wild")?.c}`) || '')} onChange={e => {
+                if (pendingWildPath) {
+                  const wildPos = pendingWildPath.find(p => specialTiles[p.r][p.c].type === "wild");
+                  if (wildPos) {
+                    const wildKey = `${wildPos.r}-${wildPos.c}`;
+                    const newInputs = new Map(wildTileInputs);
+                    newInputs.set(wildKey, e.target.value.slice(0, 1).toUpperCase());
+                    setWildTileInputs(newInputs);
+                  }
+                }
+              }} onKeyDown={e => {
+              if (e.key === 'Enter' && wildTileInputs.size > 0) {
                 handleWildSubmit();
               }
             }} placeholder="Enter letter (A-Z)" className="w-full text-center text-lg font-mono" maxLength={1} autoFocus />
@@ -3058,12 +3071,12 @@ function WordPathGame({
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => {
               setShowWildDialog(false);
-              setWildTileInput('');
+              setWildTileInputs(new Map());
               setPendingWildPath(null);
             }} className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={handleWildSubmit} disabled={!wildTileInput || !/[A-Z]/.test(wildTileInput)} className="flex-1">
+              <Button onClick={handleWildSubmit} disabled={wildTileInputs.size === 0 || Array.from(wildTileInputs.values()).some(v => !/[A-Z]/.test(v))} className="flex-1">
                 Submit Word
               </Button>
             </div>
