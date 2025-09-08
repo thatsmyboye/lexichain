@@ -37,9 +37,9 @@ export function useProfile(user: User | null) {
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (error) {
         throw error;
       }
 
@@ -57,11 +57,19 @@ export function useProfile(user: User | null) {
   };
 
   const updateDisplayName = async (displayName: string) => {
-    if (!user) return false;
+    if (!user) {
+      console.error('No user found for display name update');
+      return false;
+    }
+
+    console.log('Attempting to update display name:', displayName);
 
     // Validate display name before saving
     const validation = validateDisplayName(displayName);
+    console.log('Validation result:', validation);
+    
     if (!validation.isValid) {
+      console.log('Validation failed:', validation.error);
       toast({
         title: "Invalid Display Name",
         description: validation.error,
@@ -72,28 +80,40 @@ export function useProfile(user: User | null) {
 
     setLoading(true);
     try {
+      // Use upsert with proper conflict resolution
+      const upsertData = {
+        user_id: user.id,
+        display_name: displayName.trim(),
+      };
+      
+      console.log('Upserting profile data:', upsertData);
+
       const { data, error } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: user.id,
-          display_name: displayName.trim(),
+        .upsert(upsertData, {
+          onConflict: 'user_id'
         })
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Profile updated successfully:', data);
       setProfile(data);
       toast({
         title: "Success",
         description: "Display name updated successfully",
       });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating display name:', error);
+      const errorMessage = error.message || error.details || 'Unknown database error';
       toast({
         title: "Error",
-        description: "Failed to update display name",
+        description: `Failed to update display name: ${errorMessage}`,
         variant: "destructive",
       });
       return false;

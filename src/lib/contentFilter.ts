@@ -3,20 +3,18 @@ interface ValidationResult {
   error?: string;
 }
 
-// Common inappropriate words and patterns
+// Only truly inappropriate words - reduced to prevent false positives
 const INAPPROPRIATE_WORDS = [
   // Basic profanity
-  'fuck', 'shit', 'damn', 'bitch', 'asshole', 'bastard', 'crap',
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard',
   // Offensive terms
-  'nazi', 'hitler', 'racist', 'nigger', 'faggot', 'retard', 'gay',
+  'nazi', 'hitler', 'nigger', 'faggot', 'retard',
   // Sexual content
-  'sex', 'porn', 'nude', 'naked', 'boobs', 'dick', 'cock', 'pussy',
+  'porn', 'nude', 'naked', 'dick', 'cock', 'pussy',
   // Drugs
-  'weed', 'cocaine', 'heroin', 'meth', 'drugs',
-  // Violence
-  'kill', 'murder', 'die', 'death', 'suicide', 'bomb', 'terrorist',
+  'cocaine', 'heroin', 'meth',
   // Spam/inappropriate
-  'admin', 'moderator', 'official', 'support', 'bot', 'null', 'undefined'
+  'admin', 'moderator', 'official', 'support', 'bot'
 ];
 
 // Common character substitutions used to bypass filters
@@ -48,13 +46,15 @@ function containsInappropriateContent(text: string): boolean {
   const normalized = normalizeText(text);
   
   return INAPPROPRIATE_WORDS.some(word => {
-    // Check if the inappropriate word appears in the normalized text
-    return normalized.includes(word);
+    // Use word boundaries to prevent false positives (e.g., "boy" in "thatsmyboye")
+    const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(normalized);
   });
 }
 
-// Fix content filter - too strict on common words
 export function validateDisplayName(displayName: string): ValidationResult {
+  console.log('Validating display name:', displayName);
+  
   // Basic validation
   if (!displayName || displayName.trim().length === 0) {
     return { isValid: false, error: "Display name cannot be empty" };
@@ -68,12 +68,9 @@ export function validateDisplayName(displayName: string): ValidationResult {
     return { isValid: false, error: "Display name cannot be longer than 30 characters" };
   }
   
-  // More lenient content check - only block truly inappropriate content
-  const normalized = normalizeText(displayName);
-  const severeWords = ['fuck', 'shit', 'nazi', 'hitler', 'nigger', 'faggot', 'retard'];
-  const hasSevereContent = severeWords.some(word => normalized.includes(word));
-  
-  if (hasSevereContent) {
+  // Content check with improved algorithm
+  if (containsInappropriateContent(displayName)) {
+    console.log('Display name failed content filter:', displayName);
     return { isValid: false, error: "Display name contains inappropriate content. Please choose a different name." };
   }
   
@@ -83,5 +80,6 @@ export function validateDisplayName(displayName: string): ValidationResult {
     return { isValid: false, error: "Display name contains too many special characters" };
   }
   
+  console.log('Display name validation passed:', displayName);
   return { isValid: true };
 }
