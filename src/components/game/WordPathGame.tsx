@@ -1696,6 +1696,10 @@ function WordPathGame({
     setShowDifficultyDialog(true);
   }
   function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "expert") {
+    if (user && settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
+      saveGameResult();
+    }
+    
     const config = DIFFICULTY_CONFIG[difficulty];
     const newSize = config.gridSize;
     setSettings(prev => ({
