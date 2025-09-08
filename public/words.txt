@@ -193826,6 +193826,9 @@ mosesite
 mosetena
 mosette
 mosgu
+mosh
+moshed
+moshes
 moshav
 moshavim
 mosk
