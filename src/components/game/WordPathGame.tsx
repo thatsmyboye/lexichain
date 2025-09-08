@@ -1006,11 +1006,11 @@ function WordPathGame({
 
   // Save standard game result and update goals when game ends
   const saveGameResult = async () => {
-    if (!user || settings.mode === "daily" || settings.mode === "practice" || !gameOver) return;
+    if (settings.mode === "daily" || settings.mode === "practice" || !gameOver) return;
     const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
     try {
       const gameResult = {
-        user_id: user.id,
+        user_id: user?.id || 'anonymous',
         score: score,
         words_found: usedWords.length,
         longest_word: longestWord,
@@ -1696,7 +1696,7 @@ function WordPathGame({
     setShowDifficultyDialog(true);
   }
   function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "expert") {
-    if (user && settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
+    if (settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
       saveGameResult();
     }
     
