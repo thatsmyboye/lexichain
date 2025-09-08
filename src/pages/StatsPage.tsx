@@ -11,6 +11,7 @@ import { GoalCard } from "@/components/goals/GoalCard";
 import { GoalSelector } from "@/components/goals/GoalSelector";
 import { useGoals } from "@/hooks/useGoals";
 import { useToast } from "@/hooks/use-toast";
+import { parseISO, format } from "date-fns";
 
 const StatsPage = () => {
   const navigate = useNavigate();
@@ -554,14 +555,10 @@ const StatsPage = () => {
                           </div>
                           <div>
                             <p className="font-medium text-sm">
-                              {new Date(challenge.challenge_date).toLocaleDateString('en-US', { 
-                                weekday: 'short', 
-                                month: 'short', 
-                                day: 'numeric' 
-                              })}
+                              {format(parseISO(challenge.challenge_date + 'T12:00:00'), 'EEE, MMM d')}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {new Date(challenge.created_at).toLocaleDateString()}
+                              {format(parseISO(challenge.challenge_date + 'T12:00:00'), 'M/d/yyyy')}
                             </p>
                           </div>
                         </div>
