@@ -513,6 +513,10 @@ export type Database = {
         Args: { action_type: string; target_user_id?: string }
         Returns: boolean
       }
+      validate_audit_log_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
