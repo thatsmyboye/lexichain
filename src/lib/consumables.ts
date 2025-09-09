@@ -132,3 +132,43 @@ export const WORD_DISCOVERY_BONUSES = {
     chance: 0.25
   }
 };
+
+// Leaderboard reward configurations
+export const LEADERBOARD_REWARDS = {
+  daily: {
+    1: [{ id: "hint_revealer" as ConsumableId, quantity: 5 }, { id: "score_multiplier" as ConsumableId, quantity: 2 }],
+    2: [{ id: "hint_revealer" as ConsumableId, quantity: 4 }, { id: "score_multiplier" as ConsumableId, quantity: 1 }],
+    3: [{ id: "hint_revealer" as ConsumableId, quantity: 3 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    4: [{ id: "hint_revealer" as ConsumableId, quantity: 3 }],
+    5: [{ id: "hint_revealer" as ConsumableId, quantity: 2 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    6: [{ id: "hint_revealer" as ConsumableId, quantity: 2 }],
+    7: [{ id: "hint_revealer" as ConsumableId, quantity: 2 }],
+    8: [{ id: "hint_revealer" as ConsumableId, quantity: 1 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    9: [{ id: "hint_revealer" as ConsumableId, quantity: 1 }],
+    10: [{ id: "hint_revealer" as ConsumableId, quantity: 1 }]
+  },
+  weekly: {
+    1: [{ id: "hint_revealer" as ConsumableId, quantity: 8 }, { id: "score_multiplier" as ConsumableId, quantity: 4 }, { id: "extra_moves" as ConsumableId, quantity: 1 }],
+    2: [{ id: "hint_revealer" as ConsumableId, quantity: 6 }, { id: "score_multiplier" as ConsumableId, quantity: 3 }, { id: "hammer" as ConsumableId, quantity: 2 }],
+    3: [{ id: "hint_revealer" as ConsumableId, quantity: 5 }, { id: "score_multiplier" as ConsumableId, quantity: 2 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    4: [{ id: "hint_revealer" as ConsumableId, quantity: 4 }, { id: "score_multiplier" as ConsumableId, quantity: 1 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    5: [{ id: "hint_revealer" as ConsumableId, quantity: 4 }, { id: "hammer" as ConsumableId, quantity: 2 }],
+    6: [{ id: "hint_revealer" as ConsumableId, quantity: 3 }, { id: "score_multiplier" as ConsumableId, quantity: 1 }],
+    7: [{ id: "hint_revealer" as ConsumableId, quantity: 3 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    8: [{ id: "hint_revealer" as ConsumableId, quantity: 2 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    9: [{ id: "hint_revealer" as ConsumableId, quantity: 2 }],
+    10: [{ id: "hint_revealer" as ConsumableId, quantity: 2 }]
+  },
+  monthly: {
+    1: [{ id: "hint_revealer" as ConsumableId, quantity: 15 }, { id: "score_multiplier" as ConsumableId, quantity: 8 }, { id: "extra_moves" as ConsumableId, quantity: 3 }, { id: "hammer" as ConsumableId, quantity: 5 }],
+    2: [{ id: "hint_revealer" as ConsumableId, quantity: 12 }, { id: "score_multiplier" as ConsumableId, quantity: 6 }, { id: "extra_moves" as ConsumableId, quantity: 2 }, { id: "hammer" as ConsumableId, quantity: 4 }],
+    3: [{ id: "hint_revealer" as ConsumableId, quantity: 10 }, { id: "score_multiplier" as ConsumableId, quantity: 5 }, { id: "extra_moves" as ConsumableId, quantity: 2 }, { id: "hammer" as ConsumableId, quantity: 3 }],
+    4: [{ id: "hint_revealer" as ConsumableId, quantity: 8 }, { id: "score_multiplier" as ConsumableId, quantity: 4 }, { id: "extra_moves" as ConsumableId, quantity: 1 }, { id: "hammer" as ConsumableId, quantity: 3 }],
+    5: [{ id: "hint_revealer" as ConsumableId, quantity: 7 }, { id: "score_multiplier" as ConsumableId, quantity: 3 }, { id: "extra_moves" as ConsumableId, quantity: 1 }, { id: "hammer" as ConsumableId, quantity: 2 }],
+    6: [{ id: "hint_revealer" as ConsumableId, quantity: 6 }, { id: "score_multiplier" as ConsumableId, quantity: 3 }, { id: "hammer" as ConsumableId, quantity: 2 }],
+    7: [{ id: "hint_revealer" as ConsumableId, quantity: 5 }, { id: "score_multiplier" as ConsumableId, quantity: 2 }, { id: "hammer" as ConsumableId, quantity: 2 }],
+    8: [{ id: "hint_revealer" as ConsumableId, quantity: 4 }, { id: "score_multiplier" as ConsumableId, quantity: 2 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    9: [{ id: "hint_revealer" as ConsumableId, quantity: 4 }, { id: "score_multiplier" as ConsumableId, quantity: 1 }, { id: "hammer" as ConsumableId, quantity: 1 }],
+    10: [{ id: "hint_revealer" as ConsumableId, quantity: 3 }, { id: "score_multiplier" as ConsumableId, quantity: 1 }]
+  }
+};

@@ -21,5 +21,24 @@ verify_jwt = false
 [functions.verify-payment]
 verify_jwt = false
 
+[functions.distribute-daily-rewards]
+verify_jwt = false
+
+[functions.distribute-weekly-rewards]
+verify_jwt = false
+
+[functions.distribute-monthly-rewards]
+verify_jwt = false
+
 [edge-runtime]
 enabled = true
+
+[pg_cron]
+# Run daily rewards at 00:01 EST (05:01 UTC) every day
+daily_rewards = '1 5 * * * SELECT net.http_post(url:=''https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-daily-rewards'', headers:=''{\"Content-Type\": \"application/json\", \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW9mdWx2c3Fvand1cXloZnFxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE5OTc1OSwiZXhwIjoyMDcwNzc1NzU5fQ.eKovvFgI7t0PQBeGVr1HPccxqrMrPsFlBeHcTj-b5ZE\"}''::jsonb, body:=''{}''::jsonb) as request_id;'
+
+# Run weekly rewards at 00:01 EST (05:01 UTC) every Monday  
+weekly_rewards = '1 5 * * 1 SELECT net.http_post(url:=''https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-weekly-rewards'', headers:=''{\"Content-Type\": \"application/json\", \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW9mdWx2c3Fvand1cXloZnFxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE5OTc1OSwiZXhwIjoyMDcwNzc1NzU5fQ.eKovvFgI7t0PQBeGVr1HPccxqrMrPsFlBeHcTj-b5ZE\"}''::jsonb, body:=''{}''::jsonb) as request_id;'
+
+# Run monthly rewards at 00:01 EST (05:01 UTC) on the 1st of each month
+monthly_rewards = '1 5 1 * * SELECT net.http_post(url:=''https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-monthly-rewards'', headers:=''{\"Content-Type\": \"application/json\", \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW9mdWx2c3Fvand1cXloZnFxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE5OTc1OSwiZXhwIjoyMDcwNzc1NzU5fQ.eKovvFgI7t0PQBeGVr1HPccxqrMrPsFlBeHcTj-b5ZE\"}''::jsonb, body:=''{}''::jsonb) as request_id;'

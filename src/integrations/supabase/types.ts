@@ -184,6 +184,39 @@ export type Database = {
           },
         ]
       }
+      leaderboard_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          leaderboard_type: string
+          period: string
+          rank: number
+          rewards_given: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leaderboard_type: string
+          period: string
+          rank: number
+          rewards_given: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leaderboard_type?: string
+          period?: string
+          rank?: number
+          rewards_given?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_goals: {
         Row: {
           completed_at: string | null
@@ -413,6 +446,18 @@ export type Database = {
       current_user_has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
+      }
+      distribute_daily_leaderboard_rewards: {
+        Args: { target_date: string }
+        Returns: Json
+      }
+      distribute_monthly_leaderboard_rewards: {
+        Args: { target_month: number; target_year: number }
+        Returns: Json
+      }
+      distribute_weekly_leaderboard_rewards: {
+        Args: { target_week_start: string }
+        Returns: Json
       }
       get_benchmark_data: {
         Args: { challenge_date: string }
