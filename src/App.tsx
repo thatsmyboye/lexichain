@@ -15,6 +15,7 @@ const StatsPage = lazy(() => import("./pages/StatsPage"));
 const StorePage = lazy(() => import("./pages/StorePage"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCanceled = lazy(() => import("./pages/PaymentCanceled"));
+const DebugPage = lazy(() => import("./pages/DebugPage"));
 
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/store" element={<StorePage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
+            <Route path="/debug" element={<DebugPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

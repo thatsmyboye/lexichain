@@ -11,12 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
 import { useConsumables } from "@/hooks/useConsumables";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/ConsumableInventory";
 import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { ChevronDown } from "lucide-react";
+import { getDailyChallengeDate } from "@/utils/dateUtils";
 type Pos = {
   r: number;
   c: number;
@@ -176,8 +178,8 @@ function seededRandomLetter(rng: () => number) {
   return "E";
 }
 function getDailySeed(): string {
-  const today = new Date();
-  return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+  // Use the centralized date utility for consistency
+  return getDailyChallengeDate();
 }
 function getDailyMovesLimit(): number {
   // Fixed at 10 moves for Daily Challenge
@@ -852,6 +854,7 @@ function WordPathGame({
     addActiveEffect,
     removeActiveEffect
   } = useConsumables(user);
+  const { syncBackupResults } = useOfflineSync();
   const isMobile = useIsMobile();
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][] | null>(null);
@@ -1042,24 +1045,87 @@ function WordPathGame({
     }
   };
 
-  // Save daily challenge result when game ends
-  const saveDailyChallengeResult = async () => {
+  // Enhanced daily challenge result saving with retry logic and better error handling
+  const saveDailyChallengeResult = async (retryCount = 0) => {
     if (!user || settings.mode !== "daily" || !gameOver) return;
+    
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 second
+    
     try {
+      const challengeDate = getDailySeed();
+      
+      // Log save attempt for debugging
+      console.log(`[Daily Challenge] Saving result for ${challengeDate}, attempt ${retryCount + 1}`, {
+        score,
+        finalGrade,
+        userId: user.id.substring(0, 8) + '...'
+      });
+      
       const challengeResult = {
         user_id: user.id,
-        challenge_date: getDailySeed(),
-        // Use the daily seed as the challenge date
+        challenge_date: challengeDate,
         score: score,
         achievement_level: finalGrade
       };
-      const {
-        error
-      } = await supabase.from("daily_challenge_results").insert(challengeResult);
-      if (error) throw error;
-      console.log("Daily challenge result saved successfully");
-    } catch (error) {
-      console.error("Error saving daily challenge result:", error);
+      
+      // Use upsert to handle duplicates gracefully
+      const { error } = await supabase
+        .from("daily_challenge_results")
+        .upsert(challengeResult, {
+          onConflict: 'user_id,challenge_date',
+          ignoreDuplicates: false
+        });
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log(`[Daily Challenge] Result saved successfully for ${challengeDate}`);
+      toast.success("Daily Challenge result saved!");
+      
+    } catch (error: any) {
+      console.error(`[Daily Challenge] Save failed (attempt ${retryCount + 1}):`, error);
+      
+      // Check if it's a network/temporary error that's worth retrying
+      const isRetryableError = error?.message?.includes('network') || 
+                              error?.message?.includes('timeout') ||
+                              error?.message?.includes('connection') ||
+                              error?.code === 'PGRST301' || // PostgREST connection error
+                              error?.code === '08006'; // PostgreSQL connection failure
+      
+      if (retryCount < maxRetries && isRetryableError) {
+        const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+        console.log(`[Daily Challenge] Retrying save in ${delay}ms...`);
+        
+        toast.info(`Retrying save... (${retryCount + 1}/${maxRetries})`);
+        
+        setTimeout(() => {
+          saveDailyChallengeResult(retryCount + 1);
+        }, delay);
+      } else {
+        // Final failure - show user-friendly error
+        console.error('[Daily Challenge] Final save failure:', error);
+        toast.error("Failed to save Daily Challenge result. Please check your connection and try again.");
+        
+        // Store in localStorage as backup for offline sync later
+        try {
+          const backupKey = `daily-challenge-result-backup-${getDailySeed()}`;
+          const backupData = {
+            user_id: user.id,
+            challenge_date: getDailySeed(),
+            score: score,
+            achievement_level: finalGrade,
+            timestamp: new Date().toISOString(),
+            synced: false
+          };
+          localStorage.setItem(backupKey, JSON.stringify(backupData));
+          console.log('[Daily Challenge] Result backed up to localStorage for later sync');
+          toast.info("Result saved locally - will sync when connection is restored");
+        } catch (storageError) {
+          console.error('[Daily Challenge] Failed to backup to localStorage:', storageError);
+        }
+      }
     }
   };
 

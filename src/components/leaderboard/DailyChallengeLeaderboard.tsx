@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, Medal, Award } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { toZonedTime, format } from 'date-fns-tz';
+import { getDailyChallengeDate } from "@/utils/dateUtils";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -27,7 +28,10 @@ export function DailyChallengeLeaderboard({ currentUser }: DailyChallengeLeaderb
   const [activeTab, setActiveTab] = useState("day");
 
   const easternTimeZone = 'America/New_York';
-  const today = format(toZonedTime(new Date(), easternTimeZone), 'yyyy-MM-dd');
+  const today = getDailyChallengeDate();
+  
+  // Log the date being used for leaderboard fetching for debugging
+  console.log(`[Leaderboard] Fetching daily leaderboard for date: ${today}`);
 
   const fetchLeaderboards = async () => {
     setLoading(true);
