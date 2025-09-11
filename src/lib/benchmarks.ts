@@ -101,8 +101,8 @@ export async function computeDynamicBenchmarks(
   try {
     console.log(`Calculating dynamic benchmarks for ${challengeDate} using service function...`);
     
-    // Use the new service-level function that bypasses RLS to access all players' data
-    const { data: benchmarkData, error } = await supabaseClient.rpc('get_benchmark_data', {
+    // Use the enhanced benchmark function that includes board analysis
+    const { data: benchmarkData, error } = await supabaseClient.rpc('get_enhanced_benchmark_data', {
       challenge_date: challengeDate
     });
 

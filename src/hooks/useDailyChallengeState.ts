@@ -17,11 +17,56 @@ export type DailyChallengeGameState = {
   seed: string;
   benchmarks?: any; // Store benchmark thresholds
   discoverableCount?: number; // Store total discoverable words
+  boardAnalysis?: any; // Store board analysis data
+  lastSaved?: number; // Timestamp of last save
 };
 
 export const useDailyChallengeState = (challengeDate: string) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [lastSaveStatus, setLastSaveStatus] = useState<'success' | 'error' | 'pending' | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const periodicSaveRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Enhanced mobile-optimized state persistence
+  const setupMobileOptimizations = useCallback(() => {
+    // Mobile-specific event handlers for state preservation
+    const handleBeforeUnload = () => {
+      const state = localStorage.getItem(`daily-challenge-${challengeDate}`);
+      if (state) {
+        try {
+          const gameState = JSON.parse(state) as DailyChallengeGameState;
+          if (gameState && !gameState.gameOver) {
+            // Mark as interrupted for recovery
+            gameState.lastSaved = Date.now();
+            localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+          }
+        } catch (e) {
+          console.warn('Error saving state on beforeunload:', e);
+        }
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // App going to background - save immediately
+        const state = localStorage.getItem(`daily-challenge-${challengeDate}`);
+        if (state) {
+          handleBeforeUnload();
+        }
+      }
+    };
+
+    // Add mobile-optimized event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [challengeDate]);
 
   // Debounced save function to prevent rapid database operations
   const debouncedSaveState = useCallback(async (gameState: DailyChallengeGameState): Promise<void> => {
@@ -38,11 +83,33 @@ export const useDailyChallengeState = (challengeDate: string) => {
 
   const immediatelyRleeHaveStateImpl = async (gameState: DailyChallengeGameState): Promise<void> => {
     setIsLoading(true);
+    setLastSaveStatus('pending');
+    
     try {
-      // Validate state before saving - be more lenient
-      if (!gameState.seed || gameState.seed !== challengeDate) {
-        console.warn('Invalid game state: seed mismatch, but attempting to save anyway');
+      // Enhanced state validation with progressive recovery
+      const stateValid = gameState.seed === challengeDate && 
+                        gameState.initialBoard && 
+                        gameState.board &&
+                        Array.isArray(gameState.usedWords) &&
+                        typeof gameState.score === 'number';
+      
+      if (!stateValid) {
+        console.warn('Invalid game state detected, attempting repair...');
+        // Progressive state repair - keep what's valid
+        if (!gameState.seed) gameState.seed = challengeDate;
+        if (!Array.isArray(gameState.usedWords)) gameState.usedWords = [];
+        if (typeof gameState.score !== 'number') gameState.score = 0;
       }
+
+      // Add save timestamp for tracking
+      gameState.lastSaved = Date.now();
+
+      // Compress state for mobile storage optimization
+      const compressedState = {
+        ...gameState,
+        // Remove redundant data that can be regenerated
+        benchmarks: gameState.gameOver ? gameState.benchmarks : undefined
+      };
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -57,7 +124,7 @@ export const useDailyChallengeState = (challengeDate: string) => {
             .upsert({
               user_id: user.id,
               challenge_date: challengeDate,
-              game_state: gameState
+              game_state: compressedState
             }, {
               onConflict: 'user_id,challenge_date',
               ignoreDuplicates: false
@@ -65,25 +132,30 @@ export const useDailyChallengeState = (challengeDate: string) => {
           
           if (!error) {
             saved = true;
-            // Sync to localStorage for consistency
-            localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+            setLastSaveStatus('success');
+            // Sync to localStorage for consistency and offline access
+            localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(compressedState));
           } else {
             console.error(`Error saving daily challenge state to database (attempt ${4-retries}):`, error);
             retries--;
             if (retries === 0) {
+              setLastSaveStatus('error');
               // Final fallback to localStorage
-              localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+              localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(compressedState));
             }
           }
         }
       } else {
         // Use localStorage for guests
-        localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+        localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(compressedState));
+        setLastSaveStatus('success');
       }
     } catch (e) {
       console.error('Error saving daily challenge state:', e);
+      setLastSaveStatus('error');
       // Fallback to localStorage
-      localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(gameState));
+      const fallbackState = { ...gameState, lastSaved: Date.now() };
+      localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(fallbackState));
     } finally {
       setIsLoading(false);
     }
@@ -105,6 +177,7 @@ export const useDailyChallengeState = (challengeDate: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       let loadedState: DailyChallengeGameState | null = null;
+      let partialState: Partial<DailyChallengeGameState> | null = null;
       
       if (user) {
         // Load from database for logged-in users
@@ -114,13 +187,20 @@ export const useDailyChallengeState = (challengeDate: string) => {
             .select('game_state')
             .eq('user_id', user.id)
             .eq('challenge_date', challengeDate)
-            .maybeSingle(); // Use maybeSingle to avoid errors when no data exists
+            .maybeSingle();
           
           if (data && !error) {
             const gameState = data.game_state as DailyChallengeGameState;
-            // Validate state before using it
-            if (gameState.seed === challengeDate && gameState.initialBoard && gameState.board) {
+            // Enhanced validation with progressive recovery
+            const hasValidCore = gameState.seed === challengeDate && 
+                                gameState.initialBoard && 
+                                gameState.board;
+            
+            if (hasValidCore) {
               loadedState = gameState;
+            } else if (gameState.seed === challengeDate) {
+              // Partial state - can be recovered
+              partialState = gameState;
             }
           }
         } catch (e) {
@@ -129,19 +209,24 @@ export const useDailyChallengeState = (challengeDate: string) => {
       }
       
       // Fallback to localStorage if database load failed or no user
-      if (!loadedState) {
+      if (!loadedState && !partialState) {
         const savedState = localStorage.getItem(`daily-challenge-${challengeDate}`);
         if (savedState) {
           try {
             const gameState = JSON.parse(savedState) as DailyChallengeGameState;
-            // Validate state before using it
-            if (gameState.seed === challengeDate && gameState.initialBoard && gameState.board) {
+            const hasValidCore = gameState.seed === challengeDate && 
+                                gameState.initialBoard && 
+                                gameState.board;
+            
+            if (hasValidCore) {
               loadedState = gameState;
               
               // Sync valid localStorage state to database if user is logged in
               if (user) {
                 await immediatelyRleeHaveStateImpl(gameState);
               }
+            } else if (gameState.seed === challengeDate) {
+              partialState = gameState;
             }
           } catch (e) {
             console.warn('Failed to load daily challenge state from localStorage:', e);
@@ -149,7 +234,8 @@ export const useDailyChallengeState = (challengeDate: string) => {
         }
       }
       
-      return loadedState;
+      // Return full state or partial state for recovery
+      return loadedState || (partialState as DailyChallengeGameState);
     } finally {
       setIsLoading(false);
     }
@@ -179,8 +265,72 @@ export const useDailyChallengeState = (challengeDate: string) => {
     }
   };
 
+  // Periodic state snapshots for mobile optimization
+  const startPeriodicSaves = useCallback((gameState: DailyChallengeGameState) => {
+    if (periodicSaveRef.current) {
+      clearInterval(periodicSaveRef.current);
+    }
+    
+    // Save every 30 seconds during active gameplay
+    periodicSaveRef.current = setInterval(() => {
+      if (!gameState.gameOver) {
+        debouncedSaveState(gameState);
+      }
+    }, 30000);
+  }, [debouncedSaveState]);
+
+  const stopPeriodicSaves = useCallback(() => {
+    if (periodicSaveRef.current) {
+      clearInterval(periodicSaveRef.current);
+      periodicSaveRef.current = null;
+    }
+  }, []);
+
+  // Enhanced state validation
+  const validateGameState = useCallback((state: any): { isValid: boolean; canRecover: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    let isValid = true;
+    let canRecover = false;
+
+    if (!state) {
+      errors.push('State is null or undefined');
+      return { isValid: false, canRecover: false, errors };
+    }
+
+    if (state.seed !== challengeDate) {
+      errors.push('Seed mismatch');
+      isValid = false;
+    } else {
+      canRecover = true;
+    }
+
+    if (!state.initialBoard || !Array.isArray(state.initialBoard)) {
+      errors.push('Missing or invalid initial board');
+      isValid = false;
+    }
+
+    if (!state.board || !Array.isArray(state.board)) {
+      errors.push('Missing or invalid current board');
+      isValid = false;
+    }
+
+    if (!Array.isArray(state.usedWords)) {
+      errors.push('Missing or invalid used words');
+      isValid = false;
+    }
+
+    if (typeof state.score !== 'number') {
+      errors.push('Missing or invalid score');
+      isValid = false;
+    }
+
+    return { isValid, canRecover, errors };
+  }, [challengeDate]);
+
   // Auto-sync state when user authentication changes
   useEffect(() => {
+    const cleanupMobile = setupMobileOptimizations();
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
@@ -189,10 +339,12 @@ export const useDailyChallengeState = (challengeDate: string) => {
           if (localState) {
             try {
               const gameState = JSON.parse(localState) as DailyChallengeGameState;
-              // Validate before migration
-              if (gameState.seed === challengeDate && gameState.initialBoard && gameState.board) {
+              const validation = validateGameState(gameState);
+              
+              if (validation.isValid) {
                 await saveState(gameState, true); // Use immediate save for migration
-                // Keep localStorage as backup, don't remove it
+              } else if (validation.canRecover) {
+                console.log('Partial state found during login, available for recovery');
               }
             } catch (e) {
               console.error('Error migrating daily challenge state to database:', e);
@@ -204,17 +356,26 @@ export const useDailyChallengeState = (challengeDate: string) => {
 
     return () => {
       subscription.unsubscribe();
-      // Clear timeout on cleanup
+      cleanupMobile();
+      
+      // Clear timeouts on cleanup
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      if (periodicSaveRef.current) {
+        clearInterval(periodicSaveRef.current);
+      }
     };
-  }, [challengeDate, saveState]);
+  }, [challengeDate, saveState, setupMobileOptimizations, validateGameState]);
 
   return {
     saveState,
     loadState,
     clearState,
-    isLoading
+    isLoading,
+    lastSaveStatus,
+    validateGameState,
+    startPeriodicSaves,
+    stopPeriodicSaves
   };
 };

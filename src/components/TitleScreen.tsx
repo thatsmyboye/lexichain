@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from '@supabase/supabase-js';
 import type { LoginStreakData } from "@/hooks/useLoginStreak";
+import { getDailyChallengeDate } from "@/utils/dateUtils";
+import { checkIncompleteGameState } from "@/utils/gameStateUtils";
 
 interface TitleScreenProps {
   onPlayClick: () => void;
@@ -25,6 +27,12 @@ const TitleScreen = ({
   user: propUser
 }: TitleScreenProps) => {
   const [user, setUser] = useState<User | null>(propUser || null);
+  const [hasIncompleteChallenge, setHasIncompleteChallenge] = useState(false);
+  const [challengeProgress, setChallengeProgress] = useState<{
+    score: number;
+    movesUsed: number;
+    lastSaved?: number;
+  } | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -36,6 +44,23 @@ const TitleScreen = ({
       console.error('Unexpected logout error:', error);
     }
   };
+  // Enhanced state validation with progressive recovery
+  useEffect(() => {
+    const checkIncompleteChallenge = () => {
+      const today = getDailyChallengeDate();
+      const gameInfo = checkIncompleteGameState(today);
+      
+      setHasIncompleteChallenge(gameInfo.hasIncompleteGame);
+      setChallengeProgress(gameInfo.progress || null);
+    };
+
+    checkIncompleteChallenge();
+    
+    // Check periodically in case state changes
+    const interval = setInterval(checkIncompleteChallenge, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (propUser !== undefined) {
       setUser(propUser);
@@ -76,10 +101,29 @@ const TitleScreen = ({
                 🔥 {streakData.currentStreak} day streak!
               </div>
             )}
+            
+            {hasIncompleteChallenge && challengeProgress && (
+              <div className="bg-accent/20 border border-accent/40 rounded-lg px-3 py-2 text-sm">
+                <div className="text-accent-foreground font-medium">Daily Challenge in Progress</div>
+                <div className="text-muted-foreground">
+                  Score: {challengeProgress.score} • Moves: {challengeProgress.movesUsed}
+                  {challengeProgress.lastSaved && (
+                    <div className="text-xs mt-1">
+                      Last saved: {new Date(challengeProgress.lastSaved).toLocaleTimeString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           
           <div className="flex items-center justify-center gap-3">
-            <Button variant="hero" size="lg" onClick={onPlayClick} className="px-6">
-              Play
+            <Button 
+              variant={hasIncompleteChallenge ? "default" : "hero"} 
+              size="lg" 
+              onClick={onPlayClick} 
+              className="px-6"
+            >
+              {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
             </Button>
             <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-6">
               {user ? 'Log Out' : 'Login'}
@@ -127,10 +171,29 @@ const TitleScreen = ({
                 🔥 {streakData.currentStreak} day streak!
               </div>
             )}
+            
+            {hasIncompleteChallenge && challengeProgress && (
+              <div className="bg-accent/20 border border-accent/40 rounded-lg px-4 py-3">
+                <div className="text-accent-foreground font-medium text-lg">Daily Challenge in Progress</div>
+                <div className="text-muted-foreground">
+                  Score: {challengeProgress.score} • Moves: {challengeProgress.movesUsed}
+                  {challengeProgress.lastSaved && (
+                    <div className="text-sm mt-1">
+                      Last saved: {new Date(challengeProgress.lastSaved).toLocaleTimeString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           
           <div className="flex items-center justify-center gap-4">
-            <Button variant="hero" size="lg" onClick={onPlayClick} className="px-8">
-              Play
+            <Button 
+              variant={hasIncompleteChallenge ? "default" : "hero"} 
+              size="lg" 
+              onClick={onPlayClick} 
+              className="px-8"
+            >
+              {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
             </Button>
             <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-8">
               {user ? 'Log Out' : 'Login'}

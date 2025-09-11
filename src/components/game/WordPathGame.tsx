@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { computeBenchmarksFromWordCount, computeBoardSpecificBenchmarks, computeDynamicBenchmarks, type Benchmarks, type BoardAnalysis } from "@/lib/benchmarks";
+import { analyzeBoardComposition, createBoardAnalysisForBenchmarks } from "@/lib/boardAnalysis";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
 import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
@@ -1055,18 +1056,51 @@ function WordPathGame({
     try {
       const challengeDate = getDailySeed();
       
+      // Analyze board composition for enhanced benchmarks
+      const detailedAnalysis = analyzeBoardComposition(board);
+      const boardAnalysisForBenchmarks = createBoardAnalysisForBenchmarks(detailedAnalysis);
+      
+      // Save board analysis to database for future benchmark calculations
+      try {
+        await supabase.rpc('save_daily_challenge_board_analysis', {
+          challenge_date: challengeDate,
+          word_count: discoverableCount,
+          grid_size: board.length,
+          rarity_score_potential: detailedAnalysis.rarityScorePotential,
+          avg_word_length: detailedAnalysis.avgWordLength,
+          connectivity_score: detailedAnalysis.connectivityScore,
+          max_score_potential: detailedAnalysis.maxScorePotential,
+          letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution)
+        });
+      } catch (boardAnalysisError) {
+        console.warn('Failed to save board analysis:', boardAnalysisError);
+        // Don't fail the entire save operation for this
+      }
+      
       // Log save attempt for debugging
       console.log(`[Daily Challenge] Saving result for ${challengeDate}, attempt ${retryCount + 1}`, {
         score,
         finalGrade,
-        userId: user.id.substring(0, 8) + '...'
+        userId: user.id.substring(0, 8) + '...',
+        boardAnalysis: detailedAnalysis
       });
       
       const challengeResult = {
         user_id: user.id,
         challenge_date: challengeDate,
         score: score,
-        achievement_level: finalGrade
+        achievement_level: finalGrade,
+        board_analysis: {
+          gridSize: detailedAnalysis.gridSize,
+          wordCount: discoverableCount,
+          rarityScore: detailedAnalysis.rarityScorePotential,
+          avgWordLength: detailedAnalysis.avgWordLength,
+          connectivityScore: detailedAnalysis.connectivityScore,
+          maxScorePotential: detailedAnalysis.maxScorePotential,
+          difficultyScore: detailedAnalysis.difficultyScore
+        },
+        word_count: discoverableCount,
+        grid_size: board.length
       };
       
       // Use upsert to handle duplicates gracefully

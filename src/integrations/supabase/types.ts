@@ -55,33 +55,78 @@ export type Database = {
           },
         ]
       }
+      daily_challenge_board_analysis: {
+        Row: {
+          avg_word_length: number
+          challenge_date: string
+          connectivity_score: number
+          created_at: string | null
+          grid_size: number
+          letter_distribution: Json
+          max_score_potential: number
+          rarity_score_potential: number
+          word_count: number
+        }
+        Insert: {
+          avg_word_length?: number
+          challenge_date: string
+          connectivity_score?: number
+          created_at?: string | null
+          grid_size?: number
+          letter_distribution?: Json
+          max_score_potential?: number
+          rarity_score_potential?: number
+          word_count: number
+        }
+        Update: {
+          avg_word_length?: number
+          challenge_date?: string
+          connectivity_score?: number
+          created_at?: string | null
+          grid_size?: number
+          letter_distribution?: Json
+          max_score_potential?: number
+          rarity_score_potential?: number
+          word_count?: number
+        }
+        Relationships: []
+      }
       daily_challenge_results: {
         Row: {
           achievement_level: string
+          board_analysis: Json | null
           challenge_date: string
           created_at: string
+          grid_size: number | null
           id: string
           score: number
           updated_at: string
           user_id: string
+          word_count: number | null
         }
         Insert: {
           achievement_level: string
+          board_analysis?: Json | null
           challenge_date: string
           created_at?: string
+          grid_size?: number | null
           id?: string
           score: number
           updated_at?: string
           user_id: string
+          word_count?: number | null
         }
         Update: {
           achievement_level?: string
+          board_analysis?: Json | null
           challenge_date?: string
           created_at?: string
+          grid_size?: number | null
           id?: string
           score?: number
           updated_at?: string
           user_id?: string
+          word_count?: number | null
         }
         Relationships: []
       }
@@ -472,6 +517,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_enhanced_benchmark_data: {
+        Args: { challenge_date: string }
+        Returns: Json
+      }
       get_monthly_leaderboard: {
         Args: { month: number; year: number }
         Returns: {
@@ -508,6 +557,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      save_daily_challenge_board_analysis: {
+        Args: {
+          avg_word_length: number
+          challenge_date: string
+          connectivity_score: number
+          grid_size: number
+          letter_distribution: Json
+          max_score_potential: number
+          rarity_score_potential: number
+          word_count: number
+        }
+        Returns: undefined
       }
       validate_admin_action: {
         Args: { action_type: string; target_user_id?: string }
