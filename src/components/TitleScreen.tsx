@@ -5,7 +5,6 @@ import { User } from '@supabase/supabase-js';
 import type { LoginStreakData } from "@/hooks/useLoginStreak";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { checkIncompleteGameState } from "@/utils/gameStateUtils";
-
 interface TitleScreenProps {
   onPlayClick: () => void;
   onLoginClick: () => void;
@@ -33,10 +32,11 @@ const TitleScreen = ({
     movesUsed: number;
     lastSaved?: number;
   } | null>(null);
-
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const {
+        error
+      } = await supabase.auth.signOut();
       if (error) {
         console.error('Logout error:', error);
       }
@@ -49,18 +49,15 @@ const TitleScreen = ({
     const checkIncompleteChallenge = () => {
       const today = getDailyChallengeDate();
       const gameInfo = checkIncompleteGameState(today);
-      
       setHasIncompleteChallenge(gameInfo.hasIncompleteGame);
       setChallengeProgress(gameInfo.progress || null);
     };
-
     checkIncompleteChallenge();
-    
+
     // Check periodically in case state changes
     const interval = setInterval(checkIncompleteChallenge, 5000);
     return () => clearInterval(interval);
   }, []);
-
   useEffect(() => {
     if (propUser !== undefined) {
       setUser(propUser);
@@ -96,33 +93,22 @@ const TitleScreen = ({
               Lexichain
             </h1>
             
-            {user && streakData && (
-              <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+            {user && streakData && <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
                 🔥 {streakData.currentStreak} day streak!
-              </div>
-            )}
+              </div>}
             
-            {hasIncompleteChallenge && challengeProgress && (
-              <div className="bg-accent/20 border border-accent/40 rounded-lg px-3 py-2 text-sm">
+            {hasIncompleteChallenge && challengeProgress && <div className="bg-accent/20 border border-accent/40 rounded-lg px-3 py-2 text-sm">
                 <div className="text-accent-foreground font-medium">Daily Challenge in Progress</div>
                 <div className="text-muted-foreground">
                   Score: {challengeProgress.score} • Moves: {challengeProgress.movesUsed}
-                  {challengeProgress.lastSaved && (
-                    <div className="text-xs mt-1">
+                  {challengeProgress.lastSaved && <div className="text-xs mt-1">
                       Last saved: {new Date(challengeProgress.lastSaved).toLocaleTimeString()}
-                    </div>
-                  )}
+                    </div>}
                 </div>
-              </div>
-            )}
+              </div>}
           
           <div className="flex items-center justify-center gap-3">
-            <Button 
-              variant={hasIncompleteChallenge ? "default" : "hero"} 
-              size="lg" 
-              onClick={onPlayClick} 
-              className="px-6"
-            >
+            <Button variant={hasIncompleteChallenge ? "default" : "hero"} size="lg" onClick={onPlayClick} className="px-6">
               {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
             </Button>
             <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-6">
@@ -135,25 +121,21 @@ const TitleScreen = ({
               🛒 Store
             </Button>
             
-            {user && (
-              <>
+            {user && <>
                 <Button variant="outline" size="lg" onClick={onStatsClick} className="px-6">
                   📊 Stats
                 </Button>
                 <Button variant="outline" size="lg" onClick={onLeaderboardClick} className="px-6">
                   🏆 Leaderboards
                 </Button>
-              </>
-            )}
+              </>}
           </div>
           
-          {!user && (
-            <div className="text-center">
+          {!user && <div className="text-center">
               <button onClick={onRegisterClick} className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline">
                 Register
               </button>
-            </div>
-          )}
+            </div>}
         </div>
         
         <div></div> {/* Bottom spacer for footer */}
@@ -166,33 +148,17 @@ const TitleScreen = ({
               Lexichain
             </h1>
             
-            {user && streakData && (
-              <div className="text-lg text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+            {user && streakData && <div className="text-lg text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
                 🔥 {streakData.currentStreak} day streak!
-              </div>
-            )}
+              </div>}
             
-            {hasIncompleteChallenge && challengeProgress && (
-              <div className="bg-accent/20 border border-accent/40 rounded-lg px-4 py-3">
+            {hasIncompleteChallenge && challengeProgress && <div className="bg-accent/20 border border-accent/40 rounded-lg px-4 py-3">
                 <div className="text-accent-foreground font-medium text-lg">Daily Challenge in Progress</div>
-                <div className="text-muted-foreground">
-                  Score: {challengeProgress.score} • Moves: {challengeProgress.movesUsed}
-                  {challengeProgress.lastSaved && (
-                    <div className="text-sm mt-1">
-                      Last saved: {new Date(challengeProgress.lastSaved).toLocaleTimeString()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                
+              </div>}
           
           <div className="flex items-center justify-center gap-4">
-            <Button 
-              variant={hasIncompleteChallenge ? "default" : "hero"} 
-              size="lg" 
-              onClick={onPlayClick} 
-              className="px-8"
-            >
+            <Button variant={hasIncompleteChallenge ? "default" : "hero"} size="lg" onClick={onPlayClick} className="px-8">
               {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
             </Button>
             <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-8">
@@ -205,25 +171,21 @@ const TitleScreen = ({
               🛒 Store
             </Button>
             
-            {user && (
-              <>
+            {user && <>
                 <Button variant="outline" size="lg" onClick={onStatsClick} className="px-8">
                   📊 Stats
                 </Button>
                 <Button variant="outline" size="lg" onClick={onLeaderboardClick} className="px-8">
                   🏆 Leaderboards
                 </Button>
-              </>
-            )}
+              </>}
           </div>
           
-          {!user && (
-            <div className="text-center">
+          {!user && <div className="text-center">
               <button onClick={onRegisterClick} className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline">
                 Register
               </button>
-            </div>
-          )}
+            </div>}
         </div>
       </div>
       
