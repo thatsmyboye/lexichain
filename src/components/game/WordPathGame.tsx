@@ -20,6 +20,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { ChevronDown } from "lucide-react";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
+import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
+import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
 type Pos = {
   r: number;
   c: number;
@@ -882,6 +884,7 @@ function WordPathGame({
   const [discoverableCount, setDiscoverableCount] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<AchievementId>>(new Set());
   const [gameOver, setGameOver] = useState(false);
+  const [saveProgress, setSaveProgress] = useState<SaveProgress | null>(null);
   const [finalGrade, setFinalGrade] = useState<"None" | "Bronze" | "Silver" | "Gold" | "Platinum">("None");
   const [streak, setStreak] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1046,121 +1049,60 @@ function WordPathGame({
     }
   };
 
-  // Enhanced daily challenge result saving with retry logic and better error handling
-  const saveDailyChallengeResult = async (retryCount = 0) => {
+  // Bulletproof daily challenge result saving
+  const saveDailyChallengeResult = async () => {
     if (!user || settings.mode !== "daily" || !gameOver) return;
     
-    const maxRetries = 3;
-    const baseDelay = 1000; // 1 second
+    // Prepare enhanced data for the progressive save strategy
+    const detailedAnalysis = analyzeBoardComposition(board);
+    const enhancedData = {
+      board_analysis: {
+        gridSize: detailedAnalysis.gridSize,
+        wordCount: discoverableCount,
+        rarityScore: detailedAnalysis.rarityScorePotential,
+        avgWordLength: detailedAnalysis.avgWordLength,
+        connectivityScore: detailedAnalysis.connectivityScore,
+        maxScorePotential: detailedAnalysis.maxScorePotential,
+        difficultyScore: detailedAnalysis.difficultyScore
+      },
+      word_count: discoverableCount,
+      grid_size: board.length
+    };
     
+    // Save board analysis to database separately (non-blocking)
     try {
-      const challengeDate = getDailySeed();
-      
-      // Analyze board composition for enhanced benchmarks
-      const detailedAnalysis = analyzeBoardComposition(board);
-      const boardAnalysisForBenchmarks = createBoardAnalysisForBenchmarks(detailedAnalysis);
-      
-      // Save board analysis to database for future benchmark calculations
-      try {
-        await supabase.rpc('save_daily_challenge_board_analysis', {
-          challenge_date: challengeDate,
-          word_count: discoverableCount,
-          grid_size: board.length,
-          rarity_score_potential: detailedAnalysis.rarityScorePotential,
-          avg_word_length: detailedAnalysis.avgWordLength,
-          connectivity_score: detailedAnalysis.connectivityScore,
-          max_score_potential: detailedAnalysis.maxScorePotential,
-          letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution)
-        });
-      } catch (boardAnalysisError) {
-        console.warn('Failed to save board analysis:', boardAnalysisError);
-        // Don't fail the entire save operation for this
-      }
-      
-      // Log save attempt for debugging
-      console.log(`[Daily Challenge] Saving result for ${challengeDate}, attempt ${retryCount + 1}`, {
-        score,
-        finalGrade,
-        userId: user.id.substring(0, 8) + '...',
-        boardAnalysis: detailedAnalysis
-      });
-      
-      const challengeResult = {
-        user_id: user.id,
+      const challengeDate = getDailyChallengeDate();
+      await supabase.rpc('save_daily_challenge_board_analysis', {
         challenge_date: challengeDate,
-        score: score,
-        achievement_level: finalGrade,
-        board_analysis: {
-          gridSize: detailedAnalysis.gridSize,
-          wordCount: discoverableCount,
-          rarityScore: detailedAnalysis.rarityScorePotential,
-          avgWordLength: detailedAnalysis.avgWordLength,
-          connectivityScore: detailedAnalysis.connectivityScore,
-          maxScorePotential: detailedAnalysis.maxScorePotential,
-          difficultyScore: detailedAnalysis.difficultyScore
-        },
         word_count: discoverableCount,
-        grid_size: board.length
-      };
-      
-      // Use upsert to handle duplicates gracefully
-      const { error } = await supabase
-        .from("daily_challenge_results")
-        .upsert(challengeResult, {
-          onConflict: 'user_id,challenge_date',
-          ignoreDuplicates: false
-        });
-      
-      if (error) {
-        throw error;
-      }
-      
-      console.log(`[Daily Challenge] Result saved successfully for ${challengeDate}`);
-      toast.success("Daily Challenge result saved!");
-      
-    } catch (error: any) {
-      console.error(`[Daily Challenge] Save failed (attempt ${retryCount + 1}):`, error);
-      
-      // Check if it's a network/temporary error that's worth retrying
-      const isRetryableError = error?.message?.includes('network') || 
-                              error?.message?.includes('timeout') ||
-                              error?.message?.includes('connection') ||
-                              error?.code === 'PGRST301' || // PostgREST connection error
-                              error?.code === '08006'; // PostgreSQL connection failure
-      
-      if (retryCount < maxRetries && isRetryableError) {
-        const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
-        console.log(`[Daily Challenge] Retrying save in ${delay}ms...`);
-        
-        toast.info(`Retrying save... (${retryCount + 1}/${maxRetries})`);
-        
-        setTimeout(() => {
-          saveDailyChallengeResult(retryCount + 1);
-        }, delay);
-      } else {
-        // Final failure - show user-friendly error
-        console.error('[Daily Challenge] Final save failure:', error);
-        toast.error("Failed to save Daily Challenge result. Please check your connection and try again.");
-        
-        // Store in localStorage as backup for offline sync later
-        try {
-          const backupKey = `daily-challenge-result-backup-${getDailySeed()}`;
-          const backupData = {
-            user_id: user.id,
-            challenge_date: getDailySeed(),
-            score: score,
-            achievement_level: finalGrade,
-            timestamp: new Date().toISOString(),
-            synced: false
-          };
-          localStorage.setItem(backupKey, JSON.stringify(backupData));
-          console.log('[Daily Challenge] Result backed up to localStorage for later sync');
-          toast.info("Result saved locally - will sync when connection is restored");
-        } catch (storageError) {
-          console.error('[Daily Challenge] Failed to backup to localStorage:', storageError);
-        }
-      }
+        grid_size: board.length,
+        rarity_score_potential: detailedAnalysis.rarityScorePotential,
+        avg_word_length: detailedAnalysis.avgWordLength,
+        connectivity_score: detailedAnalysis.connectivityScore,
+        max_score_potential: detailedAnalysis.maxScorePotential,
+        letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution)
+      });
+    } catch (boardAnalysisError) {
+      console.warn('Failed to save board analysis (non-critical):', boardAnalysisError);
     }
+    
+    // Use bulletproof save with progress feedback
+    const saveSuccess = await saveDailyChallengeResultBulletproof(
+      user,
+      score,
+      finalGrade,
+      enhancedData,
+      (progress) => {
+        setSaveProgress(progress);
+      }
+    );
+    
+    if (!saveSuccess) {
+      console.log('[Daily Challenge] Result saved to local backup for later sync');
+    }
+    
+    // Clear progress after a delay to show final state
+    setTimeout(() => setSaveProgress(null), 3000);
   };
 
   // Save game result when game ends

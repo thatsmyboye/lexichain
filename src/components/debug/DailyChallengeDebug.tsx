@@ -7,6 +7,8 @@ import { getDailyChallengeDate, formatDateForChallenge, validateChallengeDate } 
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
+import { toast } from 'sonner';
+import { syncOfflineDailyChallengeResults, getLocalBackupStats } from '@/utils/dailyChallengeResultSaver';
 
 interface DebugInfo {
   localTime: string;
@@ -22,6 +24,7 @@ export function DailyChallengeDebug() {
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [userResults, setUserResults] = useState<any[]>([]);
   const { syncBackupResults } = useOfflineSync();
+  const [backupStats, setBackupStats] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
 
   const refreshDebugInfo = () => {
@@ -29,10 +32,12 @@ export function DailyChallengeDebug() {
     const easternTime = toZonedTime(now, 'America/New_York');
     const challengeDate = getDailyChallengeDate();
     
-    // Get backup results from localStorage
-    const backupKeys = Object.keys(localStorage)
-      .filter(key => key.startsWith('daily-challenge-result-backup-'));
-    const backupResults = backupKeys.map(key => {
+    // Get enhanced backup statistics
+    const stats = getLocalBackupStats();
+    setBackupStats(stats);
+    
+    // Get backup results from localStorage for display
+    const backupResults = stats.backupKeys.map(key => {
       try {
         return { key, data: JSON.parse(localStorage.getItem(key) || '{}') };
       } catch {
@@ -171,10 +176,22 @@ export function DailyChallengeDebug() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center justify-between">
-                  💾 Backup Results ({debugInfo.backupResults.length})
-                  {debugInfo.backupResults.length > 0 && (
+                  💾 Backup Results ({backupStats?.totalBackups || 0})
+                  {(backupStats?.totalBackups || 0) > 0 && (
                     <div className="flex gap-1">
-                      <Button size="sm" onClick={() => syncBackupResults()}>
+                      <Button 
+                        size="sm" 
+                        onClick={async () => {
+                          try {
+                            const syncedCount = await syncOfflineDailyChallengeResults();
+                            toast.success(`Synced ${syncedCount} results!`);
+                            refreshDebugInfo(); // Refresh to update counts
+                          } catch (error) {
+                            toast.error('Sync failed');
+                            console.error('Sync error:', error);
+                          }
+                        }}
+                      >
                         Sync Now
                       </Button>
                       <Button size="sm" variant="destructive" onClick={clearBackupResults}>
