@@ -1189,49 +1189,55 @@ function WordPathGame({
       saveDailyState();
     }
   }, [settings.mode, isInitializing, board, saveDailyState]);
+  // Enhanced dictionary loading useEffect
   useEffect(() => {
     let mounted = true;
     setIsInitializing(true);
-    fetch("/words.txt").then(r => r.text()).then(txt => {
-      if (!mounted) return;
-      const words = txt.split(/\r?\n/).filter(Boolean).map(w => w.trim().toLowerCase());
-      const s = new Set<string>();
-      for (const w of words) if (w.length >= 3) s.add(w);
-      const arr = Array.from(s);
-      arr.sort();
-      setDict(s);
-      setSorted(arr);
-
-      // Only generate a board for classic mode or when no specific mode is set
-      // Daily and blitz modes handle their own board generation
-      if (!initialMode || initialMode === "classic") {
-        setIsGenerating(true);
-        const newBoard = generateSolvableBoard(size, s, arr);
-        const probe = probeGrid(newBoard, s, arr, K_MIN_WORDS, MAX_DFS_NODES);
-        const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
-        if (!mounted) return;
-        setBoard(newBoard);
-        setBenchmarks(bms);
-        setDiscoverableCount(probe.words.size);
-        setUnlocked(new Set());
-        setGameOver(false);
-        setFinalGrade("None");
-        setPath([]);
-        setDragging(false);
-        setUsedWords([]);
-        setLastWordTiles(new Set());
-        setScore(0);
-        setStreak(0);
-        setIsGenerating(false);
-        toast.success("Dictionary loaded. Board ready!");
-      } else {
-        toast.success("Dictionary loaded. Waiting for game mode initialization...");
-      }
-      setIsInitializing(false);
-    }).catch(() => {
-      setIsInitializing(false);
-      toast.error("Failed to load dictionary. Offline mode.");
+    
+    import('@/utils/dictionaryManager').then(({ loadEnhancedDictionary }) => {
+      loadEnhancedDictionary()
+        .then(({ dict, sorted, status }) => {
+          if (!mounted) return;
+          
+          setDict(dict);
+          setSorted(sorted);
+          console.log("📖 Enhanced dictionary loaded:", status);
+          
+          // Only generate a board for classic mode or when no specific mode is set
+          // Daily and blitz modes handle their own board generation
+          if (!initialMode || initialMode === "classic") {
+            setIsGenerating(true);
+            const newBoard = generateSolvableBoard(size, dict, sorted);
+            const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
+            const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+            if (!mounted) return;
+            setBoard(newBoard);
+            setBenchmarks(bms);
+            setDiscoverableCount(probe.words.size);
+            setUnlocked(new Set());
+            setGameOver(false);
+            setFinalGrade("None");
+            setPath([]);
+            setDragging(false);
+            setUsedWords([]);
+            setLastWordTiles(new Set());
+            setScore(0);
+            setStreak(0);
+            setIsGenerating(false);
+            toast.success(`Dictionary loaded (${status.wordCount.toLocaleString()} words). Board ready!`);
+          } else {
+            toast.success(`Dictionary loaded (${status.wordCount.toLocaleString()} words). Waiting for game mode initialization...`);
+          }
+          setIsInitializing(false);
+        })
+        .catch((error) => {
+          if (!mounted) return;
+          console.error("Dictionary loading failed:", error);
+          setIsInitializing(false);
+          toast.error("Failed to load dictionary. Please refresh the page.");
+        });
     });
+    
     return () => {
       mounted = false;
     };
@@ -2566,8 +2572,33 @@ function WordPathGame({
     if (actualWord.length < 3) {
       return clearPath();
     }
-    if (!dict.has(actualWord)) {
-      toast.error(`Not a valid word: ${actualWord.toUpperCase()}`);
+    // Enhanced word validation with better error messages
+    const wordValidation = (() => {
+      try {
+        import('@/utils/dictionaryManager').then(({ validateWordEnhanced, debugWordValidation }) => {
+          debugWordValidation(actualWord);
+        });
+      } catch (e) {
+        // Fallback to basic validation
+      }
+      return dict.has(actualWord);
+    })();
+    
+    if (!wordValidation) {
+      // Try to provide helpful feedback
+      const suggestions = (() => {
+        if (actualWord.length >= 3) {
+          const prefix = actualWord.substring(0, 3);
+          return sorted.filter(w => w.startsWith(prefix) && Math.abs(w.length - actualWord.length) <= 1).slice(0, 2);
+        }
+        return [];
+      })();
+      
+      const suggestionText = suggestions.length > 0 
+        ? ` (Did you mean: ${suggestions.join(', ').toUpperCase()}?)`
+        : '';
+      
+      toast.error(`"${actualWord.toUpperCase()}" is not a valid word${suggestionText}`);
       return clearPath();
     }
     if (usedWords.some(entry => entry.word === actualWord)) {
@@ -3589,7 +3620,7 @@ function WordPathGame({
                                 <div className="grid grid-cols-2 gap-y-1 text-[11px]">
                                   <div>Base</div><div className="text-right">+{entry.breakdown.base}</div>
                                   <div>Rarity</div><div className="text-right">+{Math.round(entry.breakdown.rarity.bonus)}</div>
-                                  <div>Link</div><div className="text-right">+{entry.breakdown.linkBonus}</div>
+                                  <div>Link</div><div className="text-right">×{entry.breakdown.linkMultiplier.toFixed(1)}</div>
                                   <div>Length</div><div className="text-right">+{entry.breakdown.lengthBonus}</div>
                                   {entry.breakdown.timeBonus > 0 ? (
                                     <>
