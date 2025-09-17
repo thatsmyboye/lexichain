@@ -109,6 +109,79 @@ function getAdjacentPositions(pos: Pos, size: number): Pos[] {
   }
   return adjacent;
 }
+
+// Centralized Q-U adjacency validation and fixing function
+function validateAndFixQUAdjacency(
+  board: string[][], 
+  size: number, 
+  letterCounts?: Map<string, number>,
+  seed?: string,
+  debugMode: boolean = false
+): { board: string[][], violations: number, details: string[] } {
+  const newBoard = board.map(row => [...row]);
+  const workingLetterCounts = letterCounts || new Map<string, number>();
+  let violations = 0;
+  const details: string[] = [];
+
+  // If no letter counts provided, calculate them
+  if (!letterCounts) {
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const letter = newBoard[r][c];
+        workingLetterCounts.set(letter, (workingLetterCounts.get(letter) || 0) + 1);
+      }
+    }
+  }
+
+  // Check all Q tiles for adjacent U tiles
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (newBoard[r][c] === 'Q') {
+        const adjacentPositions = getAdjacentPositions({ r, c }, size);
+        const hasAdjacentU = adjacentPositions.some(pos => newBoard[pos.r][pos.c] === 'U');
+        
+        if (!hasAdjacentU) {
+          violations++;
+          const oldLetter = newBoard[r][c];
+          workingLetterCounts.set(oldLetter, (workingLetterCounts.get(oldLetter) || 0) - 1);
+          
+          // Find replacement letter (avoid Q and respect max count constraints)
+          let newLetter;
+          let attempts = 0;
+          do {
+            if (seed && attempts < 10) {
+              const rng = seedRandom(seed + r + c + "qfix" + attempts);
+              newLetter = seededRandomLetter(rng);
+            } else {
+              newLetter = randomLetter();
+            }
+            attempts++;
+          } while ((newLetter === 'Q' || (workingLetterCounts.get(newLetter) || 0) >= 4) && attempts < 50);
+          
+          // Fallback to common letters if still no valid option
+          if (attempts >= 50) {
+            const fallbackLetters = ['E', 'A', 'R', 'I', 'O', 'T', 'N', 'S'];
+            newLetter = fallbackLetters.find(letter => 
+              (workingLetterCounts.get(letter) || 0) < 4
+            ) || 'E';
+          }
+          
+          workingLetterCounts.set(newLetter, (workingLetterCounts.get(newLetter) || 0) + 1);
+          newBoard[r][c] = newLetter;
+          
+          const detail = `Q at (${r},${c}) replaced with ${newLetter} - no adjacent U`;
+          details.push(detail);
+          
+          if (debugMode) {
+            console.log(`Q-U Validation: ${detail}`);
+          }
+        }
+      }
+    }
+  }
+
+  return { board: newBoard, violations, details };
+}
 function makeBoard(size: number, seed?: string) {
   const letterCounts = new Map<string, number>();
   let board: string[][];
@@ -127,36 +200,9 @@ function makeBoard(size: number, seed?: string) {
     }, () => constrainedRandomLetter(letterCounts)));
   }
 
-  // Validate Q-U adjacency and fix if needed
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      if (board[r][c] === 'Q') {
-        // Check if there's a U adjacent to this Q
-        const adjacentPositions = getAdjacentPositions({
-          r,
-          c
-        }, size);
-        const hasAdjacentU = adjacentPositions.some(pos => board[pos.r][pos.c] === 'U');
-        if (!hasAdjacentU) {
-          // No adjacent U found, replace with a different letter
-          const oldLetter = board[r][c];
-          letterCounts.set(oldLetter, (letterCounts.get(oldLetter) || 0) - 1);
-          let newLetter;
-          do {
-            if (seed) {
-              const rng = seedRandom(seed + r + c + "fix");
-              newLetter = seededRandomLetter(rng);
-            } else {
-              newLetter = randomLetter();
-            }
-          } while (newLetter === 'Q' || (letterCounts.get(newLetter) || 0) >= 4);
-          letterCounts.set(newLetter, (letterCounts.get(newLetter) || 0) + 1);
-          board[r][c] = newLetter;
-        }
-      }
-    }
-  }
-  return board;
+  // Use centralized Q-U adjacency validation
+  const validation = validateAndFixQUAdjacency(board, size, letterCounts, seed, false);
+  return validation.board;
 }
 
 // Seeded random number generator
@@ -681,7 +727,13 @@ function handleShuffleTiles(
       }
     }
     
-    setBoard(shuffledBoard);
+    // Apply Q-U adjacency validation to the shuffled board
+    const validation = validateAndFixQUAdjacency(shuffledBoard, size, undefined, undefined, true);
+    if (validation.violations > 0) {
+      console.log(`Shuffle Q-U Validation: Fixed ${validation.violations} violations`);
+    }
+    
+    setBoard(validation.board);
     
     // Set all tiles as affected for visual effect
     const allTileKeys = new Set<string>();
@@ -748,7 +800,13 @@ function handleXFactorTiles(
       });
     });
 
-    setBoard(newBoard);
+    // Apply Q-U adjacency validation after all X-Factor changes
+    const validation = validateAndFixQUAdjacency(newBoard, size, currentLetterCounts, undefined, true);
+    if (validation.violations > 0) {
+      console.log(`X-Factor Q-U Validation: Fixed ${validation.violations} violations`);
+    }
+
+    setBoard(validation.board);
     setSpecialTiles(newSpecialTiles);
     setAffectedTiles(changedTileKeys);
     xChanged = changedTileKeys.size;
@@ -1381,6 +1439,14 @@ function WordPathGame({
       }
     });
 
+    // Apply Q-U adjacency validation if any Q letters were placed
+    const hasNewQ = wildcardPositions.some((wildPos, index) => 
+      index < wildLetters.length && wildLetters[index].toUpperCase() === 'Q'
+    );
+    const validatedBoard = hasNewQ ? 
+      validateAndFixQUAdjacency(newBoard, size, undefined, undefined, true).board : 
+      newBoard;
+
     // Remove the wild tile special type since it's now a regular letter
     const newSpecialTiles = specialTiles.map(row => [...row]);
     wildcardPositions.forEach(wildPos => {
@@ -1389,7 +1455,7 @@ function WordPathGame({
       };
     });
     
-    setBoard(newBoard);
+    setBoard(validatedBoard);
     setSpecialTiles(newSpecialTiles);
     
     // Continue with scoring and game state updates without calling non-existent function
@@ -1458,13 +1524,18 @@ function WordPathGame({
       const wildPos = wildcardPositions[0];
       newBoard[wildPos.r][wildPos.c] = wildLetter.toUpperCase();
 
+      // Apply Q-U adjacency validation if a Q letter was placed
+      const validatedBoard = wildLetter.toUpperCase() === 'Q' ? 
+        validateAndFixQUAdjacency(newBoard, size, undefined, undefined, true).board : 
+        newBoard;
+
       // Remove the wild tile special type since it's now a regular letter
       const newSpecialTiles = specialTiles.map(row => [...row]);
       newSpecialTiles[wildPos.r][wildPos.c] = {
         type: null
       };
       
-      setBoard(newBoard);
+      setBoard(validatedBoard);
       setSpecialTiles(newSpecialTiles);
     }
     // Increment moves for daily challenge
