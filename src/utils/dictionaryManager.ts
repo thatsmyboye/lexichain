@@ -109,17 +109,33 @@ class DictionaryManager {
   }
 
   private validateDictionaryIntegrity(): void {
-    const testWords = ['the', 'and', 'cat', 'dog', 'house'];
+    // Test words across the alphabet to ensure complete coverage
+    const testWords = ['the', 'and', 'cat', 'dog', 'house', 'water', 'with', 'work', 'zero', 'zoo'];
     const missingCommonWords = testWords.filter(word => !this.dictionary.has(word));
     
-    if (missingCommonWords.length > 2) {
-      console.warn("⚠️ Dictionary may be incomplete - missing common words:", missingCommonWords);
+    if (missingCommonWords.length > 0) {
+      console.warn("⚠️ Dictionary missing common words:", missingCommonWords);
+    }
+
+    // Check alphabet coverage by testing one word from each letter
+    const alphabetTest = 'abcdefghijklmnopqrstuvwxyz'.split('').map(letter => {
+      return this.sortedWords.find(word => word.startsWith(letter));
+    }).filter(Boolean);
+    
+    if (alphabetTest.length < 26) {
+      console.warn("⚠️ Dictionary may not cover all letters of alphabet");
     }
 
     // Verify sorted array matches dictionary
     if (this.sortedWords.length !== this.dictionary.size) {
       console.error("❌ Dictionary integrity error: sorted array size mismatch");
     }
+    
+    console.log("📊 Dictionary stats:", {
+      totalWords: this.dictionary.size,
+      alphabetCoverage: `${alphabetTest.length}/26 letters`,
+      missingCommonWords: missingCommonWords.length
+    });
   }
 
   validateWord(word: string): WordValidationResult {

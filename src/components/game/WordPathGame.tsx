@@ -22,6 +22,7 @@ import { ChevronDown } from "lucide-react";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
 import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
+import { dictionaryManager } from "@/utils/dictionaryManager";
 type Pos = {
   r: number;
   c: number;
@@ -1194,16 +1195,15 @@ function WordPathGame({
     let mounted = true;
     setIsInitializing(true);
     
-    import('@/utils/dictionaryManager').then(({ loadEnhancedDictionary }) => {
-      loadEnhancedDictionary()
-        .then(({ dict, sorted, status }) => {
-          if (!mounted) return;
-          
-          setDict(dict);
-          setSorted(sorted);
-          console.log("📖 Enhanced dictionary loaded:", status);
-          
-          // Only generate a board for classic mode or when no specific mode is set
+    dictionaryManager.loadDictionary()
+      .then(({ dict, sorted, status }) => {
+        if (!mounted) return;
+        
+        setDict(dict);
+        setSorted(sorted);
+        console.log("📖 Enhanced dictionary loaded:", status);
+        
+        // Only generate a board for classic mode or when no specific mode is set
           // Daily and blitz modes handle their own board generation
           if (!initialMode || initialMode === "classic") {
             setIsGenerating(true);
@@ -1236,7 +1236,6 @@ function WordPathGame({
           setIsInitializing(false);
           toast.error("Failed to load dictionary. Please refresh the page.");
         });
-    });
     
     return () => {
       mounted = false;
@@ -1292,12 +1291,13 @@ function WordPathGame({
       return board[p.r][p.c];
     }).join("").toLowerCase();
 
-    // Validate the word
-    if (testWord.length < 3) {
-      return;
-    }
-    if (!dict.has(testWord)) {
-      toast.error(`Not a valid word: ${testWord.toUpperCase()}`);
+    // Validate the word using enhanced dictionary manager
+    const validation = dictionaryManager.validateWord(testWord);
+    if (!validation.isValid) {
+      const errorMsg = validation.suggestions && validation.suggestions.length > 0 
+        ? `Not a valid word: ${testWord.toUpperCase()}. Did you mean: ${validation.suggestions.slice(0,2).join(', ').toUpperCase()}?`
+        : `Not a valid word: ${testWord.toUpperCase()}`;
+      toast.error(errorMsg);
       return;
     }
     if (usedWords.some(entry => entry.word === testWord)) {
@@ -2573,26 +2573,11 @@ function WordPathGame({
       return clearPath();
     }
     // Enhanced word validation with better error messages
-    const wordValidation = (() => {
-      try {
-        import('@/utils/dictionaryManager').then(({ validateWordEnhanced, debugWordValidation }) => {
-          debugWordValidation(actualWord);
-        });
-      } catch (e) {
-        // Fallback to basic validation
-      }
-      return dict.has(actualWord);
-    })();
+    const validation = dictionaryManager.validateWord(actualWord);
     
-    if (!wordValidation) {
-      // Try to provide helpful feedback
-      const suggestions = (() => {
-        if (actualWord.length >= 3) {
-          const prefix = actualWord.substring(0, 3);
-          return sorted.filter(w => w.startsWith(prefix) && Math.abs(w.length - actualWord.length) <= 1).slice(0, 2);
-        }
-        return [];
-      })();
+    if (!validation.isValid) {
+      // Use suggestions from enhanced validation
+      const suggestions = validation.suggestions || [];
       
       const suggestionText = suggestions.length > 0 
         ? ` (Did you mean: ${suggestions.join(', ').toUpperCase()}?)`
