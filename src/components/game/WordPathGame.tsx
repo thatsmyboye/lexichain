@@ -1294,10 +1294,7 @@ function WordPathGame({
     // Validate the word using enhanced dictionary manager
     const validation = dictionaryManager.validateWord(testWord);
     if (!validation.isValid) {
-      const errorMsg = validation.suggestions && validation.suggestions.length > 0 
-        ? `Not a valid word: ${testWord.toUpperCase()}. Did you mean: ${validation.suggestions.slice(0,2).join(', ').toUpperCase()}?`
-        : `Not a valid word: ${testWord.toUpperCase()}`;
-      toast.error(errorMsg);
+      toast.error(`Not a valid word: ${testWord.toUpperCase()}`);
       return;
     }
     if (usedWords.some(entry => entry.word === testWord)) {
@@ -2576,14 +2573,7 @@ function WordPathGame({
     const validation = dictionaryManager.validateWord(actualWord);
     
     if (!validation.isValid) {
-      // Use suggestions from enhanced validation
-      const suggestions = validation.suggestions || [];
-      
-      const suggestionText = suggestions.length > 0 
-        ? ` (Did you mean: ${suggestions.join(', ').toUpperCase()}?)`
-        : '';
-      
-      toast.error(`"${actualWord.toUpperCase()}" is not a valid word${suggestionText}`);
+      toast.error(`"${actualWord.toUpperCase()}" is not a valid word`);
       return clearPath();
     }
     if (usedWords.some(entry => entry.word === actualWord)) {
