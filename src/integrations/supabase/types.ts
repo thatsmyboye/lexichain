@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -558,6 +558,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_security_event: {
+        Args: { event_details?: Json; event_level?: string; event_type: string }
+        Returns: undefined
+      }
       save_daily_challenge_board_analysis: {
         Args: {
           avg_word_length: number
@@ -578,6 +582,10 @@ export type Database = {
       validate_audit_log_access: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      validate_display_name_server_side: {
+        Args: { display_name: string }
+        Returns: Json
       }
     }
     Enums: {
