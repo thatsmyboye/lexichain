@@ -1628,7 +1628,7 @@ function WordPathGame({
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
 
     // Introduce special tiles if conditions are met
-    if (shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
+    if (shouldIntroduceSpecialTiles(usedWords.length)) {
       const updatedSpecialTiles = [...newSpecialTiles];
       const emptyPositions: Pos[] = [];
 
@@ -1755,8 +1755,8 @@ function WordPathGame({
       type: null
     };
   }
-  function shouldIntroduceSpecialTiles(currentScore: number, bronzeThreshold: number): boolean {
-    return currentScore >= bronzeThreshold;
+  function shouldIntroduceSpecialTiles(wordCount: number): boolean {
+    return wordCount >= 1;
   }
   function createEmptySpecialTilesGrid(size: number): SpecialTile[][] {
     return Array.from({
@@ -2785,7 +2785,7 @@ function WordPathGame({
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
 
     // Introduce special tiles if conditions are met
-    if (shouldIntroduceSpecialTiles(finalScore, benchmarks?.bronze || 100)) {
+    if (shouldIntroduceSpecialTiles(usedWords.length)) {
       const updatedSpecialTiles = [...newSpecialTiles];
       const emptyPositions: Pos[] = [];
 
@@ -3105,7 +3105,7 @@ function WordPathGame({
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Special tiles appear after reaching Bronze level and expire after a few turns.
+                  Special tiles appear after forming your first valid word and expire after a few turns.
                 </div>
             </div>
             
@@ -3562,7 +3562,7 @@ function WordPathGame({
                   </div>}
               </div>
               <div className="text-xs text-muted-foreground text-right">
-                {score >= (benchmarks?.bronze || 100) ? "Special tiles active!" : ""}
+                {usedWords.length >= 1 ? "Special tiles active!" : ""}
                 {gameOver && finalGrade !== "None" && <div className="mt-1 font-medium">Final: {finalGrade}</div>}
                 {settings.mode === "daily" && <div className="mt-1 text-xs text-muted-foreground">
                     {settings.dailyMovesLimit - movesUsed} moves remaining
