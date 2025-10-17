@@ -8,7 +8,7 @@ interface SoundContextType {
   volume: number;
 }
 
-type SoundType = 
+export type SoundType = 
   | 'word_complete'
   | 'word_invalid'
   | 'achievement'
@@ -255,27 +255,25 @@ export function useSound() {
 }
 
 // Sound button component
-interface SoundButtonProps {
-  children: React.ReactNode;
+import { Button, ButtonProps } from '@/components/ui/button';
+
+export interface SoundButtonProps extends ButtonProps {
   soundType?: SoundType;
-  onClick?: () => void;
-  className?: string;
-  disabled?: boolean;
 }
 
 export function SoundButton({ 
   children, 
   soundType = 'button_click', 
   onClick, 
-  className,
-  disabled = false 
+  disabled = false,
+  ...props
 }: SoundButtonProps) {
   const { playSound } = useSound();
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!disabled) {
       playSound(soundType);
-      onClick?.();
+      onClick?.(e);
     }
   };
 
@@ -286,14 +284,14 @@ export function SoundButton({
   };
 
   return (
-    <button
+    <Button
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      className={className}
       disabled={disabled}
+      {...props}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 

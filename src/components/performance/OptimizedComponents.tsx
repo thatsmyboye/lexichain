@@ -175,7 +175,8 @@ export const OptimizedList = memo(<T,>({
   );
 }) as <T>(props: OptimizedListProps<T>) => React.ReactElement;
 
-OptimizedList.displayName = 'OptimizedList';
+// Set displayName after the cast
+(OptimizedList as any).displayName = 'OptimizedList';
 
 // Memoized image component with lazy loading
 interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {

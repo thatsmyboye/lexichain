@@ -63,13 +63,15 @@ export function withLazyLoading<T extends ComponentType<any>>(
 ) {
   const LazyComponent = lazy(importFunc);
 
-  return React.forwardRef<any, React.ComponentProps<T>>((props, ref) => (
+  const WrappedComponent = (props: React.ComponentProps<T>) => (
     <LazyErrorBoundary>
       <Suspense fallback={fallback || <LoadingSpinner />}>
-        <LazyComponent {...props} ref={ref} />
+        <LazyComponent {...props} />
       </Suspense>
     </LazyErrorBoundary>
-  ));
+  );
+
+  return WrappedComponent;
 }
 
 // Lazy load game components
@@ -102,38 +104,6 @@ export const LazyAuthPage = withLazyLoading(
 
 export const LazyDebugPage = withLazyLoading(
   () => import('@/pages/DebugPage')
-);
-
-// Lazy load tutorial components
-export const LazyTutorialOverlay = withLazyLoading(
-  () => import('@/components/tutorial/TutorialOverlay')
-);
-
-export const LazyInteractiveTutorial = withLazyLoading(
-  () => import('@/components/tutorial/InteractiveTutorial')
-);
-
-// Lazy load effects components
-export const LazyParticleSystem = withLazyLoading(
-  () => import('@/components/effects/ParticleSystem')
-);
-
-export const LazySoundSystem = withLazyLoading(
-  () => import('@/components/effects/SoundSystem')
-);
-
-// Lazy load accessibility components
-export const LazyColorBlindSupport = withLazyLoading(
-  () => import('@/components/accessibility/ColorBlindSupport')
-);
-
-export const LazyARIAComponents = withLazyLoading(
-  () => import('@/components/accessibility/ARIAComponents')
-);
-
-// Route-based code splitting
-export const LazyRoute = withLazyLoading(
-  () => import('@/components/performance/LazyRoute')
 );
 
 // Dynamic import utility

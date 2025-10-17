@@ -15,11 +15,12 @@ port = 54323
 enabled = true
 port = 54324
 
-[functions.create-payment]
-verify_jwt = false
+# Temporarily disabled payment functions to fix build issues
+# [functions.create-payment]
+# verify_jwt = false
 
-[functions.verify-payment]
-verify_jwt = false
+# [functions.verify-payment]
+# verify_jwt = false
 
 [functions.distribute-daily-rewards]
 verify_jwt = false
