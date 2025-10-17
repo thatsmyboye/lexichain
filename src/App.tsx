@@ -6,7 +6,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import Index from "./pages/Index";
 
-// Lazy load non-critical pages
+// Import new providers
+import { SoundProvider } from "@/components/effects/SoundSystem";
+import { ColorBlindProvider } from "@/components/accessibility/ColorBlindSupport";
+import { ARIAProvider } from "@/components/accessibility/ARIAComponents";
+import { ComponentPreloader, PerformanceMetrics } from "@/components/performance/CodeSplitting";
+
+// Lazy load non-critical pages using optimized components
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 const MyAccountPage = lazy(() => import("./pages/MyAccountPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -27,27 +33,36 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/stats" element={<StatsPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/account" element={<MyAccountPage />} />
-            <Route path="/store" element={<StorePage />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment-canceled" element={<PaymentCanceled />} />
-            <Route path="/debug" element={<DebugPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
+    <SoundProvider>
+      <ColorBlindProvider>
+        <ARIAProvider>
+          <TooltipProvider>
+            <ComponentPreloader>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/stats" element={<StatsPage />} />
+                    <Route path="/leaderboard" element={<LeaderboardPage />} />
+                    <Route path="/account" element={<MyAccountPage />} />
+                    <Route path="/store" element={<StorePage />} />
+                    <Route path="/payment-success" element={<PaymentSuccess />} />
+                    <Route path="/payment-canceled" element={<PaymentCanceled />} />
+                    <Route path="/debug" element={<DebugPage />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+              <PerformanceMetrics />
+            </ComponentPreloader>
+          </TooltipProvider>
+        </ARIAProvider>
+      </ColorBlindProvider>
+    </SoundProvider>
   </QueryClientProvider>
 );
 

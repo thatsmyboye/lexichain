@@ -5,6 +5,9 @@ import { User } from '@supabase/supabase-js';
 import type { LoginStreakData } from "@/hooks/useLoginStreak";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { checkIncompleteGameState } from "@/utils/gameStateUtils";
+import { InteractiveTutorial } from "@/components/tutorial/InteractiveTutorial";
+import { SoundButton } from "@/components/effects/SoundSystem";
+import { BookOpen, Settings } from "lucide-react";
 interface TitleScreenProps {
   onPlayClick: () => void;
   onLoginClick: () => void;
@@ -12,6 +15,7 @@ interface TitleScreenProps {
   onStatsClick: () => void;
   onStoreClick: () => void;
   onLeaderboardClick: () => void;
+  onSettingsClick?: () => void;
   streakData?: LoginStreakData | null;
   user?: User | null;
 }
@@ -22,6 +26,7 @@ const TitleScreen = ({
   onStatsClick,
   onStoreClick,
   onLeaderboardClick,
+  onSettingsClick,
   streakData,
   user: propUser
 }: TitleScreenProps) => {
@@ -108,27 +113,39 @@ const TitleScreen = ({
               </div>}
           
           <div className="flex items-center justify-center gap-3">
-            <Button variant={hasIncompleteChallenge ? "default" : "hero"} size="lg" onClick={onPlayClick} className="px-6">
+            <SoundButton variant={hasIncompleteChallenge ? "default" : "hero"} size="lg" onClick={onPlayClick} className="px-6">
               {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
-            </Button>
-            <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-6">
+            </SoundButton>
+            <SoundButton variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-6">
               {user ? 'Log Out' : 'Login'}
-            </Button>
+            </SoundButton>
           </div>
           
           <div className="flex flex-col items-center gap-2">
-            <Button variant="outline" size="lg" onClick={onStoreClick} className="px-6">
+            <SoundButton variant="outline" size="lg" onClick={onStoreClick} className="px-6">
               🛒 Store
-            </Button>
+            </SoundButton>
             
             {user && <>
-                <Button variant="outline" size="lg" onClick={onStatsClick} className="px-6">
+                <SoundButton variant="outline" size="lg" onClick={onStatsClick} className="px-6">
                   📊 Stats
-                </Button>
-                <Button variant="outline" size="lg" onClick={onLeaderboardClick} className="px-6">
+                </SoundButton>
+                <SoundButton variant="outline" size="lg" onClick={onLeaderboardClick} className="px-6">
                   🏆 Leaderboards
-                </Button>
+                </SoundButton>
               </>}
+            
+            <div className="flex gap-2 mt-2">
+              <SoundButton variant="ghost" size="sm" onClick={() => {}} className="px-3">
+                <BookOpen className="h-4 w-4 mr-1" />
+                Tutorial
+              </SoundButton>
+              {onSettingsClick && (
+                <SoundButton variant="ghost" size="sm" onClick={onSettingsClick} className="px-3">
+                  <Settings className="h-4 w-4" />
+                </SoundButton>
+              )}
+            </div>
           </div>
           
           {!user && <div className="text-center">
@@ -158,27 +175,39 @@ const TitleScreen = ({
               </div>}
           
           <div className="flex items-center justify-center gap-4">
-            <Button variant={hasIncompleteChallenge ? "default" : "hero"} size="lg" onClick={onPlayClick} className="px-8">
+            <SoundButton variant={hasIncompleteChallenge ? "default" : "hero"} size="lg" onClick={onPlayClick} className="px-8">
               {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
-            </Button>
-            <Button variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-8">
+            </SoundButton>
+            <SoundButton variant="outline" size="lg" onClick={user ? handleLogout : onLoginClick} className="px-8">
               {user ? 'Log Out' : 'Login'}
-            </Button>
+            </SoundButton>
           </div>
           
           <div className="flex flex-col items-center gap-3">
-            <Button variant="outline" size="lg" onClick={onStoreClick} className="px-8">
+            <SoundButton variant="outline" size="lg" onClick={onStoreClick} className="px-8">
               🛒 Store
-            </Button>
+            </SoundButton>
             
             {user && <>
-                <Button variant="outline" size="lg" onClick={onStatsClick} className="px-8">
+                <SoundButton variant="outline" size="lg" onClick={onStatsClick} className="px-8">
                   📊 Stats
-                </Button>
-                <Button variant="outline" size="lg" onClick={onLeaderboardClick} className="px-8">
+                </SoundButton>
+                <SoundButton variant="outline" size="lg" onClick={onLeaderboardClick} className="px-8">
                   🏆 Leaderboards
-                </Button>
+                </SoundButton>
               </>}
+            
+            <div className="flex gap-3 mt-2">
+              <SoundButton variant="ghost" size="sm" onClick={() => {}} className="px-4">
+                <BookOpen className="h-4 w-4 mr-2" />
+                Tutorial
+              </SoundButton>
+              {onSettingsClick && (
+                <SoundButton variant="ghost" size="sm" onClick={onSettingsClick} className="px-4">
+                  <Settings className="h-4 w-4" />
+                </SoundButton>
+              )}
+            </div>
           </div>
           
           {!user && <div className="text-center">
@@ -194,6 +223,9 @@ const TitleScreen = ({
         
         <div>© {new Date().getFullYear()} Banton Games. All rights reserved.</div>
       </footer>
+      
+      {/* Interactive Tutorial */}
+      <InteractiveTutorial />
     </div>;
 };
 export default TitleScreen;
