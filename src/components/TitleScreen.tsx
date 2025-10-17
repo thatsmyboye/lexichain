@@ -224,8 +224,8 @@ const TitleScreen = ({
         <div>© {new Date().getFullYear()} Banton Games. All rights reserved.</div>
       </footer>
       
-      {/* Interactive Tutorial */}
-      <InteractiveTutorial />
+      {/* Interactive Tutorial - Hidden for now but retained for later use */}
+      {/* <InteractiveTutorial /> */}
     </div>;
 };
 export default TitleScreen;

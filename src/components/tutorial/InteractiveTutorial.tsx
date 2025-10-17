@@ -45,6 +45,7 @@ export function InteractiveTutorial({ onComplete, onSkip, className }: Interacti
   };
 
   const handleSkipTutorial = () => {
+    setShowWelcome(false);
     skipTutorial();
     onSkip?.();
   };

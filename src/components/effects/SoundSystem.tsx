@@ -192,6 +192,10 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   };
 
   const playSound = (soundType: SoundType) => {
+    // Sounds disabled for now
+    return;
+    
+    /* Original sound code - keep for later use
     if (!soundGeneratorRef.current) return;
 
     switch (soundType) {
@@ -229,6 +233,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         soundGeneratorRef.current.playNotification();
         break;
     }
+    */
   };
 
   return (
