@@ -22,17 +22,11 @@ const StorePage = lazy(() => import("./pages/StorePage"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCanceled = lazy(() => import("./pages/PaymentCanceled"));
 const DebugPage = lazy(() => import("./pages/DebugPage"));
-
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center">
+const LoadingSpinner = () => <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-  </div>
-);
-
+  </div>;
 const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => <QueryClientProvider client={queryClient}>
     <SoundProvider>
       <ColorBlindProvider>
         <ARIAProvider>
@@ -57,13 +51,11 @@ const App = () => (
                   </Routes>
                 </Suspense>
               </BrowserRouter>
-              <PerformanceMetrics />
+              
             </ComponentPreloader>
           </TooltipProvider>
         </ARIAProvider>
       </ColorBlindProvider>
     </SoundProvider>
-  </QueryClientProvider>
-);
-
+  </QueryClientProvider>;
 export default App;
