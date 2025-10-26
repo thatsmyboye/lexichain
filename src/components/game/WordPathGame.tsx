@@ -1410,7 +1410,7 @@ function WordPathGame({
       streak,
       mode: settings.mode,
       blitzMultiplier,
-      activeEffects: activeEffects.filter(e => e.id !== "score_multiplier"),
+      activeEffects,
       baseMode: "square",
       chainMode: "linear"
     });
@@ -1497,7 +1497,7 @@ function WordPathGame({
       streak,
       mode: settings.mode,
       blitzMultiplier,
-      activeEffects: activeEffects.filter(e => e.id !== "score_multiplier"),
+      activeEffects,
       baseMode: "square",
       chainMode: "linear"
     });
