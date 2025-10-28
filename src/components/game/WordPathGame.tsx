@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { computeBenchmarksFromWordCount, computeBoardSpecificBenchmarks, computeDynamicBenchmarks, type Benchmarks, type BoardAnalysis } from "@/lib/benchmarks";
 import { analyzeBoardComposition, createBoardAnalysisForBenchmarks } from "@/lib/boardAnalysis";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
+import { calculateXpGain } from "@/lib/progression";
 import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
@@ -976,6 +977,8 @@ function WordPathGame({
   const [isInitializing, setIsInitializing] = useState(false);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [usedWordsExpanded, setUsedWordsExpanded] = useState(false);
+  const [xpGained, setXpGained] = useState(0);
+  const [showXpGain, setShowXpGain] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
     scoreThreshold: benchmarks?.bronze || 100,
     // Use Bronze threshold
@@ -1788,14 +1791,33 @@ function WordPathGame({
             setFinalGrade(grade === "None" ? "None" : grade);
             setGameOver(true);
 
+            // Calculate and display XP gained
+            const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
+            const xpGain = calculateXpGain({
+              baseScore: finalScore,
+              wordsFound: usedWords.length,
+              longestWord: longestWord.length,
+              gameMode: settings.mode,
+              difficulty: settings.difficulty,
+              timeBonus: 0,
+              streakBonus: 0,
+              perfectGame: grade === "Platinum"
+            });
+            
+            setXpGained(xpGain);
+            setShowXpGain(true);
+            
+            // Hide XP gain display after 5 seconds
+            setTimeout(() => setShowXpGain(false), 5000);
+
             // Save state when game ends
             saveGameState();
             if (dailyMovesExceeded) {
-              toast.info(`Daily Challenge complete! Final score: ${finalScore} (${grade})`);
+              toast.info(`Daily Challenge complete! Final score: ${finalScore} (${grade}) • +${xpGain} XP`);
             } else if (grade !== "None") {
-              toast.info(`Game over • Grade: ${grade}`);
+              toast.info(`Game over • Grade: ${grade} • +${xpGain} XP`);
             } else {
-              toast.info("No valid words remain. Game over!");
+              toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
             }
             setUnlocked(prev => {
               const next = new Set(prev);
@@ -1813,10 +1835,29 @@ function WordPathGame({
               return next;
             });
           } else {
+            // Calculate and display XP gained
+            const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
+            const xpGain = calculateXpGain({
+              baseScore: score,
+              wordsFound: usedWords.length,
+              longestWord: longestWord.length,
+              gameMode: settings.mode,
+              difficulty: settings.difficulty,
+              timeBonus: 0,
+              streakBonus: 0,
+              perfectGame: false
+            });
+            
+            setXpGained(xpGain);
+            setShowXpGain(true);
+            
+            // Hide XP gain display after 5 seconds
+            setTimeout(() => setShowXpGain(false), 5000);
+
             if (dailyMovesExceeded) {
-              toast.info("Daily Challenge complete!");
+              toast.info(`Daily Challenge complete! • +${xpGain} XP`);
             } else {
-              toast.info("No valid words remain. Game over!");
+              toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
             }
             setGameOver(true);
 
@@ -1931,8 +1972,27 @@ function WordPathGame({
   // End the current game and collect XP
   function onEndGame() {
     if (settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
+      // Calculate and display XP gained
+      const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
+      const xpGain = calculateXpGain({
+        baseScore: score,
+        wordsFound: usedWords.length,
+        longestWord: longestWord.length,
+        gameMode: settings.mode,
+        difficulty: settings.difficulty,
+        timeBonus: 0,
+        streakBonus: 0,
+        perfectGame: false
+      });
+      
+      setXpGained(xpGain);
+      setShowXpGain(true);
+      
+      // Hide XP gain display after 5 seconds
+      setTimeout(() => setShowXpGain(false), 5000);
+      
       setGameOver(true);
-      toast.success(`Game ended! Score: ${score.toLocaleString()}`);
+      toast.success(`Game ended! Score: ${score.toLocaleString()} • +${xpGain} XP`);
     } else if (gameOver) {
       toast.info("Game already ended!");
     } else {
@@ -3097,6 +3157,23 @@ function WordPathGame({
   };
   return (
     <section className="container mx-auto py-4 max-w-7xl">
+      {/* XP Gain Display */}
+      {showXpGain && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-500">
+          <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="text-2xl">✨</div>
+                <div>
+                  <div className="font-bold text-lg">+{xpGained} XP</div>
+                  <div className="text-sm opacity-90">Experience Gained!</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <Dialog open={showDifficultyDialog} onOpenChange={setShowDifficultyDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

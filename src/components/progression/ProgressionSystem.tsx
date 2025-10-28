@@ -24,7 +24,8 @@ import {
   SkillNode, 
   SKILL_TREES,
   canUnlockSkill,
-  getSkillEffect
+  getSkillEffect,
+  XP_REQUIREMENTS
 } from '@/lib/progression';
 import { useSound } from '@/components/effects';
 
@@ -134,10 +135,15 @@ export function ProgressionSystem({
                       <span>Progress to Level {playerLevel.level + 1}</span>
                       <span>{playerLevel.xpToNext} XP needed</span>
                     </div>
-                    <Progress 
-                      value={playerLevel.xpToNext > 0 ? ((playerLevel.xp - (playerLevel.xp - playerLevel.xpToNext)) / playerLevel.xpToNext) * 100 : 100} 
-                      className="h-3"
-                    />
+                    <div className="flex items-center gap-2 mb-1">
+                      <Progress 
+                        value={playerLevel.xpToNext > 0 ? ((playerLevel.xp - XP_REQUIREMENTS[playerLevel.level - 1]) / (XP_REQUIREMENTS[playerLevel.level] - XP_REQUIREMENTS[playerLevel.level - 1])) * 100 : 100} 
+                        className="h-3 flex-1"
+                      />
+                      <div className="text-xs text-muted-foreground font-medium min-w-[60px] text-right">
+                        {playerLevel.xpToNext > 0 ? `${playerLevel.xp - XP_REQUIREMENTS[playerLevel.level - 1]}/${XP_REQUIREMENTS[playerLevel.level] - XP_REQUIREMENTS[playerLevel.level - 1]}` : 'Max Level'}
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
