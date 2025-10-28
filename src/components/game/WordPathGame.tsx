@@ -1927,6 +1927,19 @@ function WordPathGame({
   function onNewGame() {
     setShowDifficultyDialog(true);
   }
+  
+  // End the current game and collect XP
+  function onEndGame() {
+    if (settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
+      setGameOver(true);
+      toast.success(`Game ended! Score: ${score.toLocaleString()}`);
+    } else if (gameOver) {
+      toast.info("Game already ended!");
+    } else {
+      toast.info("No progress to save yet!");
+    }
+  }
+  
   function startGameWithDifficulty(difficulty: "easy" | "medium" | "hard" | "expert") {
     if (settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
       saveGameResult();
@@ -3182,6 +3195,10 @@ function WordPathGame({
           {settings.mode === "blitz" && blitzStarted && !gameOver && <Button variant="outline" onClick={() => setBlitzPaused(!blitzPaused)} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))] ml-3">
               {blitzPaused ? "▶️ Resume" : "⏸️ Pause"}
             </Button>}
+          
+          {settings.mode === "classic" && !gameOver && <Button variant="outline" onClick={onEndGame} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+            End Game
+          </Button>}
           
           <Button variant="outline" onClick={onBackToTitle} size="sm" className={`bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]]`}>
             Back to Title
