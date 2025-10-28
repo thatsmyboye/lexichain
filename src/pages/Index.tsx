@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLoginStreak } from "@/hooks/useLoginStreak";
 import type { User } from "@supabase/supabase-js";
+import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
+  const [showAdvancedModes, setShowAdvancedModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz">("classic");
+  const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
@@ -51,6 +54,23 @@ const Index = () => {
   const handleBackToTitle = () => {
     setShowGame(false);
     setShowModeSelection(false);
+    setShowAdvancedModes(false);
+  };
+
+  const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
+    setSelectedAdvancedMode(mode);
+    setShowAdvancedModes(false);
+    setShowGame(true);
+  };
+
+  const handleShowAdvancedModes = () => {
+    setShowModeSelection(false);
+    setShowAdvancedModes(true);
+  };
+
+  const handleBackToModeSelection = () => {
+    setShowAdvancedModes(false);
+    setShowModeSelection(true);
   };
   const handleLoginClick = () => {
     navigate("/auth?mode=login");
@@ -67,6 +87,16 @@ const Index = () => {
   const handleLeaderboardClick = () => {
     navigate("/leaderboard");
   };
+
+  if (showAdvancedModes) {
+    return <AdvancedGameModes 
+      onModeSelect={handleAdvancedModeSelect}
+      onBack={handleBackToModeSelection}
+      userLevel={1}
+      unlockedModes={new Set(['time_attack', 'zen'])}
+    />;
+  }
+
   if (showGame) {
     return <main>
         <header className="container mx-auto pt-10 pb-4">
@@ -94,6 +124,10 @@ const Index = () => {
             <div className="flex flex-col gap-3">
               <Button variant="hero" size="lg" onClick={() => handleModeSelect("daily")} className="px-12 py-4 text-lg">
                 Daily Challenge
+              </Button>
+              
+              <Button variant="outline" size="lg" onClick={handleShowAdvancedModes} className="px-12 py-4 text-lg">
+                More Game Modes
               </Button>
               
               <Button variant="outline" size="lg" onClick={() => handleModeSelect("practice")} className="px-12 py-4 text-lg">

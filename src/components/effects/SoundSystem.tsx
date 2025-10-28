@@ -19,7 +19,11 @@ export type SoundType =
   | 'level_up'
   | 'error'
   | 'success'
-  | 'notification';
+  | 'notification'
+  | 'skill_unlock'
+  | 'theme_change'
+  | 'achievement_unlock'
+  | 'hint_used';
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
 
