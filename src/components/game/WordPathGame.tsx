@@ -1333,7 +1333,7 @@ function WordPathGame({
         
         // Only generate a board for classic mode or when no specific mode is set
           // Daily and blitz modes handle their own board generation
-          if (!initialMode || initialMode === "classic") {
+          if (!initialMode || initialMode === "classic" || initialMode === "time_attack") {
             setIsGenerating(true);
             const newBoard = generateSolvableBoard(size, dict, sorted);
             const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
