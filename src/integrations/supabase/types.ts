@@ -333,7 +333,7 @@ export type Database = {
       }
       security_audit_log: {
         Row: {
-          client_ip: unknown | null
+          client_ip: unknown
           created_at: string
           event_details: Json | null
           event_level: string
@@ -343,7 +343,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           event_details?: Json | null
           event_level: string
@@ -353,7 +353,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           event_details?: Json | null
           event_level?: string
@@ -484,10 +484,7 @@ export type Database = {
           total_scores: number
         }[]
       }
-      cleanup_unconfirmed_users: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_unconfirmed_users: { Args: never; Returns: undefined }
       current_user_has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
@@ -504,10 +501,7 @@ export type Database = {
         Args: { target_week_start: string }
         Returns: Json
       }
-      get_benchmark_data: {
-        Args: { challenge_date: string }
-        Returns: Json
-      }
+      get_benchmark_data: { Args: { challenge_date: string }; Returns: Json }
       get_daily_leaderboard: {
         Args: { challenge_date: string }
         Returns: {
@@ -530,10 +524,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_week_start: {
-        Args: { input_date?: string }
-        Returns: string
-      }
+      get_week_start: { Args: { input_date?: string }; Returns: string }
       get_weekly_leaderboard: {
         Args: { week_start: string }
         Returns: {
@@ -543,10 +534,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      grant_admin_role: {
-        Args: { target_user_id: string }
-        Returns: undefined
-      }
+      grant_admin_role: { Args: { target_user_id: string }; Returns: undefined }
       grant_starter_consumables: {
         Args: { target_user_id: string }
         Returns: undefined
@@ -579,10 +567,7 @@ export type Database = {
         Args: { action_type: string; target_user_id?: string }
         Returns: boolean
       }
-      validate_audit_log_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      validate_audit_log_access: { Args: never; Returns: boolean }
       validate_display_name_server_side: {
         Args: { display_name: string }
         Returns: Json
