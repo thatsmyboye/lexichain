@@ -11,7 +11,7 @@ const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz">("classic");
+  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
@@ -40,10 +40,21 @@ const Index = () => {
     const ogd = document.querySelector('meta[property="og:description"]');
     if (ogd) ogd.setAttribute("content", desc);
   }, []);
+  
+  // Check for URL parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    if (mode && ['time_attack', 'endless', 'puzzle', 'survival', 'zen'].includes(mode)) {
+      setSelectedMode(mode as any);
+      setShowGame(true);
+    }
+  }, []);
+  
   const handlePlayClick = () => {
     setShowModeSelection(true);
   };
-  const handleModeSelect = (mode: "classic" | "daily" | "practice" | "blitz") => {
+  const handleModeSelect = (mode: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen") => {
     setSelectedMode(mode);
     setShowModeSelection(false);
     setShowGame(true);

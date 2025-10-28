@@ -38,7 +38,7 @@ type SpecialTile = {
   value?: number;
   expiryTurns?: number;
 };
-type GameMode = "classic" | "target" | "daily" | "practice" | "blitz";
+type GameMode = "classic" | "target" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen";
 type GameSettings = {
   scoreThreshold: number;
   mode: GameMode;
@@ -312,7 +312,7 @@ function computeScoreBreakdown(params: {
   specialTiles: SpecialTile[][];
   lastWordTiles: Set<string>;
   streak: number;
-  mode: "classic" | "daily" | "target" | "practice" | "blitz";
+  mode: "classic" | "daily" | "target" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen";
   blitzMultiplier: number;
   activeEffects: Array<{
     id: string;
@@ -367,7 +367,33 @@ function computeScoreBreakdown(params: {
   if (scoreMultiplierEffect && typeof scoreMultiplierEffect.data?.multiplier === "number") {
     consumableMultiplier = scoreMultiplierEffect.data.multiplier as number;
   }
-  const combinedMultiplierRaw = tileMultiplier * consumableMultiplier;
+  
+  // Mode-specific multipliers
+  let modeMultiplier = 1;
+  switch (mode) {
+    case "time_attack":
+      modeMultiplier = 1.2;
+      break;
+    case "endless":
+      modeMultiplier = 1.5;
+      break;
+    case "puzzle":
+      modeMultiplier = 2.0;
+      break;
+    case "survival":
+      modeMultiplier = 1.8;
+      break;
+    case "zen":
+      modeMultiplier = 0.5;
+      break;
+    case "blitz":
+      modeMultiplier = blitzMultiplier;
+      break;
+    default:
+      modeMultiplier = 1;
+  }
+  
+  const combinedMultiplierRaw = tileMultiplier * consumableMultiplier * modeMultiplier;
   const combinedApplied = Math.min(MULTIPLIER_CAP, combinedMultiplierRaw);
   const capped = combinedApplied !== combinedMultiplierRaw;
   const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + timeBonus) * linkMultiplier);
@@ -900,7 +926,7 @@ function WordPathGame({
   initialMode = "classic"
 }: {
   onBackToTitle?: () => void;
-  initialMode?: "classic" | "daily" | "practice" | "blitz";
+  initialMode?: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen";
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
@@ -982,6 +1008,15 @@ function WordPathGame({
   const [blitzMultiplier, setBlitzMultiplier] = useState(1);
   const [blitzStarted, setBlitzStarted] = useState(false);
   const [blitzPaused, setBlitzPaused] = useState(false);
+  
+  // Advanced mode states
+  const [timeAttackTimeRemaining, setTimeAttackTimeRemaining] = useState(60);
+  const [timeAttackStarted, setTimeAttackStarted] = useState(false);
+  const [endlessDifficulty, setEndlessDifficulty] = useState(1);
+  const [survivalLives, setSurvivalLives] = useState(3);
+  const [survivalWave, setSurvivalWave] = useState(1);
+  const [zenHintsUsed, setZenHintsUsed] = useState(0);
+  const [zenUndoStack, setZenUndoStack] = useState<Array<{board: string[][], specialTiles: SpecialTile[][], usedWords: typeof usedWords, score: number}>>([]);
 
   // Tap-to-select functionality
   const [isTapMode, setIsTapMode] = useState(isMobile);
@@ -1015,6 +1050,23 @@ function WordPathGame({
     } else if (initialMode === "practice") {
       setDailyChallengeInitialized(true);
       startNewPracticeGame().catch(console.error);
+    } else if (initialMode === "time_attack") {
+      setSettings(prev => ({ ...prev, mode: "time_attack" }));
+      setTimeAttackTimeRemaining(60);
+      setTimeAttackStarted(false);
+    } else if (initialMode === "endless") {
+      setSettings(prev => ({ ...prev, mode: "endless" }));
+      setEndlessDifficulty(1);
+    } else if (initialMode === "puzzle") {
+      setSettings(prev => ({ ...prev, mode: "puzzle" }));
+    } else if (initialMode === "survival") {
+      setSettings(prev => ({ ...prev, mode: "survival" }));
+      setSurvivalLives(3);
+      setSurvivalWave(1);
+    } else if (initialMode === "zen") {
+      setSettings(prev => ({ ...prev, mode: "zen" }));
+      setZenHintsUsed(0);
+      setZenUndoStack([]);
     }
   }, [initialMode, dailyChallengeInitialized]);
 
@@ -1069,6 +1121,24 @@ function WordPathGame({
   //     }
   //   }
   // }, [settings.mode, blitzStarted, blitzPaused, gameOver, score, benchmarks]);
+
+  // Time Attack timer
+  useEffect(() => {
+    if (settings.mode === "time_attack" && timeAttackStarted && !gameOver) {
+      const interval = setInterval(() => {
+        setTimeAttackTimeRemaining(prev => {
+          const newTime = prev - 1;
+          if (newTime <= 0) {
+            setGameOver(true);
+            return 0;
+          }
+          return newTime;
+        });
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [settings.mode, timeAttackStarted, gameOver]);
 
   // Save standard game result and update goals when game ends
   const saveGameResult = async () => {
@@ -1668,6 +1738,50 @@ function WordPathGame({
           if (benchmarks) {
             let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
             const s = finalScore;
+            
+            // Handle endless mode - regenerate board instead of ending game
+            if (settings.mode === "endless") {
+              setEndlessDifficulty(prev => prev + 1);
+              // Regenerate board with increased difficulty
+              setIsGenerating(true);
+              generateBoard(size, settings.difficulty, endlessDifficulty + 1).then(newBoard => {
+                setBoard(newBoard);
+                setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
+                setUsedWords([]);
+                setLastWordTiles(new Set());
+                setScore(0);
+                setStreak(0);
+                setIsGenerating(false);
+              }).catch(console.error);
+              return;
+            }
+            
+            // Handle survival mode - lose a life instead of ending game
+            if (settings.mode === "survival") {
+              setSurvivalLives(prev => {
+                const newLives = prev - 1;
+                if (newLives <= 0) {
+                  setGameOver(true);
+                  return 0;
+                } else {
+                  // Continue with new wave
+                  setSurvivalWave(prev => prev + 1);
+                  setIsGenerating(true);
+                  generateBoard(size, settings.difficulty, survivalWave + 1).then(newBoard => {
+                    setBoard(newBoard);
+                    setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
+                    setUsedWords([]);
+                    setLastWordTiles(new Set());
+                    setScore(0);
+                    setStreak(0);
+                    setIsGenerating(false);
+                  }).catch(console.error);
+                  return newLives;
+                }
+              });
+              return;
+            }
+            
             if (s >= benchmarks.platinum) grade = "Platinum";else if (s >= benchmarks.gold) grade = "Gold";else if (s >= benchmarks.silver) grade = "Silver";else if (s >= benchmarks.bronze) grade = "Bronze";
             setFinalGrade(grade === "None" ? "None" : grade);
             setGameOver(true);
@@ -2999,6 +3113,52 @@ function WordPathGame({
               {isGenerating ? "Generating..." : "New Game"}
             </Button>}
           
+          {settings.mode === "time_attack" && !timeAttackStarted && <Button variant="outline" onClick={() => {
+            setTimeAttackStarted(true);
+            setTimeAttackTimeRemaining(60);
+          }} disabled={!isGameReady || isGenerating} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Start Timer
+            </Button>}
+          
+          {settings.mode === "zen" && <Button variant="outline" onClick={() => {
+            // Save current state for undo
+            setZenUndoStack(prev => [...prev, {
+              board: board ? board.map(row => [...row]) : [],
+              specialTiles: specialTiles.map(row => row.map(tile => ({ ...tile }))),
+              usedWords: [...usedWords],
+              score: score
+            }]);
+            // Reset to previous state
+            if (zenUndoStack.length > 0) {
+              const prevState = zenUndoStack[zenUndoStack.length - 1];
+              setBoard(prevState.board);
+              setSpecialTiles(prevState.specialTiles);
+              setUsedWords(prevState.usedWords);
+              setScore(prevState.score);
+              setZenUndoStack(prev => prev.slice(0, -1));
+            }
+          }} disabled={zenUndoStack.length === 0} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Undo ({zenUndoStack.length})
+            </Button>}
+          
+          {settings.mode === "zen" && <Button variant="outline" onClick={() => {
+            if (board && dict && sorted) {
+              // Find a valid word and highlight it
+              const validWords = findAllValidWords(board, dict, sorted, new Set(usedWords.map(w => w.word)));
+              if (validWords.length > 0) {
+                const hintWord = validWords[Math.floor(Math.random() * validWords.length)];
+                const hintPath = findWordPath(board, hintWord);
+                if (hintPath) {
+                  setPath(hintPath);
+                  setZenHintsUsed(prev => prev + 1);
+                  toast.info(`Hint: Try "${hintWord}"`);
+                }
+              }
+            }
+          }} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Hint ({zenHintsUsed})
+            </Button>}
+          
           <Button variant="outline" onClick={() => setShowHowToPlay(true)} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             How to Play
           </Button>
@@ -3567,6 +3727,30 @@ function WordPathGame({
                 {settings.mode === "daily" && <div className="mt-1 text-xs text-muted-foreground">
                     {settings.dailyMovesLimit - movesUsed} moves remaining
                   </div>}
+                {settings.mode === "time_attack" && (
+                  <div className="mt-1 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className={`font-medium ${timeAttackTimeRemaining <= 10 ? 'text-red-500' : timeAttackTimeRemaining <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                        ⏰ {Math.floor(timeAttackTimeRemaining / 60)}:{(timeAttackTimeRemaining % 60).toString().padStart(2, '0')}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {settings.mode === "endless" && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Difficulty: {endlessDifficulty}x | Words: {usedWords.length}
+                  </div>
+                )}
+                {settings.mode === "survival" && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Lives: {survivalLives} | Wave: {survivalWave}
+                  </div>
+                )}
+                {settings.mode === "zen" && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Hints used: {zenHintsUsed} | Undos: {zenUndoStack.length}
+                  </div>
+                )}
                 {/* Temporarily disabled blitz timer 
                  {settings.mode === "blitz" && (
                   <div className="mt-1 text-xs">

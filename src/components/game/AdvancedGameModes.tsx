@@ -58,7 +58,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
     rewards: {
       xpMultiplier: 2.0,
       scoreMultiplier: 1.5,
-      unlockRequirement: 1000
+      unlockRequirement: 5
     }
   },
   {
@@ -76,7 +76,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
     rewards: {
       xpMultiplier: 3.0,
       scoreMultiplier: 2.0,
-      unlockRequirement: 5000
+      unlockRequirement: 10
     }
   },
   {
@@ -94,7 +94,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
     rewards: {
       xpMultiplier: 2.5,
       scoreMultiplier: 1.8,
-      unlockRequirement: 2500
+      unlockRequirement: 8
     }
   },
   {

@@ -143,8 +143,8 @@ export function Phase3Integration({ user, gameStats, onBack }: Phase3Integration
 
   const handleModeSelect = (mode: string) => {
     playSound('game_start');
-    // Handle mode selection - would integrate with main game
-    console.log('Selected mode:', mode);
+    // Launch the game with the selected advanced mode
+    window.location.href = `/?mode=${mode}`;
   };
 
   const getFeatureStatus = (feature: string) => {
