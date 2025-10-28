@@ -27,7 +27,7 @@ interface AdvancedModeConfig {
 const ADVANCED_MODES: AdvancedModeConfig[] = [
   {
     id: 'classic',
-    name: 'Classic Mode',
+    name: 'Classic',
     description: 'The original Lexichain experience. No time limits, no pressure. Just pure word chaining.',
     icon: <Star className="h-6 w-6" />,
     difficulty: 'Easy',
@@ -64,7 +64,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
   },
   {
     id: 'endless',
-    name: 'Endless Mode',
+    name: '(Almost) Endless',
     description: 'Keep playing until you can\'t find any more words. How long can you last?',
     icon: <Infinity className="h-6 w-6" />,
     difficulty: 'Hard',
@@ -82,7 +82,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
   },
   {
     id: 'puzzle',
-    name: 'Puzzle Mode',
+    name: 'Puzzle',
     description: 'Solve pre-designed puzzles with specific word requirements.',
     icon: <Puzzle className="h-6 w-6" />,
     difficulty: 'Expert',
@@ -100,7 +100,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
   },
   {
     id: 'survival',
-    name: 'Survival Mode',
+    name: 'Survival',
     description: 'Survive as long as possible with increasing difficulty and special challenges.',
     icon: <Flame className="h-6 w-6" />,
     difficulty: 'Expert',
@@ -118,7 +118,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
   },
   {
     id: 'zen',
-    name: 'Zen Mode',
+    name: 'Zen',
     description: 'Relaxed gameplay with no pressure. Perfect for learning and practice.',
     icon: <Star className="h-6 w-6" />,
     difficulty: 'Easy',

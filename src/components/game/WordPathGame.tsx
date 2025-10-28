@@ -1336,7 +1336,7 @@ function WordPathGame({
         
         // Only generate a board for classic mode or when no specific mode is set
           // Daily and blitz modes handle their own board generation
-          if (!initialMode || initialMode === "classic" || initialMode === "time_attack") {
+          if (!initialMode || initialMode === "classic" || initialMode === "time_attack" || initialMode === "zen" || initialMode === "endless" || initialMode === "puzzle" || initialMode === "survival") {
             setIsGenerating(true);
             const newBoard = generateSolvableBoard(size, dict, sorted);
             const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
@@ -3019,13 +3019,29 @@ function WordPathGame({
       // Check if any valid words can still be formed
       const probe = probeGrid(testGrid, dict, sorted, 1, 100);
       if (probe.words.size === 0) {
-        setGameOver(true);
-        setFinalGrade("None");
-        toast.error("Game Over! Stone tiles have blocked all possible words.");
-        
-        // Record the final score
-        if (user) {
-          // Game over, record result will be handled by existing game over logic
+        // Handle Zen mode - regenerate board instead of ending game
+        if (settings.mode === "zen") {
+          setIsGenerating(true);
+          if (dict && sorted) {
+            const newBoard = generateSolvableBoard(size, dict, sorted);
+            setBoard(newBoard);
+            setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
+            setUsedWords([]);
+            setLastWordTiles(new Set());
+            setScore(0);
+            setStreak(0);
+            setIsGenerating(false);
+            toast.info("Zen mode: New board generated - no valid words remained!");
+          }
+        } else {
+          setGameOver(true);
+          setFinalGrade("None");
+          toast.error("Game Over! Stone tiles have blocked all possible words.");
+          
+          // Record the final score
+          if (user) {
+            // Game over, record result will be handled by existing game over logic
+          }
         }
       }
     }
@@ -3035,7 +3051,21 @@ function WordPathGame({
         const dailyMovesExceeded = settings.mode === "daily" && movesUsed + 1 >= settings.dailyMovesLimit;
         const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         if (!any || dailyMovesExceeded) {
-          if (benchmarks) {
+          // Handle Zen mode - regenerate board instead of ending game
+          if (settings.mode === "zen") {
+            setIsGenerating(true);
+            if (dict && sorted) {
+              const newBoard = generateSolvableBoard(size, dict, sorted);
+              setBoard(newBoard);
+              setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
+              setUsedWords([]);
+              setLastWordTiles(new Set());
+              setScore(0);
+              setStreak(0);
+              setIsGenerating(false);
+              toast.info("Zen mode: New board generated - no valid words remained!");
+            }
+          } else if (benchmarks) {
             let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
             const s = finalScore;
             if (s >= benchmarks.platinum) grade = "Platinum";else if (s >= benchmarks.gold) grade = "Gold";else if (s >= benchmarks.silver) grade = "Silver";else if (s >= benchmarks.bronze) grade = "Bronze";
