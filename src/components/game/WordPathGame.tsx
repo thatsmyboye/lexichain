@@ -1744,7 +1744,8 @@ function WordPathGame({
               setEndlessDifficulty(prev => prev + 1);
               // Regenerate board with increased difficulty
               setIsGenerating(true);
-              generateBoard(size, settings.difficulty, endlessDifficulty + 1).then(newBoard => {
+              if (dict && sorted) {
+                const newBoard = generateSolvableBoard(size, dict, sorted);
                 setBoard(newBoard);
                 setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
                 setUsedWords([]);
@@ -1752,7 +1753,7 @@ function WordPathGame({
                 setScore(0);
                 setStreak(0);
                 setIsGenerating(false);
-              }).catch(console.error);
+              }
               return;
             }
             
@@ -1767,7 +1768,8 @@ function WordPathGame({
                   // Continue with new wave
                   setSurvivalWave(prev => prev + 1);
                   setIsGenerating(true);
-                  generateBoard(size, settings.difficulty, survivalWave + 1).then(newBoard => {
+                  if (dict && sorted) {
+                    const newBoard = generateSolvableBoard(size, dict, sorted);
                     setBoard(newBoard);
                     setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
                     setUsedWords([]);
@@ -1775,7 +1777,7 @@ function WordPathGame({
                     setScore(0);
                     setStreak(0);
                     setIsGenerating(false);
-                  }).catch(console.error);
+                  }
                   return newLives;
                 }
               });
@@ -3143,11 +3145,25 @@ function WordPathGame({
           
           {settings.mode === "zen" && <Button variant="outline" onClick={() => {
             if (board && dict && sorted) {
-              // Find a valid word and highlight it
-              const validWords = findAllValidWords(board, dict, sorted, new Set(usedWords.map(w => w.word)));
+              // Find a valid word and highlight it using probeGrid
+              const probe = probeGrid(board, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
+              const validWords = Array.from(probe.words).filter(w => !usedWords.some(uw => uw.word === w));
               if (validWords.length > 0) {
                 const hintWord = validWords[Math.floor(Math.random() * validWords.length)];
-                const hintPath = findWordPath(board, hintWord);
+                // Find the starting position for this word
+                let hintPath: Pos[] | null = null;
+                for (let r = 0; r < size && !hintPath; r++) {
+                  for (let c = 0; c < size && !hintPath; c++) {
+                    if (board[r][c].toLowerCase() === hintWord[0].toLowerCase()) {
+                      hintPath = findWordPath(hintWord, { r, c });
+                      if (hintPath && hintPath.length === hintWord.length) {
+                        break;
+                      } else {
+                        hintPath = null;
+                      }
+                    }
+                  }
+                }
                 if (hintPath) {
                   setPath(hintPath);
                   setZenHintsUsed(prev => prev + 1);
@@ -3157,7 +3173,7 @@ function WordPathGame({
             }
           }} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
               Hint ({zenHintsUsed})
-            </Button>}
+          </Button>}
           
           <Button variant="outline" onClick={() => setShowHowToPlay(true)} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             How to Play

@@ -34,7 +34,7 @@ export interface SkillTree {
 }
 
 // XP requirements for each level (exponential growth)
-const XP_REQUIREMENTS = [
+export const XP_REQUIREMENTS = [
   0,    // Level 1
   100,  // Level 2
   250,  // Level 3

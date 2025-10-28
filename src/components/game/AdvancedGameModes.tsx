@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame } from 'lucide-react';
 import { useSound } from '@/components/effects';
+import { XP_REQUIREMENTS } from '@/lib/progression';
 
-export type AdvancedGameMode = 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen';
+export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen';
 
 interface AdvancedModeConfig {
   id: AdvancedGameMode;
@@ -24,6 +25,24 @@ interface AdvancedModeConfig {
 }
 
 const ADVANCED_MODES: AdvancedModeConfig[] = [
+  {
+    id: 'classic',
+    name: 'Classic Mode',
+    description: 'The original Lexichain experience. No time limits, no pressure. Just pure word chaining.',
+    icon: <Star className="h-6 w-6" />,
+    difficulty: 'Easy',
+    specialRules: [
+      'No time limit',
+      'Standard scoring rules',
+      'Available to all players',
+      'Perfect for beginners'
+    ],
+    rewards: {
+      xpMultiplier: 1.0,
+      scoreMultiplier: 1.0,
+      unlockRequirement: 0
+    }
+  },
   {
     id: 'time_attack',
     name: 'Time Attack',
@@ -206,6 +225,53 @@ export function AdvancedGameModes({
           </CardContent>
         </Card>
 
+        {/* XP Earning Guide */}
+        <Card className="mb-8 border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-blue-500" />
+              How to Earn XP & Unlock Modes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
+                <Target className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-sm">Play Any Game</h4>
+                  <p className="text-xs text-muted-foreground">Earn 1 XP per 10 points scored</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
+                <Star className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-sm">Find Words</h4>
+                  <p className="text-xs text-muted-foreground">+2 XP per word found</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
+                <Trophy className="h-5 w-5 text-purple-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-sm">Daily Challenge</h4>
+                  <p className="text-xs text-muted-foreground">1.2x XP multiplier</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
+                <Flame className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-sm">Long Words</h4>
+                  <p className="text-xs text-muted-foreground">+3 XP per letter in longest word</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-center pt-2 border-t">
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                💡 Tip: Play Daily Challenge to level up faster and unlock more modes!
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Mode Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {ADVANCED_MODES.map((mode) => {
@@ -244,9 +310,14 @@ export function AdvancedGameModes({
                       </div>
                     </div>
                     {!isUnlocked && (
-                      <Badge variant="outline" className="text-xs">
-                        Level {mode.rewards.unlockRequirement}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <Badge variant="outline" className="text-xs">
+                          Level {mode.rewards.unlockRequirement}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          ({XP_REQUIREMENTS[mode.rewards.unlockRequirement || 0]} XP)
+                        </span>
+                      </div>
                     )}
                   </div>
                   <CardDescription className="text-sm">

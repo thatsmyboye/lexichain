@@ -12,7 +12,9 @@ const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
+  const [showAdvancedModes, setShowAdvancedModes] = useState(false);
   const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
+  const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
@@ -67,6 +69,7 @@ const Index = () => {
   };
 
   const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
+    setSelectedMode(mode as any); // Convert AdvancedGameMode to broader type
     setSelectedAdvancedMode(mode);
     setShowAdvancedModes(false);
     setShowGame(true);
@@ -102,7 +105,7 @@ const Index = () => {
       onModeSelect={handleAdvancedModeSelect}
       onBack={handleBackToModeSelection}
       userLevel={1}
-      unlockedModes={new Set(['time_attack', 'zen'])}
+      unlockedModes={new Set(['classic', 'time_attack', 'zen'])}
     />;
   }
 
@@ -139,13 +142,11 @@ const Index = () => {
                 More Game Modes
               </Button>
               
+              {/* PRESERVE FOR FUTURE USE - Challenge Practice Mode Temporarily Disabled
               <Button variant="outline" size="lg" onClick={() => handleModeSelect("practice")} className="px-12 py-4 text-lg">
                 Challenge Practice
               </Button>
-              
-              <Button variant="outline" size="lg" onClick={() => handleModeSelect("classic")} className="px-12 py-4 text-lg">
-                Classic
-              </Button>
+              */}
             </div>
             
             <Button variant="ghost" onClick={() => setShowModeSelection(false)} className="mt-4">
