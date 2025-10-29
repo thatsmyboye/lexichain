@@ -469,6 +469,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_unlocked_modes: {
+        Row: {
+          id: string
+          mode_id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          mode_id: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          mode_id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
