@@ -222,7 +222,7 @@ export function AdvancedGameModes({
         {/* User Level Display */}
         <Card className="mb-8">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
@@ -235,9 +235,9 @@ export function AdvancedGameModes({
                   </span>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="md:text-right">
                 <div className="text-sm text-muted-foreground">Next Level</div>
-                <Progress value={((userLevel % 10) / 10) * 100} className="w-32 h-2" />
+                <Progress value={((userLevel % 10) / 10) * 100} className="w-full md:w-32 h-2" />
               </div>
             </div>
           </CardContent>

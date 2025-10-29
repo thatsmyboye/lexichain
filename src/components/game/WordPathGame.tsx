@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -3007,8 +3007,8 @@ function WordPathGame({
     }
     clearPath();
     
-    // Check if game over due to stone tiles blocking all valid words (Classic mode only)
-    if (settings.mode === "classic" && dict && sorted) {
+    // Check if game over due to stone tiles blocking all valid words (Classic or Zen mode)
+    if ((settings.mode === "classic" || settings.mode === "zen") && dict && sorted) {
       // Create a test grid with stone tiles marked as blocked
       const testGrid = board.map((row, r) => 
         row.map((letter, c) => 
@@ -3223,22 +3223,22 @@ function WordPathGame({
       </Dialog>
 
       <div className="space-y-2 mb-4">
-        <div className="flex justify-start items-center gap-2">
-          {settings.mode === "classic" && <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm">
+        <div className="grid grid-cols-2 md:flex md:justify-start md:items-center gap-2">
+          {settings.mode === "classic" && <Button variant="hero" onClick={onNewGame} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1">
               {isGenerating ? "Generating..." : "New Game"}
             </Button>}
           
           
           {settings.mode === "practice" && <Button variant="outline" onClick={() => {
           startNewPracticeGame().catch(console.error);
-        }} disabled={!isGameReady || isGenerating} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+        }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
               {isGenerating ? "Generating..." : "New Game"}
             </Button>}
           
           {settings.mode === "time_attack" && !timeAttackStarted && <Button variant="outline" onClick={() => {
             setTimeAttackStarted(true);
             setTimeAttackTimeRemaining(60);
-          }} disabled={!isGameReady || isGenerating} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+          }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
               Start Timer
             </Button>}
           
