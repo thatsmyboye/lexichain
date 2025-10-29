@@ -105,6 +105,7 @@ const Index = () => {
       onModeSelect={handleAdvancedModeSelect}
       onBack={handleBackToModeSelection}
       userLevel={1}
+      user={user}
       unlockedModes={new Set(['classic', 'time_attack', 'zen'])}
     />;
   }

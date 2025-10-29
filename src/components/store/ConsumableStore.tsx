@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, User, UserPlus, Star, Zap, Sparkles } from "lucide-react";
+import { ShoppingCart, User, UserPlus, Star, Zap, Sparkles, Rocket } from "lucide-react";
 import { CONSUMABLES, RARITY_COLORS, type ConsumableId } from "@/lib/consumables";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +33,15 @@ const STORE_ITEMS: Record<string, StoreItem> = {
   score_multiplier: { name: "Score Multiplier Pack", price: 0.99, description: "2 Score Multipliers - Doubles word score", icon: "⚡" },
   hammer: { name: "Hammer Pack", price: 0.99, description: "3 Hammers - Disables stone tiles", icon: "🔨" },
   extra_moves: { name: "Extra Moves", price: 0.99, description: "Adds 3 moves (Daily only)", icon: "🎯" },
+  
+  // Game Mode Unlocks
+  unlock_all_modes: { 
+    name: "Unlock All Advanced Modes", 
+    price: 9.99, 
+    description: "Instantly unlock all 6 Advanced Game Modes - Time Attack, Endless, Puzzle, Survival, Zen, and more!", 
+    icon: "🚀",
+    isBundle: false
+  },
   
   // Bundles
   bundle_starter: { 
@@ -139,6 +148,46 @@ export function ConsumableStore({ user, onPurchaseComplete }: ConsumableStorePro
         </h2>
         <p className="text-muted-foreground">Enhance your gameplay with powerful consumables</p>
       </div>
+
+      {/* Game Mode Unlocks */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Rocket className="h-5 w-5 text-orange-500" />
+          <h3 className="text-lg font-semibold">Game Mode Unlocks</h3>
+          <Badge variant="secondary">New!</Badge>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(STORE_ITEMS)
+            .filter(([id, item]) => id === 'unlock_all_modes')
+            .map(([id, item]) => (
+              <Card key={id} className="p-6 h-full border-2 border-orange-200 dark:border-orange-800 bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-950 dark:to-yellow-950">
+                <div className="flex flex-col h-full">
+                  <div className="text-center flex-1">
+                    <div className="text-4xl mb-4">{item.icon}</div>
+                    <h4 className="font-bold text-xl mb-3">{item.name}</h4>
+                    <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
+                    
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                      <span className="text-3xl font-bold text-orange-600">${item.price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => handlePurchase(id)}
+                    disabled={isLoading}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                    size="lg"
+                  >
+                    {isLoading ? "Processing..." : "Unlock All Modes"}
+                  </Button>
+                </div>
+              </Card>
+            ))}
+        </div>
+      </div>
+
+      <Separator />
 
       {/* Featured Bundles */}
       <div className="space-y-4">

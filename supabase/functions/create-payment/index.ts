@@ -13,6 +13,7 @@ const STRIPE_PRODUCT_IDS = {
   score_multiplier: "prod_SthFPxmVVjUmfD", // Score Multiplier Pack  
   hammer: "prod_SthG4SRT642LLF", // Hammer Pack
   extra_moves: "prod_SthGCLvy8W4Hud", // Extra Moves
+  unlock_all_modes: "prod_unlock_all_modes", // Unlock All Advanced Modes - TODO: Replace with actual Stripe product ID
   bundle_starter: "prod_SthCxac579yETl", // Starter Bundle
   bundle_power: "prod_SthDdoI1YZSCJ6", // Power Bundle
   bundle_ultimate: "prod_SthDObEI5Zyo21" // Ultimate Bundle

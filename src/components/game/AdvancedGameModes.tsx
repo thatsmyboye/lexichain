@@ -6,6 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame } from 'lucide-react';
 import { useSound } from '@/components/effects';
 import { XP_REQUIREMENTS } from '@/lib/progression';
+import { useUnlockedModes } from '@/hooks/useUnlockedModes';
+import type { User } from '@supabase/supabase-js';
 
 export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen';
 
@@ -140,17 +142,32 @@ interface AdvancedGameModesProps {
   onModeSelect: (mode: AdvancedGameMode) => void;
   onBack: () => void;
   userLevel?: number;
-  unlockedModes?: Set<AdvancedGameMode>;
+  user?: User | null;
+  unlockedModes?: Set<AdvancedGameMode>; // Optional override for testing
 }
 
 export function AdvancedGameModes({ 
   onModeSelect, 
   onBack, 
   userLevel = 1,
-  unlockedModes = new Set(['time_attack', 'zen'])
+  user = null,
+  unlockedModes: overrideUnlockedModes
 }: AdvancedGameModesProps) {
   const [selectedMode, setSelectedMode] = useState<AdvancedGameMode | null>(null);
   const { playSound } = useSound();
+  
+  // Get purchased unlocks from database
+  const { unlockedModes: purchasedUnlocks, isLoading: isLoadingUnlocks } = useUnlockedModes(user);
+  
+  // Combine purchased unlocks with level-based unlocks
+  const unlockedModes = overrideUnlockedModes || new Set([
+    ...Array.from(purchasedUnlocks),
+    // Always include classic and zen modes (unlock requirement 0)
+    'classic',
+    'zen',
+    // Include time_attack by default
+    'time_attack'
+  ]);
 
   const handleModeClick = (mode: AdvancedModeConfig) => {
     if (!unlockedModes.has(mode.id)) {
@@ -170,6 +187,7 @@ export function AdvancedGameModes({
   };
 
   const isModeUnlocked = (mode: AdvancedModeConfig) => {
+    // Check if mode is purchased or unlocked by level
     return unlockedModes.has(mode.id) || userLevel >= (mode.rewards.unlockRequirement || 0);
   };
 

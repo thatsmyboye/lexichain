@@ -62,72 +62,104 @@ serve(async (req) => {
     if (userId && userId !== 'guest') {
       console.log("Awarding consumables to user:", userId);
       
-      // Determine what to award
-      let awards = [];
-      
-      if (consumableId.startsWith('bundle_')) {
-        // Handle bundles
-        const bundleItems = BUNDLE_QUANTITIES[consumableId as keyof typeof BUNDLE_QUANTITIES];
-        if (bundleItems) {
-          for (const [itemId, quantity] of Object.entries(bundleItems)) {
-            awards.push({ consumable_id: itemId, quantity });
+      // Handle special unlock items
+      if (consumableId === 'unlock_all_modes') {
+        console.log("Unlocking all advanced game modes for user:", userId);
+        
+        // Unlock all advanced game modes
+        const allAdvancedModes = ['time_attack', 'endless', 'puzzle', 'survival', 'zen'];
+        
+        for (const modeId of allAdvancedModes) {
+          // Check if user already has this mode unlocked
+          const { data: existing } = await supabase
+            .from('user_unlocked_modes')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('mode_id', modeId)
+            .single();
+
+          if (!existing) {
+            // Insert new unlocked mode
+            await supabase
+              .from('user_unlocked_modes')
+              .insert({
+                user_id: userId,
+                mode_id: modeId,
+                unlocked_at: new Date().toISOString(),
+                source: `stripe_purchase_${sessionId}`
+              });
           }
         }
+        
+        console.log(`Successfully unlocked all advanced game modes for user ${userId}`);
       } else {
-        // Single consumable - award the pack quantity
-        const quantities = {
-          hint_revealer: 3,
-          score_multiplier: 2,
-          hammer: 3,
-          extra_moves: 1
-        };
-        awards.push({ consumable_id: consumableId, quantity: quantities[consumableId as keyof typeof quantities] || 1 });
-      }
-
-      // Award each consumable
-      for (const award of awards) {
-        // Check if user already has this consumable
-        const { data: existing } = await supabase
-          .from('user_consumables')
-          .select('quantity')
-          .eq('user_id', userId)
-          .eq('consumable_id', award.consumable_id)
-          .single();
-
-        if (existing) {
-          // Update existing
-          await supabase
-            .from('user_consumables')
-            .update({ 
-              quantity: existing.quantity + award.quantity,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', userId)
-            .eq('consumable_id', award.consumable_id);
+        // Determine what to award for consumables
+        let awards = [];
+        
+        if (consumableId.startsWith('bundle_')) {
+          // Handle bundles
+          const bundleItems = BUNDLE_QUANTITIES[consumableId as keyof typeof BUNDLE_QUANTITIES];
+          if (bundleItems) {
+            for (const [itemId, quantity] of Object.entries(bundleItems)) {
+              awards.push({ consumable_id: itemId, quantity });
+            }
+          }
         } else {
-          // Insert new
-          await supabase
+          // Single consumable - award the pack quantity
+          const quantities = {
+            hint_revealer: 3,
+            score_multiplier: 2,
+            hammer: 3,
+            extra_moves: 1
+          };
+          awards.push({ consumable_id: consumableId, quantity: quantities[consumableId as keyof typeof quantities] || 1 });
+        }
+
+        // Award each consumable
+        for (const award of awards) {
+          // Check if user already has this consumable
+          const { data: existing } = await supabase
             .from('user_consumables')
+            .select('quantity')
+            .eq('user_id', userId)
+            .eq('consumable_id', award.consumable_id)
+            .single();
+
+          if (existing) {
+            // Update existing
+            await supabase
+              .from('user_consumables')
+              .update({ 
+                quantity: existing.quantity + award.quantity,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', userId)
+              .eq('consumable_id', award.consumable_id);
+          } else {
+            // Insert new
+            await supabase
+              .from('user_consumables')
+              .insert({
+                user_id: userId,
+                consumable_id: award.consumable_id,
+                quantity: award.quantity
+              });
+          }
+
+          // Record transaction
+          await supabase
+            .from('consumable_transactions')
             .insert({
               user_id: userId,
               consumable_id: award.consumable_id,
-              quantity: award.quantity
+              quantity: award.quantity,
+              transaction_type: 'earned',
+              source: `stripe_purchase_${sessionId}`
             });
         }
 
-        // Record transaction
-        await supabase
-          .from('consumable_transactions')
-          .insert({
-            user_id: userId,
-            consumable_id: award.consumable_id,
-            quantity: award.quantity,
-            transaction_type: 'earned',
-            source: `stripe_purchase_${sessionId}`
-          });
+        console.log(`Successfully awarded ${awards.length} consumable types to user ${userId}`);
       }
-
-      console.log(`Successfully awarded ${awards.length} consumable types to user ${userId}`);
     }
 
     return new Response(JSON.stringify({ 

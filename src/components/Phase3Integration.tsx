@@ -172,6 +172,7 @@ export function Phase3Integration({ user, gameStats, onBack }: Phase3Integration
         onModeSelect={handleModeSelect}
         onBack={() => setActiveTab('overview')}
         userLevel={playerLevel.level}
+        user={user}
         unlockedModes={new Set(['time_attack', 'zen'])}
       />
     );
