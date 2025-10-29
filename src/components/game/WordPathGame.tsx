@@ -1132,6 +1132,33 @@ function WordPathGame({
         setTimeAttackTimeRemaining(prev => {
           const newTime = prev - 1;
           if (newTime <= 0) {
+            // Time's up! Calculate and display XP, then end game
+            const longestWord = usedWords.reduce((longest, wordEntry) => 
+              wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+            );
+            
+            const xpGain = calculateXpGain({
+              baseScore: score,
+              wordsFound: usedWords.length,
+              longestWord: longestWord.length,
+              gameMode: settings.mode,
+              difficulty: settings.difficulty,
+              timeBonus: 0,
+              streakBonus: 0,
+              perfectGame: false
+            });
+            
+            setXpGained(xpGain);
+            setShowXpGain(true);
+            
+            // Hide XP gain display after 5 seconds
+            setTimeout(() => setShowXpGain(false), 5000);
+            
+            // Show completion toast
+            toast.success(`⏱️ Time Attack Complete! Score: ${score} • +${xpGain} XP`, {
+              duration: 4000
+            });
+            
             setGameOver(true);
             return 0;
           }
@@ -1141,10 +1168,10 @@ function WordPathGame({
       
       return () => clearInterval(interval);
     }
-  }, [settings.mode, timeAttackStarted, gameOver]);
+  }, [settings.mode, timeAttackStarted, gameOver, usedWords, score, settings.difficulty]);
 
   // Save standard game result and update goals when game ends
-  const saveGameResult = async () => {
+  const saveGameResult = useCallback(async () => {
     if (settings.mode === "daily" || settings.mode === "practice" || !gameOver) return;
     if (!user) {
       console.log("Cannot save XP - user not logged in");
@@ -1233,7 +1260,7 @@ function WordPathGame({
       console.error("Error saving game result:", error);
       toast.error("Failed to save game result");
     }
-  };
+  }, [settings.mode, settings.difficulty, gameOver, user, usedWords, score, finalGrade, movesUsed, gameStartTime, size, unlocked]);
 
   // Bulletproof daily challenge result saving
   const saveDailyChallengeResult = async () => {
@@ -1301,6 +1328,13 @@ function WordPathGame({
       }
     }
   }, [gameOver, user, settings.mode]);
+
+  // Auto-save game result when game ends (for standard modes)
+  useEffect(() => {
+    if (gameOver && user && settings.mode !== "daily" && settings.mode !== "practice") {
+      saveGameResult();
+    }
+  }, [gameOver, user, settings.mode, saveGameResult]);
 
   // Save and restore daily challenge state
   const saveDailyState = async (initialBoardToSave?: string[][], immediate = false) => {
@@ -1744,12 +1778,31 @@ function WordPathGame({
     if (benchmarks && settings.mode === "target") {
       const targetScore = benchmarks[settings.targetTier];
       if (finalScore >= targetScore && !gameOver) {
-        setGameOver(true);
         const grade = settings.targetTier[0].toUpperCase() + settings.targetTier.slice(1) as "Bronze" | "Silver" | "Gold" | "Platinum";
         setFinalGrade(grade);
-
-        // Target reached, no firstWin achievement
-        toast.success(`Target reached: ${grade}`);
+        
+        // Calculate and display XP gained
+        const longestWord = usedWords.reduce((longest, wordEntry) => 
+          wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+        );
+        
+        const xpGain = calculateXpGain({
+          baseScore: finalScore,
+          wordsFound: usedWords.length,
+          longestWord: longestWord.length,
+          gameMode: settings.mode,
+          difficulty: settings.difficulty,
+          timeBonus: 0,
+          streakBonus: 0,
+          perfectGame: grade === "Platinum"
+        });
+        
+        setXpGained(xpGain);
+        setShowXpGain(true);
+        setTimeout(() => setShowXpGain(false), 5000);
+        
+        setGameOver(true);
+        toast.success(`🎯 Target reached: ${grade} • +${xpGain} XP`);
       }
     }
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
@@ -1819,6 +1872,33 @@ function WordPathGame({
               setSurvivalLives(prev => {
                 const newLives = prev - 1;
                 if (newLives <= 0) {
+                  // Survival mode ended - calculate and display XP
+                  const longestWord = usedWords.reduce((longest, wordEntry) => 
+                    wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+                  );
+                  
+                  const xpGain = calculateXpGain({
+                    baseScore: score,
+                    wordsFound: usedWords.length,
+                    longestWord: longestWord.length,
+                    gameMode: settings.mode,
+                    difficulty: settings.difficulty,
+                    timeBonus: 0,
+                    streakBonus: 0,
+                    perfectGame: false
+                  });
+                  
+                  setXpGained(xpGain);
+                  setShowXpGain(true);
+                  
+                  // Hide XP gain display after 5 seconds
+                  setTimeout(() => setShowXpGain(false), 5000);
+                  
+                  // Show completion toast
+                  toast.info(`💀 Survival Mode Complete! Wave ${survivalWave} • Score: ${score} • +${xpGain} XP`, {
+                    duration: 4000
+                  });
+                  
                   setGameOver(true);
                   return 0;
                 } else {
@@ -2383,7 +2463,27 @@ function WordPathGame({
         // Check if there are words available before consuming
         const availableWords = getAvailableWordsForHint();
         if (availableWords.length === 0) {
-          // No words available, end the game
+          // No words available, calculate XP and end the game
+          const longestWord = usedWords.reduce((longest, wordEntry) => 
+            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+          );
+          
+          const xpGain = calculateXpGain({
+            baseScore: score,
+            wordsFound: usedWords.length,
+            longestWord: longestWord.length,
+            gameMode: settings.mode,
+            difficulty: settings.difficulty,
+            timeBonus: 0,
+            streakBonus: 0,
+            perfectGame: false
+          });
+          
+          setXpGained(xpGain);
+          setShowXpGain(true);
+          setTimeout(() => setShowXpGain(false), 5000);
+          
+          toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
           setGameOver(true);
           return;
         }
@@ -2460,6 +2560,27 @@ function WordPathGame({
     if (!dict || !sorted || !board) return;
     const availableWords = getAvailableWordsForHint();
     if (availableWords.length === 0) {
+      // No words available, calculate XP and end the game
+      const longestWord = usedWords.reduce((longest, wordEntry) => 
+        wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+      );
+      
+      const xpGain = calculateXpGain({
+        baseScore: score,
+        wordsFound: usedWords.length,
+        longestWord: longestWord.length,
+        gameMode: settings.mode,
+        difficulty: settings.difficulty,
+        timeBonus: 0,
+        streakBonus: 0,
+        perfectGame: false
+      });
+      
+      setXpGained(xpGain);
+      setShowXpGain(true);
+      setTimeout(() => setShowXpGain(false), 5000);
+      
+      toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
       setGameOver(true);
       return;
     }
@@ -3092,14 +3213,29 @@ function WordPathGame({
             toast.info("Zen mode: New board generated - no valid words remained!");
           }
         } else {
-          setGameOver(true);
-          setFinalGrade("None");
-          toast.error("Game Over! Stone tiles have blocked all possible words.");
+          // Non-zen mode: Game over due to stones blocking all words
+          const longestWord = usedWords.reduce((longest, wordEntry) => 
+            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+          );
           
-          // Record the final score
-          if (user) {
-            // Game over, record result will be handled by existing game over logic
-          }
+          const xpGain = calculateXpGain({
+            baseScore: score,
+            wordsFound: usedWords.length,
+            longestWord: longestWord.length,
+            gameMode: settings.mode,
+            difficulty: settings.difficulty,
+            timeBonus: 0,
+            streakBonus: 0,
+            perfectGame: false
+          });
+          
+          setXpGained(xpGain);
+          setShowXpGain(true);
+          setTimeout(() => setShowXpGain(false), 5000);
+          
+          setFinalGrade("None");
+          setGameOver(true);
+          toast.error(`💎 Stone tiles blocked all words! Game Over • +${xpGain} XP`);
         }
       }
     }
