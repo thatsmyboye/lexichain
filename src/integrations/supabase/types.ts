@@ -312,6 +312,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          total_xp: number
           updated_at: string
           user_id: string
         }
@@ -319,6 +320,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          total_xp?: number
           updated_at?: string
           user_id: string
         }
@@ -326,6 +328,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          total_xp?: number
           updated_at?: string
           user_id?: string
         }

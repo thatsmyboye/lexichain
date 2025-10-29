@@ -1146,10 +1146,28 @@ function WordPathGame({
   // Save standard game result and update goals when game ends
   const saveGameResult = async () => {
     if (settings.mode === "daily" || settings.mode === "practice" || !gameOver) return;
+    if (!user) {
+      console.log("Cannot save XP - user not logged in");
+      return;
+    }
+    
     const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
+    
+    // Calculate XP gain
+    const xpGain = calculateXpGain({
+      baseScore: score,
+      wordsFound: usedWords.length,
+      longestWord: longestWord.length,
+      gameMode: settings.mode,
+      difficulty: settings.difficulty,
+      timeBonus: 0,
+      streakBonus: 0,
+      perfectGame: finalGrade === "Platinum"
+    });
+    
     try {
       const gameResult = {
-        user_id: user?.id || 'anonymous',
+        user_id: user.id,
         score: score,
         words_found: usedWords.length,
         longest_word: longestWord,
@@ -1160,24 +1178,60 @@ function WordPathGame({
         grid_size: size,
         game_mode: settings.mode
       };
-      const {
-        data,
-        error
-      } = await supabase.from("standard_game_results").insert(gameResult).select().single();
+      
+      // Save game result
+      const { data, error } = await supabase
+        .from("standard_game_results")
+        .insert(gameResult)
+        .select()
+        .single();
+      
       if (error) throw error;
 
-      // Update goal progress - TEMPORARILY DISABLED
-      // if (data) {
-      //   await updateGoalProgress({
-      //     score: score,
-      //     words_found: usedWords.length,
-      //     longest_word: longestWord,
-      //     achievement_grade: finalGrade,
-      //     game_id: data.id
-      //   });
-      // }
+      // Update user's total XP with retry logic for mobile
+      let xpUpdateSuccess = false;
+      let retries = 3;
+      
+      while (!xpUpdateSuccess && retries > 0) {
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("total_xp")
+            .eq("user_id", user.id)
+            .single();
+          
+          if (profileError) throw profileError;
+          
+          const newTotalXp = (profileData?.total_xp || 0) + xpGain;
+          
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ total_xp: newTotalXp })
+            .eq("user_id", user.id);
+          
+          if (updateError) throw updateError;
+          
+          xpUpdateSuccess = true;
+          console.log(`✅ XP saved: +${xpGain} XP (Total: ${newTotalXp})`);
+        } catch (xpError) {
+          retries--;
+          console.error(`XP save attempt failed (${retries} retries left):`, xpError);
+          
+          if (retries > 0) {
+            // Wait before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
+          } else {
+            // Store XP locally for later sync if all retries fail
+            const pendingXp = localStorage.getItem('pending_xp') || '0';
+            localStorage.setItem('pending_xp', String(parseInt(pendingXp) + xpGain));
+            console.log(`📱 XP stored locally for later sync: ${xpGain}`);
+            toast.warning("XP will be synced when connection improves");
+          }
+        }
+      }
     } catch (error) {
       console.error("Error saving game result:", error);
+      toast.error("Failed to save game result");
     }
   };
 
@@ -1970,7 +2024,7 @@ function WordPathGame({
   }
   
   // End the current game and collect XP
-  function onEndGame() {
+  async function onEndGame() {
     if (settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
       // Calculate and display XP gained
       const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
@@ -1992,6 +2046,10 @@ function WordPathGame({
       setTimeout(() => setShowXpGain(false), 5000);
       
       setGameOver(true);
+      
+      // Save game result and XP immediately
+      await saveGameResult();
+      
       toast.success(`Game ended! Score: ${score.toLocaleString()} • +${xpGain} XP`);
     } else if (gameOver) {
       toast.info("Game already ended!");
