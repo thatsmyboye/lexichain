@@ -334,6 +334,39 @@ export type Database = {
         }
         Relationships: []
       }
+      puzzle_completions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          moves_used: number
+          optional_words_found: number
+          puzzle_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          moves_used: number
+          optional_words_found?: number
+          puzzle_id: string
+          score?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          moves_used?: number
+          optional_words_found?: number
+          puzzle_id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_audit_log: {
         Row: {
           client_ip: unknown

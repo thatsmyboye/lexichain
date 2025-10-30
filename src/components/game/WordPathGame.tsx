@@ -24,6 +24,7 @@ import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
 import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
 import { dictionaryManager } from "@/utils/dictionaryManager";
+import { getPuzzleById, type PuzzleBoard } from "@/lib/puzzleBoards";
 type Pos = {
   r: number;
   c: number;
@@ -924,10 +925,12 @@ function checkAndAwardAchievements(
 
 function WordPathGame({
   onBackToTitle,
-  initialMode = "classic"
+  initialMode = "classic",
+  initialPuzzleId
 }: {
   onBackToTitle?: () => void;
   initialMode?: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen";
+  initialPuzzleId?: string;
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
@@ -1027,10 +1030,15 @@ function WordPathGame({
   const [puzzleMode, setPuzzleMode] = useState(false);
   const [currentPuzzleId, setCurrentPuzzleId] = useState<string | null>(null);
   const [puzzleRequiredWords, setPuzzleRequiredWords] = useState<Set<string>>(new Set());
+  const [puzzleFoundWords, setPuzzleFoundWords] = useState<Set<string>>(new Set());
   const [puzzleMovesRemaining, setPuzzleMovesRemaining] = useState(10);
+  const [puzzleOptionalWords, setPuzzleOptionalWords] = useState<Set<string>>(new Set());
   const [endlessStarted, setEndlessStarted] = useState(false);
   const [survivalStarted, setSurvivalStarted] = useState(false);
   const [zenStarted, setZenStarted] = useState(false);
+  
+  // Zen mode hint highlighting
+  const [hintHighlight, setHintHighlight] = useState<Pos[] | null>(null);
 
   // Tap-to-select functionality
   const [isTapMode, setIsTapMode] = useState(isMobile);
@@ -1428,6 +1436,76 @@ function WordPathGame({
       saveDailyState();
     }
   }, [settings.mode, isInitializing, board, saveDailyState]);
+  
+  // Puzzle mode helpers
+  const savePuzzleCompletion = async (lastWord: string) => {
+    if (!user || !currentPuzzleId) return;
+    
+    const puzzle = getPuzzleById(currentPuzzleId);
+    if (!puzzle) return;
+    
+    const optionalFound = Array.from(puzzleFoundWords).filter(
+      w => puzzle.optionalWords?.includes(w)
+    ).length;
+    
+    try {
+      const { error } = await supabase
+        .from('puzzle_completions' as any)
+        .upsert({
+          user_id: user.id,
+          puzzle_id: currentPuzzleId,
+          moves_used: puzzle.maxMoves - puzzleMovesRemaining + 1,
+          optional_words_found: optionalFound,
+          score: score,
+          completed_at: new Date().toISOString()
+        });
+      
+      if (!error) {
+        // Award XP for puzzle completion
+        const xpGain = puzzle.xpReward + (optionalFound * 20);
+        setXpGained(xpGain);
+        setShowXpGain(true);
+        setTimeout(() => setShowXpGain(false), 5000);
+        
+        toast.success(`🧩 Puzzle Complete! +${xpGain} XP`, {
+          description: `All required words found! ${optionalFound} bonus words.`
+        });
+        
+        setGameOver(true);
+      }
+    } catch (err) {
+      console.error('Error saving puzzle completion:', err);
+    }
+  };
+  
+  const loadPuzzle = (puzzleId: string) => {
+    const puzzle = getPuzzleById(puzzleId);
+    if (!puzzle || !dict || !sorted) return;
+    
+    setPuzzleMode(true);
+    setCurrentPuzzleId(puzzleId);
+    setPuzzleRequiredWords(new Set(puzzle.requiredWords.map(w => w.toUpperCase())));
+    setPuzzleFoundWords(new Set());
+    setPuzzleMovesRemaining(puzzle.maxMoves);
+    setPuzzleOptionalWords(new Set((puzzle.optionalWords || []).map(w => w.toUpperCase())));
+    
+    // Set the fixed puzzle board
+    setBoard(puzzle.board.map(row => [...row]));
+    setSize(puzzle.board.length);
+    setUsedWords([]);
+    setScore(0);
+    setStreak(0);
+    setGameOver(false);
+    setPath([]);
+    
+    // Calculate benchmarks for the puzzle board
+    const probe = probeGrid(puzzle.board, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
+    const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+    setBenchmarks(bms);
+    setDiscoverableCount(probe.words.size);
+    
+    toast.success(`🧩 ${puzzle.name} loaded! Find all required words in ${puzzle.maxMoves} moves.`);
+  };
   // Enhanced dictionary loading useEffect
   useEffect(() => {
     let mounted = true;
@@ -1479,6 +1557,13 @@ function WordPathGame({
       mounted = false;
     };
   }, [initialMode, size]);
+  
+  // Puzzle mode initialization
+  useEffect(() => {
+    if (initialPuzzleId && dict && sorted && !puzzleMode) {
+      loadPuzzle(initialPuzzleId);
+    }
+  }, [initialPuzzleId, dict, sorted]);
 
   // Dictionary-ready benchmark calculation for daily challenges
   useEffect(() => {
@@ -3111,6 +3196,78 @@ function WordPathGame({
 
     // Save state after successful word submission
     saveGameState();
+    
+    // Zen mode: save current state before processing word
+    if (settings.mode === 'zen') {
+      setZenUndoStack(prev => [...prev, { 
+        board: board.map(r => [...r]), 
+        specialTiles: specialTiles.map(r => [...r]),
+        usedWords: [...usedWords],
+        score 
+      }]);
+    }
+    
+    // Puzzle mode: check required words and decrement moves
+    if (puzzleMode && currentPuzzleId) {
+      setPuzzleFoundWords(prev => new Set([...prev, actualWord.toUpperCase()]));
+      setPuzzleMovesRemaining(prev => prev - 1);
+      
+      // Check if all required words are now found
+      const allRequiredFound = Array.from(puzzleRequiredWords).every(w => 
+        puzzleFoundWords.has(w) || w === actualWord.toUpperCase()
+      );
+      
+      if (allRequiredFound) {
+        // Puzzle completed!
+        setTimeout(() => {
+          savePuzzleCompletion(actualWord);
+        }, 1000);
+        return;
+      }
+      
+      if (puzzleMovesRemaining <= 1 && !allRequiredFound) {
+        // Out of moves
+        setTimeout(() => {
+          setGameOver(true);
+          toast.error(`Puzzle incomplete! You found ${puzzleFoundWords.size}/${puzzleRequiredWords.size} required words.`);
+        }, 1000);
+      }
+    }
+    
+    // Survival mode: check for boss word completion and increment wave progress
+    if (settings.mode === 'survival') {
+      setSurvivalWordsThisWave(prev => prev + 1);
+      
+      // Check if boss word requirement is met (7+ letter word)
+      if (survivalBossWordRequired && actualWord.length >= 7) {
+        setSurvivalBossWordRequired(false);
+        toast.success('👑 Boss word completed! Wave cleared!', { duration: 3000 });
+      }
+      
+      // Apply progressive difficulty every 5 words within a wave
+      if (survivalWordsThisWave > 0 && survivalWordsThisWave % 5 === 0) {
+        // Add stone tiles as difficulty increases
+        const emptyPositions: Pos[] = [];
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (specialTiles[r][c].type === null) {
+              emptyPositions.push({ r, c });
+            }
+          }
+        }
+        
+        if (emptyPositions.length > 0) {
+          const newSpecialTilesForDifficulty = specialTiles.map(row => [...row]);
+          const randomPos = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
+          newSpecialTilesForDifficulty[randomPos.r][randomPos.c] = {
+            type: 'stone',
+            expiryTurns: undefined
+          };
+          setSpecialTiles(newSpecialTilesForDifficulty);
+          toast.warning('⚠️ Difficulty increased! Stone tile added.', { duration: 2000 });
+        }
+      }
+    }
 
     // Legacy variables needed for achievements, toasts, and other legacy code
     const sharedTilesCount = lastWordTiles.size ? path.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
@@ -3554,8 +3711,10 @@ function WordPathGame({
                 }
                 if (hintPath) {
                   setPath(hintPath);
+                  setHintHighlight(hintPath);
+                  setTimeout(() => setHintHighlight(null), 5000);
                   setZenHintsUsed(prev => prev + 1);
-                  toast.info(`Hint: Try "${hintWord}"`);
+                  toast.info(`Hint: ${hintWord.toUpperCase()} (${hintPath.length} letters)`);
                 }
               }
             }
