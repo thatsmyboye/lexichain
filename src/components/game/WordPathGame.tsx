@@ -1018,8 +1018,19 @@ function WordPathGame({
   const [endlessDifficulty, setEndlessDifficulty] = useState(1);
   const [survivalLives, setSurvivalLives] = useState(3);
   const [survivalWave, setSurvivalWave] = useState(1);
+  const [survivalWordsThisWave, setSurvivalWordsThisWave] = useState(0);
+  const [survivalBossWordRequired, setSurvivalBossWordRequired] = useState(false);
   const [zenHintsUsed, setZenHintsUsed] = useState(0);
   const [zenUndoStack, setZenUndoStack] = useState<Array<{board: string[][], specialTiles: SpecialTile[][], usedWords: typeof usedWords, score: number}>>([]);
+  
+  // Puzzle mode states
+  const [puzzleMode, setPuzzleMode] = useState(false);
+  const [currentPuzzleId, setCurrentPuzzleId] = useState<string | null>(null);
+  const [puzzleRequiredWords, setPuzzleRequiredWords] = useState<Set<string>>(new Set());
+  const [puzzleMovesRemaining, setPuzzleMovesRemaining] = useState(10);
+  const [endlessStarted, setEndlessStarted] = useState(false);
+  const [survivalStarted, setSurvivalStarted] = useState(false);
+  const [zenStarted, setZenStarted] = useState(false);
 
   // Tap-to-select functionality
   const [isTapMode, setIsTapMode] = useState(isMobile);
@@ -1125,12 +1136,20 @@ function WordPathGame({
   //   }
   // }, [settings.mode, blitzStarted, blitzPaused, gameOver, score, benchmarks]);
 
-  // Time Attack timer
+  // Time Attack timer with visual warnings
   useEffect(() => {
     if (settings.mode === "time_attack" && timeAttackStarted && !gameOver) {
       const interval = setInterval(() => {
         setTimeAttackTimeRemaining(prev => {
           const newTime = prev - 1;
+          
+          // Visual warnings at 30s and 10s
+          if (newTime === 30) {
+            toast.warning('⏰ 30 seconds remaining!', { duration: 2000 });
+          } else if (newTime === 10) {
+            toast.error('⚡ 10 seconds left!', { duration: 2000 });
+          }
+          
           if (newTime <= 0) {
             // Time's up! Calculate and display XP, then end game
             const longestWord = usedWords.reduce((longest, wordEntry) => 
@@ -1703,6 +1722,16 @@ function WordPathGame({
     if (settings.mode === "daily") {
       setMovesUsed(prev => prev + 1);
     }
+    
+    // Save state for Zen mode undo (before making changes)
+    if (settings.mode === "zen") {
+      setZenUndoStack(prev => [...prev, {
+        board: board ? board.map(row => [...row]) : [],
+        specialTiles: specialTiles.map(row => row.map(tile => ({ ...tile }))),
+        usedWords: [...usedWords],
+        score: score
+      }]);
+    }
 
     // Handle X-Factor tiles first
     const currentBoardForXFactor = newBoard.map(row => [...row]);
@@ -1806,6 +1835,32 @@ function WordPathGame({
       }
     }
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
+    
+    // Survival mode: Track words and check for boss word completion
+    if (settings.mode === "survival") {
+      const wordsThisWave = survivalWordsThisWave + 1;
+      setSurvivalWordsThisWave(wordsThisWave);
+      
+      // Check if this is a boss wave (every 5th wave)
+      if (survivalWave % 5 === 0 && !survivalBossWordRequired) {
+        // Boss wave: require a 7+ letter word
+        setSurvivalBossWordRequired(true);
+        toast.warning('⚡ Boss Wave! Find a 7+ letter word to continue!', { duration: 4000 });
+      }
+      
+      // If boss word required, check if this word satisfies it
+      if (survivalBossWordRequired && actualWord.length >= 7) {
+        setSurvivalBossWordRequired(false);
+        setSurvivalWordsThisWave(0);
+        toast.success('👑 Boss Word Found! Wave Complete!', { duration: 3000 });
+      }
+      
+      // Regular difficulty increase every 5 words (non-boss waves)
+      if (!survivalBossWordRequired && wordsThisWave >= 5) {
+        setSurvivalWordsThisWave(0);
+        // Could add difficulty increase here (e.g., reduce time, add stones)
+      }
+    }
 
     // Introduce special tiles if conditions are met
     if (shouldIntroduceSpecialTiles(usedWords.length)) {
@@ -1860,10 +1915,11 @@ function WordPathGame({
                 setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
                 setUsedWords([]);
                 setLastWordTiles(new Set());
-                setScore(0);
+                // FIX: Don't reset score in endless mode - it should accumulate
                 setStreak(0);
                 setIsGenerating(false);
               }
+              toast.success(`🎯 New Board! Difficulty: ${endlessDifficulty + 1}`, { duration: 2000 });
               return;
             }
             
@@ -1903,7 +1959,8 @@ function WordPathGame({
                   return 0;
                 } else {
                   // Continue with new wave
-                  setSurvivalWave(prev => prev + 1);
+                  const newWave = survivalWave + 1;
+                  setSurvivalWave(newWave);
                   setIsGenerating(true);
                   if (dict && sorted) {
                     const newBoard = generateSolvableBoard(size, dict, sorted);
@@ -1911,10 +1968,11 @@ function WordPathGame({
                     setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
                     setUsedWords([]);
                     setLastWordTiles(new Set());
-                    setScore(0);
+                    // FIX: Don't reset score in survival mode - it should accumulate
                     setStreak(0);
                     setIsGenerating(false);
                   }
+                  toast.success(`🌊 Wave ${newWave}! ${newWave % 5 === 0 ? '⚡ Boss Wave - Find a 7+ letter word!' : ''}`, { duration: 3000 });
                   return newLives;
                 }
               });
@@ -3436,15 +3494,31 @@ function WordPathGame({
               Start Timer
             </Button>}
           
-          {settings.mode === "zen" && <Button variant="outline" onClick={() => {
-            // Save current state for undo
-            setZenUndoStack(prev => [...prev, {
-              board: board ? board.map(row => [...row]) : [],
-              specialTiles: specialTiles.map(row => row.map(tile => ({ ...tile }))),
-              usedWords: [...usedWords],
-              score: score
-            }]);
-            // Reset to previous state
+          {settings.mode === "endless" && !endlessStarted && <Button variant="outline" onClick={() => {
+            setEndlessStarted(true);
+            toast.success('🎯 Endless Mode Started! Clear all words to advance!', { duration: 3000 });
+          }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Start Endless Run
+            </Button>}
+          
+          {settings.mode === "survival" && !survivalStarted && <Button variant="outline" onClick={() => {
+            setSurvivalStarted(true);
+            setSurvivalLives(3);
+            setSurvivalWave(1);
+            toast.success('💀 Survival Mode Started! 3 Lives', { duration: 3000 });
+          }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Start Survival
+            </Button>}
+          
+          {settings.mode === "zen" && !zenStarted && <Button variant="outline" onClick={() => {
+            setZenStarted(true);
+            toast.success('🧘 Zen Mode - Take your time, no pressure!', { duration: 3000 });
+          }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Begin Zen Practice
+            </Button>}
+          
+          {settings.mode === "zen" && zenStarted && <Button variant="outline" onClick={() => {
+            // Reset to previous state (FIX: removed the save that was creating infinite loop)
             if (zenUndoStack.length > 0) {
               const prevState = zenUndoStack[zenUndoStack.length - 1];
               setBoard(prevState.board);
@@ -4005,6 +4079,57 @@ function WordPathGame({
               <div>
                 <div className="text-xs text-muted-foreground">Score</div>
                 <div className="text-2xl font-bold">{score}</div>
+                
+                {/* Mode-specific indicators */}
+                {settings.mode === "time_attack" && timeAttackStarted && (
+                  <div className="mt-2">
+                    <div className="text-xs text-muted-foreground">Time Remaining</div>
+                    <div className={`text-lg font-bold ${timeAttackTimeRemaining <= 10 ? 'text-red-500 animate-pulse' : timeAttackTimeRemaining <= 30 ? 'text-orange-500' : 'text-green-500'}`}>
+                      {timeAttackTimeRemaining}s
+                    </div>
+                  </div>
+                )}
+                
+                {settings.mode === "endless" && endlessStarted && (
+                  <div className="mt-2">
+                    <div className="text-xs text-muted-foreground">Difficulty Level</div>
+                    <div className="text-lg font-bold text-purple-500">
+                      {endlessDifficulty}
+                    </div>
+                  </div>
+                )}
+                
+                {settings.mode === "survival" && survivalStarted && (
+                  <div className="mt-2 space-y-1">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Wave</div>
+                      <div className="text-lg font-bold text-blue-500">
+                        {survivalWave} {survivalWave % 5 === 0 ? '⚡' : ''}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Lives</div>
+                      <div className="text-lg font-bold text-red-500">
+                        {'❤️'.repeat(survivalLives)}
+                      </div>
+                    </div>
+                    {survivalBossWordRequired && (
+                      <div className="text-xs text-orange-500 font-medium animate-pulse">
+                        🎯 Boss: 7+ letters!
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {settings.mode === "zen" && zenStarted && (
+                  <div className="mt-2">
+                    <div className="text-xs text-muted-foreground">Zen Mode</div>
+                    <div className="text-sm text-green-500">
+                      🧘 No pressure
+                    </div>
+                  </div>
+                )}
+                
                 {benchmarks && <div className="mt-2 space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Daily Challenge Tiers</div>
                     <div className="space-y-1">
