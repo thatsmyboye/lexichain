@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame } from 'lucide-react';
 import { useSound } from '@/components/effects';
-import { XP_REQUIREMENTS } from '@/lib/progression';
+import { XP_REQUIREMENTS, calculateLevel } from '@/lib/progression';
 import { useUnlockedModes } from '@/hooks/useUnlockedModes';
 import type { User } from '@supabase/supabase-js';
 
@@ -142,6 +142,7 @@ interface AdvancedGameModesProps {
   onModeSelect: (mode: AdvancedGameMode) => void;
   onBack: () => void;
   userLevel?: number;
+  totalXp?: number;
   user?: User | null;
   unlockedModes?: Set<AdvancedGameMode>; // Optional override for testing
 }
@@ -150,11 +151,20 @@ export function AdvancedGameModes({
   onModeSelect, 
   onBack, 
   userLevel = 1,
+  totalXp = 0,
   user = null,
   unlockedModes: overrideUnlockedModes
 }: AdvancedGameModesProps) {
   const [selectedMode, setSelectedMode] = useState<AdvancedGameMode | null>(null);
   const { playSound } = useSound();
+  
+  // Calculate level data from total XP
+  const levelData = calculateLevel(totalXp);
+  const currentLevelXp = userLevel > 0 ? XP_REQUIREMENTS[userLevel - 1] : 0;
+  const nextLevelXp = userLevel < XP_REQUIREMENTS.length ? XP_REQUIREMENTS[userLevel] : XP_REQUIREMENTS[XP_REQUIREMENTS.length - 1];
+  const xpInCurrentLevel = totalXp - currentLevelXp;
+  const xpNeededForNextLevel = nextLevelXp - currentLevelXp;
+  const progressPercentage = xpNeededForNextLevel > 0 ? (xpInCurrentLevel / xpNeededForNextLevel) * 100 : 0;
   
   // Get purchased unlocks from database
   const { unlockedModes: purchasedUnlocks, isLoading: isLoadingUnlocks } = useUnlockedModes(user);
@@ -236,8 +246,10 @@ export function AdvancedGameModes({
                 </div>
               </div>
               <div className="md:text-right">
-                <div className="text-sm text-muted-foreground">Next Level</div>
-                <Progress value={((userLevel % 10) / 10) * 100} className="w-full md:w-32 h-2" />
+                <div className="text-sm text-muted-foreground">
+                  {xpInCurrentLevel} / {xpNeededForNextLevel} XP
+                </div>
+                <Progress value={progressPercentage} className="w-full md:w-32 h-2" />
               </div>
             </div>
           </CardContent>

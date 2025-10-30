@@ -4,6 +4,8 @@ import TitleScreen from "@/components/TitleScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLoginStreak } from "@/hooks/useLoginStreak";
+import { useProfile } from "@/hooks/useProfile";
+import { calculateLevel } from "@/lib/progression";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
 
@@ -20,6 +22,10 @@ const Index = () => {
 
   // Initialize login streak tracking
   const { streakData } = useLoginStreak(user);
+  
+  // Fetch user profile for XP and level calculation
+  const { profile, refreshProfile } = useProfile(user);
+  const playerLevel = profile ? calculateLevel(profile.total_xp) : { level: 1, xp: 0, xpToNext: 100, totalXp: 0, title: "Word Novice", color: "text-gray-500", unlockedFeatures: [] };
 
   useEffect(() => {
     // Get current user and set up auth state listener
@@ -66,6 +72,8 @@ const Index = () => {
     setShowGame(false);
     setShowModeSelection(false);
     setShowAdvancedModes(false);
+    // Refresh profile to get updated XP
+    refreshProfile();
   };
 
   const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
@@ -104,9 +112,9 @@ const Index = () => {
     return <AdvancedGameModes 
       onModeSelect={handleAdvancedModeSelect}
       onBack={handleBackToModeSelection}
-      userLevel={1}
+      userLevel={playerLevel.level}
+      totalXp={profile?.total_xp || 0}
       user={user}
-      unlockedModes={new Set(['classic', 'time_attack', 'zen'])}
     />;
   }
 
