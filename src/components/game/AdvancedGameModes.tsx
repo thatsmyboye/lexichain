@@ -180,7 +180,7 @@ export function AdvancedGameModes({
   ]);
 
   const handleModeClick = (mode: AdvancedModeConfig) => {
-    if (!unlockedModes.has(mode.id)) {
+    if (!isModeUnlocked(mode)) {
       playSound('error');
       return;
     }
