@@ -312,6 +312,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          total_xp: number
           updated_at: string
           user_id: string
         }
@@ -319,6 +320,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          total_xp?: number
           updated_at?: string
           user_id: string
         }
@@ -326,7 +328,41 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          total_xp?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      puzzle_completions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          moves_used: number
+          optional_words_found: number
+          puzzle_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          moves_used: number
+          optional_words_found?: number
+          puzzle_id: string
+          score?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          moves_used?: number
+          optional_words_found?: number
+          puzzle_id?: string
+          score?: number
           user_id?: string
         }
         Relationships: []
@@ -462,6 +498,27 @@ export type Database = {
           granted_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_unlocked_modes: {
+        Row: {
+          id: string
+          mode_id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          mode_id: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          mode_id?: string
+          unlocked_at?: string
           user_id?: string
         }
         Relationships: []

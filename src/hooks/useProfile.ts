@@ -8,6 +8,7 @@ interface Profile {
   id: string;
   user_id: string;
   display_name: string | null;
+  total_xp: number;
   created_at: string;
   updated_at: string;
 }

@@ -17530,6 +17530,7 @@ apozema
 apozemical
 apozymase
 app
+apps
 appay
 appair
 appal
@@ -36346,6 +36347,12 @@ blobbiness
 blobbing
 blobs
 bloc
+blog
+blogged
+blogger
+bloggers
+blogging
+blogs
 blocage
 block
 blockade
@@ -84494,6 +84501,7 @@ diary
 diarial
 diarian
 diaries
+diaried
 diarist
 diaristic
 diarists
@@ -97895,6 +97903,9 @@ emaculate
 emagram
 email
 emailed
+emailer
+emailing
+emails
 emajagua
 emamelware
 emanant
@@ -283556,6 +283567,8 @@ selfpreservatory
 selfpropelling
 selfrestrained
 selfs
+selfie
+selfies
 selfsaid
 selfsame
 selfsameness
@@ -294749,6 +294762,8 @@ smartism
 smartless
 smartly
 smartness
+smartphone
+smartphones
 smarts
 smartweed
 smash
@@ -320380,6 +320395,8 @@ texases
 texcocan
 texguino
 text
+texted
+texting
 textarian
 textbook
 textbookish
@@ -363682,6 +363699,8 @@ weblike
 webmaker
 webmaking
 webs
+website
+websites
 webster
 websterian
 websterite
@@ -365619,6 +365638,7 @@ wifiekie
 wifing
 wifish
 wifock
+wifi
 wig
 wigan
 wigans

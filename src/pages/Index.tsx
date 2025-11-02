@@ -4,8 +4,11 @@ import TitleScreen from "@/components/TitleScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLoginStreak } from "@/hooks/useLoginStreak";
+import { useProfile } from "@/hooks/useProfile";
+import { calculateLevel } from "@/lib/progression";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
+import PuzzleSelector from "@/components/game/PuzzleSelector";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
@@ -13,13 +16,19 @@ const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
   const [showAdvancedModes, setShowAdvancedModes] = useState(false);
+  const [showPuzzleSelector, setShowPuzzleSelector] = useState(false);
   const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
   const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
+  const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
   // Initialize login streak tracking
   const { streakData } = useLoginStreak(user);
+  
+  // Fetch user profile for XP and level calculation
+  const { profile, refreshProfile } = useProfile(user);
+  const playerLevel = profile ? calculateLevel(profile.total_xp) : { level: 1, xp: 0, xpToNext: 100, totalXp: 0, title: "Word Novice", color: "text-gray-500", unlockedFeatures: [] };
 
   useEffect(() => {
     // Get current user and set up auth state listener
@@ -66,13 +75,36 @@ const Index = () => {
     setShowGame(false);
     setShowModeSelection(false);
     setShowAdvancedModes(false);
+    setShowPuzzleSelector(false);
+    setSelectedPuzzleId(null);
+    // Refresh profile to get updated XP
+    refreshProfile();
   };
 
   const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
+    // Special handling for puzzle mode
+    if (mode === 'puzzle') {
+      setShowAdvancedModes(false);
+      setShowPuzzleSelector(true);
+      return;
+    }
+    
     setSelectedMode(mode as any); // Convert AdvancedGameMode to broader type
     setSelectedAdvancedMode(mode);
     setShowAdvancedModes(false);
     setShowGame(true);
+  };
+  
+  const handlePuzzleSelect = (puzzleId: string) => {
+    setSelectedPuzzleId(puzzleId);
+    setSelectedMode('puzzle');
+    setShowPuzzleSelector(false);
+    setShowGame(true);
+  };
+  
+  const handleBackToPuzzleSelector = () => {
+    setShowPuzzleSelector(false);
+    setShowAdvancedModes(true);
   };
 
   const handleShowAdvancedModes = () => {
@@ -100,13 +132,21 @@ const Index = () => {
     navigate("/leaderboard");
   };
 
+  if (showPuzzleSelector) {
+    return <PuzzleSelector
+      onPuzzleSelect={handlePuzzleSelect}
+      onBack={handleBackToPuzzleSelector}
+      user={user}
+    />;
+  }
+
   if (showAdvancedModes) {
     return <AdvancedGameModes 
       onModeSelect={handleAdvancedModeSelect}
       onBack={handleBackToModeSelection}
-      userLevel={1}
+      userLevel={playerLevel.level}
+      totalXp={profile?.total_xp || 0}
       user={user}
-      unlockedModes={new Set(['classic', 'time_attack', 'zen'])}
     />;
   }
 
@@ -120,7 +160,11 @@ const Index = () => {
         <Suspense fallback={<div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
           </div>}>
-          <WordPathGame onBackToTitle={handleBackToTitle} initialMode={selectedMode} />
+          <WordPathGame 
+            onBackToTitle={handleBackToTitle} 
+            initialMode={selectedMode}
+            initialPuzzleId={selectedPuzzleId || undefined}
+          />
         </Suspense>
       </main>;
   }
