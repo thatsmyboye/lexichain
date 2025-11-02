@@ -24,6 +24,7 @@ import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
 import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
 import { dictionaryManager } from "@/utils/dictionaryManager";
+import { PUZZLE_DEFINITIONS, getRandomPuzzle, type PuzzleDefinition } from "@/lib/puzzles";
 type Pos = {
   r: number;
   c: number;
@@ -1020,6 +1021,11 @@ function WordPathGame({
   const [survivalWave, setSurvivalWave] = useState(1);
   const [zenHintsUsed, setZenHintsUsed] = useState(0);
   const [zenUndoStack, setZenUndoStack] = useState<Array<{board: string[][], specialTiles: SpecialTile[][], usedWords: typeof usedWords, score: number}>>([]);
+  
+  // Puzzle mode states
+  const [currentPuzzle, setCurrentPuzzle] = useState<PuzzleDefinition | null>(null);
+  const [puzzleMovesLimit, setPuzzleMovesLimit] = useState<number>(10);
+  const [requiredWordsFound, setRequiredWordsFound] = useState<Set<string>>(new Set());
 
   // Tap-to-select functionality
   const [isTapMode, setIsTapMode] = useState(isMobile);
@@ -1062,6 +1068,11 @@ function WordPathGame({
       setEndlessDifficulty(1);
     } else if (initialMode === "puzzle") {
       setSettings(prev => ({ ...prev, mode: "puzzle" }));
+      // Initialize puzzle mode - load a random puzzle
+      const puzzle = getRandomPuzzle();
+      setCurrentPuzzle(puzzle);
+      setPuzzleMovesLimit(puzzle.maxMoves);
+      setRequiredWordsFound(new Set());
     } else if (initialMode === "survival") {
       setSettings(prev => ({ ...prev, mode: "survival" }));
       setSurvivalLives(3);
@@ -1334,16 +1345,33 @@ function WordPathGame({
         setSorted(sorted);
         console.log("📖 Enhanced dictionary loaded:", status);
         
-        // Only generate a board for classic mode or when no specific mode is set
+          // Only generate a board for classic mode or when no specific mode is set
           // Daily and blitz modes handle their own board generation
           if (!initialMode || initialMode === "classic" || initialMode === "time_attack" || initialMode === "zen" || initialMode === "endless" || initialMode === "puzzle" || initialMode === "survival") {
             setIsGenerating(true);
-            const newBoard = generateSolvableBoard(size, dict, sorted);
-            const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
-            const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+            let newBoard: string[][];
+            let probe: any;
+            let bms: Benchmarks | null = null;
+            
+            // Puzzle mode uses pre-designed boards
+            if (initialMode === "puzzle" && currentPuzzle) {
+              newBoard = currentPuzzle.board.map(row => [...row]);
+              const puzzleSize = newBoard.length;
+              setSize(puzzleSize);
+              setSettings(prev => ({ ...prev, gridSize: puzzleSize }));
+              // Probe puzzle board to get word count
+              probe = probeGrid(newBoard, dict, sorted, 1, MAX_DFS_NODES);
+              bms = computeBenchmarksFromWordCount(probe.words.size, 1);
+              setSpecialTiles(createEmptySpecialTilesGrid(puzzleSize));
+            } else {
+              newBoard = generateSolvableBoard(size, dict, sorted);
+              probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
+              bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+            }
+            
             if (!mounted) return;
             setBoard(newBoard);
-            setBenchmarks(bms);
+            if (bms) setBenchmarks(bms);
             setDiscoverableCount(probe.words.size);
             setUnlocked(new Set());
             setGameOver(false);
@@ -1354,8 +1382,13 @@ function WordPathGame({
             setLastWordTiles(new Set());
             setScore(0);
             setStreak(0);
+            setMovesUsed(0);
             setIsGenerating(false);
-            toast.success(`Dictionary loaded (${status.wordCount.toLocaleString()} words). Board ready!`);
+            if (initialMode === "puzzle") {
+              toast.success(`Puzzle "${currentPuzzle?.name}" loaded! Find all required words.`);
+            } else {
+              toast.success(`Dictionary loaded (${status.wordCount.toLocaleString()} words). Board ready!`);
+            }
           } else {
             toast.success(`Dictionary loaded (${status.wordCount.toLocaleString()} words). Waiting for game mode initialization...`);
           }
@@ -1371,7 +1404,7 @@ function WordPathGame({
     return () => {
       mounted = false;
     };
-  }, [initialMode, size]);
+  }, [initialMode, size, currentPuzzle]);
 
   // Dictionary-ready benchmark calculation for daily challenges
   useEffect(() => {
@@ -1547,6 +1580,13 @@ function WordPathGame({
       toast.error("Daily move limit reached!");
       return;
     }
+    
+    // Check puzzle mode move limit
+    if (settings.mode === "puzzle" && movesUsed >= puzzleMovesLimit) {
+      toast.error("Puzzle move limit reached!");
+      return;
+    }
+    
     const actualWord = validatedWord;
     const wildUsed = true;
     const hasStoneTile = wordPath.some(p => specialTiles[p.r][p.c].type === "stone");
@@ -2811,6 +2851,12 @@ function WordPathGame({
       toast.error("Daily move limit reached!");
       return clearPath();
     }
+    
+    // Check puzzle mode move limit
+    if (settings.mode === "puzzle" && movesUsed >= puzzleMovesLimit) {
+      toast.error("Puzzle move limit reached!");
+      return clearPath();
+    }
     const actualWord = wordFromPath;
     const wildUsed = false;
     const hasWildTile = path.some(p => specialTiles[p.r][p.c].type === "wild");
@@ -2879,9 +2925,22 @@ function WordPathGame({
     const sharedTilesCount = lastWordTiles.size ? path.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
     const multiplier = breakdown.multipliers.combinedApplied;
 
-    // Increment moves for daily challenge
-    if (settings.mode === "daily") {
+    // Increment moves for daily challenge and puzzle mode
+    if (settings.mode === "daily" || settings.mode === "puzzle") {
       setMovesUsed(prev => prev + 1);
+    }
+    
+    // Track required words in puzzle mode
+    if (settings.mode === "puzzle" && currentPuzzle) {
+      const wordUpper = actualWord.toUpperCase();
+      if (currentPuzzle.requiredWords.includes(wordUpper)) {
+        setRequiredWordsFound(prev => {
+          const newSet = new Set(prev);
+          newSet.add(wordUpper);
+          return newSet;
+        });
+        toast.success(`✓ Required word found: ${wordUpper}`);
+      }
     }
 
     // Legacy scoring removed - now using breakdown.total
@@ -2971,6 +3030,35 @@ function WordPathGame({
         toast.success(`Target reached: ${grade}`);
       }
     }
+    
+    // Check puzzle completion (after updating requiredWordsFound)
+    if (settings.mode === "puzzle" && currentPuzzle) {
+      const updatedFound = new Set(requiredWordsFound);
+      if (currentPuzzle.requiredWords.includes(actualWord.toUpperCase())) {
+        updatedFound.add(actualWord.toUpperCase());
+      }
+      const allRequiredFound = currentPuzzle.requiredWords.every(word => 
+        updatedFound.has(word.toUpperCase())
+      );
+      if (allRequiredFound && !gameOver) {
+        setGameOver(true);
+        const isPerfect = currentPuzzle.perfectSolution && 
+          currentPuzzle.requiredWords.length === usedWords.length + 1 &&
+          currentPuzzle.requiredWords.every((word, idx) => {
+            if (idx === usedWords.length) {
+              return word.toUpperCase() === actualWord.toUpperCase();
+            }
+            return idx < usedWords.length && usedWords[idx].word.toUpperCase() === word.toUpperCase();
+          });
+        
+        const grade = isPerfect ? "Platinum" : 
+                     finalScore >= (currentPuzzle.perfectSolution?.score || 3000) ? "Gold" :
+                     finalScore >= 2000 ? "Silver" : "Bronze";
+        setFinalGrade(grade);
+        toast.success(`🎉 Puzzle Complete! Grade: ${grade}`);
+      }
+    }
+    
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
 
     // Introduce special tiles if conditions are met
@@ -3049,8 +3137,22 @@ function WordPathGame({
       if (sorted && dict) {
         // Check if daily challenge is out of moves
         const dailyMovesExceeded = settings.mode === "daily" && movesUsed + 1 >= settings.dailyMovesLimit;
+        // Check if puzzle mode is out of moves
+        const puzzleMovesExceeded = settings.mode === "puzzle" && movesUsed + 1 >= puzzleMovesLimit;
         const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
-        if (!any || dailyMovesExceeded) {
+        if (!any || dailyMovesExceeded || puzzleMovesExceeded) {
+          // Handle puzzle mode - check completion on move limit
+          if (settings.mode === "puzzle" && puzzleMovesExceeded && currentPuzzle) {
+            const allRequiredFound = currentPuzzle.requiredWords.every(word => 
+              requiredWordsFound.has(word.toUpperCase())
+            );
+            if (!allRequiredFound) {
+              setGameOver(true);
+              setFinalGrade("None");
+              toast.error("Puzzle incomplete! Move limit reached.");
+            }
+            // If all required words found, completion is already handled in submitWord
+          }
           // Handle Zen mode - regenerate board instead of ending game
           if (settings.mode === "zen") {
             setIsGenerating(true);
@@ -3889,6 +3991,33 @@ function WordPathGame({
                 {settings.mode === "zen" && (
                   <div className="mt-1 text-xs text-muted-foreground">
                     Hints used: {zenHintsUsed} | Undos: {zenUndoStack.length}
+                  </div>
+                )}
+                {settings.mode === "puzzle" && currentPuzzle && (
+                  <div className="mt-1 text-xs space-y-1">
+                    <div className="font-medium text-muted-foreground">
+                      🧩 {currentPuzzle.name}
+                    </div>
+                    <div className="text-muted-foreground">
+                      Moves: {movesUsed}/{puzzleMovesLimit}
+                    </div>
+                    <div className="text-muted-foreground">
+                      Required words: {requiredWordsFound.size}/{currentPuzzle.requiredWords.length}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {currentPuzzle.requiredWords.map(word => (
+                        <span 
+                          key={word}
+                          className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            requiredWordsFound.has(word.toUpperCase())
+                              ? 'bg-green-500/20 text-green-700 dark:text-green-400'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {word}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {/* Temporarily disabled blitz timer 
