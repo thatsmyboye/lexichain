@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame } from 'lucide-react';
+import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame, Shield } from 'lucide-react';
 import { useSound } from '@/components/effects';
 import { XP_REQUIREMENTS, calculateLevel } from '@/lib/progression';
 import { useUnlockedModes } from '@/hooks/useUnlockedModes';
@@ -145,6 +145,7 @@ interface AdvancedGameModesProps {
   totalXp?: number;
   user?: User | null;
   unlockedModes?: Set<AdvancedGameMode>; // Optional override for testing
+  isAdmin?: boolean; // Admin users have all modes unlocked
 }
 
 export function AdvancedGameModes({ 
@@ -153,7 +154,8 @@ export function AdvancedGameModes({
   userLevel = 1,
   totalXp = 0,
   user = null,
-  unlockedModes: overrideUnlockedModes
+  unlockedModes: overrideUnlockedModes,
+  isAdmin = false
 }: AdvancedGameModesProps) {
   const [selectedMode, setSelectedMode] = useState<AdvancedGameMode | null>(null);
   const { playSound } = useSound();
@@ -197,6 +199,8 @@ export function AdvancedGameModes({
   };
 
   const isModeUnlocked = (mode: AdvancedModeConfig) => {
+    // Admin users have all modes unlocked
+    if (isAdmin) return true;
     // Check if mode is purchased or unlocked by level
     return unlockedModes.has(mode.id) || userLevel >= (mode.rewards.unlockRequirement || 0);
   };
@@ -219,10 +223,18 @@ export function AdvancedGameModes({
           <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
             ← Back
           </Button>
-          <div>
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
-              Advanced Modes
-            </h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+                Advanced Modes
+              </h1>
+              {isAdmin && (
+                <Badge variant="outline" className="border-primary/50 bg-primary/10 text-primary">
+                  <Shield className="h-3 w-3 mr-1" />
+                  Admin Mode - All Unlocked
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground mt-2">
               Challenge yourself with specialized game modes
             </p>

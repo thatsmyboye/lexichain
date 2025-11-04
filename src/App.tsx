@@ -22,6 +22,7 @@ const StorePage = lazy(() => import("./pages/StorePage"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCanceled = lazy(() => import("./pages/PaymentCanceled"));
 const DebugPage = lazy(() => import("./pages/DebugPage"));
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const LoadingSpinner = () => <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
   </div>;
@@ -46,6 +47,7 @@ const App = () => <QueryClientProvider client={queryClient}>
                     <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/payment-canceled" element={<PaymentCanceled />} />
                     <Route path="/debug" element={<DebugPage />} />
+                    <Route path="/admin" element={<AdminDashboardPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

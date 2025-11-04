@@ -9,6 +9,7 @@ import { calculateLevel } from "@/lib/progression";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
 import PuzzleSelector from "@/components/game/PuzzleSelector";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
@@ -29,6 +30,7 @@ const Index = () => {
   // Fetch user profile for XP and level calculation
   const { profile, refreshProfile } = useProfile(user);
   const playerLevel = profile ? calculateLevel(profile.total_xp) : { level: 1, xp: 0, xpToNext: 100, totalXp: 0, title: "Word Novice", color: "text-gray-500", unlockedFeatures: [] };
+  const { isAdmin } = useIsAdmin(user);
 
   useEffect(() => {
     // Get current user and set up auth state listener
@@ -147,6 +149,7 @@ const Index = () => {
       userLevel={playerLevel.level}
       totalXp={profile?.total_xp || 0}
       user={user}
+      isAdmin={isAdmin}
     />;
   }
 

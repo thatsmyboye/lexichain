@@ -7,7 +7,9 @@ import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { checkIncompleteGameState } from "@/utils/gameStateUtils";
 import { InteractiveTutorial } from "@/components/tutorial/InteractiveTutorial";
 import { SoundButton } from "@/components/effects/SoundSystem";
-import { BookOpen, Settings } from "lucide-react";
+import { BookOpen, Settings, Shield } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useNavigate } from "react-router-dom";
 interface TitleScreenProps {
   onPlayClick: () => void;
   onLoginClick: () => void;
@@ -37,6 +39,8 @@ const TitleScreen = ({
     movesUsed: number;
     lastSaved?: number;
   } | null>(null);
+  const { isAdmin } = useIsAdmin(user);
+  const navigate = useNavigate();
   const handleLogout = async () => {
     try {
       const {
@@ -133,6 +137,17 @@ const TitleScreen = ({
                 <SoundButton variant="outline" size="lg" onClick={onLeaderboardClick} className="px-6">
                   🏆 Leaderboards
                 </SoundButton>
+                {isAdmin && (
+                  <SoundButton 
+                    variant="outline" 
+                    size="lg" 
+                    onClick={() => navigate('/admin')} 
+                    className="px-6 border-primary/50 hover:border-primary"
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin
+                  </SoundButton>
+                )}
               </>}
             
             <div className="flex gap-2 mt-2">
@@ -195,6 +210,17 @@ const TitleScreen = ({
                 <SoundButton variant="outline" size="lg" onClick={onLeaderboardClick} className="px-8">
                   🏆 Leaderboards
                 </SoundButton>
+                {isAdmin && (
+                  <SoundButton 
+                    variant="outline" 
+                    size="lg" 
+                    onClick={() => navigate('/admin')} 
+                    className="px-8 border-primary/50 hover:border-primary"
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin Dashboard
+                  </SoundButton>
+                )}
               </>}
             
             <div className="flex gap-3 mt-2">
