@@ -1990,7 +1990,11 @@ function WordPathGame({
       for (let i = 0; i < tilesToPlace; i++) {
         const randomIndex = Math.floor(Math.random() * emptyPositions.length);
         const pos = emptyPositions.splice(randomIndex, 1)[0];
-        const specialTile = generateSpecialTile();
+        const specialTile = generateSpecialTile(
+          score,
+          settings.mode,
+          settings.mode === "endless" ? endlessDifficulty : 1
+        );
         if (specialTile.type !== null) {
           updatedSpecialTiles[pos.r][pos.c] = specialTile;
         }
@@ -2011,6 +2015,8 @@ function WordPathGame({
             
             // Handle endless mode - regenerate board instead of ending game
             if (settings.mode === "endless") {
+              // Increment difficulty - linear progression is fine for now
+              // Could be adjusted to exponential or step-based if needed
               setEndlessDifficulty(prev => prev + 1);
               // Regenerate board with increased difficulty
               setIsGenerating(true);
@@ -2173,7 +2179,7 @@ function WordPathGame({
   }
 
   // Special tile generation functions
-  function generateSpecialTile(currentScore: number = 0, gameMode: string = "classic"): SpecialTile {
+  function generateSpecialTile(currentScore: number = 0, gameMode: string = "classic", endlessDifficultyLevel: number = 1): SpecialTile {
     const rand = Math.random();
     let cumulative = 0;
     
@@ -2184,6 +2190,29 @@ function WordPathGame({
       const baseStoneRate = 0.05;
       const progressiveRate = Math.min(0.25, (currentScore / 1000) * 0.10);
       modifiedRarities.stone = baseStoneRate + progressiveRate;
+    } else if (gameMode === "endless") {
+      // Endless mode: difficulty affects special tile rarities
+      // As difficulty increases, helpful tiles become more common, stones become less common
+      const difficultyFactor = Math.min(1.0, endlessDifficultyLevel / 10); // Normalize to 0-1 over 10 levels
+      
+      // Increase helpful tiles (wild, multiplier, xfactor) as difficulty increases
+      const helpfulMultiplier = 1 + difficultyFactor * 1.5; // Up to 2.5x at level 10+
+      modifiedRarities.wild = SPECIAL_TILE_RARITIES.wild * helpfulMultiplier;
+      modifiedRarities.multiplier = SPECIAL_TILE_RARITIES.multiplier * helpfulMultiplier;
+      modifiedRarities.xfactor = SPECIAL_TILE_RARITIES.xfactor * helpfulMultiplier;
+      
+      // Reduce stone spawn rate slightly as difficulty increases (more helpful tiles)
+      modifiedRarities.stone = SPECIAL_TILE_RARITIES.stone * (1 - difficultyFactor * 0.3);
+      
+      // Normalize rarities to ensure they sum to a reasonable probability
+      const totalRarity = Object.values(modifiedRarities).reduce((sum, r) => sum + r, 0);
+      if (totalRarity > 0.5) {
+        // Scale down if too high
+        const scale = 0.5 / totalRarity;
+        Object.keys(modifiedRarities).forEach(key => {
+          modifiedRarities[key as keyof typeof modifiedRarities] *= scale;
+        });
+      }
     }
     
     for (const [type, rarity] of Object.entries(modifiedRarities)) {
@@ -3419,7 +3448,11 @@ function WordPathGame({
       for (let i = 0; i < tilesToPlace; i++) {
         const randomIndex = Math.floor(Math.random() * emptyPositions.length);
         const pos = emptyPositions.splice(randomIndex, 1)[0];
-        const specialTile = generateSpecialTile();
+        const specialTile = generateSpecialTile(
+          score,
+          settings.mode,
+          settings.mode === "endless" ? endlessDifficulty : 1
+        );
         if (specialTile.type !== null) {
           updatedSpecialTiles[pos.r][pos.c] = specialTile;
         }
@@ -3796,24 +3829,76 @@ function WordPathGame({
             <DialogTitle>How to play</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1">•</span>
-                <span className="text-sm">Drag through adjacent tiles to form words</span>
+            {settings.mode === "endless" ? (
+              <>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">(Almost) Endless Mode</h3>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Drag through adjacent tiles to form words</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Words must be 3+ letters and valid</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Each word must reuse ≥1 tile from previous</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">When no words remain, a new board appears automatically</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Difficulty increases with each new board</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">Strategy Tips</h3>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Your score accumulates across all boards - aim for high-scoring words</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Plan ahead to maximize tile reuse and word chains</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Special tiles become more common as difficulty increases</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">There's no time limit - take your time to find the best words</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-muted-foreground mt-1">•</span>
+                    <span className="text-sm">Try to clear each board completely before moving to the next</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-1">•</span>
+                  <span className="text-sm">Drag through adjacent tiles to form words</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-1">•</span>
+                  <span className="text-sm">Words must be 3+ letters and valid</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-1">•</span>
+                  <span className="text-sm">Each word must reuse ≥1 tile from previous</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-1">•</span>
+                  <span className="text-sm">Keep chaining until no valid word remains</span>
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1">•</span>
-                <span className="text-sm">Words must be 3+ letters and valid</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1">•</span>
-                <span className="text-sm">Each word must reuse ≥1 tile from previous</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-muted-foreground mt-1">•</span>
-                <span className="text-sm">Keep chaining until no valid word remains</span>
-              </div>
-            </div>
+            )}
             
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
@@ -4335,7 +4420,7 @@ function WordPathGame({
                   </div>
                 )}
                 
-                {benchmarks && <div className="mt-2 space-y-2">
+                {benchmarks && settings.mode !== "endless" && <div className="mt-2 space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">Daily Challenge Tiers</div>
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-xs">
