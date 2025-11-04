@@ -10,6 +10,7 @@ import { Shield, Home, AlertCircle } from 'lucide-react';
 import { ProfileManagement } from '@/components/admin/ProfileManagement';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { AdminActions } from '@/components/admin/AdminActions';
+import { UserRoleManagement } from '@/components/admin/UserRoleManagement';
 
 export default function AdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -109,14 +110,19 @@ export default function AdminDashboardPage() {
         </div>
 
         <Tabs defaultValue="actions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="actions">Admin Actions</TabsTrigger>
-            <TabsTrigger value="profiles">Profile Management</TabsTrigger>
+            <TabsTrigger value="roles">User Roles</TabsTrigger>
+            <TabsTrigger value="profiles">Profiles</TabsTrigger>
             <TabsTrigger value="audit">Audit Logs</TabsTrigger>
           </TabsList>
 
           <TabsContent value="actions" className="space-y-4">
             <AdminActions />
+          </TabsContent>
+
+          <TabsContent value="roles" className="space-y-4">
+            <UserRoleManagement />
           </TabsContent>
 
           <TabsContent value="profiles" className="space-y-4">
