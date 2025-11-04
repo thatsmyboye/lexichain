@@ -1549,7 +1549,15 @@ function WordPathGame({
               setStreak(0);
               setMovesUsed(0);
               setIsGenerating(false);
-              toast.success(`Dictionary loaded (${status.wordCount.toLocaleString()} words). Board ready!`);
+              
+              // Auto-start endless mode when board is ready
+              if (initialMode === "endless") {
+                setEndlessStarted(true);
+                setEndlessDifficulty(1);
+                toast.success('🎯 Endless Mode Started! Clear all words to advance!', { duration: 3000 });
+              } else {
+                toast.success(`Dictionary loaded (${status.wordCount.toLocaleString()} words). Board ready!`);
+              }
             } else {
               // Puzzle mode - just load dictionary, board will be loaded via loadPuzzle()
               setIsGenerating(false);
@@ -2192,17 +2200,20 @@ function WordPathGame({
       modifiedRarities.stone = baseStoneRate + progressiveRate;
     } else if (gameMode === "endless") {
       // Endless mode: difficulty affects special tile rarities
-      // As difficulty increases, helpful tiles become more common, stones become less common
+      // As difficulty increases, stone tiles become MORE common (making it harder)
       const difficultyFactor = Math.min(1.0, endlessDifficultyLevel / 10); // Normalize to 0-1 over 10 levels
       
-      // Increase helpful tiles (wild, multiplier, xfactor) as difficulty increases
-      const helpfulMultiplier = 1 + difficultyFactor * 1.5; // Up to 2.5x at level 10+
-      modifiedRarities.wild = SPECIAL_TILE_RARITIES.wild * helpfulMultiplier;
-      modifiedRarities.multiplier = SPECIAL_TILE_RARITIES.multiplier * helpfulMultiplier;
-      modifiedRarities.xfactor = SPECIAL_TILE_RARITIES.xfactor * helpfulMultiplier;
+      // Increase stone spawn rate as difficulty increases (makes it progressively harder)
+      // Base rate 0.15, increases to 0.40 at level 10+
+      const baseStoneRate = SPECIAL_TILE_RARITIES.stone;
+      const maxStoneRate = 0.40;
+      modifiedRarities.stone = baseStoneRate + (maxStoneRate - baseStoneRate) * difficultyFactor;
       
-      // Reduce stone spawn rate slightly as difficulty increases (more helpful tiles)
-      modifiedRarities.stone = SPECIAL_TILE_RARITIES.stone * (1 - difficultyFactor * 0.3);
+      // Slightly reduce helpful tiles as difficulty increases (but not as much as stones increase)
+      const helpfulReduction = 1 - difficultyFactor * 0.3; // Reduce by up to 30% at max difficulty
+      modifiedRarities.wild = SPECIAL_TILE_RARITIES.wild * helpfulReduction;
+      modifiedRarities.multiplier = SPECIAL_TILE_RARITIES.multiplier * helpfulReduction;
+      modifiedRarities.xfactor = SPECIAL_TILE_RARITIES.xfactor * helpfulReduction;
       
       // Normalize rarities to ensure they sum to a reasonable probability
       const totalRarity = Object.values(modifiedRarities).reduce((sum, r) => sum + r, 0);
@@ -3463,8 +3474,8 @@ function WordPathGame({
     }
     clearPath();
     
-    // Check if game over due to stone tiles blocking all valid words (Classic or Zen mode)
-    if ((settings.mode === "classic" || settings.mode === "zen") && dict && sorted) {
+    // Check if game over due to stone tiles blocking all valid words (Classic, Zen, or Endless mode)
+    if ((settings.mode === "classic" || settings.mode === "zen" || (settings.mode === "endless" && endlessStarted)) && dict && sorted) {
       // Create a test grid with stone tiles marked as blocked
       const testGrid = board.map((row, r) => 
         row.map((letter, c) => 
@@ -3489,8 +3500,34 @@ function WordPathGame({
             setIsGenerating(false);
             toast.info("Zen mode: New board generated - no valid words remained!");
           }
+        } else if (settings.mode === "endless" && endlessStarted) {
+          // Endless mode: Stone tiles blocked all words - end the run
+          const longestWord = usedWords.reduce((longest, wordEntry) => 
+            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+          );
+          
+          const xpGain = calculateXpGain({
+            baseScore: score,
+            wordsFound: usedWords.length,
+            longestWord: longestWord.length,
+            gameMode: settings.mode,
+            difficulty: settings.difficulty,
+            timeBonus: 0,
+            streakBonus: 0,
+            perfectGame: false
+          });
+          
+          setXpGained(xpGain);
+          setShowXpGain(true);
+          setTimeout(() => setShowXpGain(false), 5000);
+          
+          setFinalGrade("None");
+          setGameOver(true);
+          saveGameResult();
+          
+          toast.error(`💎 Stone tiles blocked all words! Endless Run Complete • Reached Level ${endlessDifficulty} • Score: ${score.toLocaleString()} • +${xpGain} XP`, { duration: 5000 });
         } else {
-          // Non-zen mode: Game over due to stones blocking all words
+          // Classic mode: Game over due to stones blocking all words
           const longestWord = usedWords.reduce((longest, wordEntry) => 
             wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
           );
@@ -3730,12 +3767,6 @@ function WordPathGame({
               Start Timer
             </Button>}
           
-          {settings.mode === "endless" && !endlessStarted && <Button variant="outline" onClick={() => {
-            setEndlessStarted(true);
-            toast.success('🎯 Endless Mode Started! Clear all words to advance!', { duration: 3000 });
-          }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
-              Start Endless Run
-            </Button>}
           
           {settings.mode === "survival" && !survivalStarted && <Button variant="outline" onClick={() => {
             setSurvivalStarted(true);
@@ -3811,6 +3842,34 @@ function WordPathGame({
           
           {settings.mode === "classic" && !gameOver && <Button variant="outline" onClick={onEndGame} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             End Game
+          </Button>}
+          
+          {settings.mode === "endless" && endlessStarted && !gameOver && <Button variant="outline" onClick={async () => {
+            // End endless run and collect XP
+            const longestWord = usedWords.reduce((longest, wordEntry) => 
+              wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+            );
+            const xpGain = calculateXpGain({
+              baseScore: score,
+              wordsFound: usedWords.length,
+              longestWord: longestWord.length,
+              gameMode: settings.mode,
+              difficulty: settings.difficulty,
+              timeBonus: 0,
+              streakBonus: 0,
+              perfectGame: false
+            });
+            
+            setXpGained(xpGain);
+            setShowXpGain(true);
+            setTimeout(() => setShowXpGain(false), 5000);
+            
+            setGameOver(true);
+            await saveGameResult();
+            
+            toast.success(`Endless Run Complete! Reached Level ${endlessDifficulty} • Score: ${score.toLocaleString()} • +${xpGain} XP`);
+          }} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+            End Run
           </Button>}
           
           <Button variant="outline" onClick={onBackToTitle} size="sm" className={`bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]]`}>
