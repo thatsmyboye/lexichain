@@ -9,7 +9,6 @@ import { calculateLevel } from "@/lib/progression";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
 import PuzzleSelector from "@/components/game/PuzzleSelector";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
@@ -22,6 +21,7 @@ const Index = () => {
   const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   // Initialize login streak tracking
@@ -29,8 +29,6 @@ const Index = () => {
   
   // Fetch user profile for XP and level calculation
   const { profile, refreshProfile } = useProfile(user);
-  const playerLevel = profile ? calculateLevel(profile.total_xp) : { level: 1, xp: 0, xpToNext: 100, totalXp: 0, title: "Word Novice", color: "text-gray-500", unlockedFeatures: [] };
-  const { isAdmin } = useIsAdmin(user);
 
   useEffect(() => {
     // Get current user and set up auth state listener
@@ -44,6 +42,32 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check admin status separately to avoid hook ordering issues
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdmin();
+  }, [user]);
   useEffect(() => {
     document.title = "Lexichain | Build word chains by reusing tiles";
     const desc = "Draw paths to make words. Each new word must reuse at least one tile. Keep chaining until no valid word remains.";
@@ -141,6 +165,8 @@ const Index = () => {
       user={user}
     />;
   }
+
+  const playerLevel = profile ? calculateLevel(profile.total_xp) : { level: 1, xp: 0, xpToNext: 100, totalXp: 0, title: "Word Novice", color: "text-gray-500", unlockedFeatures: [] };
 
   if (showAdvancedModes) {
     return <AdvancedGameModes 

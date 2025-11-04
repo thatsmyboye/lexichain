@@ -8,7 +8,6 @@ import { checkIncompleteGameState } from "@/utils/gameStateUtils";
 import { InteractiveTutorial } from "@/components/tutorial/InteractiveTutorial";
 import { SoundButton } from "@/components/effects/SoundSystem";
 import { BookOpen, Settings, Shield } from "lucide-react";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useNavigate } from "react-router-dom";
 interface TitleScreenProps {
   onPlayClick: () => void;
@@ -39,7 +38,7 @@ const TitleScreen = ({
     movesUsed: number;
     lastSaved?: number;
   } | null>(null);
-  const { isAdmin } = useIsAdmin(user);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const handleLogout = async () => {
     try {
@@ -92,6 +91,32 @@ const TitleScreen = ({
     });
     return () => subscription.unsubscribe();
   }, [propUser]);
+
+  // Check admin status
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdmin();
+  }, [user]);
   return <div className="h-screen flex flex-col items-center bg-gradient-to-br from-background to-muted relative px-4">
       {/* Mobile: Compact layout with justify-between */}
       <div className="md:hidden h-full flex flex-col items-center justify-between py-[24px]">
