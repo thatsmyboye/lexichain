@@ -2229,7 +2229,24 @@ function WordPathGame({
     for (const [type, rarity] of Object.entries(modifiedRarities)) {
       cumulative += rarity;
       if (rand <= cumulative) {
-        const expiryTurns = Math.floor(Math.random() * 5) + 1; // Random 1-5 turns
+        // Calculate expiry turns based on tile type and game mode
+        let expiryTurns: number;
+        if (type === "stone" && gameMode === "endless") {
+          // Stone tiles in endless mode last longer as difficulty increases
+          // Base: 3-5 turns, increases to 8-12 turns at difficulty 10+
+          const difficultyFactor = Math.min(1.0, endlessDifficultyLevel / 10);
+          const baseMin = 3;
+          const baseMax = 5;
+          const maxMin = 8;
+          const maxMax = 12;
+          const minTurns = Math.floor(baseMin + (maxMin - baseMin) * difficultyFactor);
+          const maxTurns = Math.floor(baseMax + (maxMax - baseMax) * difficultyFactor);
+          expiryTurns = Math.floor(Math.random() * (maxTurns - minTurns + 1)) + minTurns;
+        } else {
+          // Default expiry: Random 1-5 turns for other tiles/modes
+          expiryTurns = Math.floor(Math.random() * 5) + 1;
+        }
+        
         if (type === "multiplier") {
           const multiplierValues = [2, 3, 4];
           const value = multiplierValues[Math.floor(Math.random() * multiplierValues.length)];
