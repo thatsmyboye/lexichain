@@ -169092,6 +169092,8 @@ latticinii
 latticinio
 lattin
 lattins
+latte
+lattes
 latuka
 latus
 latvia
@@ -196469,6 +196471,7 @@ nache
 nachitoch
 nachitoches
 nacho
+nachos
 nachschlag
 nachtmml
 nachus
@@ -258419,6 +258422,8 @@ ques
 quesal
 quesited
 quesitive
+quesadilla
+quesadillas
 quest
 quested
 quester
