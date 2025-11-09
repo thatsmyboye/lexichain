@@ -196,7 +196,9 @@ export function AdvancedGameModes({
     'classic',
     'zen',
     // Include time_attack by default
-    'time_attack'
+    'time_attack',
+    // TEMPORARY: Chaos mode unlocked for all players
+    'chaos'
   ]);
 
   const handleModeClick = (mode: AdvancedModeConfig) => {
