@@ -40,7 +40,7 @@ type SpecialTile = {
   value?: number;
   expiryTurns?: number;
 };
-type GameMode = "classic" | "target" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen";
+type GameMode = "classic" | "target" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
 type GameSettings = {
   scoreThreshold: number;
   mode: GameMode;
@@ -314,7 +314,7 @@ function computeScoreBreakdown(params: {
   specialTiles: SpecialTile[][];
   lastWordTiles: Set<string>;
   streak: number;
-  mode: "classic" | "daily" | "target" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen";
+  mode: "classic" | "daily" | "target" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   blitzMultiplier: number;
   activeEffects: Array<{
     id: string;
@@ -929,7 +929,7 @@ function WordPathGame({
   initialPuzzleId
 }: {
   onBackToTitle?: () => void;
-  initialMode?: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen";
+  initialMode?: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   initialPuzzleId?: string;
 }) {
   const [user, setUser] = useState<User | null>(null);
@@ -1090,6 +1090,8 @@ function WordPathGame({
       setSettings(prev => ({ ...prev, mode: "zen" }));
       setZenHintsUsed(0);
       setZenUndoStack([]);
+    } else if (initialMode === "chaos") {
+      setSettings(prev => ({ ...prev, mode: "chaos" }));
     }
   }, [initialMode, dailyChallengeInitialized]);
 
@@ -1522,7 +1524,7 @@ function WordPathGame({
         
           // Only generate a board for classic mode or when no specific mode is set
           // Daily and blitz modes handle their own board generation
-          if (!initialMode || initialMode === "classic" || initialMode === "time_attack" || initialMode === "zen" || initialMode === "endless" || initialMode === "puzzle" || initialMode === "survival") {
+          if (!initialMode || initialMode === "classic" || initialMode === "time_attack" || initialMode === "zen" || initialMode === "endless" || initialMode === "puzzle" || initialMode === "survival" || initialMode === "chaos") {
             setIsGenerating(true);
             let newBoard: string[][];
             let probe: any;
@@ -3489,10 +3491,104 @@ function WordPathGame({
         setSpecialTiles(updatedSpecialTiles);
       }
     }
+    
+    // Chaos Mode: Reshuffle board after every word
+    if (settings.mode === "chaos" && dict && sorted) {
+      setTimeout(() => {
+        // Keep some random tiles, shuffle others
+        const newBoard = board.map(row => [...row]);
+        const tilesToReshuffle = Math.floor(Math.random() * 5) + 3; // 3-7 tiles reshuffled
+        const positions: Pos[] = [];
+        
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            positions.push({ r, c });
+          }
+        }
+        
+        // Shuffle positions randomly
+        for (let i = positions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+        
+        // Replace random tiles with new letters
+        const letterCounts = new Map<string, number>();
+        for (let i = 0; i < Math.min(tilesToReshuffle, positions.length); i++) {
+          const pos = positions[i];
+          newBoard[pos.r][pos.c] = constrainedRandomLetter(letterCounts);
+        }
+        
+        // Validate Q-U adjacency
+        const validation = validateAndFixQUAdjacency(newBoard, size, undefined, undefined, false);
+        const validatedBoard = validation.board;
+        
+        // Ensure at least 1 valid word exists
+        const probe = probeGrid(validatedBoard, dict, sorted, 1, 1000);
+        if (probe.words.size > 0) {
+          setBoard(validatedBoard);
+          
+          // Chaos Mode: Occasionally turn special tiles into traps (20% chance)
+          if (Math.random() < 0.2) {
+            const updatedTraps = newSpecialTiles.map(row => [...row]);
+            const specialPositions: Pos[] = [];
+            
+            for (let r = 0; r < size; r++) {
+              for (let c = 0; c < size; c++) {
+                if (updatedTraps[r][c].type !== null && updatedTraps[r][c].type !== 'stone') {
+                  specialPositions.push({ r, c });
+                }
+              }
+            }
+            
+            if (specialPositions.length > 0) {
+              const trapPos = specialPositions[Math.floor(Math.random() * specialPositions.length)];
+              const oldType = updatedTraps[trapPos.r][trapPos.c].type;
+              
+              // Convert special tile to trap - spawn stone tiles instead
+              if (oldType === 'multiplier' || oldType === 'xfactor') {
+                // Find empty positions for stone tiles
+                const emptyPos: Pos[] = [];
+                for (let r = 0; r < size; r++) {
+                  for (let c = 0; c < size; c++) {
+                    if (updatedTraps[r][c].type === null) {
+                      emptyPos.push({ r, c });
+                    }
+                  }
+                }
+                
+                // Spawn 3 stone tiles
+                const stonesToSpawn = Math.min(3, emptyPos.length);
+                for (let i = 0; i < stonesToSpawn; i++) {
+                  const idx = Math.floor(Math.random() * emptyPos.length);
+                  const pos = emptyPos.splice(idx, 1)[0];
+                  updatedTraps[pos.r][pos.c] = { type: 'stone', expiryTurns: undefined };
+                }
+                
+                // Remove the trap tile
+                updatedTraps[trapPos.r][trapPos.c] = { type: null };
+                setSpecialTiles(updatedTraps);
+                toast.warning('⚠️ TRAP! Multiplier spawned stone tiles!', { duration: 3000 });
+              } else if (oldType === 'wild') {
+                // Wild tile trap: temporarily block vowels on next word
+                toast.warning('⚠️ TRAP! Wild tile turned dangerous!', { duration: 3000 });
+                // Remove wild tile
+                updatedTraps[trapPos.r][trapPos.c] = { type: null };
+                setSpecialTiles(updatedTraps);
+              }
+            }
+          }
+          
+          setAffectedTiles(new Set());
+          toast.info('🔀 Chaos! Board reshuffled!', { duration: 2000 });
+        }
+      }, 500);
+    }
+    
     clearPath();
     
-    // Check if game over due to stone tiles blocking all valid words (Classic, Zen, or Endless mode)
-    if ((settings.mode === "classic" || settings.mode === "zen" || (settings.mode === "endless" && endlessStarted)) && dict && sorted) {
+    // Check if game over due to stone tiles blocking all valid words (Classic, Zen, Chaos, or Endless mode)
+    if ((settings.mode === "classic" || settings.mode === "zen" || settings.mode === "chaos" || (settings.mode === "endless" && endlessStarted)) && dict && sorted) {
       // Create a test grid with stone tiles marked as blocked
       const testGrid = board.map((row, r) => 
         row.map((letter, c) => 
@@ -3503,8 +3599,8 @@ function WordPathGame({
       // Check if any valid words can still be formed
       const probe = probeGrid(testGrid, dict, sorted, 1, 100);
       if (probe.words.size === 0) {
-        // Handle Zen mode - regenerate board instead of ending game
-        if (settings.mode === "zen") {
+        // Handle Zen and Chaos modes - regenerate board instead of ending game
+        if (settings.mode === "zen" || settings.mode === "chaos") {
           setIsGenerating(true);
           if (dict && sorted) {
             const newBoard = generateSolvableBoard(size, dict, sorted);
@@ -3515,7 +3611,7 @@ function WordPathGame({
             setScore(0);
             setStreak(0);
             setIsGenerating(false);
-            toast.info("Zen mode: New board generated - no valid words remained!");
+            toast.info(`${settings.mode === "chaos" ? "Chaos" : "Zen"} mode: New board generated - no valid words remained!`);
           }
         } else if (settings.mode === "endless" && endlessStarted) {
           // Endless mode: Stone tiles blocked all words - end the run
@@ -3593,8 +3689,8 @@ function WordPathGame({
             }
             // If all required words found, completion is already handled in submitWord
           }
-          // Handle Zen mode - regenerate board instead of ending game
-          if (settings.mode === "zen") {
+          // Handle Zen and Chaos mode - regenerate board instead of ending game
+          if (settings.mode === "zen" || settings.mode === "chaos") {
             setIsGenerating(true);
             if (dict && sorted) {
               const newBoard = generateSolvableBoard(size, dict, sorted);

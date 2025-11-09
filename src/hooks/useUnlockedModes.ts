@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
-export type AdvancedGameMode = 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen';
+export type AdvancedGameMode = 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos';
 
 export function useUnlockedModes(user: User | null) {
   const [unlockedModes, setUnlockedModes] = useState<Set<AdvancedGameMode>>(new Set());

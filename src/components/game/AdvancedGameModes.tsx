@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame, Shield } from 'lucide-react';
+import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame, Shield, Shuffle } from 'lucide-react';
 import { useSound } from '@/components/effects';
 import { XP_REQUIREMENTS, calculateLevel } from '@/lib/progression';
 import { useUnlockedModes } from '@/hooks/useUnlockedModes';
 import type { User } from '@supabase/supabase-js';
 
-export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen';
+export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos';
 
 interface AdvancedModeConfig {
   id: AdvancedGameMode;
@@ -134,6 +134,24 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
       xpMultiplier: 0.8,
       scoreMultiplier: 0.5,
       unlockRequirement: 0
+    }
+  },
+  {
+    id: 'chaos',
+    name: 'Chaos',
+    description: 'The board reshuffles after every word! Special tiles may turn into traps.',
+    icon: <Shuffle className="h-6 w-6" />,
+    difficulty: 'Expert',
+    specialRules: [
+      'Board reshuffles after each word',
+      'New letters may swap in',
+      'Special tiles can become traps',
+      'At least 1 valid word always available'
+    ],
+    rewards: {
+      xpMultiplier: 2.8,
+      scoreMultiplier: 2.2,
+      unlockRequirement: 12
     }
   }
 ];
