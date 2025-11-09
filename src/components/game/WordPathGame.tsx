@@ -3358,8 +3358,8 @@ function WordPathGame({
     const sharedTilesCount = lastWordTiles.size ? path.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
     const multiplier = breakdown.multipliers.combinedApplied;
 
-    // Increment moves for daily challenge and puzzle mode
-    if (settings.mode === "daily" || settings.mode === "puzzle") {
+    // Increment moves for daily challenge, puzzle mode, and chaos mode
+    if (settings.mode === "daily" || settings.mode === "puzzle" || settings.mode === "chaos") {
       setMovesUsed(prev => prev + 1);
     }
     
@@ -3512,11 +3512,15 @@ function WordPathGame({
           [positions[i], positions[j]] = [positions[j], positions[i]];
         }
         
+        // Track which tiles will be changed for visual effect
+        const changedTileKeys = new Set<string>();
+        
         // Replace random tiles with new letters
         const letterCounts = new Map<string, number>();
         for (let i = 0; i < Math.min(tilesToReshuffle, positions.length); i++) {
           const pos = positions[i];
           newBoard[pos.r][pos.c] = constrainedRandomLetter(letterCounts);
+          changedTileKeys.add(keyOf(pos));
         }
         
         // Validate Q-U adjacency
@@ -3527,6 +3531,10 @@ function WordPathGame({
         const probe = probeGrid(validatedBoard, dict, sorted, 1, 1000);
         if (probe.words.size > 0) {
           setBoard(validatedBoard);
+          
+          // Show visual effect on changed tiles
+          setAffectedTiles(changedTileKeys);
+          setTimeout(() => setAffectedTiles(new Set()), 1000);
           
           // Chaos Mode: Occasionally turn special tiles into traps (20% chance)
           if (Math.random() < 0.2) {
@@ -3579,10 +3587,39 @@ function WordPathGame({
             }
           }
           
-          setAffectedTiles(new Set());
           toast.info('🔀 Chaos! Board reshuffled!', { duration: 2000 });
         }
       }, 500);
+      
+      // Check if Chaos mode move limit reached (15 moves)
+      if (movesUsed + 1 >= 15) {
+        setTimeout(() => {
+          const longestWord = usedWords.reduce((longest, wordEntry) => 
+            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
+          );
+          
+          const xpGain = calculateXpGain({
+            baseScore: finalScore,
+            wordsFound: usedWords.length,
+            longestWord: longestWord.length,
+            gameMode: settings.mode,
+            difficulty: settings.difficulty,
+            timeBonus: 0,
+            streakBonus: 0,
+            perfectGame: false
+          });
+          
+          setXpGained(xpGain);
+          setShowXpGain(true);
+          setTimeout(() => setShowXpGain(false), 5000);
+          
+          setFinalGrade("None");
+          setGameOver(true);
+          saveGameResult();
+          
+          toast.success(`🎊 Chaos Round Complete! Score: ${finalScore.toLocaleString()} • +${xpGain} XP`, { duration: 5000 });
+        }, 1500);
+      }
     }
     
     clearPath();
@@ -3943,6 +3980,35 @@ function WordPathGame({
             }
           }} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
               Hint ({zenHintsUsed})
+          </Button>}
+          
+          {settings.mode === "chaos" && <Button variant="hero" onClick={() => {
+            if (dict && sorted) {
+              setIsGenerating(true);
+              const newBoard = generateSolvableBoard(size, dict, sorted);
+              const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
+              const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
+              
+              setBoard(newBoard);
+              setBenchmarks(bms);
+              setDiscoverableCount(probe.words.size);
+              setSpecialTiles(Array.from({ length: size }, () => Array.from({ length: size }, () => ({ type: null }))));
+              setUnlocked(new Set());
+              setGameOver(false);
+              setFinalGrade("None");
+              setPath([]);
+              setDragging(false);
+              setUsedWords([]);
+              setLastWordTiles(new Set());
+              setScore(0);
+              setStreak(0);
+              setMovesUsed(0);
+              setIsGenerating(false);
+              
+              toast.success('🔀 New Chaos Round! 15 moves to survive!', { duration: 3000 });
+            }
+          }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1">
+              {isGenerating ? "Generating..." : gameOver ? "New Round" : "Restart Round"}
           </Button>}
           
           <Button variant="outline" onClick={() => setShowHowToPlay(true)} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
@@ -4670,6 +4736,13 @@ function WordPathGame({
                 {settings.mode === "zen" && (
                   <div className="mt-1 text-xs text-muted-foreground">
                     Hints used: {zenHintsUsed} | Undos: {zenUndoStack.length}
+                  </div>
+                )}
+                {settings.mode === "chaos" && (
+                  <div className="mt-1 text-xs">
+                    <div className={`font-medium ${movesUsed >= 13 ? 'text-red-500' : movesUsed >= 10 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                      🔀 Moves: {movesUsed}/15
+                    </div>
                   </div>
                 )}
                 {puzzleMode && currentPuzzleId && (() => {
