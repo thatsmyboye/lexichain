@@ -8,8 +8,10 @@ import { ColorBlindSettings, HighContrastToggle } from '@/components/accessibili
 import { useSound } from '@/components/effects/SoundSystem';
 import { useColorBlind } from '@/components/accessibility/ColorBlindSupport';
 import { TileSkinSelector } from '@/components/settings/TileSkinSelector';
+import { useIsMobile } from '@/hooks/use-mobile';
 export function GameSettings() {
   const [activeTab, setActiveTab] = useState('general');
+  const isMobile = useIsMobile();
   const {
     playSound
   } = useSound();
@@ -35,19 +37,19 @@ export function GameSettings() {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              General
+              {!isMobile && <span>General</span>}
             </TabsTrigger>
             <TabsTrigger value="accessibility" className="flex items-center gap-2">
               <Accessibility className="h-4 w-4" />
-              Accessibility
+              {!isMobile && <span>Accessibility</span>}
             </TabsTrigger>
             <TabsTrigger value="audio" className="flex items-center gap-2">
               <Volume2 className="h-4 w-4" />
-              Audio
+              {!isMobile && <span>Audio</span>}
             </TabsTrigger>
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
-              Appearance
+              {!isMobile && <span>Appearance</span>}
             </TabsTrigger>
           </TabsList>
 
