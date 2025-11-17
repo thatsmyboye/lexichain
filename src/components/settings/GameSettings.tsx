@@ -8,19 +8,19 @@ import { ColorBlindSettings, HighContrastToggle } from '@/components/accessibili
 import { useSound } from '@/components/effects/SoundSystem';
 import { useColorBlind } from '@/components/accessibility/ColorBlindSupport';
 import { TileSkinSelector } from '@/components/settings/TileSkinSelector';
-
 export function GameSettings() {
   const [activeTab, setActiveTab] = useState('general');
-  const { playSound } = useSound();
-  const { colorBlindType } = useColorBlind();
-
+  const {
+    playSound
+  } = useSound();
+  const {
+    colorBlindType
+  } = useColorBlind();
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     playSound('button_click');
   };
-
-  return (
-    <Card className="w-full max-w-2xl mx-auto">
+  return <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
@@ -63,11 +63,7 @@ export function GameSettings() {
                       Automatically save your progress
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="h-4 w-4 text-primary"
-                  />
+                  <input type="checkbox" defaultChecked className="h-4 w-4 text-primary" />
                 </div>
 
                 <Separator />
@@ -79,24 +75,12 @@ export function GameSettings() {
                       Show achievement and goal notifications
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="h-4 w-4 text-primary"
-                  />
+                  <input type="checkbox" defaultChecked className="h-4 w-4 text-primary" />
                 </div>
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Game Difficulty</label>
-                  <select className="w-full p-2 border rounded-md">
-                    <option value="easy">Easy</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="hard">Hard</option>
-                    <option value="expert">Expert</option>
-                  </select>
-                </div>
+                
               </div>
             </div>
           </TabsContent>
@@ -129,8 +113,8 @@ export function GameSettings() {
 
           <TabsContent value="audio" className="space-y-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Audio Settings</h3>
-              <SoundSettings />
+              <h3 className="text-lg font-semibold">Coming Soon</h3>
+              
             </div>
           </TabsContent>
 
@@ -166,20 +150,11 @@ export function GameSettings() {
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Animation Speed</label>
-                  <select className="w-full p-2 border rounded-md">
-                    <option value="slow">Slow</option>
-                    <option value="normal" selected>Normal</option>
-                    <option value="fast">Fast</option>
-                    <option value="none">None</option>
-                  </select>
-                </div>
+                
               </div>
             </div>
           </TabsContent>
         </Tabs>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
