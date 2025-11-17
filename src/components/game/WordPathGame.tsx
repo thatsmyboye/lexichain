@@ -25,6 +25,8 @@ import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/
 import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
 import { dictionaryManager } from "@/utils/dictionaryManager";
 import { getPuzzleById, type PuzzleBoard } from "@/lib/puzzleBoards";
+import { useTileSkin } from "@/hooks/useTileSkin";
+import { getBenchmarkColor } from "@/lib/tileSkins";
 type Pos = {
   r: number;
   c: number;
@@ -948,6 +950,7 @@ function WordPathGame({
   } = useConsumables(user);
   const { syncBackupResults } = useOfflineSync();
   const isMobile = useIsMobile();
+  const { skin } = useTileSkin();
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][] | null>(null);
   const [specialTiles, setSpecialTiles] = useState<SpecialTile[][]>(() => Array.from({
@@ -4477,49 +4480,26 @@ function WordPathGame({
                 // Determine current achievement level for border color
                 const currentGrade = benchmarks ? score >= benchmarks.platinum ? "platinum" : score >= benchmarks.gold ? "gold" : score >= benchmarks.silver ? "silver" : score >= benchmarks.bronze ? "bronze" : "none" : "none";
 
-                // Define border colors for each achievement level
-                const getBorderColor = () => {
-                  switch (currentGrade) {
-                    case "platinum":
-                      return "border-purple-400";
-                    case "gold":
-                      return "border-yellow-400";
-                    case "silver":
-                      return "border-gray-400";
-                    case "bronze":
-                      return "border-amber-600";
-                    default:
-                      return "border-border";
-                  }
-                };
-
-                // Define background colors for last word tiles based on achievement level
-                const getLastWordBackground = () => {
-                  switch (currentGrade) {
-                    case "platinum":
-                      return "bg-purple-100 dark:bg-purple-950/30";
-                    case "gold":
-                      return "bg-yellow-100 dark:bg-yellow-950/30";
-                    case "silver":
-                      return "bg-gray-100 dark:bg-gray-950/30";
-                    case "bronze":
-                      return "bg-amber-100 dark:bg-amber-950/30";
-                    default:
-                      return "bg-secondary/60";
-                  }
-                };
-                let baseClasses = `relative aspect-square flex items-center justify-center rounded-lg ${getBorderColor()} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
+                // Get benchmark colors from selected skin
+                const benchmarkColor = getBenchmarkColor(skin, currentGrade as 'bronze' | 'silver' | 'gold' | 'platinum' | 'none');
+                
+                let baseClasses = `relative aspect-square flex items-center justify-center rounded-lg ${benchmarkColor.border} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
+                
                 if (selected) {
-                  baseClasses += "ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] dark:bg-green-950 dark:ring-green-500 ";
+                  // Use skin's selected classes
+                  baseClasses += skin.selectedClasses + " ";
                 } else if (isAffected) {
+                  // Affected tiles (e.g., from consumables) keep their special styling
                   baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
                 } else if (reused) {
-                  baseClasses += getLastWordBackground() + " ";
+                  // Last word tiles use benchmark background color
+                  baseClasses += benchmarkColor.background + " ";
                 } else {
-                  baseClasses += "bg-card ";
+                  // Default tiles use skin's base classes
+                  baseClasses += skin.baseClasses + " ";
                 }
 
-                // Special tile styling
+                // Special tile styling (these override skin colors)
                 if (special.type === "stone") {
                   baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white ";
                 } else if (special.type === "wild") {

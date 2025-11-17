@@ -7,6 +7,7 @@ import { SoundSettings } from '@/components/effects/SoundSystem';
 import { ColorBlindSettings, HighContrastToggle } from '@/components/accessibility/ColorBlindSupport';
 import { useSound } from '@/components/effects/SoundSystem';
 import { useColorBlind } from '@/components/accessibility/ColorBlindSupport';
+import { TileSkinSelector } from '@/components/settings/TileSkinSelector';
 
 export function GameSettings() {
   const [activeTab, setActiveTab] = useState('general');
@@ -137,7 +138,11 @@ export function GameSettings() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Appearance Settings</h3>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
+                <TileSkinSelector />
+
+                <Separator />
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Theme</label>
                   <select className="w-full p-2 border rounded-md">

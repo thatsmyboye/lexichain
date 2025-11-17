@@ -157,6 +157,9 @@ const Index = () => {
   const handleLeaderboardClick = () => {
     navigate("/leaderboard");
   };
+  const handleSettingsClick = () => {
+    navigate("/settings");
+  };
 
   if (showPuzzleSelector) {
     return <PuzzleSelector
@@ -235,8 +238,9 @@ const Index = () => {
     onLoginClick={handleLoginClick} 
     onRegisterClick={handleRegisterClick} 
     onStatsClick={handleStatsClick} 
-    onStoreClick={handleStoreClick}
+    onStoreClick={handleStoreClick} 
     onLeaderboardClick={handleLeaderboardClick}
+    onSettingsClick={handleSettingsClick}
     streakData={streakData}
     user={user}
   />;
