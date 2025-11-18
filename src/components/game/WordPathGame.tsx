@@ -4476,12 +4476,14 @@ function WordPathGame({
               const reused = lastWordTiles.has(k);
               const special = specialTiles[r][c];
               const isAffected = affectedTiles.has(k);
-              const getTileClasses = () => {
-                // Determine current achievement level for border color
-                const currentGrade = benchmarks ? score >= benchmarks.platinum ? "platinum" : score >= benchmarks.gold ? "gold" : score >= benchmarks.silver ? "silver" : score >= benchmarks.bronze ? "bronze" : "none" : "none";
+              
+              // Determine current achievement level for border color (shared by tile classes and overlay)
+              const currentGrade = benchmarks ? score >= benchmarks.platinum ? "platinum" : score >= benchmarks.gold ? "gold" : score >= benchmarks.silver ? "silver" : score >= benchmarks.bronze ? "bronze" : "none" : "none";
 
-                // Get benchmark colors from selected skin
-                const benchmarkColor = getBenchmarkColor(skin, currentGrade as 'bronze' | 'silver' | 'gold' | 'platinum' | 'none');
+              // Get benchmark colors from selected skin (shared by tile classes and overlay)
+              const benchmarkColor = getBenchmarkColor(skin, currentGrade as 'bronze' | 'silver' | 'gold' | 'platinum' | 'none');
+              
+              const getTileClasses = () => {
                 
                 let baseClasses = `relative aspect-square flex items-center justify-center rounded-lg ${benchmarkColor.border} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
                 
@@ -4493,18 +4495,9 @@ function WordPathGame({
                   baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
                 } else if (reused) {
                   // Last word tiles: combine base skin with benchmark highlight
-                  // Use before pseudo-element for overlay to work with gradients
                   baseClasses += skin.baseClasses + " ";
-                  
-                  // ALWAYS show overlay for last-played tiles (critical for gameplay)
-                  if (benchmarkColor.background) {
-                    // Use before: pseudo-element for overlay that works with gradient backgrounds
-                    baseClasses += "before:content-[''] before:absolute before:inset-0 before:rounded-lg ";
-                    baseClasses += `before:${benchmarkColor.background} `;
-                    baseClasses += "before:pointer-events-none before:z-0 ";
-                    // Ensure tile content is above overlay
-                    baseClasses += "relative ";
-                  }
+                  // Make tile relative positioned for overlay div
+                  baseClasses += "relative ";
                   
                   // Add a subtle ring accent and shadow when benchmark is reached
                   if (currentGrade !== 'none') {
@@ -4562,6 +4555,39 @@ function WordPathGame({
               })} className={getTileClasses()} style={{
                 touchAction: 'none'
               }}>
+                  {/* Overlay for last-played tiles (critical for gameplay) */}
+                  {reused && benchmarkColor.background && (
+                    <div 
+                      className="absolute inset-0 rounded-lg pointer-events-none z-0"
+                      style={{
+                        backgroundColor: (() => {
+                          // If no benchmark reached, use skin-specific default overlay
+                          if (currentGrade === 'none') {
+                            // Map each skin to its overlay color
+                            const skinOverlays: Record<string, string> = {
+                              original: 'rgba(168, 85, 247, 0.2)',   // primary purple
+                              ocean: 'rgba(34, 211, 238, 0.3)',      // cyan
+                              forest: 'rgba(52, 211, 153, 0.3)',     // emerald
+                              sunset: 'rgba(251, 146, 60, 0.3)',     // orange
+                              midnight: 'rgba(168, 85, 247, 0.3)',   // purple
+                              neon: 'rgba(34, 211, 238, 0.4)'        // cyan
+                            };
+                            return skinOverlays[skin.id] || 'rgba(168, 85, 247, 0.2)';
+                          }
+                          
+                          // When benchmark is reached, use benchmark-specific colors
+                          const benchmarkColors: Record<string, string> = {
+                            platinum: 'rgba(168, 85, 247, 0.3)',  // purple
+                            gold: 'rgba(234, 179, 8, 0.3)',       // yellow
+                            silver: 'rgba(156, 163, 175, 0.3)',   // gray
+                            bronze: 'rgba(217, 119, 6, 0.3)'      // orange/amber
+                          };
+                          return benchmarkColors[currentGrade] || 'rgba(168, 85, 247, 0.2)';
+                        })()
+                      }}
+                    />
+                  )}
+                  
                   <div className="text-3xl font-semibold tracking-wide relative z-10">
                     {special.type === "wild" ? "?" : ch}
                   </div>
