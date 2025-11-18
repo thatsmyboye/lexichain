@@ -26,19 +26,19 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     benchmarkColors: {
       bronze: {
         border: 'border-amber-600',
-        background: 'bg-amber-100 dark:bg-amber-950/30'
+        background: 'bg-amber-200/70 dark:bg-amber-900/50'
       },
       silver: {
         border: 'border-gray-400',
-        background: 'bg-gray-100 dark:bg-gray-950/30'
+        background: 'bg-gray-200/70 dark:bg-gray-800/50'
       },
       gold: {
         border: 'border-yellow-400',
-        background: 'bg-yellow-100 dark:bg-yellow-950/30'
+        background: 'bg-yellow-200/70 dark:bg-yellow-900/50'
       },
       platinum: {
         border: 'border-purple-400',
-        background: 'bg-purple-100 dark:bg-purple-950/30'
+        background: 'bg-purple-200/70 dark:bg-purple-900/50'
       }
     }
   },
@@ -51,19 +51,19 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     benchmarkColors: {
       bronze: {
         border: 'border-amber-500',
-        background: 'bg-amber-100/50 dark:bg-amber-900/20'
+        background: 'bg-amber-200/60 dark:bg-amber-800/40'
       },
       silver: {
         border: 'border-slate-400',
-        background: 'bg-slate-100/50 dark:bg-slate-900/20'
+        background: 'bg-slate-200/60 dark:bg-slate-700/40'
       },
       gold: {
         border: 'border-yellow-300',
-        background: 'bg-yellow-100/50 dark:bg-yellow-900/20'
+        background: 'bg-yellow-200/60 dark:bg-yellow-800/40'
       },
       platinum: {
         border: 'border-cyan-400',
-        background: 'bg-cyan-100/50 dark:bg-cyan-900/20'
+        background: 'bg-cyan-200/60 dark:bg-cyan-800/40'
       }
     }
   },
@@ -76,19 +76,19 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     benchmarkColors: {
       bronze: {
         border: 'border-orange-600',
-        background: 'bg-orange-100/50 dark:bg-orange-900/20'
+        background: 'bg-orange-200/60 dark:bg-orange-800/40'
       },
       silver: {
         border: 'border-stone-400',
-        background: 'bg-stone-100/50 dark:bg-stone-900/20'
+        background: 'bg-stone-200/60 dark:bg-stone-700/40'
       },
       gold: {
         border: 'border-lime-400',
-        background: 'bg-lime-100/50 dark:bg-lime-900/20'
+        background: 'bg-lime-200/60 dark:bg-lime-800/40'
       },
       platinum: {
         border: 'border-emerald-400',
-        background: 'bg-emerald-100/50 dark:bg-emerald-900/20'
+        background: 'bg-emerald-200/60 dark:bg-emerald-800/40'
       }
     }
   },
@@ -101,19 +101,19 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     benchmarkColors: {
       bronze: {
         border: 'border-red-600',
-        background: 'bg-red-100/50 dark:bg-red-900/20'
+        background: 'bg-red-200/60 dark:bg-red-800/40'
       },
       silver: {
         border: 'border-rose-400',
-        background: 'bg-rose-100/50 dark:bg-rose-900/20'
+        background: 'bg-rose-200/60 dark:bg-rose-800/40'
       },
       gold: {
         border: 'border-amber-400',
-        background: 'bg-amber-100/50 dark:bg-amber-900/20'
+        background: 'bg-amber-200/60 dark:bg-amber-800/40'
       },
       platinum: {
         border: 'border-pink-400',
-        background: 'bg-pink-100/50 dark:bg-pink-900/20'
+        background: 'bg-pink-200/60 dark:bg-pink-800/40'
       }
     }
   },
@@ -126,19 +126,19 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     benchmarkColors: {
       bronze: {
         border: 'border-violet-600',
-        background: 'bg-violet-100/50 dark:bg-violet-900/20'
+        background: 'bg-violet-200/60 dark:bg-violet-800/40'
       },
       silver: {
         border: 'border-indigo-400',
-        background: 'bg-indigo-100/50 dark:bg-indigo-900/20'
+        background: 'bg-indigo-200/60 dark:bg-indigo-800/40'
       },
       gold: {
         border: 'border-yellow-300',
-        background: 'bg-yellow-100/50 dark:bg-yellow-900/20'
+        background: 'bg-yellow-200/60 dark:bg-yellow-800/40'
       },
       platinum: {
         border: 'border-purple-400',
-        background: 'bg-purple-100/50 dark:bg-purple-900/20'
+        background: 'bg-purple-200/60 dark:bg-purple-800/40'
       }
     }
   },
@@ -151,19 +151,19 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     benchmarkColors: {
       bronze: {
         border: 'border-cyan-500',
-        background: 'bg-cyan-500/20 dark:bg-cyan-500/10'
+        background: 'bg-cyan-500/30 dark:bg-cyan-500/25'
       },
       silver: {
         border: 'border-blue-400',
-        background: 'bg-blue-500/20 dark:bg-blue-500/10'
+        background: 'bg-blue-500/30 dark:bg-blue-500/25'
       },
       gold: {
         border: 'border-yellow-400',
-        background: 'bg-yellow-500/20 dark:bg-yellow-500/10'
+        background: 'bg-yellow-500/30 dark:bg-yellow-500/25'
       },
       platinum: {
         border: 'border-pink-400',
-        background: 'bg-pink-500/20 dark:bg-pink-500/10'
+        background: 'bg-pink-500/30 dark:bg-pink-500/25'
       }
     }
   }

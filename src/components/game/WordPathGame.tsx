@@ -4492,8 +4492,24 @@ function WordPathGame({
                   // Affected tiles (e.g., from consumables) keep their special styling
                   baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
                 } else if (reused) {
-                  // Last word tiles use benchmark background color
-                  baseClasses += benchmarkColor.background + " ";
+                  // Last word tiles: combine base skin with benchmark highlight
+                  // Apply base classes first, then overlay with highlight
+                  baseClasses += skin.baseClasses + " ";
+                  // Add highlight overlay - ensure it's visible with higher opacity
+                  if (benchmarkColor.background) {
+                    baseClasses += benchmarkColor.background + " ";
+                  }
+                  // Add subtle ring accent to make highlight more visible
+                  if (currentGrade !== 'none') {
+                    // Convert border color to ring color (lighter shade for ring)
+                    let ringColor = benchmarkColor.border.replace('border-', 'ring-');
+                    // Adjust shade to be slightly lighter for ring effect
+                    ringColor = ringColor
+                      .replace('-600', '-400')
+                      .replace('-500', '-300')
+                      .replace('-400', '-300');
+                    baseClasses += "ring-1 " + ringColor + " ";
+                  }
                 } else {
                   // Default tiles use skin's base classes
                   baseClasses += skin.baseClasses + " ";
