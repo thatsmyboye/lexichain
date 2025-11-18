@@ -4493,22 +4493,40 @@ function WordPathGame({
                   baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
                 } else if (reused) {
                   // Last word tiles: combine base skin with benchmark highlight
-                  // Apply base classes first, then overlay with highlight
+                  // Use before pseudo-element for overlay to work with gradients
                   baseClasses += skin.baseClasses + " ";
-                  // Add highlight overlay - ensure it's visible with higher opacity
-                  if (benchmarkColor.background) {
-                    baseClasses += benchmarkColor.background + " ";
+                  
+                  // Add highlight overlay using before pseudo-element (works with gradients)
+                  if (benchmarkColor.background && currentGrade !== 'none') {
+                    // Use before: pseudo-element for overlay that works with gradient backgrounds
+                    baseClasses += "before:content-[''] before:absolute before:inset-0 before:rounded-lg ";
+                    baseClasses += `before:${benchmarkColor.background} `;
+                    baseClasses += "before:pointer-events-none before:z-0 ";
+                    // Ensure tile content is above overlay
+                    baseClasses += "relative ";
                   }
-                  // Add subtle ring accent to make highlight more visible
+                  
+                  // Add a subtle ring accent and shadow to make it stand out more
                   if (currentGrade !== 'none') {
-                    // Convert border color to ring color (lighter shade for ring)
+                    // Convert border color to ring color for accent
                     let ringColor = benchmarkColor.border.replace('border-', 'ring-');
                     // Adjust shade to be slightly lighter for ring effect
                     ringColor = ringColor
                       .replace('-600', '-400')
                       .replace('-500', '-300')
                       .replace('-400', '-300');
-                    baseClasses += "ring-1 " + ringColor + " ";
+                    baseClasses += "ring-2 " + ringColor + " ring-opacity-70 ";
+                    
+                    // Add a subtle shadow based on grade for extra visibility
+                    if (currentGrade === 'platinum') {
+                      baseClasses += "shadow-[0_0_8px_rgba(168,85,247,0.4)] ";
+                    } else if (currentGrade === 'gold') {
+                      baseClasses += "shadow-[0_0_8px_rgba(234,179,8,0.4)] ";
+                    } else if (currentGrade === 'silver') {
+                      baseClasses += "shadow-[0_0_8px_rgba(156,163,175,0.4)] ";
+                    } else {
+                      baseClasses += "shadow-[0_0_8px_rgba(217,119,6,0.4)] ";
+                    }
                   }
                 } else {
                   // Default tiles use skin's base classes
@@ -4544,14 +4562,14 @@ function WordPathGame({
               })} className={getTileClasses()} style={{
                 touchAction: 'none'
               }}>
-                  <div className="text-3xl font-semibold tracking-wide">
+                  <div className="text-3xl font-semibold tracking-wide relative z-10">
                     {special.type === "wild" ? "?" : ch}
                   </div>
                   {/* Rarity indicators */}
-                  {special.type !== "wild" && letterRarity(ch) === 1 && <div className="absolute top-0.5 right-0.5 text-xs font-bold text-orange-600 dark:text-orange-400">
+                  {special.type !== "wild" && letterRarity(ch) === 1 && <div className="absolute top-0.5 right-0.5 text-xs font-bold text-orange-600 dark:text-orange-400 z-10">
                       +
                     </div>}
-                  {special.type !== "wild" && letterRarity(ch) === 2 && <div className="absolute top-0.5 right-0.5 text-xs font-bold text-purple-600 dark:text-purple-400">
+                  {special.type !== "wild" && letterRarity(ch) === 2 && <div className="absolute top-0.5 right-0.5 text-xs font-bold text-purple-600 dark:text-purple-400 z-10">
                       ★
                     </div>}
                   {selected && <div className="absolute top-1 right-2 text-xs font-medium text-muted-foreground">{idx + 1}</div>}
