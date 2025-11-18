@@ -11,6 +11,9 @@ import { ProfileManagement } from '@/components/admin/ProfileManagement';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { AdminActions } from '@/components/admin/AdminActions';
 import { UserRoleManagement } from '@/components/admin/UserRoleManagement';
+import { SystemOverview } from '@/components/admin/SystemOverview';
+import { GameDataManagement } from '@/components/admin/GameDataManagement';
+import { DatabaseTools } from '@/components/admin/DatabaseTools';
 
 export default function AdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -109,19 +112,30 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
 
-        <Tabs defaultValue="actions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="actions">Admin Actions</TabsTrigger>
-            <TabsTrigger value="roles">User Roles</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-6" id="admin-tabs">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="actions">Actions</TabsTrigger>
+            <TabsTrigger value="games">Games</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="profiles">Profiles</TabsTrigger>
             <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+            <TabsTrigger value="database">Database</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <SystemOverview />
+          </TabsContent>
 
           <TabsContent value="actions" className="space-y-4">
             <AdminActions />
           </TabsContent>
 
-          <TabsContent value="roles" className="space-y-4">
+          <TabsContent value="games" className="space-y-4">
+            <GameDataManagement />
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
             <UserRoleManagement />
           </TabsContent>
 
@@ -131,6 +145,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="audit" className="space-y-4">
             <AuditLogViewer />
+          </TabsContent>
+
+          <TabsContent value="database" className="space-y-4">
+            <DatabaseTools />
           </TabsContent>
         </Tabs>
       </div>

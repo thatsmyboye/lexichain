@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
+const ADMIN_EMAIL = 'paul.t.boye@gmail.com';
+
 export function useIsAdmin(user: User | null) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,19 +17,11 @@ export function useIsAdmin(user: User | null) {
 
     const checkAdminStatus = async () => {
       try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error checking admin status:', error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(!!data);
-        }
+        // Check if user email matches the exclusive admin email
+        const userEmail = user.email?.toLowerCase().trim();
+        const isAdminUser = userEmail === ADMIN_EMAIL.toLowerCase().trim();
+        
+        setIsAdmin(isAdminUser);
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
