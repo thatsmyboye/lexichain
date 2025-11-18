@@ -4496,8 +4496,8 @@ function WordPathGame({
                   // Use before pseudo-element for overlay to work with gradients
                   baseClasses += skin.baseClasses + " ";
                   
-                  // Add highlight overlay using before pseudo-element (works with gradients)
-                  if (benchmarkColor.background && currentGrade !== 'none') {
+                  // ALWAYS show overlay for last-played tiles (critical for gameplay)
+                  if (benchmarkColor.background) {
                     // Use before: pseudo-element for overlay that works with gradient backgrounds
                     baseClasses += "before:content-[''] before:absolute before:inset-0 before:rounded-lg ";
                     baseClasses += `before:${benchmarkColor.background} `;
@@ -4506,7 +4506,7 @@ function WordPathGame({
                     baseClasses += "relative ";
                   }
                   
-                  // Add a subtle ring accent and shadow to make it stand out more
+                  // Add a subtle ring accent and shadow when benchmark is reached
                   if (currentGrade !== 'none') {
                     // Convert border color to ring color for accent
                     let ringColor = benchmarkColor.border.replace('border-', 'ring-');
