@@ -50,7 +50,7 @@ export function DatabaseTools() {
         if (match) {
           const tableName = match[1];
           const { data, error } = await supabase
-            .from(tableName)
+            .from(tableName as any)
             .select('*')
             .limit(100);
 
