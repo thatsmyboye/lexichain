@@ -4494,9 +4494,7 @@ function WordPathGame({
                   // Affected tiles (e.g., from consumables) keep their special styling
                   baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
                 } else if (reused) {
-                  // Last word tiles: combine base skin with benchmark highlight
-                  baseClasses += skin.baseClasses + " ";
-                  // Make tile relative positioned for overlay div
+                  // Last word tiles: DON'T apply skin background - let overlay show through
                   baseClasses += "relative ";
                   
                   // Add a subtle ring accent and shadow when benchmark is reached
