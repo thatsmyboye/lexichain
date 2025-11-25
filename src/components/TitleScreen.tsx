@@ -149,10 +149,10 @@ const TitleScreen = ({
                   <span className="font-medium">Score: <span className="text-foreground">{challengeProgress.score}</span></span>
                   <span className="text-muted-foreground/50">•</span>
                   <span className="font-medium">Moves: <span className="text-foreground">{challengeProgress.movesUsed}</span></span>
-                  {challengeProgress.lastSaved && <div className="text-xs mt-1 text-muted-foreground/70">
-                      Last saved: {new Date(challengeProgress.lastSaved).toLocaleTimeString()}
-                    </div>}
                 </div>
+                {challengeProgress.lastSaved && <div className="text-xs mt-1.5 text-muted-foreground/70">
+                    Last saved: {new Date(challengeProgress.lastSaved).toLocaleTimeString()}
+                  </div>}
               </div>}
           
           <div className="flex items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
