@@ -4759,7 +4759,9 @@ function WordPathGame({
                             ? 'bg-gradient-to-r from-yellow-500 to-yellow-400'
                             : score >= benchmarks.silver
                               ? 'bg-gradient-to-r from-gray-400 to-gray-300'
-                              : 'bg-gradient-to-r from-orange-500 to-orange-400'
+                              : score >= benchmarks.bronze
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-400'
+                                : 'bg-gradient-to-r from-primary/60 to-primary/40'
                       }`} style={{
                     width: `${Math.min(100, score / benchmarks.platinum * 100)}%`
                   }} />
