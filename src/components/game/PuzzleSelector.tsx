@@ -64,60 +64,91 @@ export default function PuzzleSelector({ onPuzzleSelect, onBack, user }: PuzzleS
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background p-4">
-      <div className="container mx-auto max-w-6xl">
-        <div className="mb-6 flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-4 relative overflow-hidden">
+      {/* Animated background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-0 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s' }}></div>
+        <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-brand-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }}></div>
+      </div>
+
+      <div className="container mx-auto max-w-6xl relative z-10">
+        <div className="mb-6 flex items-center justify-between animate-in fade-in slide-in-from-top duration-500">
           <div>
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
-              Puzzle Mode
-            </h1>
-            <p className="text-muted-foreground mt-2">
+            <div className="relative inline-block">
+              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg">
+                Puzzle Mode
+              </h1>
+              <div className="absolute -inset-1 bg-gradient-to-r from-brand-400/10 to-brand-600/10 blur-xl -z-10"></div>
+            </div>
+            <p className="text-muted-foreground mt-2 font-medium">
               Find all required words within the move limit
             </p>
           </div>
-          <Button variant="outline" onClick={onBack}>
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="hover:bg-muted/80 transition-all duration-300"
+          >
             Back
           </Button>
         </div>
 
-        <Card className="p-6 mb-6 bg-card/50 backdrop-blur">
+        <Card className="p-6 mb-6 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm shadow-lg border-brand-500/20 animate-in fade-in slide-in-from-bottom duration-500 delay-100">
           <div className="flex items-start gap-3">
-            <Lightbulb className="w-5 h-5 text-brand-400 mt-1 flex-shrink-0" />
+            <Lightbulb className="w-6 h-6 text-brand-400 mt-1 flex-shrink-0 animate-pulse" />
             <div>
-              <h3 className="font-semibold mb-2">How to Play</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Each puzzle has specific words you must find</li>
-                <li>• You have a limited number of moves (word submissions)</li>
-                <li>• Find bonus words for extra XP!</li>
-                <li>• Complete puzzles to unlock achievements</li>
+              <h3 className="font-semibold text-lg mb-3">How to Play</h3>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-brand-500 font-bold">•</span>
+                  <span>Each puzzle has specific words you must find</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand-500 font-bold">•</span>
+                  <span>You have a limited number of moves (word submissions)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand-500 font-bold">•</span>
+                  <span>Find bonus words for extra XP!</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-brand-500 font-bold">•</span>
+                  <span>Complete puzzles to unlock achievements</span>
+                </li>
               </ul>
             </div>
           </div>
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {PUZZLE_BOARDS.map((puzzle) => {
+          {PUZZLE_BOARDS.map((puzzle, index) => {
             const completed = isCompleted(puzzle.id);
-            
+
             return (
               <Card
                 key={puzzle.id}
-                className={`p-4 cursor-pointer transition-all hover:scale-105 ${
+                className={`p-4 cursor-pointer transition-all duration-300 relative overflow-hidden group animate-in fade-in slide-in-from-bottom ${
                   selectedPuzzle?.id === puzzle.id
-                    ? 'ring-2 ring-brand-400 bg-brand-500/10'
-                    : 'hover:bg-card/80'
-                } ${completed ? 'border-green-500/50' : ''}`}
+                    ? 'ring-2 ring-brand-400 bg-gradient-to-br from-brand-500/15 to-brand-600/10 shadow-xl scale-105'
+                    : 'hover:bg-card/90 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-1'
+                } ${completed ? 'border-green-500/40 bg-green-500/5' : ''}`}
+                style={{ animationDelay: `${index * 100 + 200}ms`, animationDuration: '500ms' }}
                 onClick={() => setSelectedPuzzle(puzzle)}
               >
-                <div className="flex items-start justify-between mb-3">
+                {/* Gradient overlay on hover */}
+                {!completed && selectedPuzzle?.id !== puzzle.id && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-400/0 to-brand-600/0 group-hover:from-brand-400/5 group-hover:to-brand-600/5 transition-all duration-300 pointer-events-none"></div>
+                )}
+
+                <div className="flex items-start justify-between mb-3 relative z-10">
                   <div>
-                    <h3 className="font-semibold text-lg">{puzzle.name}</h3>
-                    <Badge className={`mt-1 ${getDifficultyColor(puzzle.difficulty)}`}>
+                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-300">{puzzle.name}</h3>
+                    <Badge className={`mt-1.5 ${getDifficultyColor(puzzle.difficulty)} font-semibold shadow-sm`}>
                       {puzzle.difficulty}
                     </Badge>
                   </div>
                   {completed && (
-                    <div className="flex items-center gap-1 text-green-400">
+                    <div className="flex items-center gap-1 text-green-500 bg-green-500/10 px-2 py-1 rounded-lg border border-green-500/30">
                       <Check className="w-5 h-5" />
                     </div>
                   )}
@@ -149,11 +180,11 @@ export default function PuzzleSelector({ onPuzzleSelect, onBack, user }: PuzzleS
         </div>
 
         {selectedPuzzle && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom duration-500">
             <Button
               size="lg"
               onClick={handleStartPuzzle}
-              className="shadow-lg"
+              className="px-10 py-6 text-lg font-bold shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500"
             >
               Start {selectedPuzzle.name}
             </Button>

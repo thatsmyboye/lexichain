@@ -236,18 +236,31 @@ export function AdvancedGameModes({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6 relative overflow-hidden">
+      {/* Animated background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s' }}></div>
+        <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-brand-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }}></div>
+      </div>
+
+      <div className="container mx-auto max-w-6xl relative z-10">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
+        <div className="flex items-center gap-4 mb-8 animate-in fade-in slide-in-from-top duration-500">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="flex items-center gap-2 hover:bg-muted/80 transition-all duration-300"
+          >
             ← Back
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
-                Advanced Modes
-              </h1>
+              <div className="relative">
+                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg">
+                  Advanced Modes
+                </h1>
+                <div className="absolute -inset-1 bg-gradient-to-r from-brand-400/10 to-brand-600/10 blur-xl -z-10"></div>
+              </div>
               {isAdmin && (
                 <Badge variant="outline" className="border-primary/50 bg-primary/10 text-primary">
                   <Shield className="h-3 w-3 mr-1" />
@@ -262,36 +275,36 @@ export function AdvancedGameModes({
         </div>
 
         {/* User Level Display */}
-        <Card className="mb-8">
+        <Card className="mb-8 border-brand-500/20 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm shadow-lg animate-in fade-in slide-in-from-bottom duration-500 delay-100">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-yellow-500/10 px-3 py-1.5 rounded-lg border border-yellow-500/20">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  <span className="font-semibold">Level {userLevel}</span>
+                  <span className="font-semibold text-lg">Level {userLevel}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20">
                   <Star className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm font-medium">
                     {unlockedModes.size} modes unlocked
                   </span>
                 </div>
               </div>
               <div className="md:text-right">
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm font-medium text-muted-foreground mb-1">
                   {xpInCurrentLevel} / {xpNeededForNextLevel} XP
                 </div>
-                <Progress value={progressPercentage} className="w-full md:w-32 h-2" />
+                <Progress value={progressPercentage} className="w-full md:w-48 h-2.5" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* XP Earning Guide */}
-        <Card className="mb-8 border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/50">
+        <Card className="mb-8 border-blue-500/30 bg-gradient-to-br from-blue-50/50 via-blue-100/30 to-blue-50/50 dark:from-blue-950/50 dark:via-blue-900/30 dark:to-blue-950/50 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-bottom duration-500 delay-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-blue-500" />
+              <Zap className="h-5 w-5 text-blue-500 animate-pulse" />
               How to Earn XP & Unlock Modes
             </CardTitle>
           </CardHeader>
@@ -336,47 +349,54 @@ export function AdvancedGameModes({
 
         {/* Mode Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {ADVANCED_MODES.map((mode) => {
+          {ADVANCED_MODES.map((mode, index) => {
             const isUnlocked = isModeUnlocked(mode);
             const isSelected = selectedMode === mode.id;
-            
+
             return (
-              <Card 
+              <Card
                 key={mode.id}
-                className={`cursor-pointer transition-all duration-200 ${
-                  isSelected 
-                    ? 'ring-2 ring-primary shadow-lg scale-105' 
-                    : 'hover:shadow-md hover:scale-102'
+                className={`cursor-pointer transition-all duration-300 relative overflow-hidden group animate-in fade-in slide-in-from-bottom ${
+                  isSelected
+                    ? 'ring-2 ring-primary shadow-2xl scale-105 bg-gradient-to-br from-primary/10 to-primary/5'
+                    : 'hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1'
                 } ${
-                  !isUnlocked 
-                    ? 'opacity-50 cursor-not-allowed' 
+                  !isUnlocked
+                    ? 'opacity-60 cursor-not-allowed grayscale-[0.3]'
                     : ''
                 }`}
+                style={{ animationDelay: `${index * 100}ms`, animationDuration: '500ms' }}
                 onClick={() => handleModeClick(mode)}
               >
-                <CardHeader>
+                {/* Gradient overlay on hover */}
+                {isUnlocked && !isSelected && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-400/0 to-brand-600/0 group-hover:from-brand-400/5 group-hover:to-brand-600/5 transition-all duration-300 pointer-events-none"></div>
+                )}
+                <CardHeader className="relative z-10">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                      <div className={`p-3 rounded-lg transition-all duration-300 ${
+                        isSelected
+                          ? 'bg-primary text-primary-foreground shadow-lg scale-110'
+                          : 'bg-gradient-to-br from-muted to-muted/70 group-hover:from-brand-500/20 group-hover:to-brand-600/20'
                       }`}>
                         {mode.icon}
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{mode.name}</CardTitle>
-                        <Badge 
-                          className={`text-xs ${getDifficultyColor(mode.difficulty)} text-white`}
+                        <CardTitle className="text-lg group-hover:text-primary transition-colors duration-300">{mode.name}</CardTitle>
+                        <Badge
+                          className={`text-xs mt-1 ${getDifficultyColor(mode.difficulty)} text-white font-semibold shadow-sm`}
                         >
                           {mode.difficulty}
                         </Badge>
                       </div>
                     </div>
                     {!isUnlocked && (
-                      <div className="flex flex-col items-end gap-0.5">
-                        <Badge variant="outline" className="text-xs">
+                      <div className="flex flex-col items-end gap-0.5 bg-muted/50 px-2 py-1 rounded-lg">
+                        <Badge variant="outline" className="text-xs border-yellow-500/50 bg-yellow-500/10">
                           Level {mode.rewards.unlockRequirement}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground font-medium">
                           ({XP_REQUIREMENTS[mode.rewards.unlockRequirement || 0]} XP)
                         </span>
                       </div>
@@ -421,13 +441,13 @@ export function AdvancedGameModes({
 
         {/* Start Button */}
         {selectedMode && (
-          <div className="flex justify-center">
-            <Button 
-              size="lg" 
+          <div className="flex justify-center animate-in fade-in slide-in-from-bottom duration-500">
+            <Button
+              size="lg"
               onClick={handleStartGame}
-              className="px-8 py-3 text-lg"
+              className="px-10 py-6 text-lg font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500"
             >
-              <Zap className="h-5 w-5 mr-2" />
+              <Zap className="h-5 w-5 mr-2 animate-pulse" />
               Start {ADVANCED_MODES.find(m => m.id === selectedMode)?.name}
             </Button>
           </div>

@@ -4488,8 +4488,8 @@ function WordPathGame({
                 let baseClasses = `relative aspect-square flex items-center justify-center rounded-lg ${benchmarkColor.border} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
                 
                 if (selected) {
-                  // Use skin's selected classes
-                  baseClasses += skin.selectedClasses + " ";
+                  // Use skin's selected classes with enhanced glow
+                  baseClasses += skin.selectedClasses + " shadow-[0_0_20px_rgba(34,197,94,0.4)] ";
                 } else if (isAffected) {
                   // Affected tiles (e.g., from consumables) keep their special styling
                   baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
@@ -4524,17 +4524,17 @@ function WordPathGame({
                   baseClasses += skin.baseClasses + " ";
                 }
 
-                // Special tile styling (these override skin colors)
+                // Special tile styling with enhanced visual effects (these override skin colors)
                 if (special.type === "stone") {
-                  baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white ";
+                  baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-[0_0_15px_rgba(75,85,99,0.4)] ";
                 } else if (special.type === "wild") {
-                  baseClasses += "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white ";
+                  baseClasses += "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] animate-pulse ";
                 } else if (special.type === "xfactor") {
-                  baseClasses += "bg-gradient-to-br from-orange-400 to-red-500 text-white ";
+                  baseClasses += "bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-[0_0_20px_rgba(251,146,60,0.5)] ";
                 } else if (special.type === "multiplier") {
-                  baseClasses += "bg-gradient-to-br from-blue-400 to-blue-600 text-white ";
+                  baseClasses += "bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] ";
                 } else if (special.type === "shuffle") {
-                  baseClasses += "bg-gradient-to-br from-red-200 to-red-300 text-red-800 ";
+                  baseClasses += "bg-gradient-to-br from-red-200 to-red-300 text-red-800 shadow-[0_0_15px_rgba(239,68,68,0.3)] ";
                 }
                 return baseClasses;
               };
@@ -4624,15 +4624,25 @@ function WordPathGame({
               </div>}
            </div>
 
-            <div className="mt-3 flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">Current:</span>
-              <span className="text-lg font-semibold flex-1">{displayWordFromPath}</span>
+            <div className="mt-4 flex items-center gap-3 p-3 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg border border-muted backdrop-blur-sm">
+              <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Current:</span>
+              <span className="text-xl font-bold flex-1 bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-brand-600">{displayWordFromPath || "..."}</span>
             </div>
 
             {/* Submit Button for Tap Mode */}
-            {(isTapMode || isMobile) && <div className="mt-2">
-                <Button onClick={submitTapWord} disabled={path.length < 3} variant={path.length >= 3 ? "default" : "outline"} size="sm" className={`transition-all duration-200 ${path.length >= 3 ? "bg-green-600 hover:bg-green-700 text-white" : "opacity-50 cursor-not-allowed"}`}>
-                  Submit
+            {(isTapMode || isMobile) && <div className="mt-3">
+                <Button
+                  onClick={submitTapWord}
+                  disabled={path.length < 3}
+                  variant={path.length >= 3 ? "default" : "outline"}
+                  size="lg"
+                  className={`w-full transition-all duration-300 ${
+                    path.length >= 3
+                      ? "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg hover:shadow-xl hover:scale-105"
+                      : "opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  Submit Word
                 </Button>
               </div>}
             
@@ -4640,11 +4650,11 @@ function WordPathGame({
         </div>
         
         <aside className="space-y-2 lg:space-y-3">
-          <Card className="p-3">
+          <Card className="p-4 bg-gradient-to-br from-card/95 to-muted/30 backdrop-blur-sm border-brand-500/20 shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-muted-foreground">Score</div>
-                <div className="text-2xl font-bold">{score}</div>
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Score</div>
+                <div className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-brand-600">{score}</div>
                 
                 {/* Mode-specific indicators */}
                 {settings.mode === "time_attack" && timeAttackStarted && (
@@ -4696,42 +4706,78 @@ function WordPathGame({
                   </div>
                 )}
                 
-                {benchmarks && settings.mode !== "endless" && <div className="mt-2 space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">Daily Challenge Tiers</div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className={`flex items-center gap-1 ${score >= benchmarks.bronze ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
+                {benchmarks && settings.mode !== "endless" && <div className="mt-3 space-y-2 p-2 bg-muted/30 rounded-lg border border-muted">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Challenge Tiers</div>
+                    <div className="space-y-1.5">
+                      <div className={`flex justify-between items-center text-xs px-2 py-1 rounded transition-all duration-300 ${
+                        score >= benchmarks.bronze
+                          ? 'bg-gradient-to-r from-orange-600/20 to-orange-500/10 border border-orange-600/30 shadow-sm'
+                          : 'opacity-60'
+                      }`}>
+                        <span className={`flex items-center gap-1.5 font-medium ${score >= benchmarks.bronze ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground'}`}>
                           🥉 Bronze
                         </span>
-                        <span className={score >= benchmarks.bronze ? 'font-medium' : ''}>{benchmarks.bronze}</span>
+                        <span className={`font-semibold ${score >= benchmarks.bronze ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground'}`}>{benchmarks.bronze}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className={`flex items-center gap-1 ${score >= benchmarks.silver ? 'text-gray-500 font-medium' : 'text-muted-foreground'}`}>
+                      <div className={`flex justify-between items-center text-xs px-2 py-1 rounded transition-all duration-300 ${
+                        score >= benchmarks.silver
+                          ? 'bg-gradient-to-r from-gray-400/20 to-gray-300/10 border border-gray-400/30 shadow-sm'
+                          : 'opacity-60'
+                      }`}>
+                        <span className={`flex items-center gap-1.5 font-medium ${score >= benchmarks.silver ? 'text-gray-600 dark:text-gray-300' : 'text-muted-foreground'}`}>
                           🥈 Silver
                         </span>
-                        <span className={score >= benchmarks.silver ? 'font-medium' : ''}>{benchmarks.silver}</span>
+                        <span className={`font-semibold ${score >= benchmarks.silver ? 'text-gray-600 dark:text-gray-300' : 'text-muted-foreground'}`}>{benchmarks.silver}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className={`flex items-center gap-1 ${score >= benchmarks.gold ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
+                      <div className={`flex justify-between items-center text-xs px-2 py-1 rounded transition-all duration-300 ${
+                        score >= benchmarks.gold
+                          ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-400/10 border border-yellow-500/30 shadow-sm'
+                          : 'opacity-60'
+                      }`}>
+                        <span className={`flex items-center gap-1.5 font-medium ${score >= benchmarks.gold ? 'text-yellow-600 dark:text-yellow-400' : 'text-muted-foreground'}`}>
                           🥇 Gold
                         </span>
-                        <span className={score >= benchmarks.gold ? 'font-medium' : ''}>{benchmarks.gold}</span>
+                        <span className={`font-semibold ${score >= benchmarks.gold ? 'text-yellow-600 dark:text-yellow-400' : 'text-muted-foreground'}`}>{benchmarks.gold}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className={`flex items-center gap-1 ${score >= benchmarks.platinum ? 'text-blue-600 font-medium' : 'text-muted-foreground'}`}>
+                      <div className={`flex justify-between items-center text-xs px-2 py-1 rounded transition-all duration-300 ${
+                        score >= benchmarks.platinum
+                          ? 'bg-gradient-to-r from-purple-500/20 to-purple-400/10 border border-purple-500/30 shadow-sm'
+                          : 'opacity-60'
+                      }`}>
+                        <span className={`flex items-center gap-1.5 font-medium ${score >= benchmarks.platinum ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground'}`}>
                           💎 Platinum
                         </span>
-                        <span className={score >= benchmarks.platinum ? 'font-medium' : ''}>{benchmarks.platinum}</span>
+                        <span className={`font-semibold ${score >= benchmarks.platinum ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground'}`}>{benchmarks.platinum}</span>
                       </div>
                     </div>
-                    {/* Progress bar */}
-                    <div className="w-full bg-secondary/20 rounded-full h-2 mt-2">
-                      <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{
+                    {/* Enhanced Progress bar */}
+                    <div className="w-full bg-secondary/30 rounded-full h-2.5 mt-2 overflow-hidden">
+                      <div className={`h-2.5 rounded-full transition-all duration-500 ${
+                        score >= benchmarks.platinum
+                          ? 'bg-gradient-to-r from-purple-500 to-purple-400'
+                          : score >= benchmarks.gold
+                            ? 'bg-gradient-to-r from-yellow-500 to-yellow-400'
+                            : score >= benchmarks.silver
+                              ? 'bg-gradient-to-r from-gray-400 to-gray-300'
+                              : score >= benchmarks.bronze
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-400'
+                                : 'bg-gradient-to-r from-primary/60 to-primary/40'
+                      }`} style={{
                     width: `${Math.min(100, score / benchmarks.platinum * 100)}%`
                   }} />
                     </div>
-                    <div className="text-xs text-center text-muted-foreground">
-                      {score >= benchmarks.platinum ? 'Platinum Achieved!' : score >= benchmarks.gold ? `${benchmarks.platinum - score} to Platinum` : score >= benchmarks.silver ? `${benchmarks.gold - score} to Gold` : score >= benchmarks.bronze ? `${benchmarks.silver - score} to Silver` : `${benchmarks.bronze - score} to Bronze`}
+                    <div className="text-xs text-center font-medium">
+                      {score >= benchmarks.platinum ? (
+                        <span className="text-purple-600 dark:text-purple-400 font-bold">✨ Platinum Achieved!</span>
+                      ) : score >= benchmarks.gold ? (
+                        <span className="text-yellow-600 dark:text-yellow-400">{benchmarks.platinum - score} to Platinum</span>
+                      ) : score >= benchmarks.silver ? (
+                        <span className="text-gray-600 dark:text-gray-400">{benchmarks.gold - score} to Gold</span>
+                      ) : score >= benchmarks.bronze ? (
+                        <span className="text-orange-600 dark:text-orange-400">{benchmarks.silver - score} to Silver</span>
+                      ) : (
+                        <span className="text-muted-foreground">{benchmarks.bronze - score} to Bronze</span>
+                      )}
                     </div>
                   </div>}
                 {false && <div className="mt-1 text-xs text-muted-foreground">
