@@ -1009,6 +1009,7 @@ function WordPathGame({
   const [showWildDialog, setShowWildDialog] = useState(false);
   const [wildTileInputs, setWildTileInputs] = useState<Map<string, string>>(new Map());
   const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
+  const [newWildTiles, setNewWildTiles] = useState<Set<string>>(new Set());
 
   // Consumable activation states
   const [activatedConsumables, setActivatedConsumables] = useState<Set<ConsumableId>>(new Set());
@@ -2000,6 +2001,7 @@ function WordPathGame({
       // Randomly place special tiles (1-3 tiles per trigger)
       const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
       const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
+      const newWildPositions: string[] = [];
       for (let i = 0; i < tilesToPlace; i++) {
         const randomIndex = Math.floor(Math.random() * emptyPositions.length);
         const pos = emptyPositions.splice(randomIndex, 1)[0];
@@ -2010,10 +2012,30 @@ function WordPathGame({
         );
         if (specialTile.type !== null) {
           updatedSpecialTiles[pos.r][pos.c] = specialTile;
+          // Track newly spawned Wild tiles
+          if (specialTile.type === "wild") {
+            newWildPositions.push(keyOf(pos));
+          }
         }
       }
       if (tilesToPlace > 0) {
         setSpecialTiles(updatedSpecialTiles);
+        // Add new Wild tiles to tracking set
+        if (newWildPositions.length > 0) {
+          setNewWildTiles(prev => {
+            const updated = new Set(prev);
+            newWildPositions.forEach(key => updated.add(key));
+            return updated;
+          });
+          // Remove from tracking after blink animation completes (1.2s)
+          setTimeout(() => {
+            setNewWildTiles(prev => {
+              const updated = new Set(prev);
+              newWildPositions.forEach(key => updated.delete(key));
+              return updated;
+            });
+          }, 1200);
+        }
       }
     }
     setTimeout(() => {
@@ -3478,6 +3500,7 @@ function WordPathGame({
       // Randomly place special tiles (1-3 tiles per trigger)
       const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
       const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
+      const newWildPositions: string[] = [];
       for (let i = 0; i < tilesToPlace; i++) {
         const randomIndex = Math.floor(Math.random() * emptyPositions.length);
         const pos = emptyPositions.splice(randomIndex, 1)[0];
@@ -3488,10 +3511,30 @@ function WordPathGame({
         );
         if (specialTile.type !== null) {
           updatedSpecialTiles[pos.r][pos.c] = specialTile;
+          // Track newly spawned Wild tiles
+          if (specialTile.type === "wild") {
+            newWildPositions.push(keyOf(pos));
+          }
         }
       }
       if (tilesToPlace > 0) {
         setSpecialTiles(updatedSpecialTiles);
+        // Add new Wild tiles to tracking set
+        if (newWildPositions.length > 0) {
+          setNewWildTiles(prev => {
+            const updated = new Set(prev);
+            newWildPositions.forEach(key => updated.add(key));
+            return updated;
+          });
+          // Remove from tracking after blink animation completes (1.2s)
+          setTimeout(() => {
+            setNewWildTiles(prev => {
+              const updated = new Set(prev);
+              newWildPositions.forEach(key => updated.delete(key));
+              return updated;
+            });
+          }, 1200);
+        }
       }
     }
     
@@ -4528,7 +4571,8 @@ function WordPathGame({
                 if (special.type === "stone") {
                   baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-[0_0_15px_rgba(75,85,99,0.4)] ";
                 } else if (special.type === "wild") {
-                  baseClasses += "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] animate-pulse ";
+                  const isNewWild = newWildTiles.has(k);
+                  baseClasses += `bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] ${isNewWild ? 'animate-blink-twice' : ''} `;
                 } else if (special.type === "xfactor") {
                   baseClasses += "bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-[0_0_20px_rgba(251,146,60,0.5)] ";
                 } else if (special.type === "multiplier") {
