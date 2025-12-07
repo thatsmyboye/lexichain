@@ -308,7 +308,7 @@ type ScoreBreakdown = {
   totalBeforeMultipliers: number;
   total: number;
 };
-const MULTIPLIER_CAP = 8;
+// Multiplier cap removed - multipliers can now stack without limit
 function computeScoreBreakdown(params: {
   actualWord: string;
   wordPath: Pos[];
@@ -398,8 +398,8 @@ function computeScoreBreakdown(params: {
   }
   
   const combinedMultiplierRaw = tileMultiplier * consumableMultiplier * modeMultiplier;
-  const combinedApplied = Math.min(MULTIPLIER_CAP, combinedMultiplierRaw);
-  const capped = combinedApplied !== combinedMultiplierRaw;
+  const combinedApplied = combinedMultiplierRaw; // No cap - multipliers stack freely
+  const capped = false;
   const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + timeBonus) * linkMultiplier);
   const total = Math.round(totalBeforeMultipliers * combinedApplied);
   return {
@@ -416,9 +416,9 @@ function computeScoreBreakdown(params: {
     multipliers: {
       tileMultiplier,
       consumableMultiplier,
-      combinedApplied,
-      capped,
-      cap: MULTIPLIER_CAP as number
+    combinedApplied,
+    capped,
+    cap: null
     },
     totalBeforeMultipliers,
     total
