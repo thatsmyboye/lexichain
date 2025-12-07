@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame, Shield, Shuffle } from 'lucide-react';
+import { Clock, Target, Zap, Puzzle, Infinity, Star, Trophy, Flame, Shield, Shuffle, Flag, Sword, TrendingUp } from 'lucide-react';
 import { useSound } from '@/components/effects';
 import { XP_REQUIREMENTS, calculateLevel } from '@/lib/progression';
 import { useUnlockedModes } from '@/hooks/useUnlockedModes';
 import type { User } from '@supabase/supabase-js';
 
-export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos';
+export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos' | 'mini_marathon' | 'weekly_gauntlet' | 'prestige_endless';
 
 interface AdvancedModeConfig {
   id: AdvancedGameMode;
@@ -152,6 +152,60 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [
       xpMultiplier: 2.8,
       scoreMultiplier: 2.2,
       unlockRequirement: 12
+    }
+  },
+  {
+    id: 'mini_marathon',
+    name: 'Mini-Marathon',
+    description: 'Three quick 5-move boards with combo carry-over. Perfect for a quick challenge!',
+    icon: <Flag className="h-6 w-6" />,
+    difficulty: 'Medium',
+    specialRules: [
+      '3 sequential boards',
+      '5 moves per board, 60s timer',
+      'Combo multiplier carries between boards',
+      'Aggregate scoring with daily leaderboard'
+    ],
+    rewards: {
+      xpMultiplier: 1.5,
+      scoreMultiplier: 1.2,
+      unlockRequirement: 0
+    }
+  },
+  {
+    id: 'weekly_gauntlet',
+    name: 'Weekly Gauntlet',
+    description: '7 daily puzzles with unique constraints. Complete all for maximum rewards!',
+    icon: <Sword className="h-6 w-6" />,
+    difficulty: 'Hard',
+    specialRules: [
+      '7 themed daily puzzles (Monday-Sunday)',
+      'Unique constraints per day',
+      'Completion bonus for finishing all 7',
+      'New Diamond tier for top performers'
+    ],
+    rewards: {
+      xpMultiplier: 2.5,
+      scoreMultiplier: 1.8,
+      unlockRequirement: 5
+    }
+  },
+  {
+    id: 'prestige_endless',
+    name: 'Prestige Endless',
+    description: 'Enhanced Endless with persistent buffs and prestige system. Long-term meta-progression!',
+    icon: <TrendingUp className="h-6 w-6" />,
+    difficulty: 'Expert',
+    specialRules: [
+      'Earn permanent buffs every 10 waves',
+      'Prestige after wave 50 for exclusive rewards',
+      'Prestige Points unlock cosmetics',
+      'Multiple leaderboards (highest wave, speed runs)'
+    ],
+    rewards: {
+      xpMultiplier: 3.5,
+      scoreMultiplier: 2.5,
+      unlockRequirement: 10
     }
   }
 ];
