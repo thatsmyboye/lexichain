@@ -99,8 +99,8 @@ export const useMiniMarathonState = (marathonDate: string) => {
         let saved = false;
 
         while (retries > 0 && !saved) {
-          const { error } = await supabase
-            .from('mini_marathon_states')
+          const { error } = await (supabase
+            .from as any)('mini_marathon_states')
             .upsert({
               user_id: user.id,
               marathon_date: marathonDate,
@@ -159,8 +159,8 @@ export const useMiniMarathonState = (marathonDate: string) => {
 
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from('mini_marathon_states')
+          const { data, error } = await (supabase
+            .from as any)('mini_marathon_states')
             .select('game_state')
             .eq('user_id', user.id)
             .eq('marathon_date', marathonDate)
@@ -213,8 +213,8 @@ export const useMiniMarathonState = (marathonDate: string) => {
 
       if (user) {
         try {
-          await supabase
-            .from('mini_marathon_states')
+          await (supabase
+            .from as any)('mini_marathon_states')
             .delete()
             .eq('user_id', user.id)
             .eq('marathon_date', marathonDate);
