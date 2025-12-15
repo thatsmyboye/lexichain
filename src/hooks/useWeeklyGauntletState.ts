@@ -93,8 +93,8 @@ export const useWeeklyGauntletState = (weekIdentifier: string) => {
         let saved = false;
 
         while (retries > 0 && !saved) {
-          const { error } = await supabase
-            .from('weekly_gauntlet_states')
+          const { error } = await (supabase
+            .from as any)('weekly_gauntlet_states')
             .upsert({
               user_id: user.id,
               week_identifier: weekIdentifier,
@@ -152,8 +152,8 @@ export const useWeeklyGauntletState = (weekIdentifier: string) => {
 
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from('weekly_gauntlet_states')
+          const { data, error } = await (supabase
+            .from as any)('weekly_gauntlet_states')
             .select('game_state')
             .eq('user_id', user.id)
             .eq('week_identifier', weekIdentifier)
@@ -203,8 +203,8 @@ export const useWeeklyGauntletState = (weekIdentifier: string) => {
 
       if (user) {
         try {
-          await supabase
-            .from('weekly_gauntlet_states')
+          await (supabase
+            .from as any)('weekly_gauntlet_states')
             .delete()
             .eq('user_id', user.id)
             .eq('week_identifier', weekIdentifier);

@@ -72,8 +72,8 @@ export const usePrestigeEndlessState = () => {
         let saved = false;
 
         while (retries > 0 && !saved) {
-          const { error } = await supabase
-            .from('prestige_endless_states')
+          const { error } = await (supabase
+            .from as any)('prestige_endless_states')
             .upsert({
               user_id: user.id,
               session_id: gameState.sessionId,
@@ -127,8 +127,8 @@ export const usePrestigeEndlessState = () => {
 
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from('prestige_endless_states')
+          const { data, error } = await (supabase
+            .from as any)('prestige_endless_states')
             .select('game_state')
             .eq('user_id', user.id)
             .maybeSingle();
@@ -178,8 +178,8 @@ export const usePrestigeEndlessState = () => {
 
       if (user) {
         try {
-          await supabase
-            .from('prestige_endless_states')
+          await (supabase
+            .from as any)('prestige_endless_states')
             .delete()
             .eq('user_id', user.id);
         } catch (e) {
@@ -199,8 +199,8 @@ export const usePrestigeEndlessState = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase
-        .from('prestige_endless_player_stats')
+      const { data, error } = await (supabase
+        .from as any)('prestige_endless_player_stats')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -229,8 +229,8 @@ export const usePrestigeEndlessState = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('prestige_endless_player_stats')
+      const { error } = await (supabase
+        .from as any)('prestige_endless_player_stats')
         .upsert({
           user_id: user.id,
           ...stats
