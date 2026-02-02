@@ -2013,59 +2013,75 @@ function WordPathGame({
 
     // Introduce special tiles if conditions are met
     if (shouldIntroduceSpecialTiles(usedWords.length)) {
-      const updatedSpecialTiles = [...newSpecialTiles];
-      const emptyPositions: Pos[] = [];
+      let updatedSpecialTiles: SpecialTile[][];
+      let newWildPositions: string[];
 
-      // Find empty positions (tiles without special tiles)
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          if (updatedSpecialTiles[r][c].type === null) {
-            emptyPositions.push({
-              r,
-              c
-            });
-          }
-        }
-      }
-
-      // Randomly place special tiles (1-3 tiles per trigger)
-      const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
-      const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
-      const newWildPositions: string[] = [];
-      for (let i = 0; i < tilesToPlace; i++) {
-        const randomIndex = Math.floor(Math.random() * emptyPositions.length);
-        const pos = emptyPositions.splice(randomIndex, 1)[0];
-        const specialTile = generateSpecialTile(
+      if (settings.mode === "daily") {
+        // Use seeded special tiles for daily challenge - all players get same tiles
+        const result = introduceSeededSpecialTiles(
+          newSpecialTiles,
+          usedWords.length + 1, // +1 because we just completed a word
           score,
-          settings.mode,
-          settings.mode === "endless" ? endlessDifficulty : 1
+          size,
+          getDailySeed()
         );
-        if (specialTile.type !== null) {
-          updatedSpecialTiles[pos.r][pos.c] = specialTile;
-          // Track newly spawned Wild tiles
-          if (specialTile.type === "wild") {
-            newWildPositions.push(keyOf(pos));
+        updatedSpecialTiles = result.tiles;
+        newWildPositions = result.newWildPositions;
+      } else {
+        // Non-daily modes use random special tiles
+        updatedSpecialTiles = [...newSpecialTiles];
+        const emptyPositions: Pos[] = [];
+
+        // Find empty positions (tiles without special tiles)
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (updatedSpecialTiles[r][c].type === null) {
+              emptyPositions.push({
+                r,
+                c
+              });
+            }
+          }
+        }
+
+        // Randomly place special tiles (1-3 tiles per trigger)
+        const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
+        const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
+        newWildPositions = [];
+        for (let i = 0; i < tilesToPlace; i++) {
+          const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+          const pos = emptyPositions.splice(randomIndex, 1)[0];
+          const specialTile = generateSpecialTile(
+            score,
+            settings.mode,
+            settings.mode === "endless" ? endlessDifficulty : 1
+          );
+          if (specialTile.type !== null) {
+            updatedSpecialTiles[pos.r][pos.c] = specialTile;
+            // Track newly spawned Wild tiles
+            if (specialTile.type === "wild") {
+              newWildPositions.push(keyOf(pos));
+            }
           }
         }
       }
-      if (tilesToPlace > 0) {
-        setSpecialTiles(updatedSpecialTiles);
-        // Add new Wild tiles to tracking set
-        if (newWildPositions.length > 0) {
+
+      setSpecialTiles(updatedSpecialTiles);
+      // Add new Wild tiles to tracking set
+      if (newWildPositions.length > 0) {
+        setNewWildTiles(prev => {
+          const updated = new Set(prev);
+          newWildPositions.forEach(key => updated.add(key));
+          return updated;
+        });
+        // Remove from tracking after blink animation completes (1.2s)
+        setTimeout(() => {
           setNewWildTiles(prev => {
             const updated = new Set(prev);
-            newWildPositions.forEach(key => updated.add(key));
+            newWildPositions.forEach(key => updated.delete(key));
             return updated;
           });
-          // Remove from tracking after blink animation completes (1.2s)
-          setTimeout(() => {
-            setNewWildTiles(prev => {
-              const updated = new Set(prev);
-              newWildPositions.forEach(key => updated.delete(key));
-              return updated;
-            });
-          }, 1200);
-        }
+        }, 1200);
       }
     }
     setTimeout(() => {
@@ -2325,6 +2341,100 @@ function WordPathGame({
   }
   function shouldIntroduceSpecialTiles(wordCount: number): boolean {
     return wordCount >= 1;
+  }
+
+  // Seeded special tile generation for Daily Challenge mode
+  // Ensures all players get the same special tiles at the same positions
+  function generateSeededSpecialTile(rng: () => number, currentScore: number = 0): SpecialTile {
+    const rand = rng();
+    let cumulative = 0;
+    
+    // Daily challenge uses balanced rarities (no progressive stone spawning)
+    const dailyRarities = { ...SPECIAL_TILE_RARITIES };
+    
+    for (const [type, rarity] of Object.entries(dailyRarities)) {
+      cumulative += rarity;
+      if (rand <= cumulative) {
+        // Use seeded random for expiry turns (2-4 turns for consistency)
+        const expiryTurns = Math.floor(rng() * 3) + 2;
+        
+        if (type === "multiplier") {
+          const multiplierValues = [2, 3, 4];
+          const value = multiplierValues[Math.floor(rng() * multiplierValues.length)];
+          return {
+            type: type as SpecialTileType,
+            value,
+            expiryTurns
+          };
+        }
+        return {
+          type: type as SpecialTileType,
+          expiryTurns
+        };
+      }
+    }
+    return {
+      type: null
+    };
+  }
+
+  // Introduces special tiles deterministically for Daily Challenge mode
+  // All players with the same seed and word count will get identical special tiles
+  function introduceSeededSpecialTiles(
+    currentSpecialTiles: SpecialTile[][],
+    wordCount: number,
+    currentScore: number,
+    gridSize: number,
+    dailySeed: string
+  ): { tiles: SpecialTile[][], newWildPositions: string[] } {
+    const updatedSpecialTiles = currentSpecialTiles.map(row => [...row]);
+    const emptyPositions: Pos[] = [];
+
+    // Find empty positions (tiles without special tiles)
+    // Use consistent ordering (row-major) for deterministic position selection
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        if (updatedSpecialTiles[r][c].type === null) {
+          emptyPositions.push({ r, c });
+        }
+      }
+    }
+
+    if (emptyPositions.length === 0) {
+      return { tiles: updatedSpecialTiles, newWildPositions: [] };
+    }
+
+    // Create seeded RNG for this word count
+    const tileCountRng = seedRandom(dailySeed + "_tiles_" + wordCount);
+    
+    // Deterministic number of tiles to place (1-3)
+    const numTilesToPlace = Math.floor(tileCountRng() * 3) + 1;
+    const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
+    const newWildPositions: string[] = [];
+
+    // Create a shuffled copy of positions using seeded random
+    const shuffledPositions = [...emptyPositions];
+    const shuffleRng = seedRandom(dailySeed + "_shuffle_" + wordCount);
+    for (let i = shuffledPositions.length - 1; i > 0; i--) {
+      const j = Math.floor(shuffleRng() * (i + 1));
+      [shuffledPositions[i], shuffledPositions[j]] = [shuffledPositions[j], shuffledPositions[i]];
+    }
+
+    for (let i = 0; i < tilesToPlace; i++) {
+      const pos = shuffledPositions[i];
+      // Each tile gets its own seeded RNG based on word count and tile index
+      const tileRng = seedRandom(dailySeed + "_tile_" + wordCount + "_" + i);
+      const specialTile = generateSeededSpecialTile(tileRng, currentScore);
+      
+      if (specialTile.type !== null) {
+        updatedSpecialTiles[pos.r][pos.c] = specialTile;
+        if (specialTile.type === "wild") {
+          newWildPositions.push(keyOf(pos));
+        }
+      }
+    }
+
+    return { tiles: updatedSpecialTiles, newWildPositions };
   }
   function createEmptySpecialTilesGrid(size: number): SpecialTile[][] {
     return Array.from({
@@ -3513,59 +3623,75 @@ function WordPathGame({
 
     // Introduce special tiles if conditions are met
     if (shouldIntroduceSpecialTiles(usedWords.length)) {
-      const updatedSpecialTiles = [...newSpecialTiles];
-      const emptyPositions: Pos[] = [];
+      let updatedSpecialTiles: SpecialTile[][];
+      let newWildPositions: string[];
 
-      // Find empty positions (tiles without special tiles)
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          if (updatedSpecialTiles[r][c].type === null) {
-            emptyPositions.push({
-              r,
-              c
-            });
-          }
-        }
-      }
-
-      // Randomly place special tiles (1-3 tiles per trigger)
-      const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
-      const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
-      const newWildPositions: string[] = [];
-      for (let i = 0; i < tilesToPlace; i++) {
-        const randomIndex = Math.floor(Math.random() * emptyPositions.length);
-        const pos = emptyPositions.splice(randomIndex, 1)[0];
-        const specialTile = generateSpecialTile(
+      if (settings.mode === "daily") {
+        // Use seeded special tiles for daily challenge - all players get same tiles
+        const result = introduceSeededSpecialTiles(
+          newSpecialTiles,
+          usedWords.length + 1, // +1 because we just completed a word
           score,
-          settings.mode,
-          settings.mode === "endless" ? endlessDifficulty : 1
+          size,
+          getDailySeed()
         );
-        if (specialTile.type !== null) {
-          updatedSpecialTiles[pos.r][pos.c] = specialTile;
-          // Track newly spawned Wild tiles
-          if (specialTile.type === "wild") {
-            newWildPositions.push(keyOf(pos));
+        updatedSpecialTiles = result.tiles;
+        newWildPositions = result.newWildPositions;
+      } else {
+        // Non-daily modes use random special tiles
+        updatedSpecialTiles = [...newSpecialTiles];
+        const emptyPositions: Pos[] = [];
+
+        // Find empty positions (tiles without special tiles)
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (updatedSpecialTiles[r][c].type === null) {
+              emptyPositions.push({
+                r,
+                c
+              });
+            }
+          }
+        }
+
+        // Randomly place special tiles (1-3 tiles per trigger)
+        const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
+        const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
+        newWildPositions = [];
+        for (let i = 0; i < tilesToPlace; i++) {
+          const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+          const pos = emptyPositions.splice(randomIndex, 1)[0];
+          const specialTile = generateSpecialTile(
+            score,
+            settings.mode,
+            settings.mode === "endless" ? endlessDifficulty : 1
+          );
+          if (specialTile.type !== null) {
+            updatedSpecialTiles[pos.r][pos.c] = specialTile;
+            // Track newly spawned Wild tiles
+            if (specialTile.type === "wild") {
+              newWildPositions.push(keyOf(pos));
+            }
           }
         }
       }
-      if (tilesToPlace > 0) {
-        setSpecialTiles(updatedSpecialTiles);
-        // Add new Wild tiles to tracking set
-        if (newWildPositions.length > 0) {
+
+      setSpecialTiles(updatedSpecialTiles);
+      // Add new Wild tiles to tracking set
+      if (newWildPositions.length > 0) {
+        setNewWildTiles(prev => {
+          const updated = new Set(prev);
+          newWildPositions.forEach(key => updated.add(key));
+          return updated;
+        });
+        // Remove from tracking after blink animation completes (1.2s)
+        setTimeout(() => {
           setNewWildTiles(prev => {
             const updated = new Set(prev);
-            newWildPositions.forEach(key => updated.add(key));
+            newWildPositions.forEach(key => updated.delete(key));
             return updated;
           });
-          // Remove from tracking after blink animation completes (1.2s)
-          setTimeout(() => {
-            setNewWildTiles(prev => {
-              const updated = new Set(prev);
-              newWildPositions.forEach(key => updated.delete(key));
-              return updated;
-            });
-          }, 1200);
-        }
+        }, 1200);
       }
     }
     
