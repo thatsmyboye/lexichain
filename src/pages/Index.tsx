@@ -9,6 +9,9 @@ import { calculateLevel } from "@/lib/progression";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
 import PuzzleSelector from "@/components/game/PuzzleSelector";
+import MiniMarathon from "@/components/game/MiniMarathon";
+import WeeklyGauntlet from "@/components/game/WeeklyGauntlet";
+import PrestigeEndless from "@/components/game/PrestigeEndless";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
@@ -17,6 +20,9 @@ const Index = () => {
   const [showModeSelection, setShowModeSelection] = useState(false);
   const [showAdvancedModes, setShowAdvancedModes] = useState(false);
   const [showPuzzleSelector, setShowPuzzleSelector] = useState(false);
+  const [showMiniMarathon, setShowMiniMarathon] = useState(false);
+  const [showWeeklyGauntlet, setShowWeeklyGauntlet] = useState(false);
+  const [showPrestigeEndless, setShowPrestigeEndless] = useState(false);
   const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
   const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
@@ -102,6 +108,9 @@ const Index = () => {
     setShowModeSelection(false);
     setShowAdvancedModes(false);
     setShowPuzzleSelector(false);
+    setShowMiniMarathon(false);
+    setShowWeeklyGauntlet(false);
+    setShowPrestigeEndless(false);
     setSelectedPuzzleId(null);
     // Refresh profile to get updated XP
     refreshProfile();
@@ -114,7 +123,26 @@ const Index = () => {
       setShowPuzzleSelector(true);
       return;
     }
-    
+
+    // Special handling for new advanced modes
+    if (mode === 'mini_marathon') {
+      setShowAdvancedModes(false);
+      setShowMiniMarathon(true);
+      return;
+    }
+
+    if (mode === 'weekly_gauntlet') {
+      setShowAdvancedModes(false);
+      setShowWeeklyGauntlet(true);
+      return;
+    }
+
+    if (mode === 'prestige_endless') {
+      setShowAdvancedModes(false);
+      setShowPrestigeEndless(true);
+      return;
+    }
+
     setSelectedMode(mode as any); // Convert AdvancedGameMode to broader type
     setSelectedAdvancedMode(mode);
     setShowAdvancedModes(false);
@@ -160,6 +188,19 @@ const Index = () => {
   const handleSettingsClick = () => {
     navigate("/settings");
   };
+
+  // Show new advanced modes
+  if (showMiniMarathon) {
+    return <MiniMarathon onBack={handleBackToTitle} />;
+  }
+
+  if (showWeeklyGauntlet) {
+    return <WeeklyGauntlet onBack={handleBackToTitle} />;
+  }
+
+  if (showPrestigeEndless) {
+    return <PrestigeEndless onBack={handleBackToTitle} />;
+  }
 
   if (showPuzzleSelector) {
     return <PuzzleSelector

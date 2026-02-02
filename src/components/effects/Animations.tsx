@@ -351,6 +351,11 @@ const animationStyles = `
   20%, 40%, 60%, 80% { transform: translateX(2px); }
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 .animate-float-low {
   animation: float-low 3s ease-in-out infinite;
 }
@@ -365,6 +370,10 @@ const animationStyles = `
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+.animate-blink-twice {
+  animation: blink 0.6s ease-in-out 2;
 }
 `;
 
