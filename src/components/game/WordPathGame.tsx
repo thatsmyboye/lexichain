@@ -24,7 +24,7 @@ import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
 import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
 import { dictionaryManager } from "@/utils/dictionaryManager";
-import { getPuzzleById, type PuzzleBoard } from "@/lib/puzzleBoards";
+import { getPuzzleById, getNextPuzzle, type PuzzleBoard } from "@/lib/puzzleBoards";
 import { useTileSkin } from "@/hooks/useTileSkin";
 import { getBenchmarkColor } from "@/lib/tileSkins";
 type Pos = {
@@ -318,6 +318,7 @@ function computeScoreBreakdown(params: {
   streak: number;
   mode: "classic" | "daily" | "target" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   blitzMultiplier: number;
+  timeAttackSpeedMultiplier?: number;
   activeEffects: Array<{
     id: string;
     data?: Record<string, unknown>;
@@ -334,6 +335,7 @@ function computeScoreBreakdown(params: {
     streak,
     mode,
     blitzMultiplier,
+    timeAttackSpeedMultiplier = 1.0,
     activeEffects,
     baseMode = "hybrid",
     chainMode = "cappedLinear"
@@ -376,7 +378,8 @@ function computeScoreBreakdown(params: {
   let modeMultiplier = 1;
   switch (mode) {
     case "time_attack":
-      modeMultiplier = 1.2;
+      // Base 1.2x multiplier + speed multiplier (which increases with words found)
+      modeMultiplier = 1.2 * timeAttackSpeedMultiplier;
       break;
     case "endless":
       modeMultiplier = 1.5;
@@ -1021,6 +1024,8 @@ function WordPathGame({
   // Advanced mode states
   const [timeAttackTimeRemaining, setTimeAttackTimeRemaining] = useState(60);
   const [timeAttackStarted, setTimeAttackStarted] = useState(false);
+  const [timeAttackWordsFound, setTimeAttackWordsFound] = useState(0);
+  const [timeAttackSpeedMultiplier, setTimeAttackSpeedMultiplier] = useState(1.0);
   const [endlessDifficulty, setEndlessDifficulty] = useState(1);
   const [survivalLives, setSurvivalLives] = useState(3);
   const [survivalWave, setSurvivalWave] = useState(1);
@@ -1039,6 +1044,7 @@ function WordPathGame({
   const [endlessStarted, setEndlessStarted] = useState(false);
   const [survivalStarted, setSurvivalStarted] = useState(false);
   const [zenStarted, setZenStarted] = useState(false);
+  const [chaosStarted, setChaosStarted] = useState(false);
   
   // Zen mode hint highlighting
   const [hintHighlight, setHintHighlight] = useState<Pos[] | null>(null);
@@ -1079,6 +1085,8 @@ function WordPathGame({
       setSettings(prev => ({ ...prev, mode: "time_attack" }));
       setTimeAttackTimeRemaining(60);
       setTimeAttackStarted(false);
+      setTimeAttackWordsFound(0);
+      setTimeAttackSpeedMultiplier(1.0);
     } else if (initialMode === "endless") {
       setSettings(prev => ({ ...prev, mode: "endless" }));
       setEndlessDifficulty(1);
@@ -1701,6 +1709,7 @@ function WordPathGame({
       streak,
       mode: settings.mode,
       blitzMultiplier,
+      timeAttackSpeedMultiplier,
       activeEffects,
       baseMode: "square",
       chainMode: "linear"
@@ -1795,6 +1804,7 @@ function WordPathGame({
       streak,
       mode: settings.mode,
       blitzMultiplier,
+      timeAttackSpeedMultiplier,
       activeEffects,
       baseMode: "square",
       chainMode: "linear"
@@ -1953,6 +1963,26 @@ function WordPathGame({
       }
     }
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
+    
+    // Time Attack mode: Update speed multiplier based on words found
+    if (settings.mode === "time_attack" && timeAttackStarted) {
+      const newWordsFound = timeAttackWordsFound + 1;
+      setTimeAttackWordsFound(newWordsFound);
+      
+      // Speed multiplier increases every 3 words (1.0x -> 1.2x -> 1.4x -> 1.6x -> 2.0x max)
+      const newMultiplier = Math.min(2.0, 1.0 + Math.floor(newWordsFound / 3) * 0.2);
+      if (newMultiplier > timeAttackSpeedMultiplier) {
+        setTimeAttackSpeedMultiplier(newMultiplier);
+        toast.success(`⚡ Speed Multiplier: ${newMultiplier.toFixed(1)}x!`, { duration: 2000 });
+      }
+      
+      // Time bonus: Add 2 seconds for each word found (longer words give more time)
+      const timeBonus = Math.min(5, Math.floor(actualWord.length / 2));
+      setTimeAttackTimeRemaining(prev => Math.min(60, prev + timeBonus));
+      if (timeBonus > 0) {
+        toast.info(`+${timeBonus}s time bonus!`, { duration: 1500 });
+      }
+    }
     
     // Survival mode: Track words and check for boss word completion
     if (settings.mode === "survival") {
@@ -3271,6 +3301,7 @@ function WordPathGame({
       streak,
       mode: settings.mode,
       blitzMultiplier,
+      timeAttackSpeedMultiplier,
       activeEffects,
       baseMode: "hybrid",
       chainMode: "cappedLinear"
@@ -3362,7 +3393,7 @@ function WordPathGame({
     const multiplier = breakdown.multipliers.combinedApplied;
 
     // Increment moves for daily challenge, puzzle mode, and chaos mode
-    if (settings.mode === "daily" || settings.mode === "puzzle" || settings.mode === "chaos") {
+    if (settings.mode === "daily" || settings.mode === "puzzle" || (settings.mode === "chaos" && chaosStarted)) {
       setMovesUsed(prev => prev + 1);
     }
     
@@ -3495,8 +3526,8 @@ function WordPathGame({
       }
     }
     
-    // Chaos Mode: Reshuffle board after every word
-    if (settings.mode === "chaos" && dict && sorted) {
+    // Chaos Mode: Reshuffle board after every word (only if started)
+    if (settings.mode === "chaos" && chaosStarted && dict && sorted) {
       setTimeout(() => {
         // Keep some random tiles, shuffle others
         const newBoard = board.map(row => [...row]);
@@ -3628,7 +3659,7 @@ function WordPathGame({
     clearPath();
     
     // Check if game over due to stone tiles blocking all valid words (Classic, Zen, Chaos, or Endless mode)
-    if ((settings.mode === "classic" || settings.mode === "zen" || settings.mode === "chaos" || (settings.mode === "endless" && endlessStarted)) && dict && sorted) {
+    if ((settings.mode === "classic" || settings.mode === "zen" || (settings.mode === "chaos" && chaosStarted) || (settings.mode === "endless" && endlessStarted)) && dict && sorted) {
       // Create a test grid with stone tiles marked as blocked
       const testGrid = board.map((row, r) => 
         row.map((letter, c) => 
@@ -3916,6 +3947,8 @@ function WordPathGame({
           {settings.mode === "time_attack" && !timeAttackStarted && <Button variant="outline" onClick={() => {
             setTimeAttackStarted(true);
             setTimeAttackTimeRemaining(60);
+            setTimeAttackWordsFound(0);
+            setTimeAttackSpeedMultiplier(1.0);
           }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
               Start Timer
             </Button>}
@@ -3985,7 +4018,15 @@ function WordPathGame({
               Hint ({zenHintsUsed})
           </Button>}
           
-          {settings.mode === "chaos" && <Button variant="hero" onClick={() => {
+          {settings.mode === "chaos" && !chaosStarted && <Button variant="outline" onClick={() => {
+            setChaosStarted(true);
+            setMovesUsed(0);
+            toast.success('🔀 Chaos Mode Started! Board reshuffles after each word. 15 moves!', { duration: 3000 });
+          }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Start Chaos
+          </Button>}
+          
+          {settings.mode === "chaos" && (chaosStarted || gameOver) && <Button variant="hero" onClick={() => {
             if (dict && sorted) {
               setIsGenerating(true);
               const newBoard = generateSolvableBoard(size, dict, sorted);
@@ -4006,6 +4047,7 @@ function WordPathGame({
               setScore(0);
               setStreak(0);
               setMovesUsed(0);
+              setChaosStarted(true);
               setIsGenerating(false);
               
               toast.success('🔀 New Chaos Round! 15 moves to survive!', { duration: 3000 });
@@ -4616,6 +4658,9 @@ function WordPathGame({
                   {special.type !== null && special.expiryTurns !== undefined && <div className="absolute top-1 left-1 text-xs font-bold bg-black/30 text-white px-1 rounded-full min-w-[16px] text-center">
                       {special.expiryTurns}
                     </div>}
+                  {special.type === "stone" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">
+                      🪨
+                    </div>}
                 </Card>;
             }))}
             {!board && <div className="col-span-full flex items-center justify-center p-8">
@@ -4650,50 +4695,135 @@ function WordPathGame({
                 
                 {/* Mode-specific indicators */}
                 {settings.mode === "time_attack" && timeAttackStarted && (
-                  <div className="mt-2">
-                    <div className="text-xs text-muted-foreground">Time Remaining</div>
-                    <div className={`text-lg font-bold ${timeAttackTimeRemaining <= 10 ? 'text-red-500 animate-pulse' : timeAttackTimeRemaining <= 30 ? 'text-orange-500' : 'text-green-500'}`}>
-                      {timeAttackTimeRemaining}s
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Time Remaining</div>
+                      <div className={`text-2xl font-bold ${timeAttackTimeRemaining <= 10 ? 'text-red-500 animate-pulse' : timeAttackTimeRemaining <= 30 ? 'text-orange-500' : 'text-green-500'}`}>
+                        ⏱️ {timeAttackTimeRemaining}s
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Speed Multiplier</div>
+                      <div className={`text-lg font-bold ${timeAttackSpeedMultiplier >= 2.0 ? 'text-yellow-500' : timeAttackSpeedMultiplier >= 1.4 ? 'text-green-500' : 'text-blue-500'}`}>
+                        ⚡ {timeAttackSpeedMultiplier.toFixed(1)}x
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
+                        <div 
+                          className="bg-gradient-to-r from-blue-400 via-green-400 to-yellow-400 h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.min(100, (timeAttackSpeedMultiplier - 1) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Words: {timeAttackWordsFound} • Next ⚡ at {Math.ceil(timeAttackWordsFound / 3) * 3 + 3 - timeAttackWordsFound} words
                     </div>
                   </div>
                 )}
                 
                 {settings.mode === "endless" && endlessStarted && (
-                  <div className="mt-2">
-                    <div className="text-xs text-muted-foreground">Difficulty Level</div>
-                    <div className="text-lg font-bold text-purple-500">
-                      {endlessDifficulty}
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Difficulty Level</div>
+                      <div className="text-lg font-bold text-purple-500 flex items-center gap-2">
+                        <span className="text-2xl">∞</span> 
+                        <span>Level {endlessDifficulty}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Stone Spawn Rate</div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
+                        <div 
+                          className="bg-gradient-to-r from-gray-400 to-gray-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.min(100, 15 + (endlessDifficulty * 2.5))}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {Math.round(15 + Math.min(25, endlessDifficulty * 2.5))}%
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Words: {usedWords.length} • Boards: {endlessDifficulty}
                     </div>
                   </div>
                 )}
                 
                 {settings.mode === "survival" && survivalStarted && (
-                  <div className="mt-2 space-y-1">
+                  <div className="mt-2 space-y-2">
                     <div>
                       <div className="text-xs text-muted-foreground">Wave</div>
-                      <div className="text-lg font-bold text-blue-500">
-                        {survivalWave} {survivalWave % 5 === 0 ? '⚡' : ''}
+                      <div className="text-lg font-bold text-blue-500 flex items-center gap-2">
+                        <span>Wave {survivalWave}</span>
+                        {survivalWave % 5 === 0 && <span className="text-orange-500 animate-pulse">⚡ BOSS</span>}
                       </div>
                     </div>
                     <div>
                       <div className="text-xs text-muted-foreground">Lives</div>
-                      <div className="text-lg font-bold text-red-500">
-                        {'❤️'.repeat(survivalLives)}
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3].map(i => (
+                          <span key={i} className={`text-xl transition-all duration-300 ${i <= survivalLives ? '' : 'opacity-30 grayscale'}`}>
+                            ❤️
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Wave Progress</div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            survivalBossWordRequired 
+                              ? 'bg-gradient-to-r from-orange-400 to-red-500' 
+                              : 'bg-gradient-to-r from-blue-400 to-blue-600'
+                          }`}
+                          style={{ width: `${survivalBossWordRequired ? 80 : Math.min(100, survivalWordsThisWave * 20)}%` }}
+                        />
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {survivalBossWordRequired 
+                          ? '🎯 Find a 7+ letter word!' 
+                          : `${survivalWordsThisWave}/5 words`
+                        }
                       </div>
                     </div>
                     {survivalBossWordRequired && (
-                      <div className="text-xs text-orange-500 font-medium animate-pulse">
-                        🎯 Boss: 7+ letters!
+                      <div className="p-2 bg-orange-500/20 rounded-lg border border-orange-500/30">
+                        <div className="text-sm text-orange-500 font-medium flex items-center gap-2 animate-pulse">
+                          <span>👑</span>
+                          <span>BOSS WAVE!</span>
+                          <span>Find a 7+ letter word to survive!</span>
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
                 
                 {settings.mode === "zen" && zenStarted && (
-                  <div className="mt-2">
-                    <div className="text-xs text-muted-foreground">Zen Mode</div>
-                    <div className="text-sm text-green-500">
-                      🧘 No pressure
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Zen Mode</div>
+                      <div className="text-sm text-green-500">
+                        🧘 No pressure
+                      </div>
+                    </div>
+                    <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        💡 Tip: {(() => {
+                          const tips = [
+                            "Longer words (5+ letters) give bonus points!",
+                            "Rare letters like Q, X, Z give extra score",
+                            "Reusing tiles from your last word adds multipliers",
+                            "Look for word endings like -ING, -TION, -ED",
+                            "Try to chain words with shared letters",
+                            "Special tiles can multiply your score",
+                            "Use the Hint button if you're stuck!",
+                            "Undo lets you try different strategies"
+                          ];
+                          return tips[usedWords.length % tips.length];
+                        })()}
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Hints: {zenHintsUsed} | Undos available: {zenUndoStack.length}
                     </div>
                   </div>
                 )}
@@ -4765,12 +4895,27 @@ function WordPathGame({
                 )}
                 {settings.mode === "endless" && (
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Difficulty: {endlessDifficulty}x | Words: {usedWords.length}
+                    {endlessStarted ? (
+                      <span className="flex items-center gap-1">
+                        <span className="text-purple-500 font-medium">∞ Level {endlessDifficulty}</span>
+                        <span>| Words: {usedWords.length}</span>
+                      </span>
+                    ) : (
+                      <span>Endless mode ready</span>
+                    )}
                   </div>
                 )}
                 {settings.mode === "survival" && (
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Lives: {survivalLives} | Wave: {survivalWave}
+                    {survivalStarted ? (
+                      <span className="flex items-center gap-2">
+                        <span>{'❤️'.repeat(survivalLives)}</span>
+                        <span className="text-blue-500 font-medium">Wave {survivalWave}</span>
+                        {survivalBossWordRequired && <span className="text-orange-500 font-medium animate-pulse">👑 BOSS</span>}
+                      </span>
+                    ) : (
+                      <span>Press "Start Survival" to begin</span>
+                    )}
                   </div>
                 )}
                 {settings.mode === "zen" && (
@@ -4780,9 +4925,15 @@ function WordPathGame({
                 )}
                 {settings.mode === "chaos" && (
                   <div className="mt-1 text-xs">
-                    <div className={`font-medium ${movesUsed >= 13 ? 'text-red-500' : movesUsed >= 10 ? 'text-orange-500' : 'text-muted-foreground'}`}>
-                      🔀 Moves: {movesUsed}/15
-                    </div>
+                    {!chaosStarted ? (
+                      <div className="text-muted-foreground">
+                        Press "Start Chaos" to begin
+                      </div>
+                    ) : (
+                      <div className={`font-medium ${movesUsed >= 13 ? 'text-red-500 animate-pulse' : movesUsed >= 10 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                        🔀 Moves: {movesUsed}/15
+                      </div>
+                    )}
                   </div>
                 )}
                 {puzzleMode && currentPuzzleId && (() => {
@@ -4835,6 +4986,33 @@ function WordPathGame({
                 {settings.mode === "daily" && gameOver && <Button variant="outline" size="sm" onClick={shareScoreInline} className="mt-2 h-6 px-2 text-xs bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
                     Share
                   </Button>}
+                {puzzleMode && gameOver && currentPuzzleId && (
+                  <div className="mt-3 flex flex-col gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => loadPuzzle(currentPuzzleId)}
+                      className="w-full text-xs"
+                    >
+                      🔄 Replay Puzzle
+                    </Button>
+                    {getNextPuzzle(currentPuzzleId) && (
+                      <Button 
+                        variant="hero" 
+                        size="sm" 
+                        onClick={() => {
+                          const nextPuzzle = getNextPuzzle(currentPuzzleId);
+                          if (nextPuzzle) {
+                            loadPuzzle(nextPuzzle.id);
+                          }
+                        }}
+                        className="w-full text-xs"
+                      >
+                        ➡️ Next Puzzle: {getNextPuzzle(currentPuzzleId)?.name}
+                      </Button>
+                    )}
+                  </div>
+                )}
           </div>
         </div>
           {usedWords.length > 0 && (() => {
