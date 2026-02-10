@@ -31,21 +31,31 @@ const Index = () => {
   const navigate = useNavigate();
 
   // Initialize login streak tracking
-  const { streakData } = useLoginStreak(user);
-  
-  // Fetch user profile for XP and level calculation
-  const { profile, refreshProfile } = useProfile(user);
+  const {
+    streakData
+  } = useLoginStreak(user);
 
+  // Fetch user profile for XP and level calculation
+  const {
+    profile,
+    refreshProfile
+  } = useProfile(user);
   useEffect(() => {
     // Get current user and set up auth state listener
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(({
+      data: {
+        user
+      }
+    }) => {
       setUser(user);
     });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -56,22 +66,16 @@ const Index = () => {
         setIsAdmin(false);
         return;
       }
-
       try {
-        const { data } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-        
+        const {
+          data
+        } = await supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
         setIsAdmin(!!data);
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
       }
     };
-
     checkAdmin();
   }, [user]);
   useEffect(() => {
@@ -84,7 +88,7 @@ const Index = () => {
     const ogd = document.querySelector('meta[property="og:description"]');
     if (ogd) ogd.setAttribute("content", desc);
   }, []);
-  
+
   // Check for URL parameters on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -94,7 +98,6 @@ const Index = () => {
       setShowGame(true);
     }
   }, []);
-  
   const handlePlayClick = () => {
     setShowModeSelection(true);
   };
@@ -115,7 +118,6 @@ const Index = () => {
     // Refresh profile to get updated XP
     refreshProfile();
   };
-
   const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
     // Special handling for puzzle mode
     if (mode === 'puzzle') {
@@ -130,42 +132,35 @@ const Index = () => {
       setShowMiniMarathon(true);
       return;
     }
-
     if (mode === 'weekly_gauntlet') {
       setShowAdvancedModes(false);
       setShowWeeklyGauntlet(true);
       return;
     }
-
     if (mode === 'prestige_endless') {
       setShowAdvancedModes(false);
       setShowPrestigeEndless(true);
       return;
     }
-
     setSelectedMode(mode as any); // Convert AdvancedGameMode to broader type
     setSelectedAdvancedMode(mode);
     setShowAdvancedModes(false);
     setShowGame(true);
   };
-  
   const handlePuzzleSelect = (puzzleId: string) => {
     setSelectedPuzzleId(puzzleId);
     setSelectedMode('puzzle');
     setShowPuzzleSelector(false);
     setShowGame(true);
   };
-  
   const handleBackToPuzzleSelector = () => {
     setShowPuzzleSelector(false);
     setShowAdvancedModes(true);
   };
-
   const handleShowAdvancedModes = () => {
     setShowModeSelection(false);
     setShowAdvancedModes(true);
   };
-
   const handleBackToModeSelection = () => {
     setShowAdvancedModes(false);
     setShowModeSelection(true);
@@ -193,51 +188,38 @@ const Index = () => {
   if (showMiniMarathon) {
     return <MiniMarathon onBack={handleBackToTitle} />;
   }
-
   if (showWeeklyGauntlet) {
     return <WeeklyGauntlet onBack={handleBackToTitle} />;
   }
-
   if (showPrestigeEndless) {
     return <PrestigeEndless onBack={handleBackToTitle} />;
   }
-
   if (showPuzzleSelector) {
-    return <PuzzleSelector
-      onPuzzleSelect={handlePuzzleSelect}
-      onBack={handleBackToPuzzleSelector}
-      user={user}
-    />;
+    return <PuzzleSelector onPuzzleSelect={handlePuzzleSelect} onBack={handleBackToPuzzleSelector} user={user} />;
   }
-
-  const playerLevel = profile ? calculateLevel(profile.total_xp) : { level: 1, xp: 0, xpToNext: 100, totalXp: 0, title: "Word Novice", color: "text-gray-500", unlockedFeatures: [] };
-
+  const playerLevel = profile ? calculateLevel(profile.total_xp) : {
+    level: 1,
+    xp: 0,
+    xpToNext: 100,
+    totalXp: 0,
+    title: "Word Novice",
+    color: "text-gray-500",
+    unlockedFeatures: []
+  };
   if (showAdvancedModes) {
-    return <AdvancedGameModes 
-      onModeSelect={handleAdvancedModeSelect}
-      onBack={handleBackToModeSelection}
-      userLevel={playerLevel.level}
-      totalXp={profile?.total_xp || 0}
-      user={user}
-      isAdmin={isAdmin}
-    />;
+    return <AdvancedGameModes onModeSelect={handleAdvancedModeSelect} onBack={handleBackToModeSelection} userLevel={playerLevel.level} totalXp={profile?.total_xp || 0} user={user} isAdmin={isAdmin} />;
   }
-
   if (showGame) {
     return <main>
         <header className="container mx-auto pt-10 pb-4">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">Lexichain</h1>
-          <p className="mt-2 text-muted-foreground max-w-2xl">Make as many valid words as you can by drawing paths through the letter grid. Each new word must reuse at least one tile from the previous word. Balance your strategy between reusing letters and making longer words, and go for a Platinum score!</p>
+          
           
         </header>
         <Suspense fallback={<div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
           </div>}>
-          <WordPathGame 
-            onBackToTitle={handleBackToTitle} 
-            initialMode={selectedMode}
-            initialPuzzleId={selectedPuzzleId || undefined}
-          />
+          <WordPathGame onBackToTitle={handleBackToTitle} initialMode={selectedMode} initialPuzzleId={selectedPuzzleId || undefined} />
         </Suspense>
       </main>;
   }
@@ -261,10 +243,10 @@ const Index = () => {
               </Button>
               
               {/* PRESERVE FOR FUTURE USE - Challenge Practice Mode Temporarily Disabled
-              <Button variant="outline" size="lg" onClick={() => handleModeSelect("practice")} className="px-12 py-4 text-lg">
+               <Button variant="outline" size="lg" onClick={() => handleModeSelect("practice")} className="px-12 py-4 text-lg">
                 Challenge Practice
-              </Button>
-              */}
+               </Button>
+               */}
             </div>
             
             <Button variant="ghost" onClick={() => setShowModeSelection(false)} className="mt-4">
@@ -274,16 +256,6 @@ const Index = () => {
         </div>
       </div>;
   }
-  return <TitleScreen 
-    onPlayClick={handlePlayClick} 
-    onLoginClick={handleLoginClick} 
-    onRegisterClick={handleRegisterClick} 
-    onStatsClick={handleStatsClick} 
-    onStoreClick={handleStoreClick} 
-    onLeaderboardClick={handleLeaderboardClick}
-    onSettingsClick={handleSettingsClick}
-    streakData={streakData}
-    user={user}
-  />;
+  return <TitleScreen onPlayClick={handlePlayClick} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} onStoreClick={handleStoreClick} onLeaderboardClick={handleLeaderboardClick} onSettingsClick={handleSettingsClick} streakData={streakData} user={user} />;
 };
 export default Index;
