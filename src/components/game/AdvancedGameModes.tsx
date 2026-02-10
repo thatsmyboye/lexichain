@@ -283,43 +283,7 @@ export function AdvancedGameModes({
         {/* XP Earning Guide */}
         <Card className="mb-8 border-blue-500/30 bg-gradient-to-br from-blue-50/50 via-blue-100/30 to-blue-50/50 dark:from-blue-950/50 dark:via-blue-900/30 dark:to-blue-950/50 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-bottom duration-500 delay-200">
           
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
-                <Target className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-sm">Play Any Game</h4>
-                  <p className="text-xs text-muted-foreground">Earn 1 XP per 10 points scored</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
-                <Star className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-sm">Find Words</h4>
-                  <p className="text-xs text-muted-foreground">+2 XP per word found</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
-                <Trophy className="h-5 w-5 text-purple-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-sm">Daily Challenge</h4>
-                  <p className="text-xs text-muted-foreground">1.2x XP multiplier</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
-                <Flame className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-sm">Long Words</h4>
-                  <p className="text-xs text-muted-foreground">+3 XP per letter in longest word</p>
-                </div>
-              </div>
-            </div>
-            <div className="text-center pt-2 border-t">
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                💡 Tip: Play Daily Challenge to level up faster and unlock more modes!
-              </p>
-            </div>
-          </CardContent>
+          
         </Card>
 
         {/* Mode Selection */}
