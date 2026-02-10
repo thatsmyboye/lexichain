@@ -136,19 +136,8 @@ export function useLoginStreak(user: User | null) {
 
       setStreakData(newStreakData);
 
-      // Award streak rewards
-      if (STREAK_REWARDS[newStreak]) {
-        await awardConsumables(
-          STREAK_REWARDS[newStreak],
-          `login_streak_${newStreak}`
-        );
-        
-        toast({
-          title: `🔥 ${newStreak} day streak! You've earned consumables!`,
-          duration: 5000,
-        });
-      } else if (newStreak > streakData.currentStreak) {
-        // Regular streak continuation
+      // Streak rewards disabled — no bonus consumables for login streaks
+      if (newStreak > streakData.currentStreak) {
         toast({
           title: `🔥 ${newStreak} day streak!`,
         });
