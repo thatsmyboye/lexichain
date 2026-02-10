@@ -54,6 +54,11 @@ const TitleScreen = ({
   };
   // Enhanced state validation with progressive recovery
   useEffect(() => {
+    if (!user) {
+      setHasIncompleteChallenge(false);
+      setChallengeProgress(null);
+      return;
+    }
     const checkIncompleteChallenge = () => {
       const today = getDailyChallengeDate();
       const gameInfo = checkIncompleteGameState(today);
@@ -65,7 +70,7 @@ const TitleScreen = ({
     // Check periodically in case state changes
     const interval = setInterval(checkIncompleteChallenge, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
   useEffect(() => {
     if (propUser !== undefined) {
       setUser(propUser);
