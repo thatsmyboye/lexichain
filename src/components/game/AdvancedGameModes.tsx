@@ -263,21 +263,7 @@ export function AdvancedGameModes({
 
         {/* User Level Display */}
         <Card className="mb-8 border-brand-500/20 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm shadow-lg animate-in fade-in slide-in-from-bottom duration-500 delay-100">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-yellow-500/10 px-3 py-1.5 rounded-lg border border-yellow-500/20">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
-                  <span className="font-semibold text-lg">Level {userLevel}</span>
-                </div>
-                
-              </div>
-              <div className="md:text-right">
-                
-                <Progress value={progressPercentage} className="w-full md:w-48 h-2.5" />
-              </div>
-            </div>
-          </CardContent>
+          
         </Card>
 
         {/* XP Earning Guide */}
