@@ -282,12 +282,7 @@ export function AdvancedGameModes({
 
         {/* XP Earning Guide */}
         <Card className="mb-8 border-blue-500/30 bg-gradient-to-br from-blue-50/50 via-blue-100/30 to-blue-50/50 dark:from-blue-950/50 dark:via-blue-900/30 dark:to-blue-950/50 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-bottom duration-500 delay-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-blue-500 animate-pulse" />
-              How to Earn XP & Unlock Modes
-            </CardTitle>
-          </CardHeader>
+          
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background">
