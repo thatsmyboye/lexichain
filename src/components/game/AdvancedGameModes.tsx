@@ -273,9 +273,7 @@ export function AdvancedGameModes({
                 
               </div>
               <div className="md:text-right">
-                <div className="text-sm font-medium text-muted-foreground mb-1">
-                  {xpInCurrentLevel} / {xpNeededForNextLevel} XP
-                </div>
+                
                 <Progress value={progressPercentage} className="w-full md:w-48 h-2.5" />
               </div>
             </div>
