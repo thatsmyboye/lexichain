@@ -204,11 +204,9 @@ export function AdvancedGameModes({
       onModeSelect(selectedMode);
     }
   };
-  const isModeUnlocked = (mode: AdvancedModeConfig) => {
-    // Admin users have all modes unlocked
-    if (isAdmin) return true;
-    // Check if mode is purchased or unlocked by level
-    return unlockedModes.has(mode.id) || userLevel >= (mode.rewards.unlockRequirement || 0);
+  const isModeUnlocked = (_mode: AdvancedModeConfig) => {
+    // All modes are available to all logged-in users
+    return true;
   };
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
