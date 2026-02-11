@@ -930,10 +930,12 @@ function checkAndAwardAchievements(
 
 function WordPathGame({
   onBackToTitle,
+  onBackToAdvancedModes,
   initialMode = "classic",
   initialPuzzleId
 }: {
   onBackToTitle?: () => void;
+  onBackToAdvancedModes?: () => void;
   initialMode?: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   initialPuzzleId?: string;
 }) {
@@ -4228,15 +4230,21 @@ function WordPathGame({
           <Button variant="outline" onClick={() => setShowHowToPlay(true)} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             How to Play
           </Button>
-          
+
+          {onBackToAdvancedModes && (
+            <Button variant="outline" onClick={onBackToAdvancedModes} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+              Back to Advanced Modes
+            </Button>
+          )}
+
           {settings.mode === "blitz" && blitzStarted && !gameOver && <Button variant="outline" onClick={() => setBlitzPaused(!blitzPaused)} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))] ml-3">
               {blitzPaused ? "▶️ Resume" : "⏸️ Pause"}
             </Button>}
-          
+
           {settings.mode === "classic" && !gameOver && <Button variant="outline" onClick={onEndGame} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             End Game
           </Button>}
-          
+
           {settings.mode === "endless" && endlessStarted && !gameOver && <Button variant="outline" onClick={async () => {
             // End endless run and collect XP
             const longestWord = usedWords.reduce((longest, wordEntry) => 
