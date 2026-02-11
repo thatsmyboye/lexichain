@@ -8,6 +8,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { calculateLevel } from "@/lib/progression";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
+import { getModeName } from "@/lib/gameModes";
 import PuzzleSelector from "@/components/game/PuzzleSelector";
 import MiniMarathon from "@/components/game/MiniMarathon";
 import WeeklyGauntlet from "@/components/game/WeeklyGauntlet";
@@ -93,8 +94,9 @@ const Index = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
-    if (mode && ['time_attack', 'endless', 'puzzle', 'survival', 'zen'].includes(mode)) {
+    if (mode && ['time_attack', 'endless', 'puzzle', 'survival', 'zen', 'chaos'].includes(mode)) {
       setSelectedMode(mode as any);
+      setSelectedAdvancedMode(mode as AdvancedGameMode);
       setShowGame(true);
     }
   }, []);
@@ -116,6 +118,13 @@ const Index = () => {
     setShowPrestigeEndless(false);
     setSelectedPuzzleId(null);
     // Refresh profile to get updated XP
+    refreshProfile();
+  };
+  const handleBackToAdvancedModes = () => {
+    setShowGame(false);
+    setShowAdvancedModes(true);
+    setSelectedPuzzleId(null);
+    // Keep selectedAdvancedMode set so user sees their last selection highlighted
     refreshProfile();
   };
   const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
@@ -150,6 +159,7 @@ const Index = () => {
   const handlePuzzleSelect = (puzzleId: string) => {
     setSelectedPuzzleId(puzzleId);
     setSelectedMode('puzzle');
+    setSelectedAdvancedMode('puzzle');
     setShowPuzzleSelector(false);
     setShowGame(true);
   };
@@ -213,13 +223,16 @@ const Index = () => {
     return <main>
         <header className="container mx-auto pt-10 pb-4">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">Lexichain</h1>
-          
-          
+          {selectedAdvancedMode && (
+            <p className="text-lg md:text-xl font-semibold text-muted-foreground mt-2 text-center">
+              {getModeName(selectedAdvancedMode)}
+            </p>
+          )}
         </header>
         <Suspense fallback={<div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
           </div>}>
-          <WordPathGame onBackToTitle={handleBackToTitle} initialMode={selectedMode} initialPuzzleId={selectedPuzzleId || undefined} />
+          <WordPathGame onBackToTitle={handleBackToTitle} onBackToAdvancedModes={selectedAdvancedMode ? handleBackToAdvancedModes : undefined} initialMode={selectedMode} initialPuzzleId={selectedPuzzleId || undefined} />
         </Suspense>
       </main>;
   }
