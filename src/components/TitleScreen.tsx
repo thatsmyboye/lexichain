@@ -147,7 +147,7 @@ const TitleScreen = ({
               <h1 className="text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg animate-in fade-in slide-in-from-top duration-700">
                 Lexichain
               </h1>
-              <div className="absolute -inset-1 bg-gradient-to-r from-brand-400/20 to-brand-600/20 blur-xl -z-10"></div>
+              <div className="absolute -inset-6 rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--brand-500)/0.18),transparent_70%)] blur-2xl -z-10"></div>
             </div>
             
             {user && streakData && <div className="text-sm font-medium bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 text-orange-600 dark:text-orange-400 rounded-lg px-4 py-2.5 backdrop-blur-sm shadow-lg animate-in fade-in slide-in-from-bottom duration-500">
