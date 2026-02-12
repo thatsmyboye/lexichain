@@ -156,6 +156,8 @@ export interface EventEffect {
   blessing?: string;
   curse?: string;
   skipWaves?: number;
+  gamble?: 'life_gambit' | 'score_gambit'; // BUG FIX #4: Deferred random outcomes
+  mystery?: 'mystery_box'; // BUG FIX #4: Deferred random outcomes
 }
 
 export interface ChoiceEvent {

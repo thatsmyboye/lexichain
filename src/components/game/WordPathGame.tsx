@@ -2070,6 +2070,12 @@ function WordPathGame({
     if (settings.mode === "survival" && survivalStarted) {
       // Update combo system
       const hasSafetyNet = survivalActivePowerUps.some(ap => ap.powerUp.type === 'safety_net' && (ap.remainingUses || 0) > 0);
+
+      // BUG FIX #3: Calculate time before updating combo (to use old timestamp)
+      const timeSpent = survivalComboState.lastWordTime > 0
+        ? (Date.now() - survivalComboState.lastWordTime) / 1000
+        : 5; // Default 5 seconds for first word
+
       const { newCombo, rewards } = updateCombo(survivalComboState, true, hasSafetyNet);
       setSurvivalComboState(newCombo);
 
@@ -2079,7 +2085,6 @@ function WordPathGame({
       setSurvivalWaveScore(waveScore);
 
       // Update performance tracking
-      const timeSpent = (Date.now() - newCombo.lastWordTime) / 1000;
       const updatedPerf = updatePerformance(
         survivalPerformance,
         actualWord,
@@ -2113,6 +2118,10 @@ function WordPathGame({
             setSurvivalLifeFragments(newFragments);
             toast.success(`💎 Life fragment earned! (${newFragments}/3)`);
           }
+        } else if (reward === 'extra_life') {
+          // BUG FIX #6: Handle 15-word combo reward
+          setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
+          toast.success('❤️ LEGENDARY COMBO! +1 Life!', { duration: 4000 });
         }
       });
 
@@ -2179,16 +2188,21 @@ function WordPathGame({
               toast.info(`🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
             }
 
-            // Decrease active power-up durations
+            // BUG FIX #2: Properly expire power-ups and handle durations
             setSurvivalActivePowerUps(prev =>
               prev.map(ap => ({
                 ...ap,
-                remainingWaves: ap.remainingWaves ? ap.remainingWaves - 1 : undefined
-              })).filter(ap => !ap.remainingWaves || ap.remainingWaves > 0)
+                remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
+              })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
             );
 
             if (survivalDifficultyFrozen > 0) {
               setSurvivalDifficultyFrozen(prev => prev - 1);
+            }
+
+            // BUG FIX #9: Reset double points multiplier after wave
+            if (survivalPointsMultiplier > 1.0) {
+              setSurvivalPointsMultiplier(1.0);
             }
           } else if (bossResult.message) {
             toast.info(bossResult.message);
@@ -2220,6 +2234,13 @@ function WordPathGame({
 
             // Check if next wave is a boss wave
             if (nextWave % 5 === 0) {
+              // BUG FIX #1: Advance wave counter before boss
+              setSurvivalWave(nextWave);
+              setSurvivalWordsThisWave(0);
+              setSurvivalChallengeProgress(0);
+              setSurvivalWaveScore(0);
+              setSurvivalMistakesThisWave(0);
+
               const boss = getRandomBossWave(nextWave);
               setSurvivalCurrentBoss(boss);
               setSurvivalBossWordRequired(true);
@@ -2266,16 +2287,21 @@ function WordPathGame({
                 toast.success(`✨ Wave ${survivalWave} complete!\n🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
               }
 
-              // Decrease active power-up durations
+              // BUG FIX #2: Properly expire power-ups
               setSurvivalActivePowerUps(prev =>
                 prev.map(ap => ({
                   ...ap,
-                  remainingWaves: ap.remainingWaves ? ap.remainingWaves - 1 : undefined
-                })).filter(ap => !ap.remainingWaves || ap.remainingWaves > 0)
+                  remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
+                })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
               );
 
               if (survivalDifficultyFrozen > 0) {
                 setSurvivalDifficultyFrozen(prev => prev - 1);
+              }
+
+              // BUG FIX #9: Reset double points multiplier after wave
+              if (survivalPointsMultiplier > 1.0) {
+                setSurvivalPointsMultiplier(1.0);
               }
             }
           }
@@ -2287,12 +2313,12 @@ function WordPathGame({
 
       setSurvivalWordsThisWave(prev => prev + 1);
 
-      // Decrease word-based power-up durations
+      // BUG FIX #2: Properly expire word-based power-ups
       setSurvivalActivePowerUps(prev =>
         prev.map(ap => ({
           ...ap,
-          remainingUses: ap.remainingUses ? ap.remainingUses - 1 : undefined
-        })).filter(ap => !ap.remainingUses || ap.remainingUses > 0)
+          remainingUses: ap.remainingUses !== undefined ? ap.remainingUses - 1 : undefined
+        })).filter(ap => ap.remainingUses === undefined || ap.remainingUses > 0)
       );
     }
 
@@ -5289,7 +5315,7 @@ function WordPathGame({
                         if (result.success) {
                           toast.success(result.message);
 
-                          // Apply the effect
+                          // BUG FIX #5: Implement all power-up effects
                           if (result.effect.lives) {
                             setSurvivalLives(prev => Math.min(prev + result.effect.lives, survivalMaxLives));
                           }
@@ -5297,10 +5323,54 @@ function WordPathGame({
                             setSurvivalShields(prev => prev + result.effect.shield);
                           }
                           if (result.effect.removeStones) {
-                            // Add stone crusher to active power-ups
                             setSurvivalActivePowerUps(prev => [...prev, {
                               powerUp,
                               remainingUses: 1,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.refreshBoard) {
+                            // Regenerate board
+                            const newBoard = Array.from({ length: size }, () =>
+                              Array.from({ length: size }, () => randomLetter())
+                            );
+                            setBoard(newBoard);
+                          }
+                          if (result.effect.revealHints) {
+                            // TODO: Implement hint system
+                            toast.info('Hint system coming soon!');
+                          }
+                          if (result.effect.freezeDifficulty) {
+                            setSurvivalDifficultyFrozen(3);
+                          }
+                          if (result.effect.wildcardActive) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingWaves: 1,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.pointsMultiplier) {
+                            setSurvivalPointsMultiplier(result.effect.pointsMultiplier);
+                          }
+                          if (result.effect.comboBoost) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingUses: 5,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.lifeLink) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingWaves: 3,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.safetyNet) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingUses: 3,
                               activatedAt: Date.now()
                             }]);
                           }
@@ -5789,25 +5859,75 @@ function WordPathGame({
               event={survivalPendingEvent}
               onChoice={(optionIndex) => {
                 const option = survivalPendingEvent.options[optionIndex];
-                const messages = applyEventEffect(option.effect, {});
+
+                // BUG FIX #4: Handle gambles and mysteries at choice time
+                let actualEffect = { ...option.effect };
+
+                if (option.effect.gamble === 'life_gambit') {
+                  // 60% chance to gain 1 life, 40% chance to lose 1 life
+                  actualEffect.lives = Math.random() < 0.6 ? 1 : -1;
+                  actualEffect.gamble = undefined;
+                } else if (option.effect.gamble === 'score_gambit') {
+                  // 50% chance to gain 500 points, 50% chance to lose 300 points
+                  actualEffect.score = Math.random() < 0.5 ? 500 : -300;
+                  actualEffect.gamble = undefined;
+                } else if (option.effect.mystery === 'mystery_box') {
+                  // 50% chance for good outcome, 50% for bad
+                  if (Math.random() < 0.5) {
+                    actualEffect.powerUp = 'combo_boost';
+                    actualEffect.lives = 1;
+                  } else {
+                    actualEffect.addStoneTiles = 2;
+                    actualEffect.score = -100;
+                  }
+                  actualEffect.mystery = undefined;
+                }
+
+                const messages = applyEventEffect(actualEffect, {});
 
                 // Apply effects
-                if (option.effect.lives) {
-                  setSurvivalLives(prev => Math.max(0, Math.min(prev + option.effect.lives, survivalMaxLives)));
+                if (actualEffect.lives) {
+                  setSurvivalLives(prev => Math.max(0, Math.min(prev + actualEffect.lives, survivalMaxLives)));
                 }
-                if (option.effect.score) {
-                  setScore(prev => Math.max(0, prev + option.effect.score));
+                if (actualEffect.score) {
+                  setScore(prev => Math.max(0, prev + actualEffect.score));
                 }
-                if (option.effect.removeStoneTiles) {
+                if (actualEffect.removeStoneTiles) {
                   setSpecialTiles(prev => prev.map(row => row.map(tile =>
                     tile.type === 'stone' ? { type: null } : tile
                   )));
                 }
-                if (option.effect.shield) {
-                  setSurvivalShields(prev => prev + option.effect.shield);
+                // BUG FIX #7: Implement addStoneTiles effect
+                if (actualEffect.addStoneTiles) {
+                  setSpecialTiles(prev => {
+                    const newTiles = [...prev.map(row => [...row])];
+                    const emptyPositions: Array<{r: number, c: number}> = [];
+
+                    // Find all empty positions
+                    for (let r = 0; r < size; r++) {
+                      for (let c = 0; c < size; c++) {
+                        if (newTiles[r][c].type === null) {
+                          emptyPositions.push({ r, c });
+                        }
+                      }
+                    }
+
+                    // Add stone tiles to random empty positions
+                    const stonesToAdd = Math.min(actualEffect.addStoneTiles, emptyPositions.length);
+                    for (let i = 0; i < stonesToAdd; i++) {
+                      const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+                      const pos = emptyPositions.splice(randomIndex, 1)[0];
+                      newTiles[pos.r][pos.c] = { type: 'stone' };
+                    }
+
+                    return newTiles;
+                  });
                 }
-                if (option.effect.powerUp) {
-                  const powerUp = POWER_UPS[option.effect.powerUp];
+                if (actualEffect.shield) {
+                  setSurvivalShields(prev => prev + actualEffect.shield);
+                }
+                if (actualEffect.powerUp) {
+                  const powerUp = POWER_UPS[actualEffect.powerUp];
                   setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
                 }
 

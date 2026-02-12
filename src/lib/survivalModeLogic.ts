@@ -688,12 +688,14 @@ export function generateRandomEvent(wave: number): ChoiceEvent | null {
         options: [
           {
             text: 'Risk 1 life for 2 lives (60% chance)',
-            effect: { lives: Math.random() < 0.6 ? 1 : -1 },
+            // BUG FIX #4: Mark as gamble, don't pre-roll
+            effect: { gamble: 'life_gambit' },
             risk: 'high'
           },
           {
             text: 'Risk 300 points for 800 points (50% chance)',
-            effect: { score: Math.random() < 0.5 ? 500 : -300 },
+            // BUG FIX #4: Mark as gamble, don't pre-roll
+            effect: { gamble: 'score_gambit' },
             risk: 'high'
           },
           {
@@ -714,9 +716,8 @@ export function generateRandomEvent(wave: number): ChoiceEvent | null {
         options: [
           {
             text: 'Open the box',
-            effect: Math.random() < 0.5
-              ? { powerUp: 'combo_boost', lives: 1 }
-              : { addStoneTiles: 2, score: -100 },
+            // BUG FIX #4: Mark as mystery, don't pre-roll
+            effect: { mystery: 'mystery_box' },
             risk: 'high'
           },
           {
