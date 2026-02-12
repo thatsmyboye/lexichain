@@ -29,6 +29,47 @@ import { dictionaryManager } from "@/utils/dictionaryManager";
 import { getPuzzleById, getNextPuzzle, type PuzzleBoard } from "@/lib/puzzleBoards";
 import { useTileSkin } from "@/hooks/useTileSkin";
 import { getBenchmarkColor } from "@/lib/tileSkins";
+import {
+  type WaveChallenge,
+  type BossWave,
+  type PowerUp,
+  type ActivePowerUp,
+  type ComboState,
+  type ShopItem,
+  type ChoiceEvent,
+  type SurvivalState,
+  type PlayerPerformance,
+  getRandomWaveChallenge,
+  getRandomBossWave,
+  getRandomPowerUp,
+  POWER_UPS,
+  type PowerUpType,
+  shouldShowShop,
+  shouldTriggerEvent
+} from "@/lib/survivalMode";
+import {
+  validateWaveChallenge,
+  isChallengeComplete,
+  validateBossWave,
+  updateCombo,
+  applyPowerUpEffect,
+  checkLifeRecovery,
+  generateShopItems,
+  generateRandomEvent,
+  applyEventEffect,
+  calculateObstacleCount,
+  updatePerformance
+} from "@/lib/survivalModeLogic";
+import {
+  LivesDisplay,
+  WaveChallengeDisplay,
+  BossWaveDisplay,
+  ComboDisplay,
+  PowerUpsInventory,
+  ShopModal,
+  ChoiceEventModal,
+  WaveCompleteModal
+} from "@/components/game/SurvivalModeUI";
 type Pos = {
   r: number;
   c: number;
@@ -1032,10 +1073,46 @@ function WordPathGame({
   const [timeAttackWordsFound, setTimeAttackWordsFound] = useState(0);
   const [timeAttackSpeedMultiplier, setTimeAttackSpeedMultiplier] = useState(1.0);
   const [endlessDifficulty, setEndlessDifficulty] = useState(1);
+
+  // Enhanced Survival Mode State
   const [survivalLives, setSurvivalLives] = useState(3);
+  const [survivalMaxLives, setSurvivalMaxLives] = useState(5);
   const [survivalWave, setSurvivalWave] = useState(1);
   const [survivalWordsThisWave, setSurvivalWordsThisWave] = useState(0);
   const [survivalBossWordRequired, setSurvivalBossWordRequired] = useState(false);
+  const [survivalCurrentChallenge, setSurvivalCurrentChallenge] = useState<WaveChallenge | null>(null);
+  const [survivalCurrentBoss, setSurvivalCurrentBoss] = useState<BossWave | null>(null);
+  const [survivalChallengeProgress, setSurvivalChallengeProgress] = useState(0);
+  const [survivalBossProgress, setSurvivalBossProgress] = useState(0);
+  const [survivalWaveScore, setSurvivalWaveScore] = useState(0);
+  const [survivalActivePowerUps, setSurvivalActivePowerUps] = useState<ActivePowerUp[]>([]);
+  const [survivalInventoryPowerUps, setSurvivalInventoryPowerUps] = useState<PowerUp[]>([]);
+  const [survivalShields, setSurvivalShields] = useState(0);
+  const [survivalComboState, setSurvivalComboState] = useState<ComboState>({
+    currentCombo: 0,
+    maxCombo: 0,
+    comboMultiplier: 1.0,
+    comboActive: false,
+    lastWordTime: 0
+  });
+  const [survivalShowShop, setSurvivalShowShop] = useState(false);
+  const [survivalPendingEvent, setSurvivalPendingEvent] = useState<ChoiceEvent | null>(null);
+  const [survivalPerfectWaveStreak, setSurvivalPerfectWaveStreak] = useState(0);
+  const [survivalLifeFragments, setSurvivalLifeFragments] = useState(0);
+  const [survivalMistakesThisWave, setSurvivalMistakesThisWave] = useState(0);
+  const [survivalPerformance, setSurvivalPerformance] = useState<PlayerPerformance>({
+    averageWordLength: 4.5,
+    averageCombo: 0,
+    successRate: 1.0,
+    averageTimePerWord: 5,
+    mistakeCount: 0
+  });
+  const [survivalDifficultyFrozen, setSurvivalDifficultyFrozen] = useState(0);
+  const [survivalChallengeTimeRemaining, setSurvivalChallengeTimeRemaining] = useState<number | undefined>(undefined);
+  const [survivalPointsMultiplier, setSurvivalPointsMultiplier] = useState(1.0);
+  const [survivalShowWaveComplete, setSurvivalShowWaveComplete] = useState(false);
+  const [survivalWaveCompleteData, setSurvivalWaveCompleteData] = useState<any>(null);
+
   const [zenHintsUsed, setZenHintsUsed] = useState(0);
   const [zenUndoStack, setZenUndoStack] = useState<Array<{board: string[][], specialTiles: SpecialTile[][], usedWords: typeof usedWords, score: number}>>([]);
   
@@ -1989,30 +2066,260 @@ function WordPathGame({
       }
     }
     
-    // Survival mode: Track words and check for boss word completion
-    if (settings.mode === "survival") {
-      const wordsThisWave = survivalWordsThisWave + 1;
-      setSurvivalWordsThisWave(wordsThisWave);
-      
-      // Check if this is a boss wave (every 5th wave)
-      if (survivalWave % 5 === 0 && !survivalBossWordRequired) {
-        // Boss wave: require a 7+ letter word
-        setSurvivalBossWordRequired(true);
-        toast.warning('⚡ Boss Wave! Find a 7+ letter word to continue!', { duration: 4000 });
+    // Enhanced Survival mode: Track words and check for challenge/boss completion
+    if (settings.mode === "survival" && survivalStarted) {
+      // Update combo system
+      const hasSafetyNet = survivalActivePowerUps.some(ap => ap.powerUp.type === 'safety_net' && (ap.remainingUses || 0) > 0);
+
+      // BUG FIX #3: Calculate time before updating combo (to use old timestamp)
+      const timeSpent = survivalComboState.lastWordTime > 0
+        ? (Date.now() - survivalComboState.lastWordTime) / 1000
+        : 5; // Default 5 seconds for first word
+
+      const { newCombo, rewards } = updateCombo(survivalComboState, true, hasSafetyNet);
+      setSurvivalComboState(newCombo);
+
+      // Apply combo multiplier to score
+      const comboScore = Math.floor(totalGain * newCombo.comboMultiplier * survivalPointsMultiplier);
+      const waveScore = survivalWaveScore + comboScore;
+      setSurvivalWaveScore(waveScore);
+
+      // Update performance tracking
+      const updatedPerf = updatePerformance(
+        survivalPerformance,
+        actualWord,
+        newCombo.currentCombo,
+        true,
+        timeSpent
+      );
+      setSurvivalPerformance(updatedPerf);
+
+      // Process combo rewards
+      rewards.forEach(reward => {
+        if (reward === 'common_powerup') {
+          const powerUp = getRandomPowerUp('common');
+          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
+          toast.success(`🎁 Combo reward: ${powerUp.name}!`);
+        } else if (reward === 'rare_powerup') {
+          const powerUp = getRandomPowerUp('rare');
+          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
+          toast.success(`⭐ Rare combo reward: ${powerUp.name}!`);
+        } else if (reward === 'epic_powerup') {
+          const powerUp = getRandomPowerUp('epic');
+          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
+          toast.success(`💎 Epic combo reward: ${powerUp.name}!`);
+        } else if (reward === 'life_fragment') {
+          const newFragments = survivalLifeFragments + 1;
+          if (newFragments >= 3) {
+            setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
+            setSurvivalLifeFragments(0);
+            toast.success('💎 Life fragments combined! +1 life');
+          } else {
+            setSurvivalLifeFragments(newFragments);
+            toast.success(`💎 Life fragment earned! (${newFragments}/3)`);
+          }
+        } else if (reward === 'extra_life') {
+          // BUG FIX #6: Handle 15-word combo reward
+          setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
+          toast.success('❤️ LEGENDARY COMBO! +1 Life!', { duration: 4000 });
+        }
+      });
+
+      // Boss wave logic
+      if (survivalBossWordRequired && survivalCurrentBoss) {
+        const pathPositions = path.map(p => ({ row: p.r, col: p.c }));
+        const bossResult = validateBossWave(
+          survivalCurrentBoss,
+          actualWord,
+          pathPositions,
+          survivalBossProgress,
+          waveScore
+        );
+
+        if (bossResult.valid) {
+          setSurvivalBossProgress(bossResult.progress);
+
+          if (bossResult.complete) {
+            // Boss defeated!
+            toast.success(bossResult.message || '👑 Boss defeated!', { duration: 3000 });
+
+            // Wave complete - check for life recovery and rewards
+            const perfectWave = survivalMistakesThisWave === 0;
+            const newPerfectStreak = perfectWave ? survivalPerfectWaveStreak + 1 : 0;
+            setSurvivalPerfectWaveStreak(newPerfectStreak);
+
+            const recovery = checkLifeRecovery(
+              survivalWave,
+              newPerfectStreak,
+              survivalLifeFragments,
+              true, // boss defeated
+              newCombo.currentCombo
+            );
+
+            if (recovery.lives > 0) {
+              setSurvivalLives(prev => Math.min(prev + recovery.lives, survivalMaxLives));
+              toast.success(recovery.message || `❤️ +${recovery.lives} life!`, { duration: 3000 });
+            }
+            setSurvivalLifeFragments(recovery.fragments);
+
+            // Advance to next wave
+            const nextWave = survivalWave + 1;
+            setSurvivalWave(nextWave);
+            setSurvivalWordsThisWave(0);
+            setSurvivalChallengeProgress(0);
+            setSurvivalBossProgress(0);
+            setSurvivalWaveScore(0);
+            setSurvivalMistakesThisWave(0);
+            setSurvivalBossWordRequired(false);
+            setSurvivalCurrentBoss(null);
+
+            // Check for events or shop
+            if (shouldShowShop(nextWave)) {
+              setSurvivalShowShop(true);
+            } else if (shouldTriggerEvent(nextWave)) {
+              const event = generateRandomEvent(nextWave);
+              if (event) {
+                setSurvivalPendingEvent(event);
+              }
+            } else {
+              // Generate next wave challenge
+              const nextChallenge = getRandomWaveChallenge(nextWave);
+              setSurvivalCurrentChallenge(nextChallenge);
+              toast.info(`🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
+            }
+
+            // BUG FIX #2: Properly expire power-ups and handle durations
+            setSurvivalActivePowerUps(prev =>
+              prev.map(ap => ({
+                ...ap,
+                remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
+              })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
+            );
+
+            if (survivalDifficultyFrozen > 0) {
+              setSurvivalDifficultyFrozen(prev => prev - 1);
+            }
+
+            // BUG FIX #9: Reset double points multiplier after wave
+            if (survivalPointsMultiplier > 1.0) {
+              setSurvivalPointsMultiplier(1.0);
+            }
+          } else if (bossResult.message) {
+            toast.info(bossResult.message);
+          }
+        } else if (bossResult.message) {
+          toast.error(bossResult.message);
+        }
       }
-      
-      // If boss word required, check if this word satisfies it
-      if (survivalBossWordRequired && actualWord.length >= 7) {
-        setSurvivalBossWordRequired(false);
-        setSurvivalWordsThisWave(0);
-        toast.success('👑 Boss Word Found! Wave Complete!', { duration: 3000 });
+      // Regular challenge logic
+      else if (survivalCurrentChallenge) {
+        const pathPositions = path.map(p => ({ row: p.r, col: p.c }));
+        const challengeResult = validateWaveChallenge(
+          survivalCurrentChallenge,
+          actualWord,
+          pathPositions,
+          survivalChallengeProgress,
+          waveScore
+        );
+
+        if (challengeResult.valid) {
+          setSurvivalChallengeProgress(challengeResult.progress);
+          if (challengeResult.message) {
+            toast.info(challengeResult.message);
+          }
+
+          // Check if challenge is complete
+          if (isChallengeComplete(survivalCurrentChallenge, challengeResult.progress)) {
+            const nextWave = survivalWave + 1;
+
+            // Check if next wave is a boss wave
+            if (nextWave % 5 === 0) {
+              // BUG FIX #1: Advance wave counter before boss
+              setSurvivalWave(nextWave);
+              setSurvivalWordsThisWave(0);
+              setSurvivalChallengeProgress(0);
+              setSurvivalWaveScore(0);
+              setSurvivalMistakesThisWave(0);
+
+              const boss = getRandomBossWave(nextWave);
+              setSurvivalCurrentBoss(boss);
+              setSurvivalBossWordRequired(true);
+              setSurvivalCurrentChallenge(null);
+              toast.warning(`${boss.icon} Boss Wave ${nextWave}! ${boss.description}`, { duration: 4000 });
+            } else {
+              // Regular wave complete
+              const perfectWave = survivalMistakesThisWave === 0;
+              const newPerfectStreak = perfectWave ? survivalPerfectWaveStreak + 1 : 0;
+              setSurvivalPerfectWaveStreak(newPerfectStreak);
+
+              const recovery = checkLifeRecovery(
+                survivalWave,
+                newPerfectStreak,
+                survivalLifeFragments,
+                false,
+                newCombo.currentCombo
+              );
+
+              if (recovery.lives > 0) {
+                setSurvivalLives(prev => Math.min(prev + recovery.lives, survivalMaxLives));
+                toast.success(recovery.message || `❤️ +${recovery.lives} life!`, { duration: 3000 });
+              }
+              setSurvivalLifeFragments(recovery.fragments);
+
+              // Advance wave
+              setSurvivalWave(nextWave);
+              setSurvivalWordsThisWave(0);
+              setSurvivalChallengeProgress(0);
+              setSurvivalWaveScore(0);
+              setSurvivalMistakesThisWave(0);
+
+              // Check for shop or events
+              if (shouldShowShop(nextWave)) {
+                setSurvivalShowShop(true);
+              } else if (shouldTriggerEvent(nextWave)) {
+                const event = generateRandomEvent(nextWave);
+                if (event) {
+                  setSurvivalPendingEvent(event);
+                }
+              } else {
+                const nextChallenge = getRandomWaveChallenge(nextWave);
+                setSurvivalCurrentChallenge(nextChallenge);
+                toast.success(`✨ Wave ${survivalWave} complete!\n🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
+              }
+
+              // BUG FIX #2: Properly expire power-ups
+              setSurvivalActivePowerUps(prev =>
+                prev.map(ap => ({
+                  ...ap,
+                  remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
+                })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
+              );
+
+              if (survivalDifficultyFrozen > 0) {
+                setSurvivalDifficultyFrozen(prev => prev - 1);
+              }
+
+              // BUG FIX #9: Reset double points multiplier after wave
+              if (survivalPointsMultiplier > 1.0) {
+                setSurvivalPointsMultiplier(1.0);
+              }
+            }
+          }
+        } else if (challengeResult.message) {
+          toast.error(challengeResult.message);
+          setSurvivalMistakesThisWave(prev => prev + 1);
+        }
       }
-      
-      // Regular difficulty increase every 5 words (non-boss waves)
-      if (!survivalBossWordRequired && wordsThisWave >= 5) {
-        setSurvivalWordsThisWave(0);
-        // Could add difficulty increase here (e.g., reduce time, add stones)
-      }
+
+      setSurvivalWordsThisWave(prev => prev + 1);
+
+      // BUG FIX #2: Properly expire word-based power-ups
+      setSurvivalActivePowerUps(prev =>
+        prev.map(ap => ({
+          ...ap,
+          remainingUses: ap.remainingUses !== undefined ? ap.remainingUses - 1 : undefined
+        })).filter(ap => ap.remainingUses === undefined || ap.remainingUses > 0)
+      );
     }
 
     // Introduce special tiles if conditions are met
@@ -4130,8 +4437,32 @@ function WordPathGame({
           {settings.mode === "survival" && !survivalStarted && <Button variant="outline" onClick={() => {
             setSurvivalStarted(true);
             setSurvivalLives(3);
+            setSurvivalMaxLives(5);
             setSurvivalWave(1);
-            toast.success('💀 Survival Mode Started! 3 Lives', { duration: 3000 });
+            setSurvivalWordsThisWave(0);
+            setSurvivalChallengeProgress(0);
+            setSurvivalWaveScore(0);
+            setSurvivalMistakesThisWave(0);
+            setSurvivalShields(0);
+            setSurvivalLifeFragments(0);
+            setSurvivalPerfectWaveStreak(0);
+            setSurvivalActivePowerUps([]);
+            setSurvivalInventoryPowerUps([]);
+            setSurvivalComboState({
+              currentCombo: 0,
+              maxCombo: 0,
+              comboMultiplier: 1.0,
+              comboActive: false,
+              lastWordTime: 0
+            });
+
+            // Generate first wave challenge
+            const firstChallenge = getRandomWaveChallenge(1);
+            setSurvivalCurrentChallenge(firstChallenge);
+            setSurvivalBossWordRequired(false);
+            setSurvivalCurrentBoss(null);
+
+            toast.success(`💀 Survival Mode Started!\n${firstChallenge.description}`, { duration: 4000 });
           }} disabled={!isGameReady || isGenerating} size="sm" className="col-span-2 md:col-span-1 bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
               Start Survival
             </Button>}
@@ -4936,7 +5267,8 @@ function WordPathGame({
                 )}
                 
                 {settings.mode === "survival" && survivalStarted && (
-                  <div className="mt-2 space-y-2">
+                  <div className="mt-2 space-y-3">
+                    {/* Wave Display */}
                     <div>
                       <div className="text-xs text-muted-foreground">Wave</div>
                       <div className="text-lg font-bold text-blue-500 flex items-center gap-2">
@@ -4944,44 +5276,121 @@ function WordPathGame({
                         {survivalWave % 5 === 0 && <span className="text-orange-500 animate-pulse">⚡ BOSS</span>}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground">Lives</div>
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3].map(i => (
-                          <span key={i} className={`text-xl transition-all duration-300 ${i <= survivalLives ? '' : 'opacity-30 grayscale'}`}>
-                            ❤️
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground">Wave Progress</div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            survivalBossWordRequired 
-                              ? 'bg-gradient-to-r from-orange-400 to-red-500' 
-                              : 'bg-gradient-to-r from-blue-400 to-blue-600'
-                          }`}
-                          style={{ width: `${survivalBossWordRequired ? 80 : Math.min(100, survivalWordsThisWave * 20)}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {survivalBossWordRequired 
-                          ? '🎯 Find a 7+ letter word!' 
-                          : `${survivalWordsThisWave}/5 words`
-                        }
-                      </div>
-                    </div>
-                    {survivalBossWordRequired && (
-                      <div className="p-2 bg-orange-500/20 rounded-lg border border-orange-500/30">
-                        <div className="text-sm text-orange-500 font-medium flex items-center gap-2 animate-pulse">
-                          <span>👑</span>
-                          <span>BOSS WAVE!</span>
-                          <span>Find a 7+ letter word to survive!</span>
-                        </div>
-                      </div>
+
+                    {/* Lives Display */}
+                    <LivesDisplay
+                      lives={survivalLives}
+                      maxLives={survivalMaxLives}
+                      shields={survivalShields}
+                      lifeFragments={survivalLifeFragments}
+                    />
+
+                    {/* Combo Display */}
+                    <ComboDisplay comboState={survivalComboState} />
+
+                    {/* Boss Wave Display */}
+                    {survivalBossWordRequired && survivalCurrentBoss && (
+                      <BossWaveDisplay
+                        boss={survivalCurrentBoss}
+                        progress={survivalBossProgress}
+                        timeRemaining={survivalChallengeTimeRemaining}
+                      />
                     )}
+
+                    {/* Wave Challenge Display */}
+                    {!survivalBossWordRequired && survivalCurrentChallenge && (
+                      <WaveChallengeDisplay
+                        challenge={survivalCurrentChallenge}
+                        progress={survivalChallengeProgress}
+                        timeRemaining={survivalChallengeTimeRemaining}
+                      />
+                    )}
+
+                    {/* Power-Ups Inventory */}
+                    <PowerUpsInventory
+                      activePowerUps={survivalActivePowerUps}
+                      inventoryPowerUps={survivalInventoryPowerUps}
+                      onActivate={(powerUp) => {
+                        const result = applyPowerUpEffect(powerUp.type, {});
+                        if (result.success) {
+                          toast.success(result.message);
+
+                          // BUG FIX #5: Implement all power-up effects
+                          if (result.effect.lives) {
+                            setSurvivalLives(prev => Math.min(prev + result.effect.lives, survivalMaxLives));
+                          }
+                          if (result.effect.shield) {
+                            setSurvivalShields(prev => prev + result.effect.shield);
+                          }
+                          if (result.effect.removeStones) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingUses: 1,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.refreshBoard) {
+                            // Regenerate board
+                            const newBoard = Array.from({ length: size }, () =>
+                              Array.from({ length: size }, () => randomLetter())
+                            );
+                            setBoard(newBoard);
+                          }
+                          if (result.effect.revealHints) {
+                            // TODO: Implement hint system
+                            toast.info('Hint system coming soon!');
+                          }
+                          if (result.effect.freezeDifficulty) {
+                            setSurvivalDifficultyFrozen(3);
+                          }
+                          if (result.effect.wildcardActive) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingWaves: 1,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.pointsMultiplier) {
+                            setSurvivalPointsMultiplier(result.effect.pointsMultiplier);
+                          }
+                          if (result.effect.comboBoost) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingUses: 5,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.lifeLink) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingWaves: 3,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+                          if (result.effect.safetyNet) {
+                            setSurvivalActivePowerUps(prev => [...prev, {
+                              powerUp,
+                              remainingUses: 3,
+                              activatedAt: Date.now()
+                            }]);
+                          }
+
+                          // Remove from inventory
+                          setSurvivalInventoryPowerUps(prev => {
+                            const idx = prev.findIndex(p => p.id === powerUp.id);
+                            if (idx >= 0) {
+                              return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+                            }
+                            return prev;
+                          });
+                        }
+                      }}
+                    />
+
+                    {/* Wave Score */}
+                    <div className="text-xs text-muted-foreground">
+                      Wave Score: <span className="font-bold text-foreground">{survivalWaveScore}</span>
+                    </div>
                   </div>
                 )}
                 
@@ -5374,7 +5783,169 @@ function WordPathGame({
 
         </aside>
       </div>
-      
+
+      {/* Survival Mode Modals */}
+      {settings.mode === "survival" && survivalStarted && (
+        <>
+          {/* Shop Modal */}
+          {survivalShowShop && (
+            <ShopModal
+              items={generateShopItems(survivalWave, score)}
+              currentScore={score}
+              currentLives={survivalLives}
+              onPurchase={(item) => {
+                if (item.costType === 'points' && score >= item.cost) {
+                  setScore(prev => prev - item.cost);
+
+                  // Apply item effect
+                  switch (item.type) {
+                    case 'extra_life':
+                      setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
+                      toast.success('❤️ +1 Life!');
+                      break;
+                    case 'stone_eraser':
+                      // Remove all stone tiles
+                      setSpecialTiles(prev => prev.map(row => row.map(tile =>
+                        tile.type === 'stone' ? { type: null } : tile
+                      )));
+                      toast.success('🧹 All stones removed!');
+                      break;
+                    case 'shield':
+                      setSurvivalShields(prev => prev + 1);
+                      toast.success('🛡️ +1 Shield!');
+                      break;
+                    case 'time_freeze':
+                      setSurvivalDifficultyFrozen(3);
+                      toast.success('❄️ Difficulty frozen for 3 waves!');
+                      break;
+                    case 'double_points':
+                      setSurvivalPointsMultiplier(2.0);
+                      toast.success('💰 Double points for next wave!');
+                      break;
+                    case 'power_up_random':
+                      const randomPU = getRandomPowerUp();
+                      setSurvivalInventoryPowerUps(prev => [...prev, randomPU]);
+                      toast.success(`🎲 Received ${randomPU.name}!`);
+                      break;
+                    case 'power_up_rare':
+                      const rarePU = getRandomPowerUp(Math.random() < 0.5 ? 'rare' : 'epic');
+                      setSurvivalInventoryPowerUps(prev => [...prev, rarePU]);
+                      toast.success(`⭐ Received ${rarePU.name}!`);
+                      break;
+                  }
+
+                  setSurvivalShowShop(false);
+
+                  // Generate next wave challenge
+                  const nextChallenge = getRandomWaveChallenge(survivalWave);
+                  setSurvivalCurrentChallenge(nextChallenge);
+                  toast.info(`🌊 Wave ${survivalWave}: ${nextChallenge.description}`, { duration: 4000 });
+                } else {
+                  toast.error('Not enough resources!');
+                }
+              }}
+              onClose={() => {
+                setSurvivalShowShop(false);
+                const nextChallenge = getRandomWaveChallenge(survivalWave);
+                setSurvivalCurrentChallenge(nextChallenge);
+                toast.info(`🌊 Wave ${survivalWave}: ${nextChallenge.description}`, { duration: 4000 });
+              }}
+            />
+          )}
+
+          {/* Choice Event Modal */}
+          {survivalPendingEvent && (
+            <ChoiceEventModal
+              event={survivalPendingEvent}
+              onChoice={(optionIndex) => {
+                const option = survivalPendingEvent.options[optionIndex];
+
+                // BUG FIX #4: Handle gambles and mysteries at choice time
+                let actualEffect = { ...option.effect };
+
+                if (option.effect.gamble === 'life_gambit') {
+                  // 60% chance to gain 1 life, 40% chance to lose 1 life
+                  actualEffect.lives = Math.random() < 0.6 ? 1 : -1;
+                  actualEffect.gamble = undefined;
+                } else if (option.effect.gamble === 'score_gambit') {
+                  // 50% chance to gain 500 points, 50% chance to lose 300 points
+                  actualEffect.score = Math.random() < 0.5 ? 500 : -300;
+                  actualEffect.gamble = undefined;
+                } else if (option.effect.mystery === 'mystery_box') {
+                  // 50% chance for good outcome, 50% for bad
+                  if (Math.random() < 0.5) {
+                    actualEffect.powerUp = 'combo_boost';
+                    actualEffect.lives = 1;
+                  } else {
+                    actualEffect.addStoneTiles = 2;
+                    actualEffect.score = -100;
+                  }
+                  actualEffect.mystery = undefined;
+                }
+
+                const messages = applyEventEffect(actualEffect, {});
+
+                // Apply effects
+                if (actualEffect.lives) {
+                  setSurvivalLives(prev => Math.max(0, Math.min(prev + actualEffect.lives, survivalMaxLives)));
+                }
+                if (actualEffect.score) {
+                  setScore(prev => Math.max(0, prev + actualEffect.score));
+                }
+                if (actualEffect.removeStoneTiles) {
+                  setSpecialTiles(prev => prev.map(row => row.map(tile =>
+                    tile.type === 'stone' ? { type: null } : tile
+                  )));
+                }
+                // BUG FIX #7: Implement addStoneTiles effect
+                if (actualEffect.addStoneTiles) {
+                  setSpecialTiles(prev => {
+                    const newTiles = [...prev.map(row => [...row])];
+                    const emptyPositions: Array<{r: number, c: number}> = [];
+
+                    // Find all empty positions
+                    for (let r = 0; r < size; r++) {
+                      for (let c = 0; c < size; c++) {
+                        if (newTiles[r][c].type === null) {
+                          emptyPositions.push({ r, c });
+                        }
+                      }
+                    }
+
+                    // Add stone tiles to random empty positions
+                    const stonesToAdd = Math.min(actualEffect.addStoneTiles, emptyPositions.length);
+                    for (let i = 0; i < stonesToAdd; i++) {
+                      const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+                      const pos = emptyPositions.splice(randomIndex, 1)[0];
+                      newTiles[pos.r][pos.c] = { type: 'stone' };
+                    }
+
+                    return newTiles;
+                  });
+                }
+                if (actualEffect.shield) {
+                  setSurvivalShields(prev => prev + actualEffect.shield);
+                }
+                if (actualEffect.powerUp) {
+                  const powerUp = POWER_UPS[actualEffect.powerUp];
+                  setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
+                }
+
+                // Show messages
+                messages.forEach(msg => toast.info(msg));
+
+                setSurvivalPendingEvent(null);
+
+                // Generate next wave challenge
+                const nextChallenge = getRandomWaveChallenge(survivalWave);
+                setSurvivalCurrentChallenge(nextChallenge);
+                toast.info(`🌊 Wave ${survivalWave}: ${nextChallenge.description}`, { duration: 4000 });
+              }}
+            />
+          )}
+        </>
+      )}
+
       {/* Footer */}
       <footer className="mt-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} Banton Games. All rights reserved.
