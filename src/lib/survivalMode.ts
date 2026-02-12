@@ -71,7 +71,8 @@ export type PowerUpType =
   | 'time_freeze'      // Pause difficulty increases
   | 'wildcard_tile'    // One tile acts as any letter
   | 'double_points'    // 2x score for next wave
-  | 'shield';          // Protect from losing a life
+  | 'shield'           // Protect from losing a life
+  | 'extra_life';      // Gain an extra life
 
 export type PowerUpRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
@@ -581,6 +582,17 @@ export const POWER_UPS: Record<PowerUpType, PowerUp> = {
     duration: 'instant',
     icon: '🛡️',
     color: 'text-silver-400'
+  },
+
+  extra_life: {
+    id: 'extra_life',
+    type: 'extra_life',
+    name: 'Extra Life',
+    description: 'Gain an extra life',
+    rarity: 'epic',
+    duration: 'instant',
+    icon: '❤️',
+    color: 'text-red-400'
   }
 };
 

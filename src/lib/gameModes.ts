@@ -1,4 +1,4 @@
-export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos';
+export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos' | 'mini_marathon' | 'weekly_gauntlet' | 'prestige_endless';
 
 export const ADVANCED_MODE_NAMES: Record<AdvancedGameMode, string> = {
   classic: 'Classic',
@@ -7,7 +7,10 @@ export const ADVANCED_MODE_NAMES: Record<AdvancedGameMode, string> = {
   puzzle: 'Puzzle',
   survival: 'Survival',
   zen: 'Zen',
-  chaos: 'Chaos'
+  chaos: 'Chaos',
+  mini_marathon: 'Mini-Marathon',
+  weekly_gauntlet: 'Weekly Gauntlet',
+  prestige_endless: 'Prestige Endless'
 };
 
 export function getModeName(mode: AdvancedGameMode | null): string | null {
