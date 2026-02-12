@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { Settings, Accessibility, Volume2, Palette, Zap } from 'lucide-react';
 import { SoundSettings } from '@/components/effects/SoundSystem';
 import { ColorBlindSettings, HighContrastToggle } from '@/components/accessibility/ColorBlindSupport';
@@ -12,6 +13,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 export function GameSettings() {
   const [activeTab, setActiveTab] = useState('general');
   const isMobile = useIsMobile();
+  const [floatingTiles, setFloatingTiles] = useState(() => {
+    return localStorage.getItem('lexichain-floating-tiles') !== 'false';
+  });
+
+  const handleFloatingTilesToggle = (checked: boolean) => {
+    setFloatingTiles(checked);
+    localStorage.setItem('lexichain-floating-tiles', checked ? 'true' : 'false');
+  };
   const {
     playSound
   } = useSound();
@@ -126,6 +135,18 @@ export function GameSettings() {
               
               <div className="space-y-6">
                 <TileSkinSelector />
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">Floating Tiles Background</label>
+                    <p className="text-xs text-muted-foreground">
+                      Animated letter tiles drifting across the title screen
+                    </p>
+                  </div>
+                  <Switch checked={floatingTiles} onCheckedChange={handleFloatingTilesToggle} />
+                </div>
 
                 <Separator />
 

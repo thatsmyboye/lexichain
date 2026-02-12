@@ -9,6 +9,7 @@ import { InteractiveTutorial } from "@/components/tutorial/InteractiveTutorial";
 import { SoundButton } from "@/components/effects/SoundSystem";
 import { BookOpen, Settings, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { FloatingTiles } from "@/components/effects/FloatingTiles";
 interface TitleScreenProps {
   onPlayClick: () => void;
   onLoginClick: () => void;
@@ -122,12 +123,20 @@ const TitleScreen = ({
 
     checkAdmin();
   }, [user]);
+  const [floatingTilesEnabled] = useState(() => {
+    return localStorage.getItem('lexichain-floating-tiles') !== 'false';
+  });
+
   return <div className="h-screen flex flex-col items-center bg-gradient-to-br from-background via-muted/30 to-background relative px-4 overflow-hidden">
-      {/* Animated background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
-      </div>
+      {/* Background: floating tiles or default gradient blobs */}
+      {floatingTilesEnabled ? (
+        <FloatingTiles />
+      ) : (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
+        </div>
+      )}
 
       {/* Mobile: Compact layout with justify-between */}
       <div className="md:hidden h-full flex flex-col items-center justify-between py-[24px] relative z-10">
