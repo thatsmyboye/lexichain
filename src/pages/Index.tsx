@@ -221,7 +221,7 @@ const Index = () => {
   }
   if (showGame) {
     return <main>
-        <header className="container mx-auto pt-10 pb-4">
+        <header className="container mx-auto pt-4 md:pt-10 pb-2 md:pb-4">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">Lexichain</h1>
           {selectedAdvancedMode && (
             <p className="text-lg md:text-xl font-semibold text-muted-foreground mt-2 text-center">

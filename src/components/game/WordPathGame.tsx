@@ -4901,12 +4901,23 @@ function WordPathGame({
 
       <div className="grid lg:grid-cols-[auto,280px] gap-3 lg:gap-2 items-start">
         <div className="space-y-4">
-          {/* Mobile QuickUse Bar */}
-          {isMobile && <div className="lg:hidden">
+          {/* Mobile QuickUse Bar + Special Tile Preview */}
+          {isMobile && <div className="lg:hidden flex items-center justify-center gap-2 mb-3">
               <QuickUseBar inventory={consumableInventory} onUseConsumable={handleUseConsumable} gameMode={settings.mode} gameState={{
             gameOver,
             isGenerating
           }} disabled={gameOver || isGenerating} />
+              {settings.mode === "daily" && !gameOver && (() => {
+                const nextTiles = previewNextSpecialTiles(
+                  usedWords.length,
+                  getDailySeed(),
+                  size,
+                  specialTiles
+                );
+                return nextTiles.length > 0 ? (
+                  <SpecialTilePreview tiles={nextTiles} />
+                ) : null;
+              })()}
             </div>}
           
           {/* Temporarily disabled blitz mode 
@@ -5527,7 +5538,7 @@ function WordPathGame({
                         specialTiles
                       );
                       return nextTiles.length > 0 ? (
-                        <div className="mt-2">
+                        <div className="mt-2 hidden lg:block">
                           <SpecialTilePreview tiles={nextTiles} />
                         </div>
                       ) : null;
