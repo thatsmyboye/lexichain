@@ -23,6 +23,8 @@ import { ChevronDown } from "lucide-react";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
 import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
+import { SpecialTilePreview } from "@/components/ui/special-tile-preview";
+import { previewNextSpecialTiles } from "@/utils/specialTilePreview";
 import { dictionaryManager } from "@/utils/dictionaryManager";
 import { getPuzzleById, getNextPuzzle, type PuzzleBoard } from "@/lib/puzzleBoards";
 import { useTileSkin } from "@/hooks/useTileSkin";
@@ -5103,9 +5105,26 @@ function WordPathGame({
               <div className="text-xs text-muted-foreground text-right">
                 {usedWords.length >= 1 ? "Special tiles active!" : ""}
                 {gameOver && finalGrade !== "None" && <div className="mt-1 font-medium">Final: {finalGrade}</div>}
-                {settings.mode === "daily" && <div className="mt-1 text-xs text-muted-foreground">
-                    {settings.dailyMovesLimit - movesUsed} moves remaining
-                  </div>}
+                {settings.mode === "daily" && (
+                  <>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {settings.dailyMovesLimit - movesUsed} moves remaining
+                    </div>
+                    {!gameOver && (() => {
+                      const nextTiles = previewNextSpecialTiles(
+                        usedWords.length,
+                        getDailySeed(),
+                        size,
+                        specialTiles
+                      );
+                      return nextTiles.length > 0 ? (
+                        <div className="mt-2">
+                          <SpecialTilePreview tiles={nextTiles} />
+                        </div>
+                      ) : null;
+                    })()}
+                  </>
+                )}
                 {settings.mode === "time_attack" && (
                   <div className="mt-1 text-xs">
                     <div className="flex items-center gap-2">
