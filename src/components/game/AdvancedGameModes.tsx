@@ -281,7 +281,7 @@ export function AdvancedGameModes({
 
         {/* Mode Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {ADVANCED_MODES.map((mode, index) => {
+          {ADVANCED_MODES.filter(mode => mode.id !== 'weekly_gauntlet').map((mode, index) => {
           const isUnlocked = isModeUnlocked(mode);
           const isSelected = selectedMode === mode.id;
           return <Card key={mode.id} className={`cursor-pointer transition-all duration-300 relative overflow-hidden group animate-in fade-in slide-in-from-bottom ${isSelected ? 'ring-2 ring-primary shadow-2xl scale-105 bg-gradient-to-br from-primary/10 to-primary/5' : 'hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1'} ${!isUnlocked ? 'opacity-60 cursor-not-allowed grayscale-[0.3]' : ''}`} style={{
