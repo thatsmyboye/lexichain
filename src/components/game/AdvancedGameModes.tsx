@@ -75,10 +75,19 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [{
 }, {
   id: 'survival',
   name: 'Survival',
-  description: 'Survive as long as possible with increasing difficulty and special challenges.',
+  description: 'A roguelike word game adventure! Complete dynamic challenges, defeat bosses, collect power-ups, and manage resources to survive as long as possible.',
   icon: <Flame className="h-6 w-6" />,
   difficulty: 'Expert',
-  specialRules: ['Difficulty increases every 5 words', 'Special challenge rounds', 'Limited lives system', 'Boss word requirements'],
+  specialRules: [
+    'Dynamic wave challenges each round',
+    'Boss waves every 5 rounds with varied mechanics',
+    'Lives system with multiple recovery methods',
+    'Combo system with escalating rewards',
+    'Power-ups and strategic shop system',
+    'Random events with meaningful choices',
+    'Adaptive difficulty scaling',
+    'Meta-progression between runs'
+  ],
   rewards: {
     xpMultiplier: 2.5,
     scoreMultiplier: 1.8,
