@@ -5425,7 +5425,7 @@ function WordPathGame({
                   </div>
                 )}
                 
-                {benchmarks && settings.mode !== "endless" && <div className="mt-3 space-y-2 p-2 bg-muted/30 rounded-lg border border-muted">
+                {benchmarks && settings.mode !== "endless" && settings.mode !== "puzzle" && <div className="mt-3 space-y-2 p-2 bg-muted/30 rounded-lg border border-muted">
                     <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Challenge Tiers</div>
                     <div className="space-y-1.5">
                       <div className={`flex justify-between items-center text-xs px-2 py-1 rounded transition-all duration-300 ${
