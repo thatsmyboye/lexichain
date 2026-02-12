@@ -162,7 +162,7 @@ export function QuickUseBar({
   }
 
   return (
-    <div className="flex gap-2 justify-center mb-3">
+    <div className="flex gap-1.5 sm:gap-2 justify-center">
       {relevantConsumables.map(id => {
         const consumable = CONSUMABLES[id];
         const data = inventory[id];
@@ -175,7 +175,7 @@ export function QuickUseBar({
             key={id}
             variant="outline"
             size="sm"
-            className={`relative h-12 w-12 p-0 ${RARITY_COLORS[consumable.rarity]}`}
+            className={`relative h-10 w-10 sm:h-12 sm:w-12 p-0 ${RARITY_COLORS[consumable.rarity]}`}
             onClick={() => canUse && onUseConsumable(id)}
             disabled={!canUse}
             title={`${consumable.name}: ${consumable.description}`}

@@ -17,11 +17,11 @@ export function SpecialTilePreview({ tiles }: SpecialTilePreviewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2 p-3 bg-muted/50 rounded-lg border border-border">
-      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        Next Special Tile{tiles.length > 1 ? "s" : ""}:
+    <div className="flex flex-col gap-1 sm:gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg border border-border">
+      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        Next{tiles.length > 1 ? " Tiles" : " Tile"}:
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 sm:gap-2">
         {tiles.map((tile, index) => (
           <TileIcon key={index} tile={tile} />
         ))}
@@ -33,7 +33,7 @@ export function SpecialTilePreview({ tiles }: SpecialTilePreviewProps) {
 function TileIcon({ tile }: { tile: SpecialTile }) {
   const getTileClasses = () => {
     let baseClasses =
-      "relative w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-300 ";
+      "relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg transition-all duration-300 ";
 
     if (tile.type === "stone") {
       baseClasses +=
