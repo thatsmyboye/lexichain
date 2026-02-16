@@ -126,6 +126,227 @@
 | **Ghost** | **3%** |
 | *(No special tile)* | *remaining %* |
 
+## Scoring Impact Analysis & Benchmark Adjustments
+
+### Current Scoring Reference
+
+**Formula**: `total = round((base + rarityBonus + lengthBonus) * linkMultiplier * tileMultiplier * consumableMultiplier * modeMultiplier)`
+
+Where `base = L² × 4 + L × 12` (hybrid mode).
+
+| Word Length | Base Score | + Length Bonus | Subtotal |
+|-------------|-----------|----------------|----------|
+| 3 | 72 | 0 | 72 |
+| 4 | 112 | 0 | 112 |
+| 5 | 160 | 25 | 185 |
+| 6 | 216 | 75 | 291 |
+| 7 | 280 | 175 | 455 |
+| 8 | 352 | 325 | 677 |
+
+**Current benchmarks** (fixed across all modes):
+- Bronze: 1,500 | Silver: 2,500 | Gold: 4,000 | Platinum: 6,000
+
+**Daily challenge**: 10 moves. Typical average word score ~150–300 per word, totaling 1,500–3,000 without multiplier luck.
+
+---
+
+### Tile-by-Tile Scoring Impact
+
+#### 1. Chain Tile — Direct Score Inflation
+
+**Mechanism**: +10 per tile beyond length 4, per Chain tile in the path.
+
+| Word Length | Chain Bonus (1 tile) | Chain Bonus (2 tiles) | % of Base Subtotal |
+|-------------|---------------------|-----------------------|--------------------|
+| 5 | +10 | +20 | 5–11% of 185 |
+| 6 | +20 | +40 | 7–14% of 291 |
+| 7 | +30 | +60 | 7–13% of 455 |
+| 8 | +40 | +80 | 6–12% of 677 |
+
+**Verdict**: Modest additive boost. At 5% rarity with 3–4 turn expiry, a player might hit 1–2 Chain tiles per 10-word game. Expected per-game inflation: **+30 to +80 points** (~2–3% of a Gold-tier game). The bonus is flat and additive (applied before multipliers in the subtotal), so it compounds with Multiplier tiles.
+
+**Interaction risk**: A Chain tile on an 8-letter word with a 3x Multiplier tile in the same path: `(677 + 40) × 3 = 2,151` vs. `677 × 3 = 2,031`. Delta of +120, meaningful but not game-breaking since both tiles must be in the same path.
+
+**Recommendation**: No benchmark adjustment needed. Impact is minor and self-limiting (flat bonus, not multiplicative).
+
+---
+
+#### 2. Tax Tile — Direct Score Deflation
+
+**Mechanism**: Final score × 0.7 per Tax tile in the path.
+
+| Scenario | Without Tax | With 1 Tax | With 2 Tax | Score Lost |
+|----------|-------------|------------|------------|------------|
+| 5-letter word, no multiplier | 185 | 130 | 91 | –55 to –94 |
+| 6-letter + 2x multiplier | 582 | 407 | 285 | –175 to –297 |
+| 7-letter + 3x multiplier | 1,365 | 956 | 669 | –409 to –696 |
+
+**Verdict**: Significant per-word impact. At 8% rarity (the highest of any new tile), Tax tiles will appear frequently. Players can often route around them, but on a 4×4 board with limited adjacency, avoidance isn't always possible. Over a 10-word game where ~2–3 words are forced through Tax tiles, expected per-game deflation: **–150 to –400 points**.
+
+**Interaction risk**: Tax stacking with Tax (0.49x) is punishing but very rare. Tax on a Multiplier path (3x × 0.7 = 2.1x) effectively downgrades a 3x to a 2x — still net positive, so players will still take it.
+
+**Recommendation**: **Reduce Bronze benchmark by 100 points** (1,500 → 1,400) to account for the negative pressure Tax puts on average players. Silver/Gold/Platinum players are more likely to route around Tax tiles effectively, so upper benchmarks can remain. Alternatively, keep benchmarks fixed and reduce Tax rarity from 8% → 6% (see consolidated recommendation below).
+
+---
+
+#### 3. Ghost Tile — Indirect Score Inflation via Path Access
+
+**Mechanism**: No direct scoring effect, but enables longer words by bridging gaps.
+
+Ghost doesn't add points itself, but by enabling paths that weren't possible before, it increases average word length. On a 4×4 grid, many 7+ letter words are blocked by adjacency constraints. Ghost relaxes this.
+
+**Estimated impact**: If Ghost enables one additional 7-letter word per game that would have otherwise been a 5-letter word: `455 – 185 = +270 points`. At 3% rarity and 2-turn expiry, this will happen in roughly 1 in 4 games.
+
+**Verdict**: Low frequency, high variance. When it hits, it's strong (+200–400 points from a single upgraded word). Average per-game inflation: **+50 to +100 points**.
+
+**Recommendation**: No benchmark adjustment needed. Rarity (3%) and short expiry (2 turns) already constrain it.
+
+---
+
+#### 4. Mirror Tile — Indirect Score Inflation via Word Access
+
+**Mechanism**: Copies predecessor letter, enabling double-letter words.
+
+Similar to Ghost — no direct points, but enables words like BUTTER, COFFEE, RABBIT that require adjacent duplicate letters. These tend to be 6–8 letter words.
+
+**Estimated impact**: Enables ~1 extra viable word per appearance. At 4% rarity, appears roughly every 2–3 games. When it does appear, it might upgrade a 4-letter word to a 6-letter word: `291 – 112 = +179 points`.
+
+**Verdict**: Moderate positive pressure, similar magnitude to Ghost but slightly more frequent. Average per-game inflation: **+40 to +80 points**.
+
+**Recommendation**: No benchmark adjustment needed.
+
+---
+
+#### 5. Freeze Tile — Indirect Score Stabilization
+
+**Mechanism**: Protects neighbors from Shuffle/XFactor/regeneration.
+
+Freeze doesn't affect scoring directly. It preserves board state, which helps players who plan multi-word strategies around specific letters. This is a skill-rewarding mechanic — better players extract more value.
+
+**Estimated impact**: Hard to quantify. Prevents score *loss* from board disruption rather than adding score. Estimated benefit: **+0 to +50 points** per game, skewed toward skilled players.
+
+**Verdict**: Negligible scoring impact. Primarily a quality-of-life tile.
+
+**Recommendation**: No benchmark adjustment needed.
+
+---
+
+#### 6. Decay Tile — Indirect Score Deflation via Board Degradation
+
+**Mechanism**: Spreads to neighbors (40% chance per turn), converting letters to common low-value ones (A, E, I, O, U, S, T, N, R).
+
+Over 3 turns, one Decay tile can spread to 1–2 neighbors. These neighbors get low-value letters, reducing rarity bonus potential and potentially breaking planned word paths.
+
+**Scoring impact of letter degradation**:
+- A tile changed from K (rare) to E (common) on a 6-letter word path loses: `round(291 × 1 × 0.08) = 23 points` in rarity bonus.
+- A tile changed from Z (ultra-rare) to A: loses `round(291 × 2 × 0.08) + round(291 × 1 × 0.12) = 47 + 35 = 82 points`.
+- Indirect cost of broken paths: unquantifiable but real.
+
+**Estimated impact**: At 7% rarity, Decay appears roughly once per game. With spread, it affects 2–4 tiles total. Expected per-game deflation: **–30 to –100 points** from rarity loss and path disruption.
+
+**Verdict**: Moderate negative pressure. The board degradation effect is more about strategic disruption than raw point loss.
+
+**Recommendation**: No benchmark adjustment needed on its own. Combined with Tax, see consolidated recommendation.
+
+---
+
+#### 7. Magnet Tile — Mixed Score Impact
+
+**Mechanism**: Replaces up to 4 orthogonal neighbors with random vowels on spawn.
+
+Vowel clusters help some words but hurt others. Common vowels (A, E, I, O, U) have 0 rarity value, so replacing rare consonants with vowels loses rarity bonus. But vowels are essential for most English words, so having them nearby is often helpful for path-building.
+
+**Estimated impact**: Net approximately neutral. May lose ~20 points per game in rarity bonus but gain it back through better word accessibility.
+
+**Recommendation**: No benchmark adjustment needed.
+
+---
+
+#### 8. Bomb Tile — Neutral (Variance Increase)
+
+**Mechanism**: Replaces ~12 tiles with new random letters after word submission.
+
+Bomb doesn't affect the score of the word it's used in — the blast happens *after* scoring. It resets a local area, which can be positive (escape dead boards) or negative (destroy good setups). Over many games, this averages out.
+
+**Estimated impact**: ~0 average per-game delta. High variance per individual game.
+
+**Recommendation**: No benchmark adjustment needed.
+
+---
+
+### Consolidated Scoring Impact
+
+| Tile | Per-Game Avg Impact | Direction | Frequency |
+|------|-------------------|-----------|-----------|
+| Chain ⛓️ | +30 to +80 | Positive | ~1–2 tiles/game |
+| Tax 💰 | –150 to –400 | **Negative** | ~2–3 tiles/game |
+| Ghost 👻 | +50 to +100 | Positive | ~0.3 tiles/game |
+| Mirror 🪞 | +40 to +80 | Positive | ~0.4 tiles/game |
+| Freeze ❄️ | +0 to +50 | Positive | ~0.6 tiles/game |
+| Decay 🦠 | –30 to –100 | Negative | ~0.7 tiles/game |
+| Magnet 🧲 | ~0 | Neutral | ~0.5 tiles/game |
+| Bomb 💣 | ~0 | Neutral | ~0.4 tiles/game |
+
+**Net expected per-game shift**: Approximately **–60 to –190 points**, dominated by Tax tile pressure.
+
+Tax is the primary balance concern because it:
+1. Has the highest rarity of any new tile (8%)
+2. Applies a multiplicative penalty (0.7x) *after* all bonuses
+3. Stacks multiplicatively with itself (0.49x for two)
+4. On a 4×4 board, is difficult to consistently avoid
+
+---
+
+### Benchmark Adjustment Recommendations
+
+#### Option A: Adjust Benchmarks (Recommended)
+
+Lower the bottom two thresholds to absorb the net negative pressure from Tax + Decay. Upper tiers stay fixed because skilled players will route around negative tiles more effectively.
+
+| Tier | Current | Proposed | Change | Rationale |
+|------|---------|----------|--------|-----------|
+| Bronze | 1,500 | **1,400** | –100 | Absorbs ~1 forced Tax word for average players |
+| Silver | 2,500 | **2,400** | –100 | Minor relief for intermediate players |
+| Gold | 4,000 | 4,000 | 0 | Skilled players avoid Tax; Chain/Ghost offset Decay |
+| Platinum | 6,000 | 6,000 | 0 | Top players benefit from Chain/Ghost/Mirror |
+
+Also adjust the corresponding goal thresholds:
+- `daily_scorer`: 1,000 → **950** (total daily points)
+- `score_climber`: 1,500 → **1,400** (single game)
+- `high_scorer`: 2,500 → **2,400** (single game)
+
+Survival mode wave targets (`50 + wave × 10` standard, `100 + wave × 15` boss) remain unchanged — survival has a 1.8x mode multiplier that already buffers against per-word penalties.
+
+#### Option B: Adjust Tile Rarity Instead
+
+If benchmarks should remain fixed at the current values, reduce Tax rarity to equalize the negative/positive pressure:
+
+| Tile | Current Proposed Rarity | Adjusted Rarity |
+|------|------------------------|-----------------|
+| Tax | 8% | **5%** |
+| Decay | 7% | **5%** |
+| Chain | 5% | **6%** |
+
+This brings net per-game impact closer to 0, preserving existing benchmarks.
+
+#### Option C: Cap Tax Penalty
+
+Keep Tax at 8% rarity and current benchmarks, but cap the minimum Tax multiplier at 0.6x (instead of allowing 0.7^N stacking). This prevents the worst-case double-Tax scenario (0.49x) while keeping the single-Tax penalty meaningful.
+
+---
+
+### Recommended Approach
+
+**Option A** is recommended because:
+- It preserves the intended frequency and impact of each tile design
+- Bronze/Silver thresholds haven't been dynamically tuned before (they're hardcoded at fixed values), so a small adjustment is low-risk
+- It keeps the balance between positive and negative tiles intentional rather than artificially flattening it
+- Gold and Platinum remain aspirational targets that reward mastery of the full tile system
+
+If playtesting shows the impact is less severe than modeled (e.g., players route around Tax more often than expected on larger boards), the adjustment can be reverted with no system-level consequences since benchmarks are simple constants.
+
+---
+
 ## Implementation Notes
 
 - All new tiles should follow the existing `SpecialTile` interface (`type`, `value?`, `expiryTurns?`).
