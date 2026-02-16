@@ -346,7 +346,7 @@ function isEnhancedPowerupsEnabled(): boolean {
 
 // Common low-value letters used by Decay and Magnet effects
 const LOW_VALUE_LETTERS = ["A", "E", "I", "O", "U", "S", "T", "N", "R"];
-const VOWELS = ["A", "E", "I", "O", "U"];
+const MAGNET_VOWELS = ["A", "E", "I", "O", "U"];
 
 // Letter rarity helpers (based on frequency with a special bucket for ultra-rare letters)
 const VERY_RARE = new Set(["J", "Q", "X", "Z"]);
@@ -793,8 +793,10 @@ function handleShuffleTiles(
   size: number,
   setBoard: (board: string[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): void {
+): string[][] {
   const shuffleTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "shuffle");
+  let resultBoard = currentBoard;
+  
   if (shuffleTiles.length > 0) {
     // Collect letters from non-frozen positions only; frozen tiles stay in place
     const shuffleablePositions: Pos[] = [];
@@ -848,7 +850,8 @@ function handleShuffleTiles(
       console.log(`Shuffle Q-U Validation: Fixed ${validation.violations} violations`);
     }
     
-    setBoard(validation.board);
+    resultBoard = validation.board;
+    setBoard(resultBoard);
     
     // Set all tiles as affected for visual effect
     const allTileKeys = new Set<string>();
@@ -865,6 +868,8 @@ function handleShuffleTiles(
     
     toast.success("Shuffle activated! All letters repositioned!");
   }
+  
+  return resultBoard;
 }
 
 function handleXFactorTiles(
@@ -875,9 +880,10 @@ function handleXFactorTiles(
   setBoard: (board: string[][]) => void,
   setSpecialTiles: (tiles: SpecialTile[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): number {
+): { xChanged: number, board: string[][] } {
   const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
   let xChanged = 0;
+  let resultBoard = currentBoard;
   
   if (xFactorTiles.length > 0) {
     const newBoard = currentBoard.map(row => [...row]);
@@ -921,7 +927,8 @@ function handleXFactorTiles(
       console.log(`X-Factor Q-U Validation: Fixed ${validation.violations} violations`);
     }
 
-    setBoard(validation.board);
+    resultBoard = validation.board;
+    setBoard(resultBoard);
     setSpecialTiles(newSpecialTiles);
     setAffectedTiles(changedTileKeys);
     xChanged = changedTileKeys.size;
@@ -933,7 +940,7 @@ function handleXFactorTiles(
     toast.info("X-Factor activated! Adjacent tiles transformed!");
   }
   
-  return xChanged;
+  return { xChanged, board: resultBoard };
 }
 
 // Apply Magnet spawn effect: replace orthogonal neighbors with random vowels
@@ -953,8 +960,8 @@ function applyMagnetSpawnEffect(
   for (const adj of orthogonal) {
     if (within(adj.r, adj.c, size) && specialTiles[adj.r][adj.c].type === null) {
       const currentLetter = newBoard[adj.r][adj.c];
-      if (!VOWELS.includes(currentLetter.toUpperCase())) {
-        newBoard[adj.r][adj.c] = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+      if (!MAGNET_VOWELS.includes(currentLetter.toUpperCase())) {
+        newBoard[adj.r][adj.c] = MAGNET_VOWELS[Math.floor(Math.random() * MAGNET_VOWELS.length)];
       }
     }
   }
@@ -1026,7 +1033,7 @@ function handleBombBlast(
   setBoard: (board: string[][]) => void,
   setSpecialTiles: (tiles: SpecialTile[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): SpecialTile[][] {
+): string[][] {
   const newBoard = board.map(row => [...row]);
   const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
   const changedKeys = new Set<string>();
@@ -1062,12 +1069,13 @@ function handleBombBlast(
 
   const validation = validateAndFixQUAdjacency(newBoard, size, letterCounts, undefined, true);
   setBoard(validation.board);
+  setSpecialTiles(newTiles);
   setAffectedTiles(changedKeys);
 
   setTimeout(() => setAffectedTiles(new Set()), 1500);
   toast.info("Bomb detonated! Area reset with new letters!");
   
-  return newTiles;
+  return validation.board;
 }
 
 function checkAndAwardAchievements(
@@ -2567,6 +2575,7 @@ function WordPathGame({
         const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
         const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
         newWildPositions = [];
+        let currentBoard = board;
         for (let i = 0; i < tilesToPlace; i++) {
           const randomIndex = Math.floor(Math.random() * emptyPositions.length);
           const pos = emptyPositions.splice(randomIndex, 1)[0];
@@ -2583,8 +2592,8 @@ function WordPathGame({
             }
             // Apply spawn effects for enhanced tiles
             if (specialTile.type === "magnet") {
-              const magnetBoard = applyMagnetSpawnEffect(pos, board, updatedSpecialTiles, size);
-              setBoard(magnetBoard);
+              currentBoard = applyMagnetSpawnEffect(pos, currentBoard, updatedSpecialTiles, size);
+              setBoard(currentBoard);
             }
             if (specialTile.type === "freeze") {
               updatedSpecialTiles = applyFreezeSpawnEffect(pos, updatedSpecialTiles, size);
@@ -4090,24 +4099,25 @@ function WordPathGame({
       });
     }
 
-    // Handle X-Factor tiles first
-    const currentBoardForXFactor = board.map(row => [...row]);
-    const xChanged = handleXFactorTiles(
+    // Handle X-Factor tiles first and track board state through all effects
+    let trackedBoard = board.map(row => [...row]);
+    const xFactorResult = handleXFactorTiles(
       path, 
       specialTiles, 
-      currentBoardForXFactor, 
+      trackedBoard, 
       size, 
       setBoard, 
       setSpecialTiles, 
       setAffectedTiles
     );
+    const xChanged = xFactorResult.xChanged;
+    trackedBoard = xFactorResult.board;
 
-    // Handle shuffle tiles (use updated board if X-factor was triggered)
-    const currentBoard = xChanged > 0 ? board : currentBoardForXFactor;
-    handleShuffleTiles(
+    // Handle shuffle tiles (use updated board from X-factor)
+    trackedBoard = handleShuffleTiles(
       path, 
       specialTiles, 
-      currentBoard, 
+      trackedBoard, 
       size, 
       setBoard, 
       setAffectedTiles
@@ -4115,13 +4125,13 @@ function WordPathGame({
 
     // Handle Bomb tile blasts (after scoring, before clearing path tiles)
     const bombTilesInPath = path.filter(p => specialTiles[p.r][p.c].type === "bomb");
-    let newSpecialTiles = specialTiles.map(row => [...row]);
     if (bombTilesInPath.length > 0) {
-      const latestBoard = board.map(row => [...row]);
       for (const bombPos of bombTilesInPath) {
-        newSpecialTiles = handleBombBlast(bombPos, latestBoard, newSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        trackedBoard = handleBombBlast(bombPos, trackedBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
       }
     }
+
+    let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
@@ -4132,9 +4142,10 @@ function WordPathGame({
 
     // Process Decay spread before expiry (enhanced powerups only, not daily)
     if (isEnhancedPowerupsEnabled() && settings.mode !== "daily") {
-      const decayResult = processDecaySpread(newSpecialTiles, board, size);
+      const decayResult = processDecaySpread(newSpecialTiles, trackedBoard, size);
       newSpecialTiles = decayResult.tiles;
-      setBoard(decayResult.board);
+      trackedBoard = decayResult.board;
+      setBoard(trackedBoard);
     }
 
     newSpecialTiles = expireSpecialTiles(newSpecialTiles);
@@ -4240,6 +4251,7 @@ function WordPathGame({
         const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
         const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
         newWildPositions = [];
+        let currentBoard = board;
         for (let i = 0; i < tilesToPlace; i++) {
           const randomIndex = Math.floor(Math.random() * emptyPositions.length);
           const pos = emptyPositions.splice(randomIndex, 1)[0];
@@ -4256,8 +4268,8 @@ function WordPathGame({
             }
             // Apply spawn effects for enhanced tiles
             if (specialTile.type === "magnet") {
-              const magnetBoard = applyMagnetSpawnEffect(pos, board, updatedSpecialTiles, size);
-              setBoard(magnetBoard);
+              currentBoard = applyMagnetSpawnEffect(pos, currentBoard, updatedSpecialTiles, size);
+              setBoard(currentBoard);
             }
             if (specialTile.type === "freeze") {
               updatedSpecialTiles = applyFreezeSpawnEffect(pos, updatedSpecialTiles, size);
