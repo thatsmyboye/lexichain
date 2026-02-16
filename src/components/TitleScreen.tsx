@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { FloatingTiles } from "@/components/effects/FloatingTiles";
 interface TitleScreenProps {
   onPlayClick: () => void;
+  onAdvancedModesClick?: () => void;
   onLoginClick: () => void;
   onRegisterClick: () => void;
   onStatsClick: () => void;
@@ -23,6 +24,7 @@ interface TitleScreenProps {
 }
 const TitleScreen = ({
   onPlayClick,
+  onAdvancedModesClick,
   onLoginClick,
   onRegisterClick,
   onStatsClick,
@@ -169,23 +171,35 @@ const TitleScreen = ({
                   </div>}
               </div>}
           
-          <div className="flex items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
-            <SoundButton
-              variant={hasIncompleteChallenge ? "default" : "hero"}
-              size="lg"
-              onClick={onPlayClick}
-              className="px-8 py-6 text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-            >
-              {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
-            </SoundButton>
-            <SoundButton
-              variant="outline"
-              size="lg"
-              onClick={user ? handleLogout : onLoginClick}
-              className="px-6 hover:bg-muted/80 transition-all duration-300"
-            >
-              {user ? 'Log Out' : 'Login'}
-            </SoundButton>
+          <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
+            <div className="flex items-center justify-center gap-3">
+              <SoundButton
+                variant={hasIncompleteChallenge ? "default" : "hero"}
+                size="lg"
+                onClick={onPlayClick}
+                className="px-8 py-6 text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+              >
+                {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
+              </SoundButton>
+              <SoundButton
+                variant="outline"
+                size="lg"
+                onClick={user ? handleLogout : onLoginClick}
+                className="px-6 hover:bg-muted/80 transition-all duration-300"
+              >
+                {user ? 'Log Out' : 'Login'}
+              </SoundButton>
+            </div>
+            {user && onAdvancedModesClick && (
+              <SoundButton
+                variant="outline"
+                size="default"
+                onClick={onAdvancedModesClick}
+                className="px-6 hover:bg-gradient-to-r hover:from-brand-500/10 hover:to-brand-600/10 hover:border-brand-500/50 transition-all duration-300"
+              >
+                🎮 More Game Modes
+              </SoundButton>
+            )}
           </div>
 
           <div className="flex flex-col items-center gap-2.5 animate-in fade-in slide-in-from-bottom duration-700 delay-500">
@@ -290,23 +304,35 @@ const TitleScreen = ({
                   </div>}
               </div>}
           
-          <div className="flex items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
-            <SoundButton
-              variant={hasIncompleteChallenge ? "default" : "hero"}
-              size="lg"
-              onClick={onPlayClick}
-              className="px-12 py-6 text-xl font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-            >
-              {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
-            </SoundButton>
-            <SoundButton
-              variant="outline"
-              size="lg"
-              onClick={user ? handleLogout : onLoginClick}
-              className="px-8 hover:bg-muted/80 transition-all duration-300"
-            >
-              {user ? 'Log Out' : 'Login'}
-            </SoundButton>
+          <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
+            <div className="flex items-center justify-center gap-4">
+              <SoundButton
+                variant={hasIncompleteChallenge ? "default" : "hero"}
+                size="lg"
+                onClick={onPlayClick}
+                className="px-12 py-6 text-xl font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
+              >
+                {hasIncompleteChallenge ? "Resume Daily Challenge" : "Play"}
+              </SoundButton>
+              <SoundButton
+                variant="outline"
+                size="lg"
+                onClick={user ? handleLogout : onLoginClick}
+                className="px-8 hover:bg-muted/80 transition-all duration-300"
+              >
+                {user ? 'Log Out' : 'Login'}
+              </SoundButton>
+            </div>
+            {user && onAdvancedModesClick && (
+              <SoundButton
+                variant="outline"
+                size="lg"
+                onClick={onAdvancedModesClick}
+                className="px-8 hover:bg-gradient-to-r hover:from-brand-500/10 hover:to-brand-600/10 hover:border-brand-500/50 transition-all duration-300"
+              >
+                🎮 More Game Modes
+              </SoundButton>
+            )}
           </div>
 
           <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom duration-700 delay-500">
