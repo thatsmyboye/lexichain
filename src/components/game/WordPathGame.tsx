@@ -2646,7 +2646,9 @@ function WordPathGame({
             settings.mode === "endless" ? endlessDifficulty : 1
           );
           if (specialTile.type !== null) {
-            updatedSpecialTiles[pos.r][pos.c] = specialTile;
+            // Preserve frozen flag if it exists
+            const existingFrozen = updatedSpecialTiles[pos.r][pos.c].frozen;
+            updatedSpecialTiles[pos.r][pos.c] = { ...specialTile, frozen: existingFrozen || specialTile.frozen };
             // Track newly spawned Wild tiles
             if (specialTile.type === "wild") {
               newWildPositions.push(keyOf(pos));
@@ -4331,7 +4333,9 @@ function WordPathGame({
             settings.mode === "endless" ? endlessDifficulty : 1
           );
           if (specialTile.type !== null) {
-            updatedSpecialTiles[pos.r][pos.c] = specialTile;
+            // Preserve frozen flag if it exists
+            const existingFrozen = updatedSpecialTiles[pos.r][pos.c].frozen;
+            updatedSpecialTiles[pos.r][pos.c] = { ...specialTile, frozen: existingFrozen || specialTile.frozen };
             // Track newly spawned Wild tiles
             if (specialTile.type === "wild") {
               newWildPositions.push(keyOf(pos));
