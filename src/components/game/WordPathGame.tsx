@@ -4907,7 +4907,7 @@ function WordPathGame({
             gameOver,
             isGenerating
           }} disabled={gameOver || isGenerating} />
-              {settings.mode === "daily" && !gameOver && (() => {
+              {settings.mode === "daily" && !gameOver && usedWords.length >= 1 && (() => {
                 const nextTiles = previewNextSpecialTiles(
                   usedWords.length,
                   getDailySeed(),
@@ -5530,7 +5530,7 @@ function WordPathGame({
                     <div className="mt-1 text-xs text-muted-foreground">
                       {settings.dailyMovesLimit - movesUsed} moves remaining
                     </div>
-                    {!gameOver && (() => {
+                    {!gameOver && usedWords.length >= 1 && (() => {
                       const nextTiles = previewNextSpecialTiles(
                         usedWords.length,
                         getDailySeed(),
