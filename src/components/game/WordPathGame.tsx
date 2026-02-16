@@ -1026,7 +1026,7 @@ function handleBombBlast(
   setBoard: (board: string[][]) => void,
   setSpecialTiles: (tiles: SpecialTile[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): void {
+): SpecialTile[][] {
   const newBoard = board.map(row => [...row]);
   const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
   const changedKeys = new Set<string>();
@@ -1062,11 +1062,12 @@ function handleBombBlast(
 
   const validation = validateAndFixQUAdjacency(newBoard, size, letterCounts, undefined, true);
   setBoard(validation.board);
-  setSpecialTiles(newTiles);
   setAffectedTiles(changedKeys);
 
   setTimeout(() => setAffectedTiles(new Set()), 1500);
   toast.info("Bomb detonated! Area reset with new letters!");
+  
+  return newTiles;
 }
 
 function checkAndAwardAchievements(
@@ -4102,14 +4103,13 @@ function WordPathGame({
 
     // Handle Bomb tile blasts (after scoring, before clearing path tiles)
     const bombTilesInPath = path.filter(p => specialTiles[p.r][p.c].type === "bomb");
+    let newSpecialTiles = specialTiles.map(row => [...row]);
     if (bombTilesInPath.length > 0) {
       const latestBoard = board.map(row => [...row]);
       for (const bombPos of bombTilesInPath) {
-        handleBombBlast(bombPos, latestBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        newSpecialTiles = handleBombBlast(bombPos, latestBoard, newSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
       }
     }
-
-    let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
