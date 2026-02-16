@@ -2180,38 +2180,77 @@ function WordPathGame({
       }]);
     }
 
-    // Handle X-Factor tiles first
-    const currentBoardForXFactor = newBoard.map(row => [...row]);
+    // Handle X-Factor tiles first and track board state through all effects
+    let trackedBoard = newBoard.map(row => [...row]);
     const xFactorResult = handleXFactorTiles(
       wordPath, 
       specialTiles, 
-      currentBoardForXFactor, 
+      trackedBoard, 
       size, 
       setBoard, 
       setSpecialTiles, 
       setAffectedTiles
     );
     const xChanged = xFactorResult.xChanged;
+    trackedBoard = xFactorResult.board;
 
-    // Handle shuffle tiles (use updated board if X-factor was triggered)
-    const currentBoard = xChanged > 0 ? xFactorResult.board : currentBoardForXFactor;
-    handleShuffleTiles(
+    // Handle shuffle tiles (use updated board from X-factor)
+    trackedBoard = handleShuffleTiles(
       wordPath, 
       specialTiles, 
-      currentBoard, 
+      trackedBoard, 
       size, 
       setBoard, 
       setAffectedTiles
     );
+
+    // Handle Bomb tile blasts (after scoring, before clearing path tiles)
+    const bombTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "bomb");
+    if (bombTilesInPath.length > 0) {
+      for (const bombPos of bombTilesInPath) {
+        trackedBoard = handleBombBlast(bombPos, trackedBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+      }
+    }
+
     let newSpecialTiles = specialTiles.map(row => [...row]);
     wordPath.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
+          ...specialTiles[p.r][p.c],
           type: null
         };
       }
     });
+
+    // Process Decay spread before expiry (enhanced powerups only, not daily)
+    if (isEnhancedPowerupsEnabled() && settings.mode !== "daily") {
+      const decayResult = processDecaySpread(newSpecialTiles, trackedBoard, size);
+      newSpecialTiles = decayResult.tiles;
+      trackedBoard = decayResult.board;
+      setBoard(trackedBoard);
+    }
+
     newSpecialTiles = expireSpecialTiles(newSpecialTiles);
+
+    // Clear frozen flags from tiles whose adjacent Freeze tile expired
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (newSpecialTiles[r][c].frozen) {
+          // Check if any adjacent tile is still a Freeze tile
+          const orthogonal = [
+            { r: r - 1, c: c }, { r: r + 1, c: c },
+            { r: r, c: c - 1 }, { r: r, c: c + 1 },
+          ];
+          const stillFrozen = orthogonal.some(
+            adj => within(adj.r, adj.c, size) && newSpecialTiles[adj.r][adj.c].type === "freeze"
+          );
+          if (!stillFrozen) {
+            newSpecialTiles[r][c] = { ...newSpecialTiles[r][c], frozen: false };
+          }
+        }
+      }
+    }
+
     setSpecialTiles(newSpecialTiles);
     setLastWordTiles(new Set(wordPath.map(keyOf)));
 
