@@ -77,6 +77,16 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     skipable: true
   },
   {
+    id: 'special_tiles',
+    title: 'Special Tiles',
+    description: 'Special tiles appear on the board as you play. Stone blocks paths, Wild acts as any letter, Multiplier boosts scores, X-Factor changes nearby letters, and Shuffle rearranges the board. Enable "Enhanced Powerups" in Settings for 8 more tile types including Mirror, Ghost, Chain, Tax, and more!',
+    target: '[data-tutorial="game-board"]',
+    position: 'bottom',
+    action: 'wait',
+    icon: <Star className="h-5 w-5 text-primary" />,
+    skipable: true
+  },
+  {
     id: 'game_modes',
     title: 'Game Modes',
     description: 'Try different game modes! Daily Challenge offers a new puzzle each day, Classic mode has no time limits, and Practice mode helps you improve your skills.',
