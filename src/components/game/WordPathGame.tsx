@@ -2173,7 +2173,7 @@ function WordPathGame({
 
     // Handle X-Factor tiles first
     const currentBoardForXFactor = newBoard.map(row => [...row]);
-    const xChanged = handleXFactorTiles(
+    const xFactorResult = handleXFactorTiles(
       wordPath, 
       specialTiles, 
       currentBoardForXFactor, 
@@ -2182,9 +2182,10 @@ function WordPathGame({
       setSpecialTiles, 
       setAffectedTiles
     );
+    const xChanged = xFactorResult.xChanged;
 
     // Handle shuffle tiles (use updated board if X-factor was triggered)
-    const currentBoard = xChanged > 0 ? newBoard : currentBoardForXFactor;
+    const currentBoard = xChanged > 0 ? xFactorResult.board : currentBoardForXFactor;
     handleShuffleTiles(
       wordPath, 
       specialTiles, 
