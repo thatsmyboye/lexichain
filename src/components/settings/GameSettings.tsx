@@ -16,6 +16,14 @@ export function GameSettings() {
   const [floatingTiles, setFloatingTiles] = useState(() => {
     return localStorage.getItem('lexichain-floating-tiles') !== 'false';
   });
+  const [enhancedPowerups, setEnhancedPowerups] = useState(() => {
+    return localStorage.getItem('lexichain-enhanced-powerups') === 'true';
+  });
+
+  const handleEnhancedPowerupsToggle = (checked: boolean) => {
+    setEnhancedPowerups(checked);
+    localStorage.setItem('lexichain-enhanced-powerups', checked ? 'true' : 'false');
+  };
 
   const handleFloatingTilesToggle = (checked: boolean) => {
     setFloatingTiles(checked);
@@ -91,7 +99,19 @@ export function GameSettings() {
 
                 <Separator />
 
-                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">Enhanced Powerups</label>
+                    <p className="text-xs text-muted-foreground">
+                      Adds 8 new tile types: Freeze, Decay, Mirror, Magnet, Bomb, Chain, Ghost, and Tax. Does not apply to Daily Challenge.
+                    </p>
+                  </div>
+                  <Switch checked={enhancedPowerups} onCheckedChange={handleEnhancedPowerupsToggle} />
+                </div>
+
+                <Separator />
+
+
               </div>
             </div>
           </TabsContent>

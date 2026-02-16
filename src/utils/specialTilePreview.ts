@@ -3,12 +3,14 @@
  * in Daily Challenge mode.
  */
 
-export type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | "shuffle";
+export type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | "shuffle"
+  | "freeze" | "decay" | "mirror" | "magnet" | "bomb" | "chain" | "ghost" | "tax";
 
 export interface SpecialTile {
   type: SpecialTileType | null;
   value?: number; // For multipliers (2x, 3x, 4x)
   expiryTurns?: number; // Number of turns until expiry
+  frozen?: boolean; // Whether this tile is frozen (protected by adjacent Freeze tile)
 }
 
 const SPECIAL_TILE_RARITIES = {

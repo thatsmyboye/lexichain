@@ -79,11 +79,13 @@ const within = (r: number, c: number, size: number) => r >= 0 && c >= 0 && r < s
 const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) <= 1;
 
 // Special tile types
-type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | "shuffle" | null;
+type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | "shuffle"
+  | "freeze" | "decay" | "mirror" | "magnet" | "bomb" | "chain" | "ghost" | "tax" | null;
 type SpecialTile = {
   type: SpecialTileType;
   value?: number;
   expiryTurns?: number;
+  frozen?: boolean;
 };
 type GameMode = "classic" | "target" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
 type GameSettings = {
@@ -321,6 +323,31 @@ const SPECIAL_TILE_RARITIES = {
   shuffle: 0.03 // Rare occurrence
 };
 
+// Enhanced powerups tile rarities (used when toggle is on and mode is not daily)
+const ENHANCED_TILE_RARITIES: Record<string, number> = {
+  stone: 0.15,
+  multiplier: 0.12,
+  xfactor: 0.08,
+  tax: 0.08,
+  decay: 0.07,
+  freeze: 0.06,
+  wild: 0.05,
+  magnet: 0.05,
+  chain: 0.05,
+  mirror: 0.04,
+  bomb: 0.04,
+  shuffle: 0.03,
+  ghost: 0.03,
+};
+
+function isEnhancedPowerupsEnabled(): boolean {
+  return localStorage.getItem('lexichain-enhanced-powerups') === 'true';
+}
+
+// Common low-value letters used by Decay and Magnet effects
+const LOW_VALUE_LETTERS = ["A", "E", "I", "O", "U", "S", "T", "N", "R"];
+const VOWELS = ["A", "E", "I", "O", "U"];
+
 // Letter rarity helpers (based on frequency with a special bucket for ultra-rare letters)
 const VERY_RARE = new Set(["J", "Q", "X", "Z"]);
 const FREQ_MAP = new Map<string, number>(LETTERS);
@@ -409,6 +436,18 @@ function computeScoreBreakdown(params: {
   if (wordLen >= 6) lengthBonus += 50;
   if (wordLen >= 7) lengthBonus += 100;
   if (wordLen >= 8) lengthBonus += 150;
+
+  // Chain tile: +10 per tile in path beyond 4, per chain tile
+  const chainTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "chain").length;
+  let chainBonus = 0;
+  if (chainTilesInPath > 0 && wordPath.length > 4) {
+    chainBonus = (wordPath.length - 4) * 10 * chainTilesInPath;
+  }
+
+  // Tax tile: 0.7x per tax tile (applied after all multipliers)
+  const taxTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "tax").length;
+  const taxMultiplier = taxTilesInPath > 0 ? Math.pow(0.7, taxTilesInPath) : 1;
+
   const timeBonus = 0; // Removed blitz functionality
 
   const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
@@ -446,8 +485,8 @@ function computeScoreBreakdown(params: {
   const combinedMultiplierRaw = tileMultiplier * consumableMultiplier * modeMultiplier;
   const combinedApplied = combinedMultiplierRaw; // No cap - multipliers stack freely
   const capped = false;
-  const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + timeBonus) * linkMultiplier);
-  const total = Math.round(totalBeforeMultipliers * combinedApplied);
+  const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + chainBonus + timeBonus) * linkMultiplier);
+  const total = Math.round(totalBeforeMultipliers * combinedApplied * taxMultiplier);
   return {
     base,
     rarity: {
@@ -757,28 +796,30 @@ function handleShuffleTiles(
 ): void {
   const shuffleTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "shuffle");
   if (shuffleTiles.length > 0) {
-    // Get all letters from the board and ensure max 4 of each letter
+    // Collect letters from non-frozen positions only; frozen tiles stay in place
+    const shuffleablePositions: Pos[] = [];
     const allLetters: string[] = [];
     const letterCounts = new Map<string, number>();
-    
+
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         const letter = currentBoard[r][c];
         const count = letterCounts.get(letter) || 0;
         letterCounts.set(letter, count + 1);
-        allLetters.push(letter);
+        if (!specialTiles[r][c].frozen) {
+          shuffleablePositions.push({ r, c });
+          allLetters.push(letter);
+        }
       }
     }
-    
+
     // Check if any letter exceeds 4 instances and replace extras
     for (const [letter, count] of letterCounts) {
       if (count > 4) {
         const excess = count - 4;
-        // Find positions with this letter and replace excess ones
         let replaced = 0;
         for (let i = 0; i < allLetters.length && replaced < excess; i++) {
           if (allLetters[i] === letter) {
-            // Replace with a constrained random letter
             const tempCounts = new Map(letterCounts);
             tempCounts.set(letter, tempCounts.get(letter)! - 1);
             allLetters[i] = constrainedRandomLetter(tempCounts);
@@ -787,20 +828,18 @@ function handleShuffleTiles(
         }
       }
     }
-    
+
     // Shuffle the letters array
     for (let i = allLetters.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
     }
-    
-    // Redistribute the shuffled letters
-    let letterIndex = 0;
+
+    // Redistribute the shuffled letters to non-frozen positions only
     const shuffledBoard = currentBoard.map(row => [...row]);
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        shuffledBoard[r][c] = allLetters[letterIndex++];
-      }
+    for (let i = 0; i < shuffleablePositions.length; i++) {
+      const { r, c } = shuffleablePositions[i];
+      shuffledBoard[r][c] = allLetters[i];
     }
     
     // Apply Q-U adjacency validation to the shuffled board
@@ -863,11 +902,11 @@ function handleXFactorTiles(
       ];
       
       diagonals.forEach(pos => {
-        if (within(pos.r, pos.c, size)) {
+        if (within(pos.r, pos.c, size) && !newSpecialTiles[pos.r][pos.c].frozen) {
           // Reduce count of old letter
           const oldLetter = newBoard[pos.r][pos.c];
           currentLetterCounts.set(oldLetter, (currentLetterCounts.get(oldLetter) || 0) - 1);
-          
+
           // Generate new constrained letter
           newBoard[pos.r][pos.c] = constrainedRandomLetter(currentLetterCounts);
           newSpecialTiles[pos.r][pos.c] = { type: null };
@@ -895,6 +934,139 @@ function handleXFactorTiles(
   }
   
   return xChanged;
+}
+
+// Apply Magnet spawn effect: replace orthogonal neighbors with random vowels
+function applyMagnetSpawnEffect(
+  pos: Pos,
+  board: string[][],
+  specialTiles: SpecialTile[][],
+  size: number
+): string[][] {
+  const newBoard = board.map(row => [...row]);
+  const orthogonal = [
+    { r: pos.r - 1, c: pos.c },
+    { r: pos.r + 1, c: pos.c },
+    { r: pos.r, c: pos.c - 1 },
+    { r: pos.r, c: pos.c + 1 },
+  ];
+  for (const adj of orthogonal) {
+    if (within(adj.r, adj.c, size) && specialTiles[adj.r][adj.c].type === null) {
+      const currentLetter = newBoard[adj.r][adj.c];
+      if (!VOWELS.includes(currentLetter.toUpperCase())) {
+        newBoard[adj.r][adj.c] = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+      }
+    }
+  }
+  return newBoard;
+}
+
+// Apply Freeze spawn effect: mark orthogonal neighbors as frozen
+function applyFreezeSpawnEffect(
+  pos: Pos,
+  specialTiles: SpecialTile[][],
+  size: number
+): SpecialTile[][] {
+  const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
+  const orthogonal = [
+    { r: pos.r - 1, c: pos.c },
+    { r: pos.r + 1, c: pos.c },
+    { r: pos.r, c: pos.c - 1 },
+    { r: pos.r, c: pos.c + 1 },
+  ];
+  for (const adj of orthogonal) {
+    if (within(adj.r, adj.c, size)) {
+      newTiles[adj.r][adj.c] = { ...newTiles[adj.r][adj.c], frozen: true };
+    }
+  }
+  return newTiles;
+}
+
+// Process Decay spread during the expiry/tick phase
+function processDecaySpread(
+  specialTiles: SpecialTile[][],
+  board: string[][],
+  size: number
+): { tiles: SpecialTile[][], board: string[][] } {
+  const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
+  const newBoard = board.map(row => [...row]);
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (specialTiles[r][c].type === "decay") {
+        // 40% chance to spread to one random orthogonal neighbor
+        if (Math.random() < 0.4) {
+          const orthogonal = [
+            { r: r - 1, c: c },
+            { r: r + 1, c: c },
+            { r: r, c: c - 1 },
+            { r: r, c: c + 1 },
+          ].filter(p => within(p.r, p.c, size) && newTiles[p.r][p.c].type === null && !newTiles[p.r][p.c].frozen);
+
+          if (orthogonal.length > 0) {
+            const target = orthogonal[Math.floor(Math.random() * orthogonal.length)];
+            // Convert neighbor's letter to a random low-value letter
+            newBoard[target.r][target.c] = LOW_VALUE_LETTERS[Math.floor(Math.random() * LOW_VALUE_LETTERS.length)];
+            // Spread copy becomes decay with 2 turns
+            newTiles[target.r][target.c] = { type: "decay", expiryTurns: 2 };
+          }
+        }
+      }
+    }
+  }
+  return { tiles: newTiles, board: newBoard };
+}
+
+// Handle Bomb blast: replace all tiles within Manhattan distance 2 with new random letters
+function handleBombBlast(
+  bombPos: Pos,
+  board: string[][],
+  specialTiles: SpecialTile[][],
+  size: number,
+  setBoard: (board: string[][]) => void,
+  setSpecialTiles: (tiles: SpecialTile[][]) => void,
+  setAffectedTiles: (tiles: Set<string>) => void
+): void {
+  const newBoard = board.map(row => [...row]);
+  const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
+  const changedKeys = new Set<string>();
+  const letterCounts = new Map<string, number>();
+
+  // Count existing letters for constraint
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const letter = newBoard[r][c];
+      letterCounts.set(letter, (letterCounts.get(letter) || 0) + 1);
+    }
+  }
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const dist = Math.abs(r - bombPos.r) + Math.abs(c - bombPos.c);
+      if (dist <= 2 && !(r === bombPos.r && c === bombPos.c)) {
+        // Skip frozen tiles
+        if (newTiles[r][c].frozen) continue;
+        // Replace letter
+        const oldLetter = newBoard[r][c];
+        letterCounts.set(oldLetter, (letterCounts.get(oldLetter) || 0) - 1);
+        newBoard[r][c] = constrainedRandomLetter(letterCounts);
+        // Clear special tile
+        newTiles[r][c] = { type: null };
+        changedKeys.add(keyOf({ r, c }));
+      }
+    }
+  }
+
+  // Clear the bomb itself
+  newTiles[bombPos.r][bombPos.c] = { type: null };
+
+  const validation = validateAndFixQUAdjacency(newBoard, size, letterCounts, undefined, true);
+  setBoard(validation.board);
+  setSpecialTiles(newTiles);
+  setAffectedTiles(changedKeys);
+
+  setTimeout(() => setAffectedTiles(new Set()), 1500);
+  toast.info("Bomb detonated! Area reset with new letters!");
 }
 
 function checkAndAwardAchievements(
@@ -1703,16 +1875,41 @@ function WordPathGame({
       }
     }
   }, [dict, sorted, settings.mode, board, benchmarks, isGenerating, settings.difficulty]);
-  const wordFromPath = useMemo(() => board ? path.map(p => board[p.r][p.c]).join("").toLowerCase() : "", [path, board]);
-
-  // Display version that shows ? for Wild tiles during selection
-  const displayWordFromPath = useMemo(() => {
-    return path.map(p => {
-      if (specialTiles[p.r][p.c].type === "wild") {
-        return "?";
+  // Resolves the word from the path, handling Ghost (skip) and Mirror (copy previous) tiles
+  const wordFromPath = useMemo(() => {
+    if (!board) return "";
+    const letters: string[] = [];
+    for (let i = 0; i < path.length; i++) {
+      const p = path[i];
+      const tile = specialTiles[p.r][p.c];
+      if (tile.type === "ghost") continue; // Ghost contributes no letter
+      if (tile.type === "mirror" && letters.length > 0) {
+        letters.push(letters[letters.length - 1]); // Copy previous letter
+      } else {
+        letters.push(board[p.r][p.c]);
       }
-      return board[p.r][p.c];
-    }).join("").toUpperCase();
+    }
+    return letters.join("").toLowerCase();
+  }, [path, board, specialTiles]);
+
+  // Display version that shows ? for Wild, Ghost as a bridge icon, Mirror as mirrored letter
+  const displayWordFromPath = useMemo(() => {
+    const parts: string[] = [];
+    for (let i = 0; i < path.length; i++) {
+      const p = path[i];
+      const tile = specialTiles[p.r][p.c];
+      if (tile.type === "wild") {
+        parts.push("?");
+      } else if (tile.type === "ghost") {
+        // Ghost is skipped in display — it contributes no letter
+        continue;
+      } else if (tile.type === "mirror" && parts.length > 0) {
+        parts.push(parts[parts.length - 1]);
+      } else {
+        parts.push(board[p.r][p.c]);
+      }
+    }
+    return parts.join("").toUpperCase();
   }, [path, board, specialTiles]);
   function handleWildSubmit() {
     if (!pendingWildPath || !wildTileInputs.size || !dict) return;
@@ -2373,6 +2570,14 @@ function WordPathGame({
             if (specialTile.type === "wild") {
               newWildPositions.push(keyOf(pos));
             }
+            // Apply spawn effects for enhanced tiles
+            if (specialTile.type === "magnet") {
+              const magnetBoard = applyMagnetSpawnEffect(pos, board, updatedSpecialTiles, size);
+              setBoard(magnetBoard);
+            }
+            if (specialTile.type === "freeze") {
+              updatedSpecialTiles = applyFreezeSpawnEffect(pos, updatedSpecialTiles, size);
+            }
           }
         }
       }
@@ -2574,50 +2779,46 @@ function WordPathGame({
   function generateSpecialTile(currentScore: number = 0, gameMode: string = "classic", endlessDifficultyLevel: number = 1): SpecialTile {
     const rand = Math.random();
     let cumulative = 0;
-    
+
+    // Use enhanced rarities if toggle is on and mode is not daily
+    const useEnhanced = isEnhancedPowerupsEnabled() && gameMode !== "daily";
+    const baseRarities: Record<string, number> = useEnhanced ? { ...ENHANCED_TILE_RARITIES } : { ...SPECIAL_TILE_RARITIES };
+
     // Progressive stone spawning for classic mode
-    const modifiedRarities = { ...SPECIAL_TILE_RARITIES };
     if (gameMode === "classic") {
       // Progressive stone spawn rate: base 0.05 + (score/1000) * 0.10, capped at 0.35
       const baseStoneRate = 0.05;
       const progressiveRate = Math.min(0.25, (currentScore / 1000) * 0.10);
-      modifiedRarities.stone = baseStoneRate + progressiveRate;
+      baseRarities.stone = baseStoneRate + progressiveRate;
     } else if (gameMode === "endless") {
       // Endless mode: difficulty affects special tile rarities
-      // As difficulty increases, stone tiles become MORE common (making it harder)
-      const difficultyFactor = Math.min(1.0, endlessDifficultyLevel / 10); // Normalize to 0-1 over 10 levels
-      
-      // Increase stone spawn rate as difficulty increases (makes it progressively harder)
-      // Base rate 0.15, increases to 0.40 at level 10+
-      const baseStoneRate = SPECIAL_TILE_RARITIES.stone;
+      const difficultyFactor = Math.min(1.0, endlessDifficultyLevel / 10);
+
+      const baseStoneRate = 0.15;
       const maxStoneRate = 0.40;
-      modifiedRarities.stone = baseStoneRate + (maxStoneRate - baseStoneRate) * difficultyFactor;
-      
-      // Slightly reduce helpful tiles as difficulty increases (but not as much as stones increase)
-      const helpfulReduction = 1 - difficultyFactor * 0.3; // Reduce by up to 30% at max difficulty
-      modifiedRarities.wild = SPECIAL_TILE_RARITIES.wild * helpfulReduction;
-      modifiedRarities.multiplier = SPECIAL_TILE_RARITIES.multiplier * helpfulReduction;
-      modifiedRarities.xfactor = SPECIAL_TILE_RARITIES.xfactor * helpfulReduction;
-      
+      baseRarities.stone = baseStoneRate + (maxStoneRate - baseStoneRate) * difficultyFactor;
+
+      const helpfulReduction = 1 - difficultyFactor * 0.3;
+      baseRarities.wild = (baseRarities.wild || 0.05) * helpfulReduction;
+      baseRarities.multiplier = (baseRarities.multiplier || 0.12) * helpfulReduction;
+      baseRarities.xfactor = (baseRarities.xfactor || 0.08) * helpfulReduction;
+
       // Normalize rarities to ensure they sum to a reasonable probability
-      const totalRarity = Object.values(modifiedRarities).reduce((sum, r) => sum + r, 0);
+      const totalRarity = Object.values(baseRarities).reduce((sum, r) => sum + r, 0);
       if (totalRarity > 0.5) {
-        // Scale down if too high
         const scale = 0.5 / totalRarity;
-        Object.keys(modifiedRarities).forEach(key => {
-          modifiedRarities[key as keyof typeof modifiedRarities] *= scale;
+        Object.keys(baseRarities).forEach(key => {
+          baseRarities[key] *= scale;
         });
       }
     }
-    
-    for (const [type, rarity] of Object.entries(modifiedRarities)) {
+
+    for (const [type, rarity] of Object.entries(baseRarities)) {
       cumulative += rarity;
       if (rand <= cumulative) {
-        // Calculate expiry turns based on tile type and game mode
+        // Calculate expiry turns based on tile type
         let expiryTurns: number;
         if (type === "stone" && gameMode === "endless") {
-          // Stone tiles in endless mode last longer as difficulty increases
-          // Base: 3-5 turns, increases to 8-12 turns at difficulty 10+
           const difficultyFactor = Math.min(1.0, endlessDifficultyLevel / 10);
           const baseMin = 3;
           const baseMax = 5;
@@ -2627,10 +2828,10 @@ function WordPathGame({
           const maxTurns = Math.floor(baseMax + (maxMax - baseMax) * difficultyFactor);
           expiryTurns = Math.floor(Math.random() * (maxTurns - minTurns + 1)) + minTurns;
         } else {
-          // Default expiry: Random 1-5 turns for other tiles/modes
-          expiryTurns = Math.floor(Math.random() * 5) + 1;
+          // Tile-specific expiry ranges
+          expiryTurns = getExpiryTurnsForType(type);
         }
-        
+
         if (type === "multiplier") {
           const multiplierValues = [2, 3, 4];
           const value = multiplierValues[Math.floor(Math.random() * multiplierValues.length)];
@@ -2649,6 +2850,21 @@ function WordPathGame({
     return {
       type: null
     };
+  }
+
+  // Returns appropriate expiry turns for each tile type
+  function getExpiryTurnsForType(type: string): number {
+    switch (type) {
+      case "freeze": return Math.floor(Math.random() * 3) + 3;   // 3-5
+      case "decay": return 3;
+      case "mirror": return Math.floor(Math.random() * 2) + 2;   // 2-3
+      case "magnet": return Math.floor(Math.random() * 2) + 3;   // 3-4
+      case "bomb": return 2;
+      case "chain": return Math.floor(Math.random() * 2) + 3;    // 3-4
+      case "ghost": return 2;
+      case "tax": return Math.floor(Math.random() * 3) + 3;      // 3-5
+      default: return Math.floor(Math.random() * 5) + 1;         // 1-5 (existing tiles)
+    }
   }
   function shouldIntroduceSpecialTiles(wordCount: number): boolean {
     return wordCount >= 1;
@@ -3728,6 +3944,12 @@ function WordPathGame({
       toast.error("Cannot use words containing Stone tiles!");
       return clearPath();
     }
+    // Ghost tile: maximum one per word
+    const ghostCount = path.filter(p => specialTiles[p.r][p.c].type === "ghost").length;
+    if (ghostCount > 1) {
+      toast.error("Only one Ghost tile per word!");
+      return clearPath();
+    }
     if (lastWordTiles.size > 0) {
       const overlap = path.some(p => lastWordTiles.has(keyOf(p)));
       if (!overlap) {
@@ -3878,6 +4100,15 @@ function WordPathGame({
       setAffectedTiles
     );
 
+    // Handle Bomb tile blasts (after scoring, before clearing path tiles)
+    const bombTilesInPath = path.filter(p => specialTiles[p.r][p.c].type === "bomb");
+    if (bombTilesInPath.length > 0) {
+      const latestBoard = board.map(row => [...row]);
+      for (const bombPos of bombTilesInPath) {
+        handleBombBlast(bombPos, latestBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+      }
+    }
+
     let newSpecialTiles = specialTiles.map(row => [...row]);
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
@@ -3886,7 +4117,35 @@ function WordPathGame({
         };
       }
     });
+
+    // Process Decay spread before expiry (enhanced powerups only, not daily)
+    if (isEnhancedPowerupsEnabled() && settings.mode !== "daily") {
+      const decayResult = processDecaySpread(newSpecialTiles, board, size);
+      newSpecialTiles = decayResult.tiles;
+      setBoard(decayResult.board);
+    }
+
     newSpecialTiles = expireSpecialTiles(newSpecialTiles);
+
+    // Clear frozen flags from tiles whose adjacent Freeze tile expired
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (newSpecialTiles[r][c].frozen) {
+          // Check if any adjacent tile is still a Freeze tile
+          const orthogonal = [
+            { r: r - 1, c: c }, { r: r + 1, c: c },
+            { r: r, c: c - 1 }, { r: r, c: c + 1 },
+          ];
+          const stillFrozen = orthogonal.some(
+            adj => within(adj.r, adj.c, size) && newSpecialTiles[adj.r][adj.c].type === "freeze"
+          );
+          if (!stillFrozen) {
+            newSpecialTiles[r][c] = { ...newSpecialTiles[r][c], frozen: false };
+          }
+        }
+      }
+    }
+
     setSpecialTiles(newSpecialTiles);
     setLastWordTiles(new Set(path.map(keyOf)));
 
@@ -3982,6 +4241,14 @@ function WordPathGame({
             // Track newly spawned Wild tiles
             if (specialTile.type === "wild") {
               newWildPositions.push(keyOf(pos));
+            }
+            // Apply spawn effects for enhanced tiles
+            if (specialTile.type === "magnet") {
+              const magnetBoard = applyMagnetSpawnEffect(pos, board, updatedSpecialTiles, size);
+              setBoard(magnetBoard);
+            }
+            if (specialTile.type === "freeze") {
+              updatedSpecialTiles = applyFreezeSpawnEffect(pos, updatedSpecialTiles, size);
             }
           }
         }
@@ -5099,6 +5366,22 @@ function WordPathGame({
                   baseClasses += "bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] ";
                 } else if (special.type === "shuffle") {
                   baseClasses += "bg-gradient-to-br from-red-200 to-red-300 text-red-800 shadow-[0_0_15px_rgba(239,68,68,0.3)] ";
+                } else if (special.type === "freeze") {
+                  baseClasses += "bg-gradient-to-br from-cyan-300 to-blue-400 text-white shadow-[0_0_20px_rgba(34,211,238,0.5)] ";
+                } else if (special.type === "decay") {
+                  baseClasses += "bg-gradient-to-br from-yellow-300 to-green-500 text-white shadow-[0_0_15px_rgba(132,204,22,0.4)] ";
+                } else if (special.type === "mirror") {
+                  baseClasses += "bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800 shadow-[0_0_20px_rgba(156,163,175,0.5)] ";
+                } else if (special.type === "magnet") {
+                  baseClasses += "bg-gradient-to-br from-red-400 to-gray-400 text-white shadow-[0_0_15px_rgba(248,113,113,0.4)] ";
+                } else if (special.type === "bomb") {
+                  baseClasses += "bg-gradient-to-br from-red-600 to-gray-900 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] ";
+                } else if (special.type === "chain") {
+                  baseClasses += "bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.4)] ";
+                } else if (special.type === "ghost") {
+                  baseClasses += "bg-gradient-to-br from-white/60 to-gray-200/60 text-gray-400 shadow-[0_0_15px_rgba(255,255,255,0.3)] opacity-70 ";
+                } else if (special.type === "tax") {
+                  baseClasses += "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-[0_0_15px_rgba(234,179,8,0.4)] ";
                 }
                 return baseClasses;
               };
@@ -5151,7 +5434,7 @@ function WordPathGame({
                   )}
                   
                   <div className="text-3xl font-semibold tracking-wide relative z-10">
-                    {special.type === "wild" ? "?" : ch}
+                    {special.type === "wild" ? "?" : special.type === "mirror" ? "🪞" : special.type === "ghost" ? ch : ch}
                   </div>
                   {/* Rarity indicators */}
                   {special.type !== "wild" && letterRarity(ch) === 1 && <div className="absolute top-0.5 right-0.5 text-xs font-bold text-orange-600 dark:text-orange-400 z-10">
@@ -5181,6 +5464,15 @@ function WordPathGame({
                   {special.type === "stone" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">
                       🪨
                     </div>}
+                  {special.type === "freeze" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">❄️</div>}
+                  {special.type === "decay" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">🦠</div>}
+                  {special.type === "mirror" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">🪞</div>}
+                  {special.type === "magnet" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">🧲</div>}
+                  {special.type === "bomb" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">💣</div>}
+                  {special.type === "chain" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">⛓️</div>}
+                  {special.type === "ghost" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">👻</div>}
+                  {special.type === "tax" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">💰</div>}
+                  {special.frozen && <div className="absolute top-0 right-0 text-xs opacity-60">❄</div>}
                 </Card>;
             }))}
             {!board && <div className="col-span-full flex items-center justify-center p-8">
