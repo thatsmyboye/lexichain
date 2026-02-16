@@ -1919,14 +1919,24 @@ function WordPathGame({
     const wildPos = wildcardPositions[0];
     const wildIndex = pendingWildPath.findIndex(p => p.r === wildPos.r && p.c === wildPos.c);
 
-    // Create the word with the user's chosen letter
-    const testWord = pendingWildPath.map((p, i) => {
+    // Create the word with the user's chosen letter, respecting ghost/mirror behavior
+    const letters: string[] = [];
+    for (let i = 0; i < pendingWildPath.length; i++) {
+      const p = pendingWildPath[i];
+      const tile = specialTiles[p.r][p.c];
+      
       if (i === wildIndex) {
         const wildKey = `${wildPos.r}-${wildPos.c}`;
-        return (wildTileInputs.get(wildKey) || '').toLowerCase();
+        letters.push((wildTileInputs.get(wildKey) || '').toLowerCase());
+      } else if (tile.type === "ghost") {
+        continue; // Ghost contributes no letter
+      } else if (tile.type === "mirror" && letters.length > 0) {
+        letters.push(letters[letters.length - 1]); // Copy previous letter
+      } else {
+        letters.push(board[p.r][p.c]);
       }
-      return board[p.r][p.c];
-    }).join("").toLowerCase();
+    }
+    const testWord = letters.join("").toLowerCase();
 
     // Validate the word using enhanced dictionary manager
     const validation = dictionaryManager.validateWord(testWord);
@@ -3913,6 +3923,14 @@ function WordPathGame({
     }
     const actualWord = wordFromPath;
     const wildUsed = false;
+    
+    // Ghost tile: maximum one per word (check before wild dialog to enforce limit)
+    const ghostCount = path.filter(p => specialTiles[p.r][p.c].type === "ghost").length;
+    if (ghostCount > 1) {
+      toast.error("Only one Ghost tile per word!");
+      return clearPath();
+    }
+    
     const hasWildTile = path.some(p => specialTiles[p.r][p.c].type === "wild");
     if (hasWildTile && dict) {
       const wildcardPositions = path.filter(p => specialTiles[p.r][p.c].type === "wild");
@@ -3943,12 +3961,6 @@ function WordPathGame({
     const hasStoneTile = path.some(p => specialTiles[p.r][p.c].type === "stone");
     if (hasStoneTile) {
       toast.error("Cannot use words containing Stone tiles!");
-      return clearPath();
-    }
-    // Ghost tile: maximum one per word
-    const ghostCount = path.filter(p => specialTiles[p.r][p.c].type === "ghost").length;
-    if (ghostCount > 1) {
-      toast.error("Only one Ghost tile per word!");
       return clearPath();
     }
     if (lastWordTiles.size > 0) {
