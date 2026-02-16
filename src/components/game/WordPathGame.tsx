@@ -3709,10 +3709,9 @@ function WordPathGame({
     }
   }
   function tryAddToPath(pos: Pos) {
-    // Ghost tiles can bridge non-adjacent tiles - check if last tile is ghost or current tile is ghost
+    // Ghost tiles can bridge non-adjacent tiles - only when the last tile in path is a ghost
     const lastTile = path.length > 0 ? specialTiles[path[path.length - 1].r][path[path.length - 1].c] : null;
-    const currentTile = specialTiles[pos.r][pos.c];
-    const canSkipAdjacency = lastTile?.type === "ghost" || currentTile.type === "ghost";
+    const canSkipAdjacency = lastTile?.type === "ghost";
     
     if (path.length && !canSkipAdjacency && !neighbors(path[path.length - 1], pos)) return;
     const k = keyOf(pos);
@@ -3905,10 +3904,9 @@ function WordPathGame({
         // If tapping a tile already in path, remove it and all tiles after it
         setPath(path.slice(0, existingIndex));
       } else {
-        // Try to add to path (must be adjacent to last tile, unless ghost tile is involved)
+        // Try to add to path (must be adjacent to last tile, unless last tile is a ghost)
         const lastTile = specialTiles[path[path.length - 1].r][path[path.length - 1].c];
-        const currentTile = specialTiles[pos.r][pos.c];
-        const canSkipAdjacency = lastTile.type === "ghost" || currentTile.type === "ghost";
+        const canSkipAdjacency = lastTile.type === "ghost";
         const isAdjacent = neighbors(path[path.length - 1], pos);
         
         if (path.length && (isAdjacent || canSkipAdjacency)) {
