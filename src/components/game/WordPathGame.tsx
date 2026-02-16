@@ -4145,6 +4145,7 @@ function WordPathGame({
     path.forEach(p => {
       if (specialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
+          ...specialTiles[p.r][p.c],
           type: null
         };
       }
