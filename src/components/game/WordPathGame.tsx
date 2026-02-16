@@ -424,8 +424,20 @@ function computeScoreBreakdown(params: {
   const linkMultiplier = 1 + sharedTilesCount * 0.15 / (1 + sharedTilesCount * 0.05);
   const linkBonus = 0; // Keep for backward compatibility in UI
 
-  const raritySum = wordPath.reduce((acc, p) => acc + letterRarity(board[p.r][p.c]), 0);
-  const ultraRareCount = wordPath.reduce((acc, p) => acc + (["J", "Q", "X", "Z"].includes(board[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
+  // Calculate rarity based on actual letters in the word (respecting ghost and mirror tiles)
+  const actualLetters: string[] = [];
+  for (let i = 0; i < wordPath.length; i++) {
+    const p = wordPath[i];
+    const tile = specialTiles[p.r][p.c];
+    if (tile.type === "ghost") continue; // Ghost contributes no letter
+    if (tile.type === "mirror" && actualLetters.length > 0) {
+      actualLetters.push(actualLetters[actualLetters.length - 1]); // Copy previous letter
+    } else {
+      actualLetters.push(board[p.r][p.c]);
+    }
+  }
+  const raritySum = actualLetters.reduce((acc, letter) => acc + letterRarity(letter), 0);
+  const ultraRareCount = actualLetters.reduce((acc, letter) => acc + (["J", "Q", "X", "Z"].includes(letter.toUpperCase()) ? 1 : 0), 0);
 
   // NEW: Percentage-based rarity system
   const rarityBonus = Math.round(base * (raritySum * 0.08)) + Math.round(base * (ultraRareCount * 0.12));
