@@ -430,8 +430,11 @@ function computeScoreBreakdown(params: {
     const p = wordPath[i];
     const tile = specialTiles[p.r][p.c];
     if (tile.type === "ghost") continue; // Ghost contributes no letter
-    if (tile.type === "mirror" && actualLetters.length > 0) {
-      actualLetters.push(actualLetters[actualLetters.length - 1]); // Copy previous letter
+    if (tile.type === "mirror") {
+      if (actualLetters.length > 0) {
+        actualLetters.push(actualLetters[actualLetters.length - 1]); // Copy previous letter
+      }
+      // If no previous letter exists, mirror contributes nothing
     } else {
       actualLetters.push(board[p.r][p.c]);
     }
