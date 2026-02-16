@@ -1011,11 +1011,11 @@ function processDecaySpread(
           ].filter(p => within(p.r, p.c, size) && newTiles[p.r][p.c].type === null && !newTiles[p.r][p.c].frozen);
 
           if (orthogonal.length > 0) {
-            const target = orthogonal[Math.floor(Math.random() * orthogonal.length)];
-            // Convert neighbor's letter to a random low-value letter
-            newBoard[target.r][target.c] = LOW_VALUE_LETTERS[Math.floor(Math.random() * LOW_VALUE_LETTERS.length)];
-            // Spread copy becomes decay with 2 turns
-            newTiles[target.r][target.c] = { type: "decay", expiryTurns: 2 };
+          const target = orthogonal[Math.floor(Math.random() * orthogonal.length)];
+          // Convert neighbor's letter to a random low-value letter
+          newBoard[target.r][target.c] = LOW_VALUE_LETTERS[Math.floor(Math.random() * LOW_VALUE_LETTERS.length)];
+          // Spread copy becomes decay with 2 turns (set to 3 since expireSpecialTiles decrements in same turn)
+          newTiles[target.r][target.c] = { type: "decay", expiryTurns: 3 };
           }
         }
       }
