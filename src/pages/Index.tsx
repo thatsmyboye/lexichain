@@ -171,6 +171,9 @@ const Index = () => {
     setShowModeSelection(false);
     setShowAdvancedModes(true);
   };
+  const handleAdvancedModesFromTitle = () => {
+    setShowAdvancedModes(true);
+  };
   const handleBackToModeSelection = () => {
     setShowAdvancedModes(false);
     setShowModeSelection(true);
@@ -269,6 +272,6 @@ const Index = () => {
         </div>
       </div>;
   }
-  return <TitleScreen onPlayClick={handlePlayClick} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} onStoreClick={handleStoreClick} onLeaderboardClick={handleLeaderboardClick} onSettingsClick={handleSettingsClick} streakData={streakData} user={user} />;
+  return <TitleScreen onPlayClick={handlePlayClick} onAdvancedModesClick={handleAdvancedModesFromTitle} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} onStoreClick={handleStoreClick} onLeaderboardClick={handleLeaderboardClick} onSettingsClick={handleSettingsClick} streakData={streakData} user={user} />;
 };
 export default Index;
