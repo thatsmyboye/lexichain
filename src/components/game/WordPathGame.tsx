@@ -1904,8 +1904,11 @@ function WordPathGame({
       const p = path[i];
       const tile = specialTiles[p.r][p.c];
       if (tile.type === "ghost") continue; // Ghost contributes no letter
-      if (tile.type === "mirror" && letters.length > 0) {
-        letters.push(letters[letters.length - 1]); // Copy previous letter
+      if (tile.type === "mirror") {
+        if (letters.length > 0) {
+          letters.push(letters[letters.length - 1]); // Copy previous letter
+        }
+        // If no previous letter exists, mirror contributes nothing
       } else {
         letters.push(board[p.r][p.c]);
       }
@@ -1950,8 +1953,11 @@ function WordPathGame({
         letters.push((wildTileInputs.get(wildKey) || '').toLowerCase());
       } else if (tile.type === "ghost") {
         continue; // Ghost contributes no letter
-      } else if (tile.type === "mirror" && letters.length > 0) {
-        letters.push(letters[letters.length - 1]); // Copy previous letter
+      } else if (tile.type === "mirror") {
+        if (letters.length > 0) {
+          letters.push(letters[letters.length - 1]); // Copy previous letter
+        }
+        // If no previous letter exists, mirror contributes nothing
       } else {
         letters.push(board[p.r][p.c]);
       }
