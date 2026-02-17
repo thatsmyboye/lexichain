@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { FloatingTiles } from "@/components/effects/FloatingTiles";
 
 interface AuthFormProps {
   onBackToTitle: () => void;
@@ -90,8 +91,9 @@ const AuthForm = ({ onBackToTitle, initialMode = "signup" }: AuthFormProps) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <div className="w-full max-w-md">
+    <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <FloatingTiles />
+      <div className="relative z-10 w-full max-w-md">
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">

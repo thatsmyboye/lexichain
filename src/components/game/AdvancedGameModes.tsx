@@ -8,6 +8,7 @@ import { useSound } from '@/components/effects';
 import { XP_REQUIREMENTS, calculateLevel } from '@/lib/progression';
 import { useUnlockedModes } from '@/hooks/useUnlockedModes';
 import type { User } from '@supabase/supabase-js';
+import { FloatingTiles } from '@/components/effects/FloatingTiles';
 export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos' | 'mini_marathon' | 'weekly_gauntlet' | 'prestige_endless';
 interface AdvancedModeConfig {
   id: AdvancedGameMode;
@@ -232,16 +233,7 @@ export function AdvancedGameModes({
     }
   };
   return <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6 relative overflow-hidden">
-      {/* Animated background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 right-0 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl animate-pulse" style={{
-        animationDuration: '5s'
-      }}></div>
-        <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-brand-400/5 rounded-full blur-3xl animate-pulse" style={{
-        animationDuration: '7s',
-        animationDelay: '1s'
-      }}></div>
-      </div>
+      <FloatingTiles />
 
       <div className="container mx-auto max-w-6xl relative z-10">
         {/* Header */}

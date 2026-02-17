@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ConsumableStore } from "@/components/store/ConsumableStore";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { FloatingTiles } from "@/components/effects/FloatingTiles";
 
 export default function StorePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -41,8 +42,9 @@ export default function StorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
+    <div className="relative overflow-hidden min-h-screen bg-background">
+      <FloatingTiles />
+      <div className="relative z-10 container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button variant="outline" size="sm" asChild>
