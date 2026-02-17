@@ -1663,27 +1663,36 @@ function WordPathGame({
   const saveDailyStateForMode = async (
     mode: "daily" | "daily_5x5",
     initialBoardToSave?: string[][],
-    immediate = false
+    immediate = false,
+    options?: {
+      skipModeCheck?: boolean;
+      benchmarksOverride?: Benchmarks | null;
+      discoverableCountOverride?: number;
+      /** When starting a fresh game, pass full initial state to avoid stale closure values */
+      initialState?: Record<string, unknown>;
+    }
   ) => {
-    if (settings.mode !== mode) return;
+    if (!options?.skipModeCheck && settings.mode !== mode) return;
     const stateHook = mode === "daily" ? dailyChallengeState : dailyChallengeState5x5;
     const seed = mode === "daily" ? getDailySeed() : getDailySeed() + "-5x5";
-    const gameState = {
-      board,
-      initialBoard: initialBoardToSave || board,
-      specialTiles,
-      usedWords,
-      score,
-      streak,
-      movesUsed,
-      unlocked: Array.from(unlocked),
-      gameOver,
-      finalGrade,
-      lastWordTiles: Array.from(lastWordTiles),
-      seed,
-      benchmarks,
-      discoverableCount
-    };
+    const gameState = options?.initialState
+      ? { ...options.initialState, seed }
+      : {
+          board: initialBoardToSave ?? board,
+          initialBoard: initialBoardToSave ?? board,
+          specialTiles,
+          usedWords,
+          score,
+          streak,
+          movesUsed,
+          unlocked: Array.from(unlocked),
+          gameOver,
+          finalGrade,
+          lastWordTiles: Array.from(lastWordTiles),
+          seed,
+          benchmarks: options?.benchmarksOverride !== undefined ? options.benchmarksOverride : benchmarks,
+          discoverableCount: options?.discoverableCountOverride !== undefined ? options.discoverableCountOverride : discoverableCount
+        };
     await stateHook.saveState(gameState, immediate);
   };
 
@@ -1691,9 +1700,12 @@ function WordPathGame({
     saveDailyStateForMode("daily", initialBoardToSave, immediate);
   const saveDaily5x5State = (initialBoardToSave?: string[][], immediate = false) =>
     saveDailyStateForMode("daily_5x5", initialBoardToSave, immediate);
-  const loadDailyState = async () => {
-    const gameState = await dailyChallengeState.loadState();
-    if (gameState) {
+
+  // Load daily challenge state (shared logic for both daily and daily_5x5 modes)
+  const loadDailyStateForMode = async (mode: "daily" | "daily_5x5") => {
+    const stateHook = mode === "daily" ? dailyChallengeState : dailyChallengeState5x5;
+    const gameState = await stateHook.loadState();
+    if (gameState && gameState.board && gameState.initialBoard) {
       setBoard(gameState.board);
       setSpecialTiles(gameState.specialTiles);
       setUsedWords(gameState.usedWords);
@@ -1703,16 +1715,13 @@ function WordPathGame({
       setUnlocked(new Set(gameState.unlocked));
       setGameOver(gameState.gameOver);
       setFinalGrade(gameState.finalGrade);
-      // Restore last word tiles to show shaded tiles from previous attempt
       setLastWordTiles(new Set(gameState.lastWordTiles || []));
 
-      // Restore benchmarks and discoverable count, with fallback for backward compatibility
       if (gameState.benchmarks && gameState.discoverableCount !== undefined) {
         console.log("📊 Benchmarks restored from saved state:", gameState.benchmarks);
         setBenchmarks(gameState.benchmarks);
         setDiscoverableCount(gameState.discoverableCount);
       } else if (dict && sorted && gameState.initialBoard) {
-        // Fallback: recalculate benchmarks for existing saves without them
         console.log("📊 Dictionary loaded, recalculating benchmarks from initialBoard...");
         const config = DIFFICULTY_CONFIG["medium"];
         const probe = probeGrid(gameState.initialBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
@@ -1727,13 +1736,12 @@ function WordPathGame({
           hasInitialBoard: !!gameState.initialBoard
         });
       }
-      return {
-        gameState,
-        hasInitialBoard: !!gameState.initialBoard
-      };
+      return { gameState, hasInitialBoard: true };
     }
     return false;
   };
+
+  const loadDailyState = () => loadDailyStateForMode("daily");
 
   // Strategic save function that prevents saves during initialization
   const saveGameState = useCallback(() => {
@@ -3283,40 +3291,40 @@ function WordPathGame({
       setSpecialTiles(createEmptySpecialTilesGrid(newSize));
     }
   }
-  async function startDailyChallenge() {
-    const difficulty = "medium"; // Daily challenges use medium difficulty
+  async function startDailyChallengeForMode(mode: "daily" | "daily_5x5") {
+    const difficulty = "medium";
     const config = DIFFICULTY_CONFIG[difficulty];
-    const newSize = config.gridSize;
-    const dailySeed = getDailySeed();
+    const newSize = mode === "daily" ? config.gridSize : 5;
+    const dailySeed = mode === "daily" ? getDailySeed() : getDailySeed() + "-5x5";
+    const modeLabel = mode === "daily" ? "Daily Challenge" : "5x5 Daily Challenge";
 
-    // Try to load existing daily state first
-    const loadResult = await loadDailyState();
+    const loadResult = await loadDailyStateForMode(mode);
     if (loadResult && loadResult.gameState) {
       setSettings(prev => ({
         ...prev,
         difficulty,
         gridSize: newSize,
-        mode: "daily",
+        mode,
         dailyMovesLimit: getDailyMovesLimit()
       }));
       setSize(newSize);
-      toast.success("Daily Challenge resumed!");
+      toast.success(`${modeLabel} resumed!`);
       return;
     }
 
-    // If no saved state, start fresh daily challenge
     setSettings(prev => ({
       ...prev,
       difficulty,
       gridSize: newSize,
-      mode: "daily",
+      mode,
       dailyMovesLimit: getDailyMovesLimit()
     }));
     setSize(newSize);
     const newBoard = makeBoard(newSize, dailySeed);
-    console.log(`Daily Challenge board generated with seed ${dailySeed}:`, newBoard[0].join(''), newBoard[1].join(''), newBoard[2].join(''), newBoard[3].join(''));
+    if (mode === "daily") {
+      console.log(`Daily Challenge board generated with seed ${dailySeed}:`, newBoard[0].join(''), newBoard[1].join(''), newBoard[2].join(''), newBoard[3].join(''));
+    }
 
-    // Reset all game state to initial values
     setPath([]);
     setDragging(false);
     setUsedWords([]);
@@ -3329,11 +3337,11 @@ function WordPathGame({
     setFinalGrade("None");
     setSpecialTiles(createEmptySpecialTilesGrid(newSize));
     setBoard(newBoard);
+
     if (dict && sorted) {
       setIsGenerating(true);
       try {
         const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
-        // Try to compute dynamic benchmarks first, fallback to static if needed
         let bms: Benchmarks;
         try {
           if (probe.analysis && user) {
@@ -3344,148 +3352,58 @@ function WordPathGame({
             bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
           }
         } catch (error) {
-          console.error('Error computing benchmarks, falling back to static:', error);
+          console.error(`Error computing ${mode} benchmarks, falling back to static:`, error);
           bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
         }
         setBenchmarks(bms);
         setDiscoverableCount(probe.words.size);
-        toast.success(`Daily Challenge ${dailySeed} ready! ${settings.dailyMovesLimit} moves to make your best score.`);
+        toast.success(`${modeLabel} ready! ${getDailyMovesLimit()} moves to make your best score.`);
 
-        // Save the initial state with the initial board preserved (immediate save)
-        await saveDailyState(newBoard, true);
-      } finally {
-        setIsGenerating(false);
-      }
-    } else {
-      // Dictionary not loaded yet, set basic state and save board
-      setBenchmarks(null);
-      setDiscoverableCount(0);
-
-      // Save the initial board immediately, even without dictionary
-      await saveDailyState(newBoard, true);
-    }
-  }
-
-  async function startDaily5x5Challenge() {
-    const size5x5 = 5;
-    const dailySeed5x5 = getDailySeed() + "-5x5";
-    const config = DIFFICULTY_CONFIG["medium"];
-
-    // Try to load existing 5x5 daily state first
-    const savedState5x5 = await dailyChallengeState5x5.loadState();
-    if (savedState5x5 && savedState5x5.board && savedState5x5.initialBoard) {
-      setBoard(savedState5x5.board);
-      setSpecialTiles(savedState5x5.specialTiles);
-      setUsedWords(savedState5x5.usedWords);
-      setScore(savedState5x5.score);
-      setStreak(savedState5x5.streak);
-      setMovesUsed(savedState5x5.movesUsed);
-      setUnlocked(new Set(savedState5x5.unlocked));
-      setGameOver(savedState5x5.gameOver);
-      setFinalGrade(savedState5x5.finalGrade);
-      setLastWordTiles(new Set(savedState5x5.lastWordTiles || []));
-      if (savedState5x5.benchmarks && savedState5x5.discoverableCount !== undefined) {
-        setBenchmarks(savedState5x5.benchmarks);
-        setDiscoverableCount(savedState5x5.discoverableCount);
-      }
-      setSettings(prev => ({
-        ...prev,
-        difficulty: "medium",
-        gridSize: size5x5,
-        mode: "daily_5x5",
-        dailyMovesLimit: getDailyMovesLimit()
-      }));
-      setSize(size5x5);
-      toast.success("5x5 Daily Challenge resumed!");
-      return;
-    }
-
-    // Start fresh 5x5 daily challenge
-    setSettings(prev => ({
-      ...prev,
-      difficulty: "medium",
-      gridSize: size5x5,
-      mode: "daily_5x5",
-      dailyMovesLimit: getDailyMovesLimit()
-    }));
-    setSize(size5x5);
-    const newBoard5x5 = makeBoard(size5x5, dailySeed5x5);
-
-    // Reset all game state
-    setPath([]);
-    setDragging(false);
-    setUsedWords([]);
-    setLastWordTiles(new Set());
-    setScore(0);
-    setStreak(0);
-    setMovesUsed(0);
-    setUnlocked(new Set());
-    setGameOver(false);
-    setFinalGrade("None");
-    setSpecialTiles(createEmptySpecialTilesGrid(size5x5));
-    setBoard(newBoard5x5);
-
-    if (dict && sorted) {
-      setIsGenerating(true);
-      try {
-        const probe = probeGrid(newBoard5x5, dict, sorted, config.minWords, MAX_DFS_NODES, true);
-        let bms: Benchmarks;
-        try {
-          if (probe.analysis && user) {
-            bms = await computeDynamicBenchmarks(dailySeed5x5, probe.words.size, config.minWords, probe.analysis, supabase);
-          } else if (probe.analysis) {
-            bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
-          } else {
-            bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
-          }
-        } catch (error) {
-          console.error('Error computing 5x5 benchmarks, falling back to static:', error);
-          bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
-        }
-        setBenchmarks(bms);
-        setDiscoverableCount(probe.words.size);
-        toast.success(`5x5 Daily Challenge ready! ${getDailyMovesLimit()} moves to make your best score.`);
-
-        // Save initial state
-        const initialGameState = {
-          board: newBoard5x5,
-          initialBoard: newBoard5x5,
-          specialTiles: createEmptySpecialTilesGrid(size5x5),
-          usedWords: [],
+        const initialState = {
+          board: newBoard,
+          initialBoard: newBoard,
+          specialTiles: createEmptySpecialTilesGrid(newSize),
+          usedWords: [] as { word: string; score: number; breakdown?: ScoreBreakdown }[],
           score: 0,
           streak: 0,
           movesUsed: 0,
-          unlocked: [],
+          unlocked: [] as AchievementId[],
           gameOver: false,
           finalGrade: "None" as const,
-          lastWordTiles: [],
-          seed: dailySeed5x5,
+          lastWordTiles: [] as string[],
           benchmarks: bms,
           discoverableCount: probe.words.size
         };
-        await dailyChallengeState5x5.saveState(initialGameState, true);
+        await saveDailyStateForMode(mode, newBoard, true, { skipModeCheck: true, initialState });
       } finally {
         setIsGenerating(false);
       }
     } else {
       setBenchmarks(null);
       setDiscoverableCount(0);
-      const initialGameState = {
-        board: newBoard5x5,
-        initialBoard: newBoard5x5,
-        specialTiles: createEmptySpecialTilesGrid(size5x5),
-        usedWords: [],
+      const initialState = {
+        board: newBoard,
+        initialBoard: newBoard,
+        specialTiles: createEmptySpecialTilesGrid(newSize),
+        usedWords: [] as { word: string; score: number; breakdown?: ScoreBreakdown }[],
         score: 0,
         streak: 0,
         movesUsed: 0,
-        unlocked: [],
+        unlocked: [] as AchievementId[],
         gameOver: false,
         finalGrade: "None" as const,
-        lastWordTiles: [],
-        seed: dailySeed5x5
+        lastWordTiles: [] as string[]
       };
-      await dailyChallengeState5x5.saveState(initialGameState, true);
+      await saveDailyStateForMode(mode, newBoard, true, { skipModeCheck: true, initialState });
     }
+  }
+
+  async function startDailyChallenge() {
+    return startDailyChallengeForMode("daily");
+  }
+
+  async function startDaily5x5Challenge() {
+    return startDailyChallengeForMode("daily_5x5");
   }
 
   async function resetDailyChallenge() {
