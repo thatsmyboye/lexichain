@@ -1723,7 +1723,7 @@ function WordPathGame({
         setDiscoverableCount(gameState.discoverableCount);
       } else if (dict && sorted && gameState.initialBoard) {
         console.log("📊 Dictionary loaded, recalculating benchmarks from initialBoard...");
-        const config = DIFFICULTY_CONFIG["medium"];
+        const config = mode === "daily_5x5" ? DAILY_5X5_CONFIG : DIFFICULTY_CONFIG["medium"];
         const probe = probeGrid(gameState.initialBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
         const bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
         console.log("📊 Benchmarks recalculated from initialBoard:", bms);
