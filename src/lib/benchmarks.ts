@@ -62,23 +62,25 @@ export async function computeDynamicBenchmarks(
   wordCount: number,
   kMin: number,
   analysis: BoardAnalysis,
-  supabaseClient: any
+  supabaseClient: any,
+  gameMode: string = 'daily'
 ): Promise<Benchmarks> {
-  const cacheKey = `${challengeDate}-${wordCount}-${kMin}-${analysis.maxScorePotential}`;
+  const cacheKey = `${challengeDate}-${wordCount}-${kMin}-${analysis.maxScorePotential}-${gameMode}`;
   
   // Clear cache to ensure fresh calculations after the data access fix
   const cached = benchmarkCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log(`Using cached benchmarks for ${challengeDate}:`, cached.benchmarks);
+    console.log(`Using cached benchmarks for ${challengeDate} (${gameMode}):`, cached.benchmarks);
     return cached.benchmarks;
   }
 
   try {
-    console.log(`Calculating dynamic benchmarks for ${challengeDate} using service function...`);
+    console.log(`Calculating dynamic benchmarks for ${challengeDate} (${gameMode}) using service function...`);
     
     // Use the enhanced benchmark function that includes board analysis
     const { data: benchmarkData, error } = await supabaseClient.rpc('get_enhanced_benchmark_data', {
-      challenge_date: challengeDate
+      challenge_date: challengeDate,
+      p_game_mode: gameMode
     });
 
     if (error) {

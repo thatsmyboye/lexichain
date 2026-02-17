@@ -61,6 +61,7 @@ export type Database = {
           challenge_date: string
           connectivity_score: number
           created_at: string | null
+          game_mode: string
           grid_size: number
           letter_distribution: Json
           max_score_potential: number
@@ -72,6 +73,7 @@ export type Database = {
           challenge_date: string
           connectivity_score?: number
           created_at?: string | null
+          game_mode?: string
           grid_size?: number
           letter_distribution?: Json
           max_score_potential?: number
@@ -83,6 +85,7 @@ export type Database = {
           challenge_date?: string
           connectivity_score?: number
           created_at?: string | null
+          game_mode?: string
           grid_size?: number
           letter_distribution?: Json
           max_score_potential?: number
@@ -97,6 +100,7 @@ export type Database = {
           board_analysis: Json | null
           challenge_date: string
           created_at: string
+          game_mode: string
           grid_size: number | null
           id: string
           score: number
@@ -109,6 +113,7 @@ export type Database = {
           board_analysis?: Json | null
           challenge_date: string
           created_at?: string
+          game_mode?: string
           grid_size?: number | null
           id?: string
           score: number
@@ -121,6 +126,7 @@ export type Database = {
           board_analysis?: Json | null
           challenge_date?: string
           created_at?: string
+          game_mode?: string
           grid_size?: number | null
           id?: string
           score?: number
@@ -560,7 +566,7 @@ export type Database = {
       }
       get_benchmark_data: { Args: { challenge_date: string }; Returns: Json }
       get_daily_leaderboard: {
-        Args: { challenge_date: string }
+        Args: { challenge_date: string; p_game_mode?: string }
         Returns: {
           display_name: string
           rank: number
@@ -569,11 +575,11 @@ export type Database = {
         }[]
       }
       get_enhanced_benchmark_data: {
-        Args: { challenge_date: string }
+        Args: { challenge_date: string; p_game_mode?: string }
         Returns: Json
       }
       get_monthly_leaderboard: {
-        Args: { month: number; year: number }
+        Args: { month: number; year: number; p_game_mode?: string }
         Returns: {
           best_score: number
           display_name: string
@@ -583,7 +589,7 @@ export type Database = {
       }
       get_week_start: { Args: { input_date?: string }; Returns: string }
       get_weekly_leaderboard: {
-        Args: { week_start: string }
+        Args: { week_start: string; p_game_mode?: string }
         Returns: {
           best_score: number
           display_name: string
@@ -615,6 +621,7 @@ export type Database = {
           grid_size: number
           letter_distribution: Json
           max_score_potential: number
+          p_game_mode?: string
           rarity_score_potential: number
           word_count: number
         }

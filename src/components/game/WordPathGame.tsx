@@ -1616,7 +1616,8 @@ function WordPathGame({
         avg_word_length: detailedAnalysis.avgWordLength,
         connectivity_score: detailedAnalysis.connectivityScore,
         max_score_potential: detailedAnalysis.maxScorePotential,
-        letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution)
+        letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution),
+        p_game_mode: settings.mode
       });
     } catch (boardAnalysisError) {
       console.warn('Failed to save board analysis (non-critical):', boardAnalysisError);
@@ -1630,7 +1631,8 @@ function WordPathGame({
       enhancedData,
       (progress) => {
         setSaveProgress(progress);
-      }
+      },
+      settings.mode
     );
     
     if (!saveSuccess) {
@@ -3255,7 +3257,7 @@ function WordPathGame({
             } = await import('@/integrations/supabase/client');
             bms = await computeDynamicBenchmarks(`practice-${Date.now()}`,
             // Unique seed for practice
-            probe.words.size, config.minWords, probe.analysis, supabase);
+            probe.words.size, config.minWords, probe.analysis, supabase, 'practice');
           } else {
             bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
           }
@@ -3345,7 +3347,7 @@ function WordPathGame({
         let bms: Benchmarks;
         try {
           if (probe.analysis && user) {
-            bms = await computeDynamicBenchmarks(dailySeed, probe.words.size, config.minWords, probe.analysis, supabase);
+            bms = await computeDynamicBenchmarks(dailySeed, probe.words.size, config.minWords, probe.analysis, supabase, mode);
           } else if (probe.analysis) {
             bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
           } else {
@@ -3466,7 +3468,7 @@ function WordPathGame({
         let bms: Benchmarks;
         try {
           if (probe.analysis && user) {
-            bms = await computeDynamicBenchmarks(getDailySeed(), probe.words.size, config.minWords, probe.analysis, supabase);
+            bms = await computeDynamicBenchmarks(getDailySeed(), probe.words.size, config.minWords, probe.analysis, supabase, settings.mode);
           } else if (probe.analysis) {
             bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
           } else {
