@@ -4868,12 +4868,16 @@ function WordPathGame({
     // Get emoji based on grade
     const gradeEmoji = grade === "Platinum" ? "💎" : grade === "Gold" ? "🥇" : grade === "Silver" ? "🥈" : grade === "Bronze" ? "🥉" : "📊";
 
+    const is5x5 = settings.mode === "daily_5x5";
+    const modeLabel = is5x5 ? "Lexichain Daily 5×5" : "Lexichain Daily";
+    const shareTitle = is5x5 ? "Lexichain Daily 5×5 Challenge" : "Lexichain Daily Challenge";
+
     // Get highest single word score
     const topWordScore = usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0;
-    const shareText = `🔤 Lexichain Daily ${date}\n${gradeEmoji} ${score} points (${grade})\n📝 Top word: ${topWordScore}\n\nlexichain.lovable.app`;
+    const shareText = `🔤 ${modeLabel} ${date}\n${gradeEmoji} ${score} points (${grade})\n📝 Top word: ${topWordScore}\n\nlexichain.lovable.app`;
     if (navigator.share) {
       navigator.share({
-        title: 'Lexichain Daily Challenge',
+        title: shareTitle,
         text: shareText
       });
     } else {
