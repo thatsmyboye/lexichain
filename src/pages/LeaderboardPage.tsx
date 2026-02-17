@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import type { User } from "@supabase/supabase-js";
+import { FloatingTiles } from "@/components/effects/FloatingTiles";
 
 export default function LeaderboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -26,8 +27,9 @@ export default function LeaderboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4">
-      <div className="container mx-auto py-8">
+    <div className="relative overflow-hidden min-h-screen bg-gradient-to-br from-background to-muted/20 p-4">
+      <FloatingTiles />
+      <div className="relative z-10 container mx-auto py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">Leaderboards</h1>
           <p className="text-muted-foreground">

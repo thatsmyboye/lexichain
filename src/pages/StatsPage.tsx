@@ -12,6 +12,7 @@ import { GoalSelector } from "@/components/goals/GoalSelector";
 import { useGoals } from "@/hooks/useGoals";
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, format } from "date-fns";
+import { FloatingTiles } from "@/components/effects/FloatingTiles";
 
 const StatsPage = () => {
   const navigate = useNavigate();
@@ -317,8 +318,9 @@ const StatsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <div className="container mx-auto px-4 py-8">
+    <div className="relative overflow-hidden min-h-screen bg-gradient-to-br from-background to-muted">
+      <FloatingTiles />
+      <div className="relative z-10 container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="outline"

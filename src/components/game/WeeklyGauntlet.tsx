@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Sword, Calendar, Trophy, Star, ArrowLeft, CheckCircle } from 'lucide-react';
 import { getWeekIdentifier } from '@/hooks/useWeeklyGauntletState';
+import { FloatingTiles } from '@/components/effects/FloatingTiles';
 
 interface WeeklyGauntletProps {
   onBack: () => void;
@@ -23,8 +24,9 @@ export function WeeklyGauntlet({ onBack }: WeeklyGauntletProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6 relative overflow-hidden">
+      <FloatingTiles />
+      <div className="container mx-auto max-w-6xl relative z-10">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button

@@ -6,6 +6,7 @@ import { PUZZLE_BOARDS, PuzzleBoard } from "@/lib/puzzleBoards";
 import { Check, Lock, Trophy, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { FloatingTiles } from "@/components/effects/FloatingTiles";
 
 interface PuzzleSelectorProps {
   onPuzzleSelect: (puzzleId: string) => void;
@@ -65,11 +66,7 @@ export default function PuzzleSelector({ onPuzzleSelect, onBack, user }: PuzzleS
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-4 relative overflow-hidden">
-      {/* Animated background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-0 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s' }}></div>
-        <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-brand-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }}></div>
-      </div>
+      <FloatingTiles />
 
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="mb-6 flex items-center justify-between animate-in fade-in slide-in-from-top duration-500">

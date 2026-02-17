@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Infinity, Sparkles, Trophy, Award, ArrowLeft, Zap } from 'lucide-react';
+import { FloatingTiles } from '@/components/effects/FloatingTiles';
 
 interface PrestigeEndlessProps {
   onBack: () => void;
@@ -19,8 +20,9 @@ export function PrestigeEndless({ onBack }: PrestigeEndlessProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6 relative overflow-hidden">
+      <FloatingTiles />
+      <div className="container mx-auto max-w-6xl relative z-10">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button

@@ -8,6 +8,7 @@ export interface BasicDailyChallengeResult {
   challenge_date: string;
   score: number;
   achievement_level: string;
+  game_mode: string;
 }
 
 export interface EnhancedDailyChallengeResult extends BasicDailyChallengeResult {
@@ -122,12 +123,12 @@ async function progressiveSave(
       const { error } = await supabase
         .from("daily_challenge_results")
         .upsert(enhancedResult, {
-          onConflict: 'user_id,challenge_date',
+          onConflict: 'user_id,challenge_date,game_mode',
           ignoreDuplicates: false
         });
       
       if (!error) {
-        console.log('[Daily Challenge] Enhanced save successful');
+        console.log(`[Daily Challenge] Enhanced save successful for mode: ${basicResult.game_mode}`);
         return true;
       }
       
@@ -144,12 +145,12 @@ async function progressiveSave(
     const { error } = await supabase
       .from("daily_challenge_results")
       .upsert(basicResult, {
-        onConflict: 'user_id,challenge_date',
+        onConflict: 'user_id,challenge_date,game_mode',
         ignoreDuplicates: false
       });
     
     if (!error) {
-      console.log('[Daily Challenge] Basic save successful');
+      console.log(`[Daily Challenge] Basic save successful for mode: ${basicResult.game_mode}`);
       return true;
     }
     
@@ -169,7 +170,8 @@ export async function saveDailyChallengeResultBulletproof(
   score: number,
   achievementLevel: string,
   enhancedData?: Partial<EnhancedDailyChallengeResult>,
-  onProgress?: (progress: SaveProgress) => void
+  onProgress?: (progress: SaveProgress) => void,
+  gameMode: string = 'daily'
 ): Promise<boolean> {
   
   onProgress?.({ stage: 'validation' });
@@ -200,7 +202,8 @@ export async function saveDailyChallengeResultBulletproof(
     user_id: user.id,
     challenge_date: challengeDate,
     score,
-    achievement_level: achievementLevel
+    achievement_level: achievementLevel,
+    game_mode: gameMode
   };
   
   // Create immediate backup on mobile devices
@@ -288,9 +291,10 @@ export async function syncOfflineDailyChallengeResults(): Promise<number> {
           user_id: backupData.user_id,
           challenge_date: backupData.challenge_date,
           score: backupData.score,
-          achievement_level: backupData.achievement_level
+          achievement_level: backupData.achievement_level,
+          game_mode: backupData.game_mode || 'daily'
         }, {
-          onConflict: 'user_id,challenge_date',
+          onConflict: 'user_id,challenge_date,game_mode',
           ignoreDuplicates: false
         });
       

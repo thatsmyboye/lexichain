@@ -161,6 +161,7 @@ export function calculateXpGain(params: {
   const modeMultipliers: Record<string, number> = {
     'classic': 1.0,
     'daily': 1.2,
+    'daily_5x5': 1.2,
     'practice': 0.8,
     'blitz': 1.5,
     'time_attack': 1.3,

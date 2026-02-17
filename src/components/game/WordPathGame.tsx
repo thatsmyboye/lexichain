@@ -87,7 +87,7 @@ type SpecialTile = {
   expiryTurns?: number;
   frozen?: boolean;
 };
-type GameMode = "classic" | "target" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
+type GameMode = "classic" | "target" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
 type GameSettings = {
   scoreThreshold: number;
   mode: GameMode;
@@ -386,7 +386,7 @@ function computeScoreBreakdown(params: {
   specialTiles: SpecialTile[][];
   lastWordTiles: Set<string>;
   streak: number;
-  mode: "classic" | "daily" | "target" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
+  mode: "classic" | "daily" | "daily_5x5" | "target" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   blitzMultiplier: number;
   timeAttackSpeedMultiplier?: number;
   activeEffects: Array<{
@@ -1175,7 +1175,7 @@ function WordPathGame({
 }: {
   onBackToTitle?: () => void;
   onBackToAdvancedModes?: () => void;
-  initialMode?: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
+  initialMode?: "classic" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   initialPuzzleId?: string;
 }) {
   const [user, setUser] = useState<User | null>(null);
@@ -1184,6 +1184,7 @@ function WordPathGame({
     updateGoalProgress
   } = useGoals(user);
   const dailyChallengeState = useDailyChallengeState(getDailySeed());
+  const dailyChallengeState5x5 = useDailyChallengeState(getDailySeed() + "-5x5");
   const {
     inventory: consumableInventory,
     activeEffects,
@@ -1356,6 +1357,9 @@ function WordPathGame({
     if (initialMode === "daily") {
       setDailyChallengeInitialized(true);
       startDailyChallenge().catch(console.error);
+    } else if (initialMode === "daily_5x5") {
+      setDailyChallengeInitialized(true);
+      startDaily5x5Challenge().catch(console.error);
     } else if (initialMode === "practice") {
       setDailyChallengeInitialized(true);
       startNewPracticeGame().catch(console.error);
@@ -1491,7 +1495,7 @@ function WordPathGame({
 
   // Save standard game result and update goals when game ends
   const saveGameResult = useCallback(async () => {
-    if (settings.mode === "daily" || settings.mode === "practice" || !gameOver) return;
+    if (settings.mode === "daily" || settings.mode === "daily_5x5" || settings.mode === "practice" || !gameOver) return;
     if (!user) {
       console.log("Cannot save XP - user not logged in");
       return;
@@ -1581,9 +1585,9 @@ function WordPathGame({
     }
   }, [settings.mode, settings.difficulty, gameOver, user, usedWords, score, finalGrade, movesUsed, gameStartTime, size, unlocked]);
 
-  // Bulletproof daily challenge result saving
+  // Bulletproof daily challenge result saving (handles both daily and daily_5x5)
   const saveDailyChallengeResult = async () => {
-    if (!user || settings.mode !== "daily" || !gameOver) return;
+    if (!user || (settings.mode !== "daily" && settings.mode !== "daily_5x5") || !gameOver) return;
     
     // Prepare enhanced data for the progressive save strategy
     const detailedAnalysis = analyzeBoardComposition(board);
@@ -1612,7 +1616,8 @@ function WordPathGame({
         avg_word_length: detailedAnalysis.avgWordLength,
         connectivity_score: detailedAnalysis.connectivityScore,
         max_score_potential: detailedAnalysis.maxScorePotential,
-        letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution)
+        letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution),
+        p_game_mode: settings.mode
       });
     } catch (boardAnalysisError) {
       console.warn('Failed to save board analysis (non-critical):', boardAnalysisError);
@@ -1626,7 +1631,8 @@ function WordPathGame({
       enhancedData,
       (progress) => {
         setSaveProgress(progress);
-      }
+      },
+      settings.mode
     );
     
     if (!saveSuccess) {
@@ -1640,7 +1646,7 @@ function WordPathGame({
   // Save game result when game ends
   useEffect(() => {
     if (gameOver) {
-      if (settings.mode === "daily") {
+      if (settings.mode === "daily" || settings.mode === "daily_5x5") {
         saveDailyChallengeResult();
       } else {
         saveGameResult();
@@ -1650,37 +1656,58 @@ function WordPathGame({
 
   // Auto-save game result when game ends (for standard modes)
   useEffect(() => {
-    if (gameOver && user && settings.mode !== "daily" && settings.mode !== "practice") {
+    if (gameOver && user && settings.mode !== "daily" && settings.mode !== "daily_5x5" && settings.mode !== "practice") {
       saveGameResult();
     }
   }, [gameOver, user, settings.mode, saveGameResult]);
 
-  // Save and restore daily challenge state
-  const saveDailyState = async (initialBoardToSave?: string[][], immediate = false) => {
-    if (settings.mode === "daily") {
-      const gameState = {
-        board,
-        initialBoard: initialBoardToSave || board,
-        // Use provided initial board or current board
-        specialTiles,
-        usedWords,
-        score,
-        streak,
-        movesUsed,
-        unlocked: Array.from(unlocked),
-        gameOver,
-        finalGrade,
-        lastWordTiles: Array.from(lastWordTiles),
-        seed: getDailySeed(),
-        benchmarks,
-        discoverableCount
-      };
-      await dailyChallengeState.saveState(gameState, immediate);
+  // Save daily challenge state (shared logic for both daily and daily_5x5 modes)
+  const saveDailyStateForMode = async (
+    mode: "daily" | "daily_5x5",
+    initialBoardToSave?: string[][],
+    immediate = false,
+    options?: {
+      skipModeCheck?: boolean;
+      benchmarksOverride?: Benchmarks | null;
+      discoverableCountOverride?: number;
+      /** When starting a fresh game, pass full initial state to avoid stale closure values */
+      initialState?: Record<string, unknown>;
     }
+  ) => {
+    if (!options?.skipModeCheck && settings.mode !== mode) return;
+    const stateHook = mode === "daily" ? dailyChallengeState : dailyChallengeState5x5;
+    const seed = mode === "daily" ? getDailySeed() : getDailySeed() + "-5x5";
+    const gameState = options?.initialState
+      ? { ...options.initialState, seed }
+      : {
+          board: initialBoardToSave ?? board,
+          initialBoard: initialBoardToSave ?? board,
+          specialTiles,
+          usedWords,
+          score,
+          streak,
+          movesUsed,
+          unlocked: Array.from(unlocked),
+          gameOver,
+          finalGrade,
+          lastWordTiles: Array.from(lastWordTiles),
+          seed,
+          benchmarks: options?.benchmarksOverride !== undefined ? options.benchmarksOverride : benchmarks,
+          discoverableCount: options?.discoverableCountOverride !== undefined ? options.discoverableCountOverride : discoverableCount
+        };
+    await stateHook.saveState(gameState, immediate);
   };
-  const loadDailyState = async () => {
-    const gameState = await dailyChallengeState.loadState();
-    if (gameState) {
+
+  const saveDailyState = (initialBoardToSave?: string[][], immediate = false) =>
+    saveDailyStateForMode("daily", initialBoardToSave, immediate);
+  const saveDaily5x5State = (initialBoardToSave?: string[][], immediate = false) =>
+    saveDailyStateForMode("daily_5x5", initialBoardToSave, immediate);
+
+  // Load daily challenge state (shared logic for both daily and daily_5x5 modes)
+  const loadDailyStateForMode = async (mode: "daily" | "daily_5x5") => {
+    const stateHook = mode === "daily" ? dailyChallengeState : dailyChallengeState5x5;
+    const gameState = await stateHook.loadState();
+    if (gameState && gameState.board && gameState.initialBoard) {
       setBoard(gameState.board);
       setSpecialTiles(gameState.specialTiles);
       setUsedWords(gameState.usedWords);
@@ -1690,18 +1717,15 @@ function WordPathGame({
       setUnlocked(new Set(gameState.unlocked));
       setGameOver(gameState.gameOver);
       setFinalGrade(gameState.finalGrade);
-      // Restore last word tiles to show shaded tiles from previous attempt
       setLastWordTiles(new Set(gameState.lastWordTiles || []));
 
-      // Restore benchmarks and discoverable count, with fallback for backward compatibility
       if (gameState.benchmarks && gameState.discoverableCount !== undefined) {
         console.log("📊 Benchmarks restored from saved state:", gameState.benchmarks);
         setBenchmarks(gameState.benchmarks);
         setDiscoverableCount(gameState.discoverableCount);
       } else if (dict && sorted && gameState.initialBoard) {
-        // Fallback: recalculate benchmarks for existing saves without them
         console.log("📊 Dictionary loaded, recalculating benchmarks from initialBoard...");
-        const config = DIFFICULTY_CONFIG["medium"];
+        const config = mode === "daily_5x5" ? DAILY_5X5_CONFIG : DIFFICULTY_CONFIG["medium"];
         const probe = probeGrid(gameState.initialBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
         const bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
         console.log("📊 Benchmarks recalculated from initialBoard:", bms);
@@ -1714,10 +1738,7 @@ function WordPathGame({
           hasInitialBoard: !!gameState.initialBoard
         });
       }
-      return {
-        gameState,
-        hasInitialBoard: !!gameState.initialBoard
-      };
+      return { gameState, hasInitialBoard: true };
     }
     return false;
   };
@@ -1726,8 +1747,10 @@ function WordPathGame({
   const saveGameState = useCallback(() => {
     if (settings.mode === "daily" && !isInitializing && board && board.length > 0) {
       saveDailyState();
+    } else if (settings.mode === "daily_5x5" && !isInitializing && board && board.length > 0) {
+      saveDaily5x5State();
     }
-  }, [settings.mode, isInitializing, board, saveDailyState]);
+  }, [settings.mode, isInitializing, board, saveDailyState, saveDaily5x5State]);
   
   // Puzzle mode helpers
   const savePuzzleCompletion = async (lastWord: string) => {
@@ -1879,12 +1902,11 @@ function WordPathGame({
 
   // Dictionary-ready benchmark calculation for daily challenges
   useEffect(() => {
-    if (dict && sorted && settings.mode === "daily" && board && !benchmarks && !isGenerating) {
+    if (dict && sorted && (settings.mode === "daily" || settings.mode === "daily_5x5") && board && !benchmarks && !isGenerating) {
       console.log("📊 Dictionary loaded, recalculating benchmarks for resumed daily challenge...");
       setIsGenerating(true);
       try {
-        const difficulty = settings.difficulty || "medium";
-        const config = DIFFICULTY_CONFIG[difficulty];
+        const config = settings.mode === "daily_5x5" ? DAILY_5X5_CONFIG : DIFFICULTY_CONFIG[settings.difficulty || "medium"];
         const probe = probeGrid(board, dict, sorted, config.minWords, MAX_DFS_NODES, true);
         const bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
         console.log("📊 Benchmarks recalculated:", bms);
@@ -2001,7 +2023,7 @@ function WordPathGame({
     }
 
     // Check daily challenge move limit
-    if (settings.mode === "daily" && movesUsed >= settings.dailyMovesLimit) {
+    if ((settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed >= settings.dailyMovesLimit) {
       toast.error("Daily move limit reached!");
       return;
     }
@@ -2089,7 +2111,7 @@ function WordPathGame({
     }
 
     // Check daily challenge move limit
-    if (settings.mode === "daily" && movesUsed >= settings.dailyMovesLimit) {
+    if ((settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed >= settings.dailyMovesLimit) {
       toast.error("Daily move limit reached!");
       return;
     }
@@ -2166,7 +2188,7 @@ function WordPathGame({
       setSpecialTiles(newSpecialTiles);
     }
     // Increment moves for daily challenge
-    if (settings.mode === "daily") {
+    if (settings.mode === "daily" || settings.mode === "daily_5x5") {
       setMovesUsed(prev => prev + 1);
     }
     
@@ -2223,7 +2245,7 @@ function WordPathGame({
     });
 
     // Process Decay spread before expiry (enhanced powerups only, not daily)
-    if (isEnhancedPowerupsEnabled() && settings.mode !== "daily") {
+    if (isEnhancedPowerupsEnabled() && settings.mode !== "daily" && settings.mode !== "daily_5x5") {
       const decayResult = processDecaySpread(newSpecialTiles, trackedBoard, size);
       newSpecialTiles = decayResult.tiles;
       trackedBoard = decayResult.board;
@@ -2604,14 +2626,15 @@ function WordPathGame({
       let updatedSpecialTiles: SpecialTile[][];
       let newWildPositions: string[];
 
-      if (settings.mode === "daily") {
+      if (settings.mode === "daily" || settings.mode === "daily_5x5") {
         // Use seeded special tiles for daily challenge - all players get same tiles
+        const dailySeedForMode = settings.mode === "daily_5x5" ? getDailySeed() + "-5x5" : getDailySeed();
         const result = introduceSeededSpecialTiles(
           newSpecialTiles,
           usedWords.length + 1, // +1 because we just completed a word
           score,
           size,
-          getDailySeed()
+          dailySeedForMode
         );
         updatedSpecialTiles = result.tiles;
         newWildPositions = result.newWildPositions;
@@ -2686,7 +2709,7 @@ function WordPathGame({
     setTimeout(() => {
       if (sorted && dict) {
         // Check if daily challenge is out of moves
-        const dailyMovesExceeded = settings.mode === "daily" && movesUsed + 1 >= settings.dailyMovesLimit;
+        const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
         const any = hasAnyValidMove(newBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
@@ -2864,7 +2887,7 @@ function WordPathGame({
     let cumulative = 0;
 
     // Use enhanced rarities if toggle is on and mode is not daily
-    const useEnhanced = isEnhancedPowerupsEnabled() && gameMode !== "daily";
+    const useEnhanced = isEnhancedPowerupsEnabled() && gameMode !== "daily" && gameMode !== "daily_5x5";
     const baseRarities: Record<string, number> = useEnhanced ? { ...ENHANCED_TILE_RARITIES } : { ...SPECIAL_TILE_RARITIES };
 
     // Progressive stone spawning for classic mode
@@ -3096,6 +3119,9 @@ function WordPathGame({
       scoreMultiplier: 1.6
     }
   };
+  // 5x5 daily challenge uses minWords calibrated for 5x5 grids (hard config).
+  // Using medium's minWords (12) would miscalibrate benchmarks since 5x5 has far more valid words.
+  const DAILY_5X5_CONFIG = { minWords: DIFFICULTY_CONFIG.hard.minWords };
   function onNewGame() {
     setShowDifficultyDialog(true);
   }
@@ -3231,7 +3257,7 @@ function WordPathGame({
             } = await import('@/integrations/supabase/client');
             bms = await computeDynamicBenchmarks(`practice-${Date.now()}`,
             // Unique seed for practice
-            probe.words.size, config.minWords, probe.analysis, supabase);
+            probe.words.size, config.minWords, probe.analysis, supabase, 'practice');
           } else {
             bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
           }
@@ -3267,40 +3293,40 @@ function WordPathGame({
       setSpecialTiles(createEmptySpecialTilesGrid(newSize));
     }
   }
-  async function startDailyChallenge() {
-    const difficulty = "medium"; // Daily challenges use medium difficulty
-    const config = DIFFICULTY_CONFIG[difficulty];
-    const newSize = config.gridSize;
-    const dailySeed = getDailySeed();
+  async function startDailyChallengeForMode(mode: "daily" | "daily_5x5") {
+    const difficulty = "medium";
+    const config = mode === "daily_5x5" ? DAILY_5X5_CONFIG : DIFFICULTY_CONFIG[difficulty];
+    const newSize = mode === "daily" ? config.gridSize : 5;
+    const dailySeed = mode === "daily" ? getDailySeed() : getDailySeed() + "-5x5";
+    const modeLabel = mode === "daily" ? "Daily Challenge" : "5x5 Daily Challenge";
 
-    // Try to load existing daily state first
-    const loadResult = await loadDailyState();
+    const loadResult = await loadDailyStateForMode(mode);
     if (loadResult && loadResult.gameState) {
       setSettings(prev => ({
         ...prev,
         difficulty,
         gridSize: newSize,
-        mode: "daily",
+        mode,
         dailyMovesLimit: getDailyMovesLimit()
       }));
       setSize(newSize);
-      toast.success("Daily Challenge resumed!");
+      toast.success(`${modeLabel} resumed!`);
       return;
     }
 
-    // If no saved state, start fresh daily challenge
     setSettings(prev => ({
       ...prev,
       difficulty,
       gridSize: newSize,
-      mode: "daily",
+      mode,
       dailyMovesLimit: getDailyMovesLimit()
     }));
     setSize(newSize);
     const newBoard = makeBoard(newSize, dailySeed);
-    console.log(`Daily Challenge board generated with seed ${dailySeed}:`, newBoard[0].join(''), newBoard[1].join(''), newBoard[2].join(''), newBoard[3].join(''));
+    if (mode === "daily") {
+      console.log(`Daily Challenge board generated with seed ${dailySeed}:`, newBoard[0].join(''), newBoard[1].join(''), newBoard[2].join(''), newBoard[3].join(''));
+    }
 
-    // Reset all game state to initial values
     setPath([]);
     setDragging(false);
     setUsedWords([]);
@@ -3313,42 +3339,75 @@ function WordPathGame({
     setFinalGrade("None");
     setSpecialTiles(createEmptySpecialTilesGrid(newSize));
     setBoard(newBoard);
+
     if (dict && sorted) {
       setIsGenerating(true);
       try {
         const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
-        // Try to compute dynamic benchmarks first, fallback to static if needed
         let bms: Benchmarks;
         try {
           if (probe.analysis && user) {
-            bms = await computeDynamicBenchmarks(dailySeed, probe.words.size, config.minWords, probe.analysis, supabase);
+            bms = await computeDynamicBenchmarks(dailySeed, probe.words.size, config.minWords, probe.analysis, supabase, mode);
           } else if (probe.analysis) {
             bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
           } else {
             bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
           }
         } catch (error) {
-          console.error('Error computing benchmarks, falling back to static:', error);
+          console.error(`Error computing ${mode} benchmarks, falling back to static:`, error);
           bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
         }
         setBenchmarks(bms);
         setDiscoverableCount(probe.words.size);
-        toast.success(`Daily Challenge ${dailySeed} ready! ${settings.dailyMovesLimit} moves to make your best score.`);
+        toast.success(`${modeLabel} ready! ${getDailyMovesLimit()} moves to make your best score.`);
 
-        // Save the initial state with the initial board preserved (immediate save)
-        await saveDailyState(newBoard, true);
+        const initialState = {
+          board: newBoard,
+          initialBoard: newBoard,
+          specialTiles: createEmptySpecialTilesGrid(newSize),
+          usedWords: [] as { word: string; score: number; breakdown?: ScoreBreakdown }[],
+          score: 0,
+          streak: 0,
+          movesUsed: 0,
+          unlocked: [] as AchievementId[],
+          gameOver: false,
+          finalGrade: "None" as const,
+          lastWordTiles: [] as string[],
+          benchmarks: bms,
+          discoverableCount: probe.words.size
+        };
+        await saveDailyStateForMode(mode, newBoard, true, { skipModeCheck: true, initialState });
       } finally {
         setIsGenerating(false);
       }
     } else {
-      // Dictionary not loaded yet, set basic state and save board
       setBenchmarks(null);
       setDiscoverableCount(0);
-
-      // Save the initial board immediately, even without dictionary
-      await saveDailyState(newBoard, true);
+      const initialState = {
+        board: newBoard,
+        initialBoard: newBoard,
+        specialTiles: createEmptySpecialTilesGrid(newSize),
+        usedWords: [] as { word: string; score: number; breakdown?: ScoreBreakdown }[],
+        score: 0,
+        streak: 0,
+        movesUsed: 0,
+        unlocked: [] as AchievementId[],
+        gameOver: false,
+        finalGrade: "None" as const,
+        lastWordTiles: [] as string[]
+      };
+      await saveDailyStateForMode(mode, newBoard, true, { skipModeCheck: true, initialState });
     }
   }
+
+  async function startDailyChallenge() {
+    return startDailyChallengeForMode("daily");
+  }
+
+  async function startDaily5x5Challenge() {
+    return startDailyChallengeForMode("daily_5x5");
+  }
+
   async function resetDailyChallenge() {
     // Try to get the saved initial board from the current state
     const savedState = await dailyChallengeState.loadState();
@@ -3409,7 +3468,7 @@ function WordPathGame({
         let bms: Benchmarks;
         try {
           if (probe.analysis && user) {
-            bms = await computeDynamicBenchmarks(getDailySeed(), probe.words.size, config.minWords, probe.analysis, supabase);
+            bms = await computeDynamicBenchmarks(getDailySeed(), probe.words.size, config.minWords, probe.analysis, supabase, settings.mode);
           } else if (probe.analysis) {
             bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
           } else {
@@ -3443,7 +3502,7 @@ function WordPathGame({
     const consumable = CONSUMABLES[consumableId];
 
     // Check if consumable can be used in current mode
-    if (consumable.dailyModeOnly && settings.mode !== "daily") {
+    if (consumable.dailyModeOnly && settings.mode !== "daily" && settings.mode !== "daily_5x5") {
       toast.error("This consumable can only be used in Daily Challenge mode");
       return;
     }
@@ -3701,7 +3760,7 @@ function WordPathGame({
     return count;
   };
   const handleExtraMoves = () => {
-    if (settings.mode !== "daily") {
+    if (settings.mode !== "daily" && settings.mode !== "daily_5x5") {
       toast.error("Extra moves can only be used in Daily Challenge mode");
       return;
     }
@@ -3991,7 +4050,7 @@ function WordPathGame({
     }
 
     // Check daily challenge move limit
-    if (settings.mode === "daily" && movesUsed >= settings.dailyMovesLimit) {
+    if ((settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed >= settings.dailyMovesLimit) {
       toast.error("Daily move limit reached!");
       return clearPath();
     }
@@ -4151,7 +4210,7 @@ function WordPathGame({
     const multiplier = breakdown.multipliers.combinedApplied;
 
     // Increment moves for daily challenge, puzzle mode, and chaos mode
-    if (settings.mode === "daily" || settings.mode === "puzzle" || (settings.mode === "chaos" && chaosStarted)) {
+    if (settings.mode === "daily" || settings.mode === "daily_5x5" || settings.mode === "puzzle" || (settings.mode === "chaos" && chaosStarted)) {
       setMovesUsed(prev => prev + 1);
     }
     
@@ -4213,7 +4272,7 @@ function WordPathGame({
     });
 
     // Process Decay spread before expiry (enhanced powerups only, not daily)
-    if (isEnhancedPowerupsEnabled() && settings.mode !== "daily") {
+    if (isEnhancedPowerupsEnabled() && settings.mode !== "daily" && settings.mode !== "daily_5x5") {
       const decayResult = processDecaySpread(newSpecialTiles, trackedBoard, size);
       newSpecialTiles = decayResult.tiles;
       trackedBoard = decayResult.board;
@@ -4291,14 +4350,15 @@ function WordPathGame({
       let updatedSpecialTiles: SpecialTile[][];
       let newWildPositions: string[];
 
-      if (settings.mode === "daily") {
+      if (settings.mode === "daily" || settings.mode === "daily_5x5") {
         // Use seeded special tiles for daily challenge - all players get same tiles
+        const dailySeedForMode = settings.mode === "daily_5x5" ? getDailySeed() + "-5x5" : getDailySeed();
         const result = introduceSeededSpecialTiles(
           newSpecialTiles,
           usedWords.length + 1, // +1 because we just completed a word
           score,
           size,
-          getDailySeed()
+          dailySeedForMode
         );
         updatedSpecialTiles = result.tiles;
         newWildPositions = result.newWildPositions;
@@ -4585,7 +4645,7 @@ function WordPathGame({
     setTimeout(() => {
       if (sorted && dict) {
         // Check if daily challenge is out of moves
-        const dailyMovesExceeded = settings.mode === "daily" && movesUsed + 1 >= settings.dailyMovesLimit;
+        const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
         // Check if puzzle mode is out of moves
         const puzzleMovesExceeded = puzzleMode && puzzleMovesRemaining <= 1;
         const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
@@ -4726,12 +4786,16 @@ function WordPathGame({
     // Get emoji based on grade
     const gradeEmoji = grade === "Platinum" ? "💎" : grade === "Gold" ? "🥇" : grade === "Silver" ? "🥈" : grade === "Bronze" ? "🥉" : "📊";
 
+    const is5x5 = settings.mode === "daily_5x5";
+    const modeLabel = is5x5 ? "Lexichain Daily 5×5" : "Lexichain Daily";
+    const shareTitle = is5x5 ? "Lexichain Daily 5×5 Challenge" : "Lexichain Daily Challenge";
+
     // Get highest single word score
     const topWordScore = usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0;
-    const shareText = `🔤 Lexichain Daily ${date}\n${gradeEmoji} ${score} points (${grade})\n📝 Top word: ${topWordScore}\n\nlexichain.lovable.app`;
+    const shareText = `🔤 ${modeLabel} ${date}\n${gradeEmoji} ${score} points (${grade})\n📝 Top word: ${topWordScore}\n\nlexichain.lovable.app`;
     if (navigator.share) {
       navigator.share({
-        title: 'Lexichain Daily Challenge',
+        title: shareTitle,
         text: shareText
       });
     } else {
@@ -5356,10 +5420,10 @@ function WordPathGame({
             gameOver,
             isGenerating
           }} disabled={gameOver || isGenerating} />
-              {settings.mode === "daily" && !gameOver && usedWords.length >= 1 && (() => {
+              {(settings.mode === "daily" || settings.mode === "daily_5x5") && !gameOver && usedWords.length >= 1 && (() => {
                 const nextTiles = previewNextSpecialTiles(
                   usedWords.length,
-                  getDailySeed(),
+                  settings.mode === "daily_5x5" ? getDailySeed() + "-5x5" : getDailySeed(),
                   size,
                   specialTiles
                 );
@@ -5999,7 +6063,7 @@ function WordPathGame({
               <div className="text-xs text-muted-foreground text-right">
                 {usedWords.length >= 1 ? "Special tiles active!" : ""}
                 {gameOver && finalGrade !== "None" && <div className="mt-1 font-medium">Final: {finalGrade}</div>}
-                {settings.mode === "daily" && (
+                {(settings.mode === "daily" || settings.mode === "daily_5x5") && (
                   <>
                     <div className="mt-1 text-xs text-muted-foreground">
                       {settings.dailyMovesLimit - movesUsed} moves remaining
@@ -6007,7 +6071,7 @@ function WordPathGame({
                     {!gameOver && usedWords.length >= 1 && (() => {
                       const nextTiles = previewNextSpecialTiles(
                         usedWords.length,
-                        getDailySeed(),
+                        settings.mode === "daily_5x5" ? getDailySeed() + "-5x5" : getDailySeed(),
                         size,
                         specialTiles
                       );
@@ -6118,7 +6182,7 @@ function WordPathGame({
                   </div>
                  )}
                  */}
-                {settings.mode === "daily" && gameOver && <Button variant="outline" size="sm" onClick={shareScoreInline} className="mt-2 h-6 px-2 text-xs bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
+                {(settings.mode === "daily" || settings.mode === "daily_5x5") && gameOver && <Button variant="outline" size="sm" onClick={shareScoreInline} className="mt-2 h-6 px-2 text-xs bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
                     Share
                   </Button>}
                 {puzzleMode && gameOver && currentPuzzleId && (

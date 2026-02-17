@@ -13,6 +13,7 @@ import PuzzleSelector from "@/components/game/PuzzleSelector";
 import MiniMarathon from "@/components/game/MiniMarathon";
 import WeeklyGauntlet from "@/components/game/WeeklyGauntlet";
 import PrestigeEndless from "@/components/game/PrestigeEndless";
+import { FloatingTiles } from "@/components/effects/FloatingTiles";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
@@ -24,7 +25,7 @@ const Index = () => {
   const [showMiniMarathon, setShowMiniMarathon] = useState(false);
   const [showWeeklyGauntlet, setShowWeeklyGauntlet] = useState(false);
   const [showPrestigeEndless, setShowPrestigeEndless] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
+  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
   const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -103,7 +104,7 @@ const Index = () => {
   const handlePlayClick = () => {
     setShowModeSelection(true);
   };
-  const handleModeSelect = (mode: "classic" | "daily" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen") => {
+  const handleModeSelect = (mode: "classic" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen") => {
     setSelectedMode(mode);
     setShowModeSelection(false);
     setShowGame(true);
@@ -240,8 +241,9 @@ const Index = () => {
       </main>;
   }
   if (showModeSelection) {
-    return <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative">
-        <div className="text-center space-y-8">
+    return <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative overflow-hidden">
+        <FloatingTiles />
+        <div className="text-center space-y-8 relative z-10">
           <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
             Lexichain
           </h1>
@@ -253,7 +255,15 @@ const Index = () => {
               <Button variant="hero" size="lg" onClick={() => handleModeSelect("daily")} className="px-12 py-4 text-lg">
                 Daily Challenge
               </Button>
-              
+
+              <Button
+                size="lg"
+                onClick={() => handleModeSelect("daily_5x5")}
+                className="px-12 py-4 text-lg bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow hover:brightness-110 hover:scale-[1.02] transition-all duration-200"
+              >
+                Daily Challenge 5x5
+              </Button>
+
               <Button variant="outline" size="lg" onClick={handleShowAdvancedModes} className="px-12 py-4 text-lg">
                 More Game Modes
               </Button>
