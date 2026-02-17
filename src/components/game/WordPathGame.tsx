@@ -1661,52 +1661,38 @@ function WordPathGame({
     }
   }, [gameOver, user, settings.mode, saveGameResult]);
 
-  // Save and restore daily challenge state
-  const saveDailyState = async (initialBoardToSave?: string[][], immediate = false) => {
-    if (settings.mode === "daily") {
-      const gameState = {
-        board,
-        initialBoard: initialBoardToSave || board,
-        // Use provided initial board or current board
-        specialTiles,
-        usedWords,
-        score,
-        streak,
-        movesUsed,
-        unlocked: Array.from(unlocked),
-        gameOver,
-        finalGrade,
-        lastWordTiles: Array.from(lastWordTiles),
-        seed: getDailySeed(),
-        benchmarks,
-        discoverableCount
-      };
-      await dailyChallengeState.saveState(gameState, immediate);
-    }
+  // Save daily challenge state (shared logic for both daily and daily_5x5 modes)
+  const saveDailyStateForMode = async (
+    mode: "daily" | "daily_5x5",
+    initialBoardToSave?: string[][],
+    immediate = false
+  ) => {
+    if (settings.mode !== mode) return;
+    const stateHook = mode === "daily" ? dailyChallengeState : dailyChallengeState5x5;
+    const seed = mode === "daily" ? getDailySeed() : getDailySeed() + "-5x5";
+    const gameState = {
+      board,
+      initialBoard: initialBoardToSave || board,
+      specialTiles,
+      usedWords,
+      score,
+      streak,
+      movesUsed,
+      unlocked: Array.from(unlocked),
+      gameOver,
+      finalGrade,
+      lastWordTiles: Array.from(lastWordTiles),
+      seed,
+      benchmarks,
+      discoverableCount
+    };
+    await stateHook.saveState(gameState, immediate);
   };
 
-  // Save 5x5 daily challenge state
-  const saveDaily5x5State = async (initialBoardToSave?: string[][], immediate = false) => {
-    if (settings.mode === "daily_5x5") {
-      const gameState = {
-        board,
-        initialBoard: initialBoardToSave || board,
-        specialTiles,
-        usedWords,
-        score,
-        streak,
-        movesUsed,
-        unlocked: Array.from(unlocked),
-        gameOver,
-        finalGrade,
-        lastWordTiles: Array.from(lastWordTiles),
-        seed: getDailySeed() + "-5x5",
-        benchmarks,
-        discoverableCount
-      };
-      await dailyChallengeState5x5.saveState(gameState, immediate);
-    }
-  };
+  const saveDailyState = (initialBoardToSave?: string[][], immediate = false) =>
+    saveDailyStateForMode("daily", initialBoardToSave, immediate);
+  const saveDaily5x5State = (initialBoardToSave?: string[][], immediate = false) =>
+    saveDailyStateForMode("daily_5x5", initialBoardToSave, immediate);
   const loadDailyState = async () => {
     const gameState = await dailyChallengeState.loadState();
     if (gameState) {
