@@ -3584,7 +3584,7 @@ function WordPathGame({
     const consumable = CONSUMABLES[consumableId];
 
     // Check if consumable can be used in current mode
-    if (consumable.dailyModeOnly && settings.mode !== "daily") {
+    if (consumable.dailyModeOnly && settings.mode !== "daily" && settings.mode !== "daily_5x5") {
       toast.error("This consumable can only be used in Daily Challenge mode");
       return;
     }
@@ -3842,7 +3842,7 @@ function WordPathGame({
     return count;
   };
   const handleExtraMoves = () => {
-    if (settings.mode !== "daily") {
+    if (settings.mode !== "daily" && settings.mode !== "daily_5x5") {
       toast.error("Extra moves can only be used in Daily Challenge mode");
       return;
     }
