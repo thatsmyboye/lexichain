@@ -1906,8 +1906,7 @@ function WordPathGame({
       console.log("📊 Dictionary loaded, recalculating benchmarks for resumed daily challenge...");
       setIsGenerating(true);
       try {
-        const difficulty = settings.difficulty || "medium";
-        const config = DIFFICULTY_CONFIG[difficulty];
+        const config = settings.mode === "daily_5x5" ? DAILY_5X5_CONFIG : DIFFICULTY_CONFIG[settings.difficulty || "medium"];
         const probe = probeGrid(board, dict, sorted, config.minWords, MAX_DFS_NODES, true);
         const bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
         console.log("📊 Benchmarks recalculated:", bms);
@@ -3120,6 +3119,9 @@ function WordPathGame({
       scoreMultiplier: 1.6
     }
   };
+  // 5x5 daily challenge uses minWords calibrated for 5x5 grids (hard config).
+  // Using medium's minWords (12) would miscalibrate benchmarks since 5x5 has far more valid words.
+  const DAILY_5X5_CONFIG = { minWords: DIFFICULTY_CONFIG.hard.minWords };
   function onNewGame() {
     setShowDifficultyDialog(true);
   }
@@ -3293,7 +3295,7 @@ function WordPathGame({
   }
   async function startDailyChallengeForMode(mode: "daily" | "daily_5x5") {
     const difficulty = "medium";
-    const config = DIFFICULTY_CONFIG[difficulty];
+    const config = mode === "daily_5x5" ? DAILY_5X5_CONFIG : DIFFICULTY_CONFIG[difficulty];
     const newSize = mode === "daily" ? config.gridSize : 5;
     const dailySeed = mode === "daily" ? getDailySeed() : getDailySeed() + "-5x5";
     const modeLabel = mode === "daily" ? "Daily Challenge" : "5x5 Daily Challenge";
