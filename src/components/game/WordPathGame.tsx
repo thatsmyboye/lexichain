@@ -1585,9 +1585,9 @@ function WordPathGame({
     }
   }, [settings.mode, settings.difficulty, gameOver, user, usedWords, score, finalGrade, movesUsed, gameStartTime, size, unlocked]);
 
-  // Bulletproof daily challenge result saving
+  // Bulletproof daily challenge result saving (handles both daily and daily_5x5)
   const saveDailyChallengeResult = async () => {
-    if (!user || settings.mode !== "daily" || !gameOver) return;
+    if (!user || (settings.mode !== "daily" && settings.mode !== "daily_5x5") || !gameOver) return;
     
     // Prepare enhanced data for the progressive save strategy
     const detailedAnalysis = analyzeBoardComposition(board);
@@ -1644,10 +1644,8 @@ function WordPathGame({
   // Save game result when game ends
   useEffect(() => {
     if (gameOver) {
-      if (settings.mode === "daily") {
+      if (settings.mode === "daily" || settings.mode === "daily_5x5") {
         saveDailyChallengeResult();
-      } else if (settings.mode === "daily_5x5") {
-        // 5x5 daily state is auto-saved via the periodic save mechanism
       } else {
         saveGameResult();
       }
