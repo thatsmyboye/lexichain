@@ -1741,8 +1741,6 @@ function WordPathGame({
     return false;
   };
 
-  const loadDailyState = () => loadDailyStateForMode("daily");
-
   // Strategic save function that prevents saves during initialization
   const saveGameState = useCallback(() => {
     if (settings.mode === "daily" && !isInitializing && board && board.length > 0) {
