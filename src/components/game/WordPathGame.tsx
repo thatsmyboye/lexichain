@@ -1617,7 +1617,7 @@ function WordPathGame({
         connectivity_score: detailedAnalysis.connectivityScore,
         max_score_potential: detailedAnalysis.maxScorePotential,
         letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution),
-        p_game_mode: settings.mode
+        // p_game_mode removed - not in RPC signature
       });
     } catch (boardAnalysisError) {
       console.warn('Failed to save board analysis (non-critical):', boardAnalysisError);
@@ -1695,7 +1695,7 @@ function WordPathGame({
           benchmarks: options?.benchmarksOverride !== undefined ? options.benchmarksOverride : benchmarks,
           discoverableCount: options?.discoverableCountOverride !== undefined ? options.discoverableCountOverride : discoverableCount
         };
-    await stateHook.saveState(gameState, immediate);
+    await stateHook.saveState(gameState as any, immediate);
   };
 
   const saveDailyState = (initialBoardToSave?: string[][], immediate = false) =>
@@ -3296,7 +3296,7 @@ function WordPathGame({
   async function startDailyChallengeForMode(mode: "daily" | "daily_5x5") {
     const difficulty = "medium";
     const config = mode === "daily_5x5" ? DAILY_5X5_CONFIG : DIFFICULTY_CONFIG[difficulty];
-    const newSize = mode === "daily" ? config.gridSize : 5;
+    const newSize = mode === "daily" ? (config as any).gridSize ?? 4 : 5;
     const dailySeed = mode === "daily" ? getDailySeed() : getDailySeed() + "-5x5";
     const modeLabel = mode === "daily" ? "Daily Challenge" : "5x5 Daily Challenge";
 
