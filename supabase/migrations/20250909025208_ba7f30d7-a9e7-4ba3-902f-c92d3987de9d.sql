@@ -1,14 +1,27 @@
 -- Schedule cron jobs for leaderboard reward distribution
 -- These will run automatically at the specified times
+--
+-- IMPORTANT: Before applying this migration, store the service_role JWT in
+-- Supabase Vault via the Dashboard (Vault > Secrets > Add secret) with the
+-- name 'service_role_key'. The token is read at cron-job execution time so
+-- it never needs to be written into version control.
 
 -- Daily rewards: Run at 5:01 AM UTC (12:01 AM EST) every day
 SELECT cron.schedule(
   'distribute-daily-leaderboard-rewards',
-  '1 5 * * *', 
+  '1 5 * * *',
   $$
   SELECT net.http_post(
     url:='https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-daily-rewards',
-    headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW9mdWx2c3Fvand1cXloZnFxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE5OTc1OSwiZXhwIjoyMDcwNzc1NzU5fQ.eKovvFgI7t0PQBeGVr1HPccxqrMrPsFlBeHcTj-b5ZE"}'::jsonb,
+    headers:=jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (
+        SELECT decrypted_secret
+        FROM vault.decrypted_secrets
+        WHERE name = 'service_role_key'
+        LIMIT 1
+      )
+    ),
     body:='{}'::jsonb
   ) as request_id;
   $$
@@ -21,7 +34,15 @@ SELECT cron.schedule(
   $$
   SELECT net.http_post(
     url:='https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-weekly-rewards',
-    headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW9mdWx2c3Fvand1cXloZnFxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE5OTc1OSwiZXhwIjoyMDcwNzc1NzU5fQ.eKovvFgI7t0PQBeGVr1HPccxqrMrPsFlBeHcTj-b5ZE"}'::jsonb,
+    headers:=jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (
+        SELECT decrypted_secret
+        FROM vault.decrypted_secrets
+        WHERE name = 'service_role_key'
+        LIMIT 1
+      )
+    ),
     body:='{}'::jsonb
   ) as request_id;
   $$
@@ -34,7 +55,15 @@ SELECT cron.schedule(
   $$
   SELECT net.http_post(
     url:='https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-monthly-rewards',
-    headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW9mdWx2c3Fvand1cXloZnFxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTE5OTc1OSwiZXhwIjoyMDcwNzc1NzU5fQ.eKovvFgI7t0PQBeGVr1HPccxqrMrPsFlBeHcTj-b5ZE"}'::jsonb,
+    headers:=jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (
+        SELECT decrypted_secret
+        FROM vault.decrypted_secrets
+        WHERE name = 'service_role_key'
+        LIMIT 1
+      )
+    ),
     body:='{}'::jsonb
   ) as request_id;
   $$
