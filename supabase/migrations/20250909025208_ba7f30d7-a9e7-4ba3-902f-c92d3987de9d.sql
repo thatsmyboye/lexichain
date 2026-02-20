@@ -15,11 +15,12 @@ SELECT cron.schedule(
     url:='https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-daily-rewards',
     headers:=jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (
-        SELECT decrypted_secret
-        FROM vault.decrypted_secrets
-        WHERE name = 'service_role_key'
-        LIMIT 1
+      'Authorization', 'Bearer ' || COALESCE(
+        (SELECT decrypted_secret
+         FROM vault.decrypted_secrets
+         WHERE name = 'service_role_key'
+         LIMIT 1),
+        (SELECT 1/0)  -- Fail loudly if service_role_key secret is missing from vault
       )
     ),
     body:='{}'::jsonb
@@ -36,11 +37,12 @@ SELECT cron.schedule(
     url:='https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-weekly-rewards',
     headers:=jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (
-        SELECT decrypted_secret
-        FROM vault.decrypted_secrets
-        WHERE name = 'service_role_key'
-        LIMIT 1
+      'Authorization', 'Bearer ' || COALESCE(
+        (SELECT decrypted_secret
+         FROM vault.decrypted_secrets
+         WHERE name = 'service_role_key'
+         LIMIT 1),
+        (SELECT 1/0)  -- Fail loudly if service_role_key secret is missing from vault
       )
     ),
     body:='{}'::jsonb
@@ -57,11 +59,12 @@ SELECT cron.schedule(
     url:='https://bfmofulvsqojwuqyhfqq.supabase.co/functions/v1/distribute-monthly-rewards',
     headers:=jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (
-        SELECT decrypted_secret
-        FROM vault.decrypted_secrets
-        WHERE name = 'service_role_key'
-        LIMIT 1
+      'Authorization', 'Bearer ' || COALESCE(
+        (SELECT decrypted_secret
+         FROM vault.decrypted_secrets
+         WHERE name = 'service_role_key'
+         LIMIT 1),
+        (SELECT 1/0)  -- Fail loudly if service_role_key secret is missing from vault
       )
     ),
     body:='{}'::jsonb
