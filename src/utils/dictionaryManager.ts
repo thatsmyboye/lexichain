@@ -49,6 +49,18 @@ class DictionaryManager {
         throw new Error("Dictionary file appears to be empty or corrupted");
       }
 
+      // Proper nouns and offensive terms to exclude (no valid alternate lowercase definition)
+      const BLOCKED_WORDS = new Set([
+        'hitler', 'hitlerian', 'hitlerism', 'hitlerite',
+        'stalin', 'stalinist', 'stalinism',
+        'mussolini', 'mao', 'lenin', 'leninist', 'leninism',
+        'nazi', 'nazis', 'nazism', 'nazify',
+        'gestapo',
+        'nigger', 'niggers',
+        'faggot', 'faggots',
+        'retard', 'retards', 'retarded',
+      ]);
+
       // Process words with enhanced validation
       const rawWords = text.split(/\r?\n/);
       const processedWords = new Set<string>();
@@ -63,6 +75,11 @@ class DictionaryManager {
         // Basic validation - only letters and apostrophes
         if (!/^[a-z']+$/.test(word)) {
           invalidWords++;
+          continue;
+        }
+
+        // Skip blocked words
+        if (BLOCKED_WORDS.has(word)) {
           continue;
         }
         
