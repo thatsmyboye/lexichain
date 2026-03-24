@@ -1251,6 +1251,7 @@ acadialite
 acadian
 acadie
 acaena
+acai
 acajou
 acajous
 acalculia
@@ -4518,6 +4519,7 @@ adultery
 adulthood
 adulticidal
 adulticide
+adulting
 adultlike
 adultly
 adultness
@@ -6568,6 +6570,7 @@ agrypniai
 agrypnias
 agrypnode
 agrypnotic
+ags
 agsam
 agst
 agt
@@ -19375,6 +19378,7 @@ arette
 arew
 arf
 arfillite
+arfs
 arfvedsonite
 arg
 argaile
@@ -34163,11 +34167,13 @@ binge
 binged
 bingee
 bingeing
+binger
 binges
 bingey
 bingeys
 binghi
 bingies
+binging
 bingle
 bingo
 bingos
@@ -72002,11 +72008,13 @@ cringeling
 cringer
 cringers
 cringes
+cringey
 cringing
 cringingly
 cringingness
 cringle
 cringles
+cringy
 crinicultural
 criniculture
 crinid
@@ -72563,6 +72571,7 @@ crosswords
 crosswort
 crost
 crostarie
+crostini
 crotal
 crotalaria
 crotalic
@@ -77034,6 +77043,7 @@ dashel
 dasher
 dashers
 dashes
+dashi
 dashier
 dashiest
 dashiki
@@ -79030,6 +79040,7 @@ deepeningly
 deepens
 deeper
 deepest
+deepfake
 deepfreeze
 deepfreezed
 deepfreezing
@@ -95688,6 +95699,7 @@ edaciousness
 edacities
 edacity
 edam
+edamame
 edana
 edaphic
 edaphically
@@ -110076,6 +110088,7 @@ farriers
 farriery
 farris
 farrisite
+farro
 farrow
 farrowed
 farrowing
@@ -115701,6 +115714,7 @@ fob
 fobbed
 fobbing
 fobs
+focaccia
 focal
 focalisation
 focalise
@@ -121834,6 +121848,7 @@ gamut
 gamuts
 gamy
 gan
+ganache
 ganam
 ganancial
 gananciales
@@ -130241,6 +130256,9 @@ grundyist
 grundyite
 grunerite
 gruneritization
+grunge
+grunger
+grunges
 grungier
 grungiest
 grungy
@@ -131623,6 +131641,7 @@ gynostemium
 gynostemiumia
 gynura
 gyokuro
+gyoza
 gyp
 gypaetus
 gype
@@ -133764,6 +133783,7 @@ hariolate
 hariolation
 hariolize
 harish
+harissa
 hark
 harka
 harked
@@ -143535,6 +143555,7 @@ hygeistic
 hygeists
 hygenics
 hygeology
+hygge
 hygiantic
 hygiantics
 hygiastic
@@ -150255,7 +150276,9 @@ indictor
 indictors
 indicts
 indidicia
+indie
 indienne
+indier
 indies
 indiferous
 indifference
@@ -162328,6 +162351,7 @@ katrina
 katrine
 katrinka
 kats
+katsu
 katsunkel
 katsup
 katsuwonidae
@@ -164745,6 +164769,7 @@ kokumingun
 kol
 kola
 kolach
+kolache
 kolacky
 kolami
 kolarian
@@ -195480,12 +195505,14 @@ nagual
 nagualism
 nagualist
 nagyagite
+nah
 nahanarvali
 nahane
 nahani
 naharvali
 nahoor
 nahor
+nahs
 nahua
 nahuan
 nahuatl
@@ -231251,6 +231278,7 @@ pestle
 pestled
 pestles
 pestling
+pesto
 pestological
 pestologist
 pestology
@@ -243210,6 +243238,7 @@ pouters
 poutful
 poutier
 poutiest
+poutine
 pouting
 poutingly
 pouts
@@ -256388,6 +256417,7 @@ qed
 qere
 qeri
 qh
+qi
 qiana
 qibla
 qid
@@ -258554,6 +258584,7 @@ radicated
 radicates
 radicating
 radication
+radicchio
 radicel
 radicels
 radices
@@ -259232,6 +259263,7 @@ ramees
 ramekin
 ramekins
 ramellose
+ramen
 rament
 ramenta
 ramentaceous
@@ -276521,6 +276553,7 @@ samogonka
 samohu
 samolus
 samory
+samosa
 samosatenian
 samothere
 samotherium
@@ -277619,6 +277652,7 @@ satanophobia
 satanship
 satara
 sataras
+satay
 satchel
 satcheled
 satchelful
@@ -285497,6 +285531,7 @@ sesbania
 sescuncia
 sescuple
 seseli
+sesh
 seshat
 sesia
 sesiidae
@@ -287213,6 +287248,7 @@ shigionoth
 shigram
 shih
 shiism
+shiitake
 shiite
 shiitic
 shik
@@ -296007,6 +296043,7 @@ spalpeens
 spalt
 spam
 spammed
+spammer
 spamming
 spams
 span
@@ -299834,6 +299871,7 @@ sridharan
 srikanth
 srinivas
 srinivasan
+sriracha
 sriram
 sris
 srivatsan
@@ -314285,6 +314323,7 @@ tahgook
 tahil
 tahin
 tahina
+tahini
 tahiti
 tahitian
 tahitians
@@ -332529,6 +332568,7 @@ tzarists
 tzaritza
 tzaritzas
 tzars
+tzatziki
 tzedakah
 tzendal
 tzental
@@ -332623,6 +332663,7 @@ udometric
 udometries
 udometry
 udomograph
+udon
 udos
 uds
 ueueteotl
@@ -333122,6 +333163,7 @@ ulvas
 ulyssean
 ulysses
 um
+umami
 umangite
 umangites
 umatilla
@@ -358261,11 +358303,13 @@ viatorial
 viatorially
 viators
 vibe
+vibed
 vibes
 vibetoite
 vibex
 vibgyor
 vibices
+vibing
 vibioid
 vibist
 vibists
@@ -359841,8 +359885,10 @@ vladimir
 vladislav
 vlei
 vlog
+vlogged
 vlogger
 vloggers
+vlogging
 vlogs
 vlsi
 vmintegral
@@ -364846,6 +364892,10 @@ wimbrel
 wime
 wimick
 wimlunge
+wimp
+wimped
+wimping
+wimpish
 wimple
 wimpled
 wimpleless
@@ -364853,6 +364903,8 @@ wimplelike
 wimpler
 wimples
 wimpling
+wimps
+wimpy
 win
 winare
 winberry
@@ -368200,6 +368252,7 @@ yeelaman
 yeelin
 yeelins
 yees
+yeet
 yeeuch
 yeeuck
 yegg
@@ -369084,6 +369137,7 @@ zayin
 zayins
 zazen
 zazens
+ze
 zea
 zeal
 zealand
@@ -369824,6 +369878,7 @@ zoomechanical
 zoomechanics
 zoomed
 zoomelanin
+zoomer
 zoometric
 zoometrical
 zoometries
