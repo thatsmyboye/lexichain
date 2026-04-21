@@ -70,23 +70,12 @@ import {
   ChoiceEventModal,
   WaveCompleteModal
 } from "@/components/game/SurvivalModeUI";
-type Pos = {
-  r: number;
-  c: number;
-};
+import type { Pos, SpecialTile, SpecialTileType } from "@/types/game";
+import { GameBoard } from "./GameBoard";
+import { LETTERS, letterRarity } from "@/lib/letterRarity";
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
 const within = (r: number, c: number, size: number) => r >= 0 && c >= 0 && r < size && c < size;
 const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) <= 1;
-
-// Special tile types
-type SpecialTileType = "stone" | "wild" | "xfactor" | "multiplier" | "shuffle"
-  | "freeze" | "decay" | "mirror" | "magnet" | "bomb" | "chain" | "ghost" | "tax" | null;
-type SpecialTile = {
-  type: SpecialTileType;
-  value?: number;
-  expiryTurns?: number;
-  frozen?: boolean;
-};
 type GameMode = "classic" | "target" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
 type GameSettings = {
   scoreThreshold: number;
@@ -98,8 +87,7 @@ type GameSettings = {
   blitzTimeLimit: number;
 };
 
-// Letter frequencies for English to generate fun boards
-const LETTERS: Array<[string, number]> = [["E", 12.02], ["T", 9.10], ["A", 8.12], ["O", 7.68], ["I", 7.31], ["N", 6.95], ["S", 6.28], ["R", 6.02], ["H", 5.92], ["D", 4.32], ["L", 3.98], ["U", 2.88], ["C", 2.71], ["M", 2.61], ["F", 2.30], ["Y", 2.11], ["W", 2.09], ["G", 2.03], ["P", 1.82], ["B", 1.49], ["V", 1.11], ["K", 0.69], ["X", 0.17], ["Q", 0.11], ["J", 0.10], ["Z", 0.07]];
+// LETTERS is imported from @/lib/letterRarity
 function randomLetter() {
   const total = LETTERS.reduce((a, [, f]) => a + f, 0);
   let x = Math.random() * total;
@@ -348,15 +336,7 @@ function isEnhancedPowerupsEnabled(): boolean {
 const LOW_VALUE_LETTERS = ["A", "E", "I", "O", "U", "S", "T", "N", "R"];
 const MAGNET_VOWELS = ["A", "E", "I", "O", "U"];
 
-// Letter rarity helpers (based on frequency with a special bucket for ultra-rare letters)
-const VERY_RARE = new Set(["J", "Q", "X", "Z"]);
-const FREQ_MAP = new Map<string, number>(LETTERS);
-function letterRarity(ch: string): number {
-  const up = ch.toUpperCase();
-  if (VERY_RARE.has(up)) return 2; // ultra-rare
-  const f = FREQ_MAP.get(up) ?? 10;
-  return f < 2 ? 1 : 0; // rare if frequency < 2%
-}
+// letterRarity is imported from @/lib/letterRarity
 type ScoreBreakdown = {
   base: number;
   rarity: {
@@ -2343,8 +2323,9 @@ function WordPathGame({
         toast.success(`🎯 Target reached: ${grade} • +${xpGain} XP`);
       }
     }
+    navigator.vibrate?.(50);
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
-    
+
     // Time Attack mode: Update speed multiplier based on words found
     if (settings.mode === "time_attack" && timeAttackStarted) {
       const newWordsFound = timeAttackWordsFound + 1;
@@ -4090,6 +4071,7 @@ function WordPathGame({
     const validation = dictionaryManager.validateWord(actualWord);
     
     if (!validation.isValid) {
+      navigator.vibrate?.([30, 10, 30]);
       toast.error(`"${actualWord.toUpperCase()}" is not a valid word`);
       return clearPath();
     }
@@ -4341,8 +4323,8 @@ function WordPathGame({
         toast.success(`Target reached: ${grade}`);
       }
     }
-    
-    
+
+    navigator.vibrate?.(50);
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
 
     // Introduce special tiles if conditions are met
@@ -5480,255 +5462,26 @@ function WordPathGame({
            )}
            */}
           
-          <div className="relative" onPointerUp={onPointerUp} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} style={{
-          touchAction: 'auto'
-        }}>
-            {/* Temporarily disabled blitz overlay
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/95 backdrop-blur-lg rounded-lg">
-                <div className="text-center space-y-4 p-6">
-                  {!blitzStarted ? (
-                    <>
-                      <div className="text-2xl font-bold text-foreground">Ready to Start?</div>
-                      <div className="text-muted-foreground">
-                        You have {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')} to find as many words as possible!
-                      </div>
-                      <Button 
-                        onClick={() => {
-                          setBlitzStarted(true);
-                          
-                          // Center grid on mobile when game starts
-                          if (window.innerWidth <= 768) {
-                            setTimeout(() => {
-                              const gridElement = document.querySelector('[data-grid-container]');
-                              if (gridElement) {
-                                gridElement.scrollIntoView({ 
-                                  behavior: 'smooth', 
-                                  block: 'center',
-                                  inline: 'center'
-                                });
-                              }
-                            }, 100);
-                          }
-                        }}
-                        variant="hero"
-                        size="lg"
-                        className="px-8"
-                        style={{ touchAction: 'manipulation' }}
-                      >
-                        Start Game
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-2xl font-bold text-foreground">⏸️ Paused</div>
-                      <div className="text-muted-foreground">
-                        Time remaining: {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-                      </div>
-                      <Button 
-                        onClick={() => setBlitzPaused(false)}
-                        variant="hero"
-                        size="lg"
-                        className="px-8"
-                      >
-                        Resume
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-             */}
-            
-            <div className="grid gap-3 select-none max-w-md" data-grid-container style={{
-            gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
-            touchAction: 'auto'
-          }}>
-            {board && board.map((row, r) => row.map((ch, c) => {
-              const k = keyOf({
-                r,
-                c
-              });
-              const idx = path.findIndex(p => p.r === r && p.c === c);
-              const selected = idx !== -1;
-              const reused = lastWordTiles.has(k);
-              const special = specialTiles[r][c];
-              const isAffected = affectedTiles.has(k);
-              
-              // Determine current achievement level for border color (shared by tile classes and overlay)
-              const currentGrade = benchmarks ? score >= benchmarks.platinum ? "platinum" : score >= benchmarks.gold ? "gold" : score >= benchmarks.silver ? "silver" : score >= benchmarks.bronze ? "bronze" : "none" : "none";
-
-              // Get benchmark colors from selected skin (shared by tile classes and overlay)
-              const benchmarkColor = getBenchmarkColor(skin, currentGrade as 'bronze' | 'silver' | 'gold' | 'platinum' | 'none');
-              
-              const getTileClasses = () => {
-                
-                let baseClasses = `relative aspect-square flex items-center justify-center rounded-lg ${benchmarkColor.border} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
-                
-                if (selected) {
-                  // Use skin's selected classes with enhanced glow
-                  baseClasses += skin.selectedClasses + " shadow-[0_0_20px_rgba(34,197,94,0.4)] ";
-                } else if (isAffected) {
-                  // Affected tiles (e.g., from consumables) keep their special styling
-                  baseClasses += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
-                } else if (reused) {
-                  // Last word tiles: DON'T apply skin background - let overlay show through
-                  baseClasses += "relative ";
-                  
-                  // Add a subtle ring accent and shadow when benchmark is reached
-                  if (currentGrade !== 'none') {
-                    // Convert border color to ring color for accent
-                    let ringColor = benchmarkColor.border.replace('border-', 'ring-');
-                    // Adjust shade to be slightly lighter for ring effect
-                    ringColor = ringColor
-                      .replace('-600', '-400')
-                      .replace('-500', '-300')
-                      .replace('-400', '-300');
-                    baseClasses += "ring-2 " + ringColor + " ring-opacity-70 ";
-                    
-                    // Add a subtle shadow based on grade for extra visibility
-                    if (currentGrade === 'platinum') {
-                      baseClasses += "shadow-[0_0_8px_rgba(168,85,247,0.4)] ";
-                    } else if (currentGrade === 'gold') {
-                      baseClasses += "shadow-[0_0_8px_rgba(234,179,8,0.4)] ";
-                    } else if (currentGrade === 'silver') {
-                      baseClasses += "shadow-[0_0_8px_rgba(156,163,175,0.4)] ";
-                    } else {
-                      baseClasses += "shadow-[0_0_8px_rgba(217,119,6,0.4)] ";
-                    }
-                  }
-                } else {
-                  // Default tiles use skin's base classes
-                  baseClasses += skin.baseClasses + " ";
-                }
-
-                // Special tile styling with enhanced visual effects (these override skin colors)
-                if (special.type === "stone") {
-                  baseClasses += "bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-[0_0_15px_rgba(75,85,99,0.4)] ";
-                } else if (special.type === "wild") {
-                  const isNewWild = newWildTiles.has(k);
-                  baseClasses += `bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] ${isNewWild ? 'animate-blink-twice' : ''} `;
-                } else if (special.type === "xfactor") {
-                  baseClasses += "bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-[0_0_20px_rgba(251,146,60,0.5)] ";
-                } else if (special.type === "multiplier") {
-                  baseClasses += "bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] ";
-                } else if (special.type === "shuffle") {
-                  baseClasses += "bg-gradient-to-br from-red-200 to-red-300 text-red-800 shadow-[0_0_15px_rgba(239,68,68,0.3)] ";
-                } else if (special.type === "freeze") {
-                  baseClasses += "bg-gradient-to-br from-cyan-300 to-blue-400 text-white shadow-[0_0_20px_rgba(34,211,238,0.5)] ";
-                } else if (special.type === "decay") {
-                  baseClasses += "bg-gradient-to-br from-yellow-300 to-green-500 text-white shadow-[0_0_15px_rgba(132,204,22,0.4)] ";
-                } else if (special.type === "mirror") {
-                  baseClasses += "bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800 shadow-[0_0_20px_rgba(156,163,175,0.5)] ";
-                } else if (special.type === "magnet") {
-                  baseClasses += "bg-gradient-to-br from-red-400 to-gray-400 text-white shadow-[0_0_15px_rgba(248,113,113,0.4)] ";
-                } else if (special.type === "bomb") {
-                  baseClasses += "bg-gradient-to-br from-red-600 to-gray-900 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] ";
-                } else if (special.type === "chain") {
-                  baseClasses += "bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.4)] ";
-                } else if (special.type === "ghost") {
-                  baseClasses += "bg-gradient-to-br from-white/60 to-gray-200/60 text-gray-400 shadow-[0_0_15px_rgba(255,255,255,0.3)] opacity-70 ";
-                } else if (special.type === "tax") {
-                  baseClasses += "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-[0_0_15px_rgba(234,179,8,0.4)] ";
-                }
-                return baseClasses;
-              };
-              return <Card key={k} data-tile-pos={`${r},${c}`} onPointerDown={() => onTilePointerDown({
-                r,
-                c
-              })} onPointerEnter={() => onTilePointerEnter({
-                r,
-                c
-              })} onTouchStart={e => onTouchStart(e, {
-                r,
-                c
-              })} onClick={() => onTileTap({
-                r,
-                c
-              })} className={getTileClasses()} style={{
-                touchAction: 'none'
-              }}>
-                  {/* Overlay for last-played tiles (critical for gameplay) */}
-                  {reused && benchmarkColor.background && (
-                    <div 
-                      className="absolute inset-0 rounded-lg pointer-events-none z-0"
-                      style={{
-                        backgroundColor: (() => {
-                          // If no benchmark reached, use skin-specific default overlay
-                          if (currentGrade === 'none') {
-                            // Map each skin to its overlay color
-                            const skinOverlays: Record<string, string> = {
-                              original: 'rgba(168, 85, 247, 0.2)',   // primary purple
-                              ocean: 'rgba(34, 211, 238, 0.3)',      // cyan
-                              forest: 'rgba(52, 211, 153, 0.3)',     // emerald
-                              sunset: 'rgba(251, 146, 60, 0.3)',     // orange
-                              midnight: 'rgba(168, 85, 247, 0.3)',   // purple
-                              neon: 'rgba(34, 211, 238, 0.4)'        // cyan
-                            };
-                            return skinOverlays[skin.id] || 'rgba(168, 85, 247, 0.2)';
-                          }
-                          
-                          // When benchmark is reached, use benchmark-specific colors
-                          const benchmarkColors: Record<string, string> = {
-                            platinum: 'rgba(168, 85, 247, 0.3)',  // purple
-                            gold: 'rgba(234, 179, 8, 0.3)',       // yellow
-                            silver: 'rgba(156, 163, 175, 0.3)',   // gray
-                            bronze: 'rgba(217, 119, 6, 0.3)'      // orange/amber
-                          };
-                          return benchmarkColors[currentGrade] || 'rgba(168, 85, 247, 0.2)';
-                        })()
-                      }}
-                    />
-                  )}
-                  
-                  <div className="text-3xl font-semibold tracking-wide relative z-10">
-                    {special.type === "wild" ? "?" : special.type === "mirror" ? "🪞" : special.type === "ghost" ? ch : ch}
-                  </div>
-                  {/* Rarity indicators */}
-                  {special.type !== "wild" && letterRarity(ch) === 1 && <div className="absolute top-0.5 right-0.5 text-xs font-bold text-orange-600 dark:text-orange-400 z-10">
-                      +
-                    </div>}
-                  {special.type !== "wild" && letterRarity(ch) === 2 && <div className="absolute top-0.5 right-0.5 text-xs font-bold text-purple-600 dark:text-purple-400 z-10">
-                      ★
-                    </div>}
-                  {selected && <div className="absolute top-1 right-2 text-xs font-medium text-muted-foreground">{idx + 1}</div>}
-                  {special.type === "xfactor" && <>
-                      <div className="absolute top-1 left-1 w-2 h-2 bg-white/30 rounded-full"></div>
-                      <div className="absolute top-1 right-1 w-2 h-2 bg-white/30 rounded-full"></div>
-                      <div className="absolute bottom-1 left-1 w-2 h-2 bg-white/30 rounded-full"></div>
-                      <div className="absolute bottom-1 right-1 w-2 h-2 bg-white/30 rounded-full"></div>
-                    </>}
-                  {special.type === "multiplier" && special.value && <div className="absolute bottom-1 text-xs font-bold bg-white/20 px-1 rounded">
-                      {special.value}x
-                    </div>}
-                  {special.type === "shuffle" && <div className="absolute top-0.5 right-0.5">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" className="opacity-60">
-                        <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke="currentColor" strokeWidth="2" />
-                      </svg>
-                    </div>}
-                  {special.type !== null && special.expiryTurns !== undefined && <div className="absolute top-1 left-1 text-xs font-bold bg-black/30 text-white px-1 rounded-full min-w-[16px] text-center">
-                      {special.expiryTurns}
-                    </div>}
-                  {special.type === "stone" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">
-                      🪨
-                    </div>}
-                  {special.type === "freeze" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">❄️</div>}
-                  {special.type === "decay" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">🦠</div>}
-                  {special.type === "mirror" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">🪞</div>}
-                  {special.type === "magnet" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">🧲</div>}
-                  {special.type === "bomb" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">💣</div>}
-                  {special.type === "chain" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">⛓️</div>}
-                  {special.type === "ghost" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">👻</div>}
-                  {special.type === "tax" && <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">💰</div>}
-                  {special.frozen && <div className="absolute top-0 right-0 text-xs opacity-60">❄</div>}
-                </Card>;
-            }))}
-            {!board && <div className="col-span-full flex items-center justify-center p-8">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                  <p className="text-muted-foreground">Loading game...</p>
-                </div>
-              </div>}
-           </div>
-
+          <GameBoard
+            board={board}
+            specialTiles={specialTiles}
+            path={path}
+            lastWordTiles={lastWordTiles}
+            affectedTiles={affectedTiles}
+            newWildTiles={newWildTiles}
+            size={size}
+            skin={skin}
+            score={score}
+            benchmarks={benchmarks}
+            isInitializing={isInitializing}
+            onPointerUp={onPointerUp}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            onTilePointerDown={onTilePointerDown}
+            onTilePointerEnter={onTilePointerEnter}
+            onTileTouch={onTouchStart}
+            onTileTap={onTileTap}
+          />
             <div className="mt-4 flex items-center gap-3 p-3 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg border border-muted backdrop-blur-sm">
               <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Current:</span>
               <span className="text-xl font-bold flex-1 bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-brand-600">{displayWordFromPath || "..."}</span>
@@ -5750,10 +5503,8 @@ function WordPathGame({
                   Submit Word
                 </Button>
               </div>}
-            
-           </div>
         </div>
-        
+
         <aside className="space-y-2 lg:space-y-3">
           <Card className="p-4 bg-gradient-to-br from-card/95 to-muted/30 backdrop-blur-sm border-brand-500/20 shadow-lg">
             <div className="flex items-center justify-between">
