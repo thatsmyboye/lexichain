@@ -30,6 +30,3 @@ verify_jwt = false
 
 [functions.distribute-monthly-rewards]
 verify_jwt = false
-
-[edge-runtime]
-enabled = true
