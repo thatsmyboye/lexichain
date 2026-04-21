@@ -1,24 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { AchievementId } from '@/lib/achievements';
+import type { SpecialTile, UsedWord, FinalGrade, Benchmarks, BoardAnalysis } from '@/types/game';
 
 export type DailyChallengeGameState = {
-  board: any[][];
-  initialBoard: any[][]; // Store the initial board state
-  specialTiles: any[][];
-  usedWords: any[];
+  board: string[][];
+  initialBoard: string[][];
+  specialTiles: SpecialTile[][];
+  usedWords: UsedWord[];
   score: number;
   streak: number;
   movesUsed: number;
-  unlocked: any[];
+  unlocked: string[];
   gameOver: boolean;
-  finalGrade: any;
+  finalGrade: FinalGrade | null;
   lastWordTiles?: string[];
   seed: string;
-  benchmarks?: any; // Store benchmark thresholds
-  discoverableCount?: number; // Store total discoverable words
-  boardAnalysis?: any; // Store board analysis data
-  lastSaved?: number; // Timestamp of last save
+  benchmarks?: Benchmarks;
+  discoverableCount?: number;
+  boardAnalysis?: BoardAnalysis;
+  lastSaved?: number;
 };
 
 export const useDailyChallengeState = (challengeDate: string) => {

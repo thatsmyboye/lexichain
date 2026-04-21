@@ -156,27 +156,25 @@ class SoundGenerator {
 
 export function SoundProvider({ children }: { children: React.ReactNode }) {
   const [volume, setVolume] = useState(0.5);
-  const [isMuted, setMuted] = useState(false);
+  const [isMuted, setMuted] = useState(true); // opt-in: muted until user enables in settings
   const soundGeneratorRef = useRef<SoundGenerator | null>(null);
 
   useEffect(() => {
     soundGeneratorRef.current = new SoundGenerator();
-    
-    // Load user preferences
+
+    // Load user preferences; default to muted if no saved preference
     const savedVolume = localStorage.getItem('lexichain-sound-volume');
     const savedMuted = localStorage.getItem('lexichain-sound-muted');
-    
+
     if (savedVolume) {
       const vol = parseFloat(savedVolume);
       setVolume(vol);
       soundGeneratorRef.current.setVolume(vol);
     }
-    
-    if (savedMuted) {
-      const muted = savedMuted === 'true';
-      setMuted(muted);
-      soundGeneratorRef.current.setMuted(muted);
-    }
+
+    const muted = savedMuted !== null ? savedMuted === 'true' : true;
+    setMuted(muted);
+    soundGeneratorRef.current.setMuted(muted);
 
     return () => {
       soundGeneratorRef.current = null;
@@ -196,10 +194,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   };
 
   const playSound = (soundType: SoundType) => {
-    // Sounds disabled for now
-    return;
-    
-    /* Original sound code - keep for later use
     if (!soundGeneratorRef.current) return;
 
     switch (soundType) {
@@ -237,7 +231,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         soundGeneratorRef.current.playNotification();
         break;
     }
-    */
   };
 
   return (

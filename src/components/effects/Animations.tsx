@@ -1,7 +1,23 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-// Fade in animation
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(
+    () => typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  return reduced;
+}
+
 interface FadeInProps {
   children: React.ReactNode;
   delay?: number;
@@ -10,31 +26,29 @@ interface FadeInProps {
 }
 
 export function FadeIn({ children, delay = 0, duration = 300, className }: FadeInProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const [isVisible, setIsVisible] = useState(reducedMotion);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-
+    if (reducedMotion) { setIsVisible(true); return; }
+    const timer = setTimeout(() => setIsVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   return (
     <div
       className={cn(
-        "transition-opacity duration-300 ease-out",
+        !reducedMotion && "transition-opacity ease-out",
         isVisible ? "opacity-100" : "opacity-0",
         className
       )}
-      style={{ transitionDuration: `${duration}ms` }}
+      style={!reducedMotion ? { transitionDuration: `${duration}ms` } : undefined}
     >
       {children}
     </div>
   );
 }
 
-// Slide in animation
 interface SlideInProps {
   children: React.ReactNode;
   direction?: 'up' | 'down' | 'left' | 'right';
@@ -43,54 +57,47 @@ interface SlideInProps {
   className?: string;
 }
 
-export function SlideIn({ 
-  children, 
-  direction = 'up', 
-  delay = 0, 
-  duration = 300, 
-  className 
+export function SlideIn({
+  children,
+  direction = 'up',
+  delay = 0,
+  duration = 300,
+  className,
 }: SlideInProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const [isVisible, setIsVisible] = useState(reducedMotion);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-
+    if (reducedMotion) { setIsVisible(true); return; }
+    const timer = setTimeout(() => setIsVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   const getTransform = () => {
-    if (!isVisible) {
-      switch (direction) {
-        case 'up': return 'translateY(20px)';
-        case 'down': return 'translateY(-20px)';
-        case 'left': return 'translateX(20px)';
-        case 'right': return 'translateX(-20px)';
-        default: return 'translateY(20px)';
-      }
+    if (reducedMotion || isVisible) return 'translateY(0) translateX(0)';
+    switch (direction) {
+      case 'up': return 'translateY(20px)';
+      case 'down': return 'translateY(-20px)';
+      case 'left': return 'translateX(20px)';
+      case 'right': return 'translateX(-20px)';
+      default: return 'translateY(20px)';
     }
-    return 'translateY(0) translateX(0)';
   };
 
   return (
     <div
       className={cn(
-        "transition-all duration-300 ease-out",
+        !reducedMotion && "transition-all ease-out",
         isVisible ? "opacity-100" : "opacity-0",
         className
       )}
-      style={{ 
-        transitionDuration: `${duration}ms`,
-        transform: getTransform()
-      }}
+      style={!reducedMotion ? { transitionDuration: `${duration}ms`, transform: getTransform() } : undefined}
     >
       {children}
     </div>
   );
 }
 
-// Scale in animation
 interface ScaleInProps {
   children: React.ReactNode;
   delay?: number;
@@ -99,41 +106,39 @@ interface ScaleInProps {
   className?: string;
 }
 
-export function ScaleIn({ 
-  children, 
-  delay = 0, 
-  duration = 300, 
-  scale = 0.8, 
-  className 
+export function ScaleIn({
+  children,
+  delay = 0,
+  duration = 300,
+  scale = 0.8,
+  className,
 }: ScaleInProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const [isVisible, setIsVisible] = useState(reducedMotion);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-
+    if (reducedMotion) { setIsVisible(true); return; }
+    const timer = setTimeout(() => setIsVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   return (
     <div
       className={cn(
-        "transition-all duration-300 ease-out",
+        !reducedMotion && "transition-all ease-out",
         isVisible ? "opacity-100 scale-100" : "opacity-0",
         className
       )}
-      style={{ 
+      style={!reducedMotion ? {
         transitionDuration: `${duration}ms`,
-        transform: isVisible ? 'scale(1)' : `scale(${scale})`
-      }}
+        transform: isVisible ? 'scale(1)' : `scale(${scale})`,
+      } : undefined}
     >
       {children}
     </div>
   );
 }
 
-// Bounce animation
 interface BounceProps {
   children: React.ReactNode;
   delay?: number;
@@ -141,21 +146,20 @@ interface BounceProps {
 }
 
 export function Bounce({ children, delay = 0, className }: BounceProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const [isVisible, setIsVisible] = useState(reducedMotion);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-
+    if (reducedMotion) { setIsVisible(true); return; }
+    const timer = setTimeout(() => setIsVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   return (
     <div
       className={cn(
         "transition-all duration-500 ease-out",
-        isVisible ? "animate-bounce" : "opacity-0 scale-50",
+        isVisible ? (reducedMotion ? "" : "animate-bounce") : "opacity-0 scale-50",
         className
       )}
     >
@@ -164,7 +168,6 @@ export function Bounce({ children, delay = 0, className }: BounceProps) {
   );
 }
 
-// Pulse animation
 interface PulseProps {
   children: React.ReactNode;
   delay?: number;
@@ -172,21 +175,20 @@ interface PulseProps {
 }
 
 export function Pulse({ children, delay = 0, className }: PulseProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const [isVisible, setIsVisible] = useState(reducedMotion);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-
+    if (reducedMotion) { setIsVisible(true); return; }
+    const timer = setTimeout(() => setIsVisible(true), delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   return (
     <div
       className={cn(
         "transition-all duration-300 ease-out",
-        isVisible ? "animate-pulse" : "opacity-0",
+        isVisible ? (reducedMotion ? "" : "animate-pulse") : "opacity-0",
         className
       )}
     >
@@ -195,7 +197,6 @@ export function Pulse({ children, delay = 0, className }: PulseProps) {
   );
 }
 
-// Shake animation
 interface ShakeProps {
   children: React.ReactNode;
   trigger?: boolean;
@@ -203,18 +204,15 @@ interface ShakeProps {
 }
 
 export function Shake({ children, trigger = false, className }: ShakeProps) {
+  const reducedMotion = useReducedMotion();
   const [isShaking, setIsShaking] = useState(false);
 
   useEffect(() => {
-    if (trigger) {
-      setIsShaking(true);
-      const timer = setTimeout(() => {
-        setIsShaking(false);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [trigger]);
+    if (reducedMotion || !trigger) return;
+    setIsShaking(true);
+    const timer = setTimeout(() => setIsShaking(false), 500);
+    return () => clearTimeout(timer);
+  }, [trigger, reducedMotion]);
 
   return (
     <div
@@ -229,7 +227,6 @@ export function Shake({ children, trigger = false, className }: ShakeProps) {
   );
 }
 
-// Glow effect
 interface GlowProps {
   children: React.ReactNode;
   color?: string;
@@ -237,12 +234,7 @@ interface GlowProps {
   className?: string;
 }
 
-export function Glow({ 
-  children, 
-  color = 'primary', 
-  intensity = 'medium', 
-  className 
-}: GlowProps) {
+export function Glow({ children, color = 'primary', intensity = 'medium', className }: GlowProps) {
   const getGlowClass = () => {
     const baseClass = 'shadow-lg';
     switch (intensity) {
@@ -253,14 +245,9 @@ export function Glow({
     }
   };
 
-  return (
-    <div className={cn(getGlowClass(), className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn(getGlowClass(), className)}>{children}</div>;
 }
 
-// Typewriter effect
 interface TypewriterProps {
   text: string;
   speed?: number;
@@ -269,50 +256,46 @@ interface TypewriterProps {
 }
 
 export function Typewriter({ text, speed = 50, delay = 0, className }: TypewriterProps) {
-  const [displayedText, setDisplayedText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const reducedMotion = useReducedMotion();
+  const [displayedText, setDisplayedText] = useState(reducedMotion ? text : '');
+  const [currentIndex, setCurrentIndex] = useState(reducedMotion ? text.length : 0);
 
   useEffect(() => {
+    if (reducedMotion) { setDisplayedText(text); return; }
     const timer = setTimeout(() => {
       if (currentIndex < text.length) {
         setDisplayedText(prev => prev + text[currentIndex]);
         setCurrentIndex(prev => prev + 1);
       }
     }, speed);
-
     return () => clearTimeout(timer);
-  }, [currentIndex, text, speed]);
+  }, [currentIndex, text, speed, reducedMotion]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentIndex(0);
-      setDisplayedText('');
-    }, delay);
-
+    if (reducedMotion) return;
+    const timer = setTimeout(() => { setCurrentIndex(0); setDisplayedText(''); }, delay);
     return () => clearTimeout(timer);
-  }, [delay]);
+  }, [delay, reducedMotion]);
 
   return (
     <span className={className}>
       {displayedText}
-      <span className="animate-pulse">|</span>
+      {!reducedMotion && <span className="animate-pulse">|</span>}
     </span>
   );
 }
 
-// Floating animation
 interface FloatingProps {
   children: React.ReactNode;
   intensity?: 'low' | 'medium' | 'high';
   className?: string;
 }
 
-export function Floating({ 
-  children, 
-  intensity = 'medium', 
-  className 
-}: FloatingProps) {
+export function Floating({ children, intensity = 'medium', className }: FloatingProps) {
+  const reducedMotion = useReducedMotion();
+
   const getAnimationClass = () => {
+    if (reducedMotion) return '';
     switch (intensity) {
       case 'low': return 'animate-float-low';
       case 'medium': return 'animate-float-medium';
@@ -321,63 +304,55 @@ export function Floating({
     }
   };
 
-  return (
-    <div className={cn(getAnimationClass(), className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn(getAnimationClass(), className)}>{children}</div>;
 }
 
-// Custom CSS animations
+// Custom CSS animations (injected once)
 const animationStyles = `
 @keyframes float-low {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-4px); }
 }
-
 @keyframes float-medium {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
 }
-
 @keyframes float-high {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
 }
-
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
   20%, 40%, 60%, 80% { transform: translateX(2px); }
 }
-
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
+.animate-float-low { animation: float-low 3s ease-in-out infinite; }
+.animate-float-medium { animation: float-medium 2.5s ease-in-out infinite; }
+.animate-float-high { animation: float-high 2s ease-in-out infinite; }
+.animate-shake { animation: shake 0.5s ease-in-out; }
+.animate-blink-twice { animation: blink 0.6s ease-in-out 2; }
 
-.animate-float-low {
-  animation: float-low 3s ease-in-out infinite;
-}
-
-.animate-float-medium {
-  animation: float-medium 2.5s ease-in-out infinite;
-}
-
-.animate-float-high {
-  animation: float-high 2s ease-in-out infinite;
-}
-
-.animate-shake {
-  animation: shake 0.5s ease-in-out;
-}
-
-.animate-blink-twice {
-  animation: blink 0.6s ease-in-out 2;
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-low,
+  .animate-float-medium,
+  .animate-float-high,
+  .animate-shake,
+  .animate-bounce,
+  .animate-pulse,
+  .animate-spin,
+  .animate-blink-twice {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
 `;
 
-// Inject styles
 if (typeof document !== 'undefined') {
   const styleSheet = document.createElement('style');
   styleSheet.textContent = animationStyles;
