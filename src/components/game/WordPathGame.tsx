@@ -2684,6 +2684,7 @@ function WordPathGame({
             }
           }
         }
+        trackedBoard = currentBoard;
       }
 
       setSpecialTiles(updatedSpecialTiles);
@@ -2708,7 +2709,7 @@ function WordPathGame({
       if (sorted && dict) {
         // Check if daily challenge is out of moves
         const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
-        const any = hasAnyValidMove(newBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
+        const any = hasAnyValidMove(trackedBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
             let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
@@ -4412,6 +4413,7 @@ function WordPathGame({
             }
           }
         }
+        trackedBoard = currentBoard;
       }
 
       setSpecialTiles(updatedSpecialTiles);
@@ -4437,7 +4439,7 @@ function WordPathGame({
     if (settings.mode === "chaos" && chaosStarted && dict && sorted) {
       setTimeout(() => {
         // Keep some random tiles, shuffle others
-        const newBoard = board.map(row => [...row]);
+        const newBoard = trackedBoard.map(row => [...row]);
         const tilesToReshuffle = Math.floor(Math.random() * 5) + 3; // 3-7 tiles reshuffled
         const positions: Pos[] = [];
         
@@ -4568,9 +4570,9 @@ function WordPathGame({
     // Check if game over due to stone tiles blocking all valid words (Classic, Zen, Chaos, or Endless mode)
     if ((settings.mode === "classic" || settings.mode === "zen" || (settings.mode === "chaos" && chaosStarted) || (settings.mode === "endless" && endlessStarted)) && dict && sorted) {
       // Create a test grid with stone tiles marked as blocked
-      const testGrid = board.map((row, r) => 
+      const testGrid = trackedBoard.map((row, r) => 
         row.map((letter, c) => 
-          specialTiles[r][c].type === "stone" ? "" : letter
+          newSpecialTiles[r][c].type === "stone" ? "" : letter
         )
       );
       
@@ -4650,7 +4652,7 @@ function WordPathGame({
         const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
         // Check if puzzle mode is out of moves
         const puzzleMovesExceeded = puzzleMode && puzzleMovesRemaining <= 1;
-        const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
+        const any = hasAnyValidMove(trackedBoard, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         if (!any || dailyMovesExceeded || puzzleMovesExceeded) {
           // Handle puzzle mode - check completion on move limit
           if (puzzleMode && puzzleMovesExceeded && currentPuzzleId) {
