@@ -19,6 +19,7 @@ import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "
 import type { User } from "@supabase/supabase-js";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
@@ -5104,8 +5105,12 @@ function WordPathGame({
               </div>
             )}
             
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
+            <Collapsible>
+              <CollapsibleTrigger className="flex w-full items-center justify-between py-1 group">
+                <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 pt-2">
                 <div className="grid grid-cols-2 gap-y-3 gap-x-2 sm:grid-cols-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-bold">
@@ -5165,95 +5170,84 @@ function WordPathGame({
                       <div className="text-muted-foreground">Randomize all letters</div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-cyan-300 to-blue-400 flex items-center justify-center text-white text-xs">
+                      ❄️
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Freeze</div>
+                      <div className="text-muted-foreground">Locks neighbors in place</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-300 to-green-500 flex items-center justify-center text-white text-xs">
+                      🦠
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Decay</div>
+                      <div className="text-muted-foreground">Spreads, degrades letters</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center text-gray-800 text-xs">
+                      🪞
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Mirror</div>
+                      <div className="text-muted-foreground">Copies previous letter</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-red-400 to-gray-400 flex items-center justify-center text-white text-xs">
+                      🧲
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Magnet</div>
+                      <div className="text-muted-foreground">Pulls vowels nearby</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-red-600 to-gray-900 flex items-center justify-center text-white text-xs">
+                      💣
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Bomb</div>
+                      <div className="text-muted-foreground">Blasts nearby tiles</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white text-xs">
+                      ⛓️
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Chain</div>
+                      <div className="text-muted-foreground">Bonus for long words</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-white/60 to-gray-200/60 flex items-center justify-center text-gray-400 text-xs opacity-70">
+                      👻
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Ghost</div>
+                      <div className="text-muted-foreground">Bridge tile, no letter</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white text-xs">
+                      💰
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium">Tax</div>
+                      <div className="text-muted-foreground">-30% word score</div>
+                    </div>
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   Special tiles appear after forming your first valid word and expire after a few turns.
                 </div>
-
-                {/* Enhanced Powerups tile descriptions (shown when toggle is active and not daily mode) */}
-                {isEnhancedPowerupsEnabled() && settings.mode !== "daily" && (
-                  <>
-                    <h4 className="text-xs font-semibold text-foreground mt-3">Enhanced Powerups</h4>
-                    <div className="grid grid-cols-2 gap-y-3 gap-x-2 sm:grid-cols-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-cyan-300 to-blue-400 flex items-center justify-center text-white text-xs">
-                          ❄️
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Freeze</div>
-                          <div className="text-muted-foreground">Locks neighbors in place</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-300 to-green-500 flex items-center justify-center text-white text-xs">
-                          🦠
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Decay</div>
-                          <div className="text-muted-foreground">Spreads, degrades letters</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center text-gray-800 text-xs">
-                          🪞
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Mirror</div>
-                          <div className="text-muted-foreground">Copies previous letter</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-red-400 to-gray-400 flex items-center justify-center text-white text-xs">
-                          🧲
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Magnet</div>
-                          <div className="text-muted-foreground">Pulls vowels nearby</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-red-600 to-gray-900 flex items-center justify-center text-white text-xs">
-                          💣
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Bomb</div>
-                          <div className="text-muted-foreground">Blasts nearby tiles</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white text-xs">
-                          ⛓️
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Chain</div>
-                          <div className="text-muted-foreground">Bonus for long words</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-white/60 to-gray-200/60 flex items-center justify-center text-gray-400 text-xs opacity-70">
-                          👻
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Ghost</div>
-                          <div className="text-muted-foreground">Bridge tile, no letter</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white text-xs">
-                          💰
-                        </div>
-                        <div className="text-xs">
-                          <div className="font-medium">Tax</div>
-                          <div className="text-muted-foreground">-30% word score</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Enhanced tiles are enabled in Settings. They do not appear in Daily Challenge mode.
-                    </div>
-                  </>
-                )}
-            </div>
+              </CollapsibleContent>
+            </Collapsible>
             
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">Consumable Items</h3>
