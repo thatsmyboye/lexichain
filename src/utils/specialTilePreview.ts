@@ -15,10 +15,18 @@ export interface SpecialTile {
 
 const SPECIAL_TILE_RARITIES = {
   stone: 0.15,
-  wild: 0.05,
-  xfactor: 0.08,
   multiplier: 0.12,
+  xfactor: 0.08,
+  tax: 0.08,
+  decay: 0.07,
+  freeze: 0.06,
+  wild: 0.05,
+  magnet: 0.05,
+  chain: 0.05,
+  mirror: 0.04,
+  bomb: 0.04,
   shuffle: 0.03,
+  ghost: 0.03,
 };
 
 /**
