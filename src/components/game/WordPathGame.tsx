@@ -2214,7 +2214,7 @@ function WordPathGame({
     // Handle shuffle tiles (use updated board from X-factor)
     trackedBoard = handleShuffleTiles(
       wordPath, 
-      specialTiles, 
+      trackedSpecialTiles, 
       trackedBoard, 
       size, 
       setBoard, 
@@ -2222,7 +2222,7 @@ function WordPathGame({
     );
 
     // Handle Bomb tile blasts (after scoring, before clearing path tiles)
-    const bombTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "bomb");
+    const bombTilesInPath = wordPath.filter(p => trackedSpecialTiles[p.r][p.c].type === "bomb");
     if (bombTilesInPath.length > 0) {
       for (const bombPos of bombTilesInPath) {
         const bombResult = handleBombBlast(bombPos, trackedBoard, trackedSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
@@ -4247,7 +4247,7 @@ function WordPathGame({
     // Handle shuffle tiles (use updated board from X-factor)
     trackedBoard = handleShuffleTiles(
       path, 
-      specialTiles, 
+      trackedSpecialTiles, 
       trackedBoard, 
       size, 
       setBoard, 
@@ -4255,7 +4255,7 @@ function WordPathGame({
     );
 
     // Handle Bomb tile blasts (after scoring, before clearing path tiles)
-    const bombTilesInPath = path.filter(p => specialTiles[p.r][p.c].type === "bomb");
+    const bombTilesInPath = path.filter(p => trackedSpecialTiles[p.r][p.c].type === "bomb");
     if (bombTilesInPath.length > 0) {
       for (const bombPos of bombTilesInPath) {
         const bombResult = handleBombBlast(bombPos, trackedBoard, trackedSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
