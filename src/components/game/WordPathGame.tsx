@@ -876,10 +876,11 @@ function handleXFactorTiles(
   setBoard: (board: string[][]) => void,
   setSpecialTiles: (tiles: SpecialTile[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): { xChanged: number, board: string[][] } {
+): { xChanged: number, board: string[][], specialTiles: SpecialTile[][] } {
   const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
   let xChanged = 0;
   let resultBoard = currentBoard;
+  let resultTiles = specialTiles.map(row => row.map(tile => ({ ...tile })));
   
   if (xFactorTiles.length > 0) {
     const newBoard = currentBoard.map(row => [...row]);
@@ -926,6 +927,7 @@ function handleXFactorTiles(
     resultBoard = validation.board;
     setBoard(resultBoard);
     setSpecialTiles(newSpecialTiles);
+    resultTiles = newSpecialTiles;
     setAffectedTiles(changedTileKeys);
     xChanged = changedTileKeys.size;
 
@@ -936,7 +938,7 @@ function handleXFactorTiles(
     toast.info("X-Factor activated! Adjacent tiles transformed!");
   }
   
-  return { xChanged, board: resultBoard };
+  return { xChanged, board: resultBoard, specialTiles: resultTiles };
 }
 
 // Apply Magnet spawn effect: replace orthogonal neighbors with random vowels
@@ -1029,7 +1031,7 @@ function handleBombBlast(
   setBoard: (board: string[][]) => void,
   setSpecialTiles: (tiles: SpecialTile[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): string[][] {
+): { board: string[][], specialTiles: SpecialTile[][] } {
   const newBoard = board.map(row => [...row]);
   const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
   const changedKeys = new Set<string>();
@@ -1071,7 +1073,7 @@ function handleBombBlast(
   setTimeout(() => setAffectedTiles(new Set()), 1500);
   toast.info("Bomb detonated! Area reset with new letters!");
   
-  return validation.board;
+  return { board: validation.board, specialTiles: newTiles };
 }
 
 function checkAndAwardAchievements(
@@ -1944,19 +1946,27 @@ function WordPathGame({
   function handleWildSubmit() {
     if (!pendingWildPath || !wildTileInputs.size || !dict) return;
     const wildcardPositions = pendingWildPath.filter(p => specialTiles[p.r][p.c].type === "wild");
-    if (wildcardPositions.length !== 1) return;
-    const wildPos = wildcardPositions[0];
-    const wildIndex = pendingWildPath.findIndex(p => p.r === wildPos.r && p.c === wildPos.c);
+    if (wildcardPositions.length === 0) return;
+
+    const submittedWildLetters = wildcardPositions.map(pos => {
+      const wildKey = `${pos.r}-${pos.c}`;
+      return (wildTileInputs.get(wildKey) || '').toLowerCase();
+    });
+    if (submittedWildLetters.some(letter => !/^[a-z]$/.test(letter))) {
+      toast.error("Please enter a letter for every Wild tile.");
+      return;
+    }
 
     // Create the word with the user's chosen letter, respecting ghost/mirror behavior
     const letters: string[] = [];
+    let wildLetterIndex = 0;
     for (let i = 0; i < pendingWildPath.length; i++) {
       const p = pendingWildPath[i];
       const tile = specialTiles[p.r][p.c];
       
-      if (i === wildIndex) {
-        const wildKey = `${wildPos.r}-${wildPos.c}`;
-        letters.push((wildTileInputs.get(wildKey) || '').toLowerCase());
+      if (tile.type === "wild") {
+        letters.push(submittedWildLetters[wildLetterIndex] || "");
+        wildLetterIndex++;
       } else if (tile.type === "ghost") {
         continue; // Ghost contributes no letter
       } else if (tile.type === "mirror") {
@@ -1986,14 +1996,17 @@ function WordPathGame({
     setWildTileInputs(new Map());
 
     // Set the path back and continue submission with the chosen word
-    setPath(pendingWildPath);
+    const submittedPath = [...pendingWildPath];
+    setPath(submittedPath);
     setPendingWildPath(null);
 
     // Now continue with the normal submission process using the validated word
     setTimeout(() => {
-      const wildKey = `${wildPos.r}-${wildPos.c}`;
-      const wildLetter = wildTileInputs.get(wildKey) || '';
-      submitWordWithWildLetter(testWord, pendingWildPath, wildLetter.toLowerCase());
+      if (submittedWildLetters.length > 1) {
+        submitWordWithWildLetters(testWord, submittedPath, submittedWildLetters);
+      } else {
+        submitWordWithWildLetter(testWord, submittedPath, submittedWildLetters[0]);
+      }
     }, 0);
   }
   // Create a new function for multiple wild letters
@@ -2196,11 +2209,12 @@ function WordPathGame({
     );
     const xChanged = xFactorResult.xChanged;
     trackedBoard = xFactorResult.board;
+    let trackedSpecialTiles = xFactorResult.specialTiles;
 
     // Handle shuffle tiles (use updated board from X-factor)
     trackedBoard = handleShuffleTiles(
       wordPath, 
-      specialTiles, 
+      trackedSpecialTiles, 
       trackedBoard, 
       size, 
       setBoard, 
@@ -2208,18 +2222,20 @@ function WordPathGame({
     );
 
     // Handle Bomb tile blasts (after scoring, before clearing path tiles)
-    const bombTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "bomb");
+    const bombTilesInPath = wordPath.filter(p => trackedSpecialTiles[p.r][p.c].type === "bomb");
     if (bombTilesInPath.length > 0) {
       for (const bombPos of bombTilesInPath) {
-        trackedBoard = handleBombBlast(bombPos, trackedBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        const bombResult = handleBombBlast(bombPos, trackedBoard, trackedSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        trackedBoard = bombResult.board;
+        trackedSpecialTiles = bombResult.specialTiles;
       }
     }
 
-    let newSpecialTiles = specialTiles.map(row => [...row]);
+    let newSpecialTiles = trackedSpecialTiles.map(row => row.map(tile => ({ ...tile })));
     wordPath.forEach(p => {
-      if (specialTiles[p.r][p.c].type !== null) {
+      if (newSpecialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
-          ...specialTiles[p.r][p.c],
+          ...newSpecialTiles[p.r][p.c],
           type: null
         };
       }
@@ -2641,7 +2657,7 @@ function WordPathGame({
         const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
         const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
         newWildPositions = [];
-        let currentBoard = board;
+        let currentBoard = trackedBoard;
         for (let i = 0; i < tilesToPlace; i++) {
           const randomIndex = Math.floor(Math.random() * emptyPositions.length);
           const pos = emptyPositions.splice(randomIndex, 1)[0];
@@ -2668,6 +2684,7 @@ function WordPathGame({
             }
           }
         }
+        trackedBoard = currentBoard;
       }
 
       setSpecialTiles(updatedSpecialTiles);
@@ -2692,7 +2709,7 @@ function WordPathGame({
       if (sorted && dict) {
         // Check if daily challenge is out of moves
         const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
-        const any = hasAnyValidMove(newBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
+        const any = hasAnyValidMove(trackedBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
             let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
@@ -4225,11 +4242,12 @@ function WordPathGame({
     );
     const xChanged = xFactorResult.xChanged;
     trackedBoard = xFactorResult.board;
+    let trackedSpecialTiles = xFactorResult.specialTiles;
 
     // Handle shuffle tiles (use updated board from X-factor)
     trackedBoard = handleShuffleTiles(
       path, 
-      specialTiles, 
+      trackedSpecialTiles, 
       trackedBoard, 
       size, 
       setBoard, 
@@ -4237,18 +4255,20 @@ function WordPathGame({
     );
 
     // Handle Bomb tile blasts (after scoring, before clearing path tiles)
-    const bombTilesInPath = path.filter(p => specialTiles[p.r][p.c].type === "bomb");
+    const bombTilesInPath = path.filter(p => trackedSpecialTiles[p.r][p.c].type === "bomb");
     if (bombTilesInPath.length > 0) {
       for (const bombPos of bombTilesInPath) {
-        trackedBoard = handleBombBlast(bombPos, trackedBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        const bombResult = handleBombBlast(bombPos, trackedBoard, trackedSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        trackedBoard = bombResult.board;
+        trackedSpecialTiles = bombResult.specialTiles;
       }
     }
 
-    let newSpecialTiles = specialTiles.map(row => [...row]);
+    let newSpecialTiles = trackedSpecialTiles.map(row => row.map(tile => ({ ...tile })));
     path.forEach(p => {
-      if (specialTiles[p.r][p.c].type !== null) {
+      if (newSpecialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
-          ...specialTiles[p.r][p.c],
+          ...newSpecialTiles[p.r][p.c],
           type: null
         };
       }
@@ -4366,7 +4386,7 @@ function WordPathGame({
         const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
         const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
         newWildPositions = [];
-        let currentBoard = board;
+        let currentBoard = trackedBoard;
         for (let i = 0; i < tilesToPlace; i++) {
           const randomIndex = Math.floor(Math.random() * emptyPositions.length);
           const pos = emptyPositions.splice(randomIndex, 1)[0];
@@ -4393,6 +4413,7 @@ function WordPathGame({
             }
           }
         }
+        trackedBoard = currentBoard;
       }
 
       setSpecialTiles(updatedSpecialTiles);
@@ -4418,13 +4439,16 @@ function WordPathGame({
     if (settings.mode === "chaos" && chaosStarted && dict && sorted) {
       setTimeout(() => {
         // Keep some random tiles, shuffle others
-        const newBoard = board.map(row => [...row]);
+        const newBoard = trackedBoard.map(row => [...row]);
         const tilesToReshuffle = Math.floor(Math.random() * 5) + 3; // 3-7 tiles reshuffled
         const positions: Pos[] = [];
         
         for (let r = 0; r < size; r++) {
           for (let c = 0; c < size; c++) {
-            positions.push({ r, c });
+            // Freeze protects tiles from being replaced/shuffled by other tile effects
+            if (!newSpecialTiles[r][c].frozen) {
+              positions.push({ r, c });
+            }
           }
         }
         
@@ -4549,9 +4573,9 @@ function WordPathGame({
     // Check if game over due to stone tiles blocking all valid words (Classic, Zen, Chaos, or Endless mode)
     if ((settings.mode === "classic" || settings.mode === "zen" || (settings.mode === "chaos" && chaosStarted) || (settings.mode === "endless" && endlessStarted)) && dict && sorted) {
       // Create a test grid with stone tiles marked as blocked
-      const testGrid = board.map((row, r) => 
+      const testGrid = trackedBoard.map((row, r) => 
         row.map((letter, c) => 
-          specialTiles[r][c].type === "stone" ? "" : letter
+          newSpecialTiles[r][c].type === "stone" ? "" : letter
         )
       );
       
@@ -4631,7 +4655,7 @@ function WordPathGame({
         const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
         // Check if puzzle mode is out of moves
         const puzzleMovesExceeded = puzzleMode && puzzleMovesRemaining <= 1;
-        const any = hasAnyValidMove(board, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
+        const any = hasAnyValidMove(trackedBoard, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
         if (!any || dailyMovesExceeded || puzzleMovesExceeded) {
           // Handle puzzle mode - check completion on move limit
           if (puzzleMode && puzzleMovesExceeded && currentPuzzleId) {
@@ -5296,11 +5320,11 @@ function WordPathGame({
       <Dialog open={showWildDialog} onOpenChange={setShowWildDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Choose Wild Tile Letter</DialogTitle>
+            <DialogTitle>Choose Wild Tile Letter{pendingWildPath?.filter(p => specialTiles[p.r][p.c].type === "wild").length === 1 ? "" : "s"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Enter a letter for the Wild tile to complete your word:
+              Enter a letter for each Wild tile to complete your word:
             </div>
             <div className="text-center">
               <div className="text-lg font-mono bg-muted p-2 rounded">
@@ -5314,22 +5338,24 @@ function WordPathGame({
               })}
               </div>
             </div>
-            <div>
-              <Input type="text" value={(wildTileInputs.get(`${pendingWildPath?.find(p => specialTiles[p.r][p.c].type === "wild")?.r}-${pendingWildPath?.find(p => specialTiles[p.r][p.c].type === "wild")?.c}`) || '')} onChange={e => {
-                if (pendingWildPath) {
-                  const wildPos = pendingWildPath.find(p => specialTiles[p.r][p.c].type === "wild");
-                  if (wildPos) {
-                    const wildKey = `${wildPos.r}-${wildPos.c}`;
-                    const newInputs = new Map(wildTileInputs);
-                    newInputs.set(wildKey, e.target.value.slice(0, 1).toUpperCase());
-                    setWildTileInputs(newInputs);
-                  }
-                }
+            <div className="space-y-2">
+              {(pendingWildPath?.filter(p => specialTiles[p.r][p.c].type === "wild") || []).map((wildPos, idx) => {
+              const wildKey = `${wildPos.r}-${wildPos.c}`;
+              return <Input key={wildKey} type="text" value={wildTileInputs.get(wildKey) || ''} onChange={e => {
+                const newInputs = new Map(wildTileInputs);
+                newInputs.set(wildKey, e.target.value.slice(0, 1).toUpperCase());
+                setWildTileInputs(newInputs);
               }} onKeyDown={e => {
-              if (e.key === 'Enter' && wildTileInputs.size > 0) {
+              const wildCount = pendingWildPath?.filter(p => specialTiles[p.r][p.c].type === "wild").length || 0;
+              const allFilled = wildCount > 0 && (pendingWildPath?.filter(p => specialTiles[p.r][p.c].type === "wild") || []).every(pos => {
+                const key = `${pos.r}-${pos.c}`;
+                return /^[A-Z]$/.test(wildTileInputs.get(key) || '');
+              });
+              if (e.key === 'Enter' && allFilled) {
                 handleWildSubmit();
               }
-            }} placeholder="Enter letter (A-Z)" className="w-full text-center text-lg font-mono" maxLength={1} autoFocus />
+            }} placeholder={`Wild tile ${idx + 1} letter (A-Z)`} className="w-full text-center text-lg font-mono" maxLength={1} autoFocus={idx === 0} />;
+            })}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => {
@@ -5339,7 +5365,14 @@ function WordPathGame({
             }} className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={handleWildSubmit} disabled={wildTileInputs.size === 0 || Array.from(wildTileInputs.values()).some(v => !/[A-Z]/.test(v))} className="flex-1">
+              <Button onClick={handleWildSubmit} disabled={(() => {
+              const wildcardPositions = pendingWildPath?.filter(p => specialTiles[p.r][p.c].type === "wild") || [];
+              if (wildcardPositions.length === 0) return true;
+              return wildcardPositions.some(pos => {
+                const wildKey = `${pos.r}-${pos.c}`;
+                return !/^[A-Z]$/.test(wildTileInputs.get(wildKey) || '');
+              });
+            })()} className="flex-1">
                 Submit Word
               </Button>
             </div>
