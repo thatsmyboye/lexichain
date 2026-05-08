@@ -2652,7 +2652,7 @@ function WordPathGame({
         const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
         const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
         newWildPositions = [];
-        let currentBoard = board;
+        let currentBoard = trackedBoard;
         for (let i = 0; i < tilesToPlace; i++) {
           const randomIndex = Math.floor(Math.random() * emptyPositions.length);
           const pos = emptyPositions.splice(randomIndex, 1)[0];
@@ -4377,7 +4377,7 @@ function WordPathGame({
         const numTilesToPlace = Math.floor(Math.random() * 3) + 1;
         const tilesToPlace = Math.min(numTilesToPlace, emptyPositions.length);
         newWildPositions = [];
-        let currentBoard = board;
+        let currentBoard = trackedBoard;
         for (let i = 0; i < tilesToPlace; i++) {
           const randomIndex = Math.floor(Math.random() * emptyPositions.length);
           const pos = emptyPositions.splice(randomIndex, 1)[0];
