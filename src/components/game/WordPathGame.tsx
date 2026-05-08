@@ -2963,15 +2963,15 @@ function WordPathGame({
     const rand = rng();
     let cumulative = 0;
     
-    // Daily challenge uses balanced rarities (no progressive stone spawning)
-    const dailyRarities = { ...SPECIAL_TILE_RARITIES };
-    
+    // Daily challenge uses enhanced rarities (all special tile types)
+    const dailyRarities = { ...ENHANCED_TILE_RARITIES };
+
     for (const [type, rarity] of Object.entries(dailyRarities)) {
       cumulative += rarity;
       if (rand <= cumulative) {
-        // Use seeded random for expiry turns (2-4 turns for consistency)
+        // Use seeded random for expiry turns based on tile type
         const expiryTurns = Math.floor(rng() * 3) + 2;
-        
+
         if (type === "multiplier") {
           const multiplierValues = [2, 3, 4];
           const value = multiplierValues[Math.floor(rng() * multiplierValues.length)];

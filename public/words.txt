@@ -59661,6 +59661,7 @@ clunker
 clunkers
 clunking
 clunks
+clunky
 clunter
 clupanodonic
 clupea
@@ -121731,6 +121732,7 @@ gamene
 gameness
 gamenesses
 gamer
+gamers
 games
 gamesman
 gamesmanship
@@ -125943,6 +125945,7 @@ glisteringly
 glisters
 glitch
 glitches
+glitchy
 glitnir
 glitter
 glitterance
@@ -141548,6 +141551,8 @@ hotrods
 hots
 hotshot
 hotshots
+hotspot
+hotspots
 hotsprings
 hotspur
 hotspurred
@@ -239277,6 +239282,7 @@ podaxonial
 podcast
 podcaster
 podcasters
+podcasting
 podcasts
 podded
 podder
@@ -289157,6 +289163,8 @@ signposting
 signposts
 signs
 signum
+signup
+signups
 signwriter
 sigrim
 sigurd
@@ -293086,6 +293094,7 @@ snaring
 snaringly
 snark
 snarks
+snarky
 snarl
 snarled
 snarler
@@ -296045,6 +296054,7 @@ spam
 spammed
 spammer
 spamming
+spammy
 spams
 span
 spanaemia
@@ -313494,6 +313504,7 @@ syntelome
 syntenosis
 synteresis
 syntexis
+synth
 syntheme
 synthermal
 syntheses
@@ -313531,6 +313542,7 @@ synthroni
 synthronoi
 synthronos
 synthronus
+synths
 syntomia
 syntomy
 syntone
@@ -319412,6 +319424,7 @@ textbookless
 textbooks
 texted
 texter
+texters
 textiferous
 textile
 textiles
@@ -329047,6 +329060,7 @@ trippings
 trippist
 tripple
 trippler
+trippy
 trips
 tripsacum
 tripsill
@@ -354025,6 +354039,8 @@ upseal
 upsedoun
 upseek
 upseize
+upsell
+upsells
 upsend
 upsending
 upsends
@@ -354079,6 +354095,7 @@ upsoar
 upsoared
 upsoaring
 upsoars
+upsold
 upsolve
 upspeak
 upspear
