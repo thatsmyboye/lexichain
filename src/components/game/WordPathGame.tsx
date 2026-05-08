@@ -4445,7 +4445,10 @@ function WordPathGame({
         
         for (let r = 0; r < size; r++) {
           for (let c = 0; c < size; c++) {
-            positions.push({ r, c });
+            // Freeze protects tiles from being replaced/shuffled by other tile effects
+            if (!newSpecialTiles[r][c].frozen) {
+              positions.push({ r, c });
+            }
           }
         }
         
