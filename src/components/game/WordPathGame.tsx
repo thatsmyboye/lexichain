@@ -876,10 +876,11 @@ function handleXFactorTiles(
   setBoard: (board: string[][]) => void,
   setSpecialTiles: (tiles: SpecialTile[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): { xChanged: number, board: string[][] } {
+): { xChanged: number, board: string[][], specialTiles: SpecialTile[][] } {
   const xFactorTiles = wordPath.filter(p => specialTiles[p.r][p.c].type === "xfactor");
   let xChanged = 0;
   let resultBoard = currentBoard;
+  let resultTiles = specialTiles.map(row => row.map(tile => ({ ...tile })));
   
   if (xFactorTiles.length > 0) {
     const newBoard = currentBoard.map(row => [...row]);
@@ -926,6 +927,7 @@ function handleXFactorTiles(
     resultBoard = validation.board;
     setBoard(resultBoard);
     setSpecialTiles(newSpecialTiles);
+    resultTiles = newSpecialTiles;
     setAffectedTiles(changedTileKeys);
     xChanged = changedTileKeys.size;
 
@@ -936,7 +938,7 @@ function handleXFactorTiles(
     toast.info("X-Factor activated! Adjacent tiles transformed!");
   }
   
-  return { xChanged, board: resultBoard };
+  return { xChanged, board: resultBoard, specialTiles: resultTiles };
 }
 
 // Apply Magnet spawn effect: replace orthogonal neighbors with random vowels
@@ -1029,7 +1031,7 @@ function handleBombBlast(
   setBoard: (board: string[][]) => void,
   setSpecialTiles: (tiles: SpecialTile[][]) => void,
   setAffectedTiles: (tiles: Set<string>) => void
-): string[][] {
+): { board: string[][], specialTiles: SpecialTile[][] } {
   const newBoard = board.map(row => [...row]);
   const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
   const changedKeys = new Set<string>();
@@ -1071,7 +1073,7 @@ function handleBombBlast(
   setTimeout(() => setAffectedTiles(new Set()), 1500);
   toast.info("Bomb detonated! Area reset with new letters!");
   
-  return validation.board;
+  return { board: validation.board, specialTiles: newTiles };
 }
 
 function checkAndAwardAchievements(
@@ -2207,6 +2209,7 @@ function WordPathGame({
     );
     const xChanged = xFactorResult.xChanged;
     trackedBoard = xFactorResult.board;
+    let trackedSpecialTiles = xFactorResult.specialTiles;
 
     // Handle shuffle tiles (use updated board from X-factor)
     trackedBoard = handleShuffleTiles(
@@ -2222,15 +2225,17 @@ function WordPathGame({
     const bombTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "bomb");
     if (bombTilesInPath.length > 0) {
       for (const bombPos of bombTilesInPath) {
-        trackedBoard = handleBombBlast(bombPos, trackedBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        const bombResult = handleBombBlast(bombPos, trackedBoard, trackedSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        trackedBoard = bombResult.board;
+        trackedSpecialTiles = bombResult.specialTiles;
       }
     }
 
-    let newSpecialTiles = specialTiles.map(row => [...row]);
+    let newSpecialTiles = trackedSpecialTiles.map(row => row.map(tile => ({ ...tile })));
     wordPath.forEach(p => {
-      if (specialTiles[p.r][p.c].type !== null) {
+      if (newSpecialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
-          ...specialTiles[p.r][p.c],
+          ...newSpecialTiles[p.r][p.c],
           type: null
         };
       }
@@ -4236,6 +4241,7 @@ function WordPathGame({
     );
     const xChanged = xFactorResult.xChanged;
     trackedBoard = xFactorResult.board;
+    let trackedSpecialTiles = xFactorResult.specialTiles;
 
     // Handle shuffle tiles (use updated board from X-factor)
     trackedBoard = handleShuffleTiles(
@@ -4251,15 +4257,17 @@ function WordPathGame({
     const bombTilesInPath = path.filter(p => specialTiles[p.r][p.c].type === "bomb");
     if (bombTilesInPath.length > 0) {
       for (const bombPos of bombTilesInPath) {
-        trackedBoard = handleBombBlast(bombPos, trackedBoard, specialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        const bombResult = handleBombBlast(bombPos, trackedBoard, trackedSpecialTiles, size, setBoard, setSpecialTiles, setAffectedTiles);
+        trackedBoard = bombResult.board;
+        trackedSpecialTiles = bombResult.specialTiles;
       }
     }
 
-    let newSpecialTiles = specialTiles.map(row => [...row]);
+    let newSpecialTiles = trackedSpecialTiles.map(row => row.map(tile => ({ ...tile })));
     path.forEach(p => {
-      if (specialTiles[p.r][p.c].type !== null) {
+      if (newSpecialTiles[p.r][p.c].type !== null) {
         newSpecialTiles[p.r][p.c] = {
-          ...specialTiles[p.r][p.c],
+          ...newSpecialTiles[p.r][p.c],
           type: null
         };
       }
