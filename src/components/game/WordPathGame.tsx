@@ -74,6 +74,7 @@ import {
 import type { Pos, SpecialTile, SpecialTileType } from "@/types/game";
 import { GameBoard } from "./GameBoard";
 import { LETTERS, letterRarity } from "@/lib/letterRarity";
+const SHARE_URL = "lexichain.banton-digital.com";
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
 const within = (r: number, c: number, size: number) => r >= 0 && c >= 0 && r < size && c < size;
 const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) <= 1;
@@ -2002,103 +2003,10 @@ function WordPathGame({
 
     // Now continue with the normal submission process using the validated word
     setTimeout(() => {
-      if (submittedWildLetters.length > 1) {
-        submitWordWithWildLetters(testWord, submittedPath, submittedWildLetters);
-      } else {
-        submitWordWithWildLetter(testWord, submittedPath, submittedWildLetters[0]);
-      }
+      submitWordWithWildLetters(testWord, submittedPath, submittedWildLetters);
     }, 0);
   }
-  // Create a new function for multiple wild letters
   function submitWordWithWildLetters(validatedWord: string, wordPath: Pos[], wildLetters: string[]) {
-    if (gameOver) {
-      toast.info("Round over");
-      return;
-    }
-
-    // Check daily challenge move limit
-    if ((settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed >= settings.dailyMovesLimit) {
-      toast.error("Daily move limit reached!");
-      return;
-    }
-    const actualWord = validatedWord;
-    const wildUsed = true;
-    const hasStoneTile = wordPath.some(p => specialTiles[p.r][p.c].type === "stone");
-    if (hasStoneTile) {
-      toast.error("Cannot use words containing Stone tiles!");
-      return;
-    }
-    if (lastWordTiles.size > 0) {
-      const overlap = wordPath.some(p => lastWordTiles.has(keyOf(p)));
-      if (!overlap) {
-        toast.error("Must reuse at least one tile from previous word");
-        return;
-      }
-    }
-    const breakdown = computeScoreBreakdown({
-      actualWord,
-      wordPath,
-      board,
-      specialTiles,
-      lastWordTiles,
-      streak,
-      mode: settings.mode,
-      blitzMultiplier,
-      timeAttackSpeedMultiplier,
-      activeEffects,
-      baseMode: "square",
-      chainMode: "linear"
-    });
-    const totalGain = breakdown.total;
-    setUsedWords(prev => [...prev, {
-      word: actualWord,
-      score: totalGain,
-      breakdown
-    }]);
-
-    // Save state after successful word submission
-    saveGameState();
-
-    // Legacy variables needed for achievements and toasts
-    const sharedTilesCount = lastWordTiles.size ? wordPath.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
-    const multiplier = breakdown.multipliers.combinedApplied;
-
-    // Update the wild tiles with the chosen letters permanently on the board
-    const newBoard = board.map(row => [...row]);
-    const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
-    
-    // Handle multiple wild tiles
-    wildcardPositions.forEach((wildPos, index) => {
-      if (index < wildLetters.length) {
-        newBoard[wildPos.r][wildPos.c] = wildLetters[index].toUpperCase();
-      }
-    });
-
-    // Apply Q-U adjacency validation if any Q letters were placed
-    const hasNewQ = wildcardPositions.some((wildPos, index) => 
-      index < wildLetters.length && wildLetters[index].toUpperCase() === 'Q'
-    );
-    const validatedBoard = hasNewQ ? 
-      validateAndFixQUAdjacency(newBoard, size, undefined, undefined, true).board : 
-      newBoard;
-
-    // Remove the wild tile special type since it's now a regular letter
-    const newSpecialTiles = specialTiles.map(row => [...row]);
-    wildcardPositions.forEach(wildPos => {
-      newSpecialTiles[wildPos.r][wildPos.c] = {
-        type: null
-      };
-    });
-    
-    setBoard(validatedBoard);
-    setSpecialTiles(newSpecialTiles);
-    
-    // Continue with scoring and game state updates without calling non-existent function
-    
-    // Rest of word submission continues in the main submitWord flow...
-  }
-  
-  function submitWordWithWildLetter(validatedWord: string, wordPath: Pos[], wildLetter: string) {
     if (gameOver) {
       toast.info("Round over");
       return;
@@ -2162,25 +2070,30 @@ function WordPathGame({
     const newBoard = board.map(row => [...row]);
     const wildcardPositions = wordPath.filter(p => specialTiles[p.r][p.c].type === "wild");
     
-    // Handle single wild tile (backward compatibility)
-    if (wildcardPositions.length === 1) {
-      const wildPos = wildcardPositions[0];
-      newBoard[wildPos.r][wildPos.c] = wildLetter.toUpperCase();
+    wildcardPositions.forEach((wildPos, index) => {
+      if (index < wildLetters.length) {
+        newBoard[wildPos.r][wildPos.c] = wildLetters[index].toUpperCase();
+      }
+    });
 
-      // Apply Q-U adjacency validation if a Q letter was placed
-      const validatedBoard = wildLetter.toUpperCase() === 'Q' ? 
-        validateAndFixQUAdjacency(newBoard, size, undefined, undefined, true).board : 
-        newBoard;
+    // Apply Q-U adjacency validation if any Q letters were placed
+    const hasNewQ = wildcardPositions.some((wildPos, index) =>
+      index < wildLetters.length && wildLetters[index].toUpperCase() === 'Q'
+    );
+    const validatedBoard = hasNewQ ?
+      validateAndFixQUAdjacency(newBoard, size, undefined, undefined, true).board :
+      newBoard;
 
-      // Remove the wild tile special type since it's now a regular letter
-      const newSpecialTiles = specialTiles.map(row => [...row]);
-      newSpecialTiles[wildPos.r][wildPos.c] = {
+    // Remove the wild tile special type since it's now a regular letter
+    const specialTilesAfterWild = specialTiles.map(row => [...row]);
+    wildcardPositions.forEach(wildPos => {
+      specialTilesAfterWild[wildPos.r][wildPos.c] = {
         type: null
       };
-      
-      setBoard(validatedBoard);
-      setSpecialTiles(newSpecialTiles);
-    }
+    });
+
+    setBoard(validatedBoard);
+    setSpecialTiles(specialTilesAfterWild);
     // Increment moves for daily challenge
     if (settings.mode === "daily" || settings.mode === "daily_5x5") {
       setMovesUsed(prev => prev + 1);
@@ -2197,7 +2110,7 @@ function WordPathGame({
     }
 
     // Handle X-Factor tiles first and track board state through all effects
-    let trackedBoard = newBoard.map(row => [...row]);
+    let trackedBoard = validatedBoard.map(row => [...row]);
     const xFactorResult = handleXFactorTiles(
       wordPath, 
       specialTiles, 
@@ -2272,6 +2185,7 @@ function WordPathGame({
 
     setSpecialTiles(newSpecialTiles);
     setLastWordTiles(new Set(wordPath.map(keyOf)));
+    clearPath();
 
     // Check for new achievements using shared function
     const { newAchievements, achievementBonus } = checkAndAwardAchievements(
@@ -4799,7 +4713,7 @@ function WordPathGame({
 
     // Get highest single word score
     const topWordScore = usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0;
-    const shareText = `🔤 ${modeLabel} ${date}\n${gradeEmoji} ${score} points (${grade})\n📝 Top word: ${topWordScore}\n\nlexichain.lovable.app`;
+    const shareText = `🔤 ${modeLabel} ${date}\n${gradeEmoji} ${score} points (${grade})\n📝 Top word: ${topWordScore}\n\n${SHARE_URL}`;
     if (navigator.share) {
       navigator.share({
         title: shareTitle,
@@ -5404,13 +5318,13 @@ function WordPathGame({
                 📝 Top word: {usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0}<br />
                 🎯 {settings.dailyMovesLimit - movesUsed} moves remaining<br />
                 <br />
-                Play at lexichain.lovable.app
+                Play at {SHARE_URL}
               </div>
             </div>
             <Button onClick={() => {
             const gradeEmoji = finalGrade === "Platinum" ? "💎" : finalGrade === "Gold" ? "🥇" : finalGrade === "Silver" ? "🥈" : finalGrade === "Bronze" ? "🥉" : "📊";
             const topWordScore = usedWords.length > 0 ? Math.max(...usedWords.map(w => w.score)) : 0;
-            const shareText = `🔤 Lexichain Daily Challenge ${getDailySeed()}\n${gradeEmoji} ${score} points (${finalGrade})\n📝 Top word: ${topWordScore}\n🎯 ${settings.dailyMovesLimit - movesUsed} moves remaining\n\nPlay at lexichain.lovable.app`;
+            const shareText = `🔤 Lexichain Daily Challenge ${getDailySeed()}\n${gradeEmoji} ${score} points (${finalGrade})\n📝 Top word: ${topWordScore}\n🎯 ${settings.dailyMovesLimit - movesUsed} moves remaining\n\nPlay at ${SHARE_URL}`;
             navigator.clipboard.writeText(shareText);
             toast.success("Copied to clipboard!");
             setShowShareDialog(false);
@@ -5544,7 +5458,7 @@ function WordPathGame({
                   <div className="mt-2 space-y-2">
                     <div>
                       <div className="text-xs text-muted-foreground">Time Remaining</div>
-                      <div className={`text-2xl font-bold ${timeAttackTimeRemaining <= 10 ? 'text-red-500 animate-pulse' : timeAttackTimeRemaining <= 30 ? 'text-orange-500' : 'text-green-500'}`}>
+                      <div className={`text-2xl font-bold rounded-full px-2 inline-flex items-center gap-1 ${timeAttackTimeRemaining <= 10 ? 'bg-red-500/15 text-red-500 animate-pulse' : timeAttackTimeRemaining <= 30 ? 'bg-orange-500/10 text-orange-500' : 'text-green-500'}`}>
                         ⏱️ {timeAttackTimeRemaining}s
                       </div>
                     </div>
@@ -5864,7 +5778,7 @@ function WordPathGame({
                 {settings.mode === "time_attack" && (
                   <div className="mt-1 text-xs">
                     <div className="flex items-center gap-2">
-                      <div className={`font-medium ${timeAttackTimeRemaining <= 10 ? 'text-red-500' : timeAttackTimeRemaining <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                      <div className={`rounded-full px-2 py-0.5 inline-flex items-center gap-1 ${timeAttackTimeRemaining <= 10 ? 'bg-red-500/15 text-red-500 animate-pulse font-bold' : timeAttackTimeRemaining <= 30 ? 'bg-orange-500/10 text-orange-500 font-medium' : 'text-muted-foreground font-medium'}`}>
                         ⏰ {Math.floor(timeAttackTimeRemaining / 60)}:{(timeAttackTimeRemaining % 60).toString().padStart(2, '0')}
                       </div>
                     </div>

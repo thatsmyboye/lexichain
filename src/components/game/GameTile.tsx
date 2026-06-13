@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import type { SpecialTile } from "@/types/game";
 import type { TileSkin } from "@/lib/tileSkins";
 import { letterRarity } from "@/lib/letterRarity";
+import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 
 interface BenchmarkColor {
   border: string;
@@ -40,7 +41,8 @@ function getTileClasses(
   benchmarkColor: BenchmarkColor,
   currentGrade: Grade,
 ): string {
-  let base = `relative aspect-square flex items-center justify-center rounded-lg ${benchmarkColor.border} border-2 transition-[transform,box-shadow,background-color] duration-300 `;
+  const shape = SPECIAL_SHAPES[special.type ?? "default"] ?? SPECIAL_SHAPES.default;
+  let base = `relative aspect-square flex items-center justify-center ${shape} ${benchmarkColor.border} transition-[transform,box-shadow,background-color] duration-300 `;
 
   if (isSelected) {
     base += skin.selectedClasses + " shadow-[0_0_20px_rgba(34,197,94,0.4)] ";
@@ -49,9 +51,16 @@ function getTileClasses(
   } else if (isReused) {
     base += "relative ";
     if (currentGrade !== "none") {
-      let ringColor = benchmarkColor.border.replace("border-", "ring-")
+      const ringColor = benchmarkColor.border.replace("border-", "ring-")
         .replace("-600", "-400").replace("-500", "-300").replace("-400", "-300");
-      base += "ring-2 " + ringColor + " ring-opacity-70 ";
+      // Ring weight scales with grade so progress reads without color
+      const ringWeight = {
+        platinum: "ring-4 ring-offset-1 ring-offset-background ring-opacity-70 ",
+        gold: "ring-4 ring-opacity-70 ",
+        silver: "ring-2 ring-opacity-70 ",
+        bronze: "ring-2 ring-opacity-50 ",
+      }[currentGrade];
+      base += ringWeight + ringColor + " ";
       if (currentGrade === "platinum") base += "shadow-[0_0_8px_rgba(168,85,247,0.4)] ";
       else if (currentGrade === "gold") base += "shadow-[0_0_8px_rgba(234,179,8,0.4)] ";
       else if (currentGrade === "silver") base += "shadow-[0_0_8px_rgba(156,163,175,0.4)] ";
@@ -159,6 +168,11 @@ export const GameTile = memo(function GameTile({
         />
       )}
 
+      {/* Reusable glyph so "reused" reads without color */}
+      {isReused && !isSelected && (
+        <div className="absolute bottom-0.5 left-0.5 text-[10px] leading-none opacity-70 z-10 pointer-events-none">↻</div>
+      )}
+
       <div className="text-3xl font-semibold tracking-wide relative z-10">
         {special.type === "wild" ? "?" : letter}
       </div>
@@ -181,10 +195,10 @@ export const GameTile = memo(function GameTile({
       {/* X-Factor corner dots */}
       {special.type === "xfactor" && (
         <>
-          <div className="absolute top-1 left-1 w-2 h-2 bg-white/30 rounded-full" />
-          <div className="absolute top-1 right-1 w-2 h-2 bg-white/30 rounded-full" />
-          <div className="absolute bottom-1 left-1 w-2 h-2 bg-white/30 rounded-full" />
-          <div className="absolute bottom-1 right-1 w-2 h-2 bg-white/30 rounded-full" />
+          <div className="absolute top-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
+          <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
+          <div className="absolute bottom-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
+          <div className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
         </>
       )}
 

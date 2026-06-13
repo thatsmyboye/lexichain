@@ -330,11 +330,28 @@ const animationStyles = `
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
+@keyframes tile-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+@keyframes tile-tick {
+  0%, 88%, 100% { transform: rotate(0deg); }
+  91% { transform: rotate(-2.5deg); }
+  94% { transform: rotate(2.5deg); }
+  97% { transform: rotate(-1.5deg); }
+}
+@keyframes tile-fade {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.55; }
+}
 .animate-float-low { animation: float-low 3s ease-in-out infinite; }
 .animate-float-medium { animation: float-medium 2.5s ease-in-out infinite; }
 .animate-float-high { animation: float-high 2s ease-in-out infinite; }
 .animate-shake { animation: shake 0.5s ease-in-out; }
 .animate-blink-twice { animation: blink 0.6s ease-in-out 2; }
+.animate-tile-pulse { animation: tile-pulse 2.2s ease-in-out infinite; }
+.animate-tile-tick { animation: tile-tick 1.8s ease-in-out infinite; }
+.animate-tile-fade { animation: tile-fade 2.6s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-float-low,
@@ -344,7 +361,10 @@ const animationStyles = `
   .animate-bounce,
   .animate-pulse,
   .animate-spin,
-  .animate-blink-twice {
+  .animate-blink-twice,
+  .animate-tile-pulse,
+  .animate-tile-tick,
+  .animate-tile-fade {
     animation: none !important;
   }
   * {
