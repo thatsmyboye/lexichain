@@ -79,7 +79,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'special_tiles',
     title: 'Special Tiles',
-    description: 'Special tiles appear on the board as you play. Stone blocks paths, Wild acts as any letter, Multiplier boosts scores, X-Factor changes nearby letters, and Shuffle rearranges the board. Enable "Enhanced Powerups" in Settings for 8 more tile types including Mirror, Ghost, Chain, Tax, and more!',
+    description: 'Special tiles appear on the board as you play. Stone blocks paths, Wild acts as any letter, Multiplier boosts scores, X-Factor transforms nearby letters, and Shuffle rearranges the board. Enable "Enhanced Powerups" in Settings to unlock 8 more tile types: Freeze, Decay, Mirror, Magnet, Bomb, Chain, Ghost, and Tax.',
     target: '[data-tutorial="game-board"]',
     position: 'bottom',
     action: 'wait',

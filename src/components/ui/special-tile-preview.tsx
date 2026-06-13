@@ -6,6 +6,7 @@
 
 import { SpecialTile } from "@/utils/specialTilePreview";
 import { Card } from "@/components/ui/card";
+import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 
 interface SpecialTilePreviewProps {
   tiles: SpecialTile[];
@@ -32,8 +33,8 @@ export function SpecialTilePreview({ tiles }: SpecialTilePreviewProps) {
 
 function TileIcon({ tile }: { tile: SpecialTile }) {
   const getTileClasses = () => {
-    let baseClasses =
-      "relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg transition-all duration-300 ";
+    const shape = SPECIAL_SHAPES[tile.type ?? "default"] ?? SPECIAL_SHAPES.default;
+    let baseClasses = `relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center ${shape} border-white/40 transition-all duration-300 `;
 
     if (tile.type === "stone") {
       baseClasses +=
@@ -92,10 +93,10 @@ function TileIcon({ tile }: { tile: SpecialTile }) {
 
       {tile.type === "xfactor" && (
         <>
-          <div className="absolute top-1 left-1 w-2 h-2 bg-white/30 rounded-full"></div>
-          <div className="absolute top-1 right-1 w-2 h-2 bg-white/30 rounded-full"></div>
-          <div className="absolute bottom-1 left-1 w-2 h-2 bg-white/30 rounded-full"></div>
-          <div className="absolute bottom-1 right-1 w-2 h-2 bg-white/30 rounded-full"></div>
+          <div className="absolute top-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
+          <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
+          <div className="absolute bottom-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
+          <div className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
         </>
       )}
 

@@ -1,73 +1,86 @@
-# Welcome to your Lovable project
+# Lexichain
 
-## Project info
+A strategic word-chain game where each word must share at least one tile with the previous word. Play at **[lexichain.banton-digital.com](https://lexichain.banton-digital.com)**.
 
-**URL**: https://lovable.dev/projects/e5bbf57b-ac99-49b6-9431-81d8e9ca5c59
+## How to Play
 
-## How can I edit this code?
+1. Select adjacent tiles on the grid to spell a word (minimum 3 letters).
+2. Every word after the first must **reuse at least one tile** from the previous word — that's the chain.
+3. Special tiles appear as the game progresses and add risk, reward, or chaos.
+4. Score as many points as possible before time or moves run out.
 
-There are several ways of editing your application.
+Tile selection: tap/click a starting tile, then drag or tap adjacent tiles. Release to submit.
 
-**Use Lovable**
+## Special Tiles
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e5bbf57b-ac99-49b6-9431-81d8e9ca5c59) and start prompting.
+All 13 special tile types can appear during play. Each is visually distinct by border shape, corner style, and animation — not just color.
 
-Changes made via Lovable will be committed automatically to this repo.
+| Tile | Shape cue | Effect |
+|------|-----------|--------|
+| **Stone** 🪨 | Heavy double border, square corners | Blocks the path — cannot be included in any word. Cleared by surrounding plays. |
+| **Wild** ? | Dashed border | Acts as any letter you choose. Pick the letter when submitting the word. |
+| **Multiplier** | Pulsing border | Multiplies the word's total score by 2×, 3×, or 4×. |
+| **X-Factor** | Thick border + corner dots | When used, randomises all four diagonally adjacent tiles (clearing their special types too). |
+| **Shuffle** | Shuffle icon | Redistributes all non-frozen board letters randomly when used. |
+| **Freeze** ❄️ | Dotted border + inner rim | Freezes orthogonally adjacent tiles on spawn; frozen tiles cannot be shuffled or replaced. |
+| **Decay** 🦠 | Yellow-green gradient | Spreads to adjacent tiles each turn, swapping them for low-value letters. |
+| **Mirror** 🪞 | Light grey, square corners | Repeats the letter immediately before it in your word path. |
+| **Magnet** 🧲 | Red-grey gradient | On spawn, pulls vowels into all orthogonally adjacent positions. |
+| **Bomb** 💣 | Circular tile | Blasts all tiles within a Manhattan distance of 2 when used, removing their special types. |
+| **Chain** ⛓️ | Amber gradient | Adds +10 bonus per path tile beyond 4, per Chain tile in the word. |
+| **Ghost** 👻 | Dashed border + fade | Contributes no letter — useful for routing a path without adding to the word. |
+| **Tax** 💰 | Gold gradient | Applies a 0.7× penalty multiplier per Tax tile in the word. Avoid if you can. |
 
-**Use your preferred IDE**
+Special tiles have an **expiry counter** (top-left) — they disappear after that many turns if not used.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Game Modes
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+| Mode | Description |
+|------|-------------|
+| **Classic** | Unlimited words; Stone tiles accumulate progressively. |
+| **Daily Challenge** | Fixed board, same for all players each day. Share your score. |
+| **Daily 5×5** | Like Daily but on a larger grid. |
+| **Target** | Reach a score target (Bronze / Silver / Gold / Platinum) with unlimited moves. |
+| **Time Attack** | Score as high as possible before time runs out; speed multiplier grows with each word. |
+| **Endless** | Stone tiles get denser and stay longer as difficulty escalates. |
+| **Zen** | Relaxed play with undo support. Scoring is halved. |
+| **Blitz** | Race mode with an escalating multiplier. |
+| **Survival** | Wave-based mode with boss challenges, combo rewards, and power-ups. |
+| **Puzzle** | Curated boards with specific constraints to solve. |
+| **Chaos** | High volatility — anything goes. |
 
-Follow these steps:
+## Accessibility
+
+- All tile types are distinguishable by **shape and border style** in grayscale (no color required).
+- Animations respect **`prefers-reduced-motion`**; all tile animations are disabled under that setting.
+- Four **colour-blind modes** available (Protanopia, Deuteranopia, Tritanopia, Achromatopsia).
+- **High-contrast mode** toggle in settings.
+- Full **keyboard navigation** and screen-reader ARIA announcements.
+
+## Development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
+
+# Production build
+npm run build
+
+# Lint
+npm run lint
 ```
 
-**Edit a file directly in GitHub**
+**Stack:** React + TypeScript · Vite · Tailwind CSS · shadcn/ui · Supabase
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Score System
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/e5bbf57b-ac99-49b6-9431-81d8e9ca5c59) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Base score**: 10 points per letter.
+- **Rarity bonus**: uncommon letters (+5 each), rare letters (+15 and a flat bonus).
+- **Length bonuses**: +25 (5 letters), +75 (6), +175 (7), +325 (8+).
+- **Link bonus**: +10 per shared tile with the previous word, up to a 2× multiplier at 3+ shared tiles.
+- **Tile multipliers** (Multiplier tiles, consumables, mode multipliers) apply on top.
+- **Chain tiles** add +10 per extra path tile (beyond 4) per Chain tile in the word.
+- **Tax tiles** apply a 0.7× penalty per tile.
