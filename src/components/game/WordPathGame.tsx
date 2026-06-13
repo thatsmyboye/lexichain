@@ -306,19 +306,11 @@ const STREAK_TARGET_LEN = 4; // reduced qualifying length for streaks
 // Special tiles constants
 const SPECIAL_TILE_SCORE_THRESHOLD = 150;
 const SPECIAL_TILE_RARITIES = {
-  stone: 0.08,
-  multiplier: 0.06,
-  xfactor: 0.04,
-  tax: 0.04,
-  decay: 0.04,
-  freeze: 0.03,
-  wild: 0.03,
-  magnet: 0.025,
-  chain: 0.025,
-  mirror: 0.02,
-  bomb: 0.02,
-  shuffle: 0.01,
-  ghost: 0.01,
+  stone: 0.15,
+  wild: 0.05,
+  xfactor: 0.08,
+  multiplier: 0.12,
+  shuffle: 0.03,
 };
 
 // Enhanced powerups tile rarities (used when toggle is on and mode is not daily)
