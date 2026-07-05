@@ -1944,6 +1944,29 @@ function WordPathGame({
     }
     return parts.join("").toUpperCase();
   }, [path, board, specialTiles]);
+
+  // Display-only status for the traced word — validation itself still happens
+  // on submit; this just tells the player what will happen before they release.
+  type PathWordStatus = { state: "short" | "wild" | "valid" | "invalid" | "used" | "nolink"; label: string };
+  const pathWordStatus: PathWordStatus | null = useMemo(() => {
+    if (!path.length || !board) return null;
+    if (path.some(p => specialTiles[p.r][p.c].type === "wild")) {
+      return { state: "wild", label: "Wild — pick letter on submit" };
+    }
+    const word = wordFromPath;
+    if (word.length < 3) {
+      const needed = 3 - word.length;
+      return { state: "short", label: `${needed} more letter${needed === 1 ? "" : "s"}` };
+    }
+    if (!dict) return null;
+    if (!dict.has(word)) return { state: "invalid", label: "Not a word" };
+    if (usedWords.some(entry => entry.word === word)) return { state: "used", label: "Already used" };
+    if (lastWordTiles.size > 0 && !path.some(p => lastWordTiles.has(keyOf(p)))) {
+      return { state: "nolink", label: "Reuse a tile from last word" };
+    }
+    return { state: "valid", label: "Valid" };
+  }, [path, board, specialTiles, wordFromPath, dict, usedWords, lastWordTiles]);
+
   function handleWildSubmit() {
     if (!pendingWildPath || !wildTileInputs.size || !dict) return;
     const wildcardPositions = pendingWildPath.filter(p => specialTiles[p.r][p.c].type === "wild");
@@ -5426,6 +5449,23 @@ function WordPathGame({
             <div className="mt-4 flex items-center gap-3 p-3 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg border border-muted backdrop-blur-sm">
               <span className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Current:</span>
               <span className="text-xl font-bold flex-1 bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-brand-600">{displayWordFromPath || "..."}</span>
+              {pathWordStatus && (
+                <span
+                  role="status"
+                  className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${
+                    pathWordStatus.state === "valid"
+                      ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                      : pathWordStatus.state === "invalid"
+                      ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                      : pathWordStatus.state === "used" || pathWordStatus.state === "nolink"
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {pathWordStatus.state === "valid" ? "✓ " : pathWordStatus.state === "invalid" ? "✗ " : ""}
+                  {pathWordStatus.label}
+                </span>
+              )}
             </div>
 
             {/* Submit Button for Tap Mode */}

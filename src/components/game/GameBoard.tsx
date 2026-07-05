@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useMemo, useRef } from "react";
 import type React from "react";
 import { GameTile } from "./GameTile";
 import type { Pos, SpecialTile } from "@/types/game";
@@ -61,23 +61,41 @@ export const GameBoard = memo(function GameBoard({
 
   const benchmarkColor = getBenchmarkColor(skin, currentGrade);
 
-  // Stable per-position handlers to avoid re-creating on every render
-  const makePointerDown = useCallback(
-    (pos: Pos) => () => onTilePointerDown(pos),
-    [onTilePointerDown],
-  );
-  const makePointerEnter = useCallback(
-    (pos: Pos) => () => onTilePointerEnter(pos),
-    [onTilePointerEnter],
-  );
-  const makeTouchStart = useCallback(
-    (pos: Pos) => (e: React.TouchEvent) => onTileTouch(e, pos),
-    [onTileTouch],
-  );
-  const makeTap = useCallback(
-    (pos: Pos) => () => onTileTap(pos),
-    [onTileTap],
-  );
+  // Keep the latest callbacks in a ref so per-tile handlers can stay
+  // referentially stable across renders — otherwise every render hands each
+  // GameTile fresh closures and its memo() never bails out.
+  const callbacksRef = useRef({ onTilePointerDown, onTilePointerEnter, onTileTouch, onTileTap });
+  callbacksRef.current = { onTilePointerDown, onTilePointerEnter, onTileTouch, onTileTap };
+
+  const getTileHandlers = useMemo(() => {
+    const cache = new Map<string, {
+      onPointerDown: () => void;
+      onPointerEnter: () => void;
+      onTouchStart: (e: React.TouchEvent) => void;
+      onClick: () => void;
+    }>();
+    return (k: string, r: number, c: number) => {
+      let handlers = cache.get(k);
+      if (!handlers) {
+        const pos: Pos = { r, c };
+        handlers = {
+          onPointerDown: () => callbacksRef.current.onTilePointerDown(pos),
+          onPointerEnter: () => callbacksRef.current.onTilePointerEnter(pos),
+          onTouchStart: (e: React.TouchEvent) => callbacksRef.current.onTileTouch(e, pos),
+          onClick: () => callbacksRef.current.onTileTap(pos),
+        };
+        cache.set(k, handlers);
+      }
+      return handlers;
+    };
+  }, []);
+
+  // O(1) selection lookup instead of scanning the path for every tile
+  const pathIndexByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    path.forEach((p, i) => map.set(keyOf(p), i));
+    return map;
+  }, [path]);
 
   return (
     <div
@@ -107,9 +125,9 @@ export const GameBoard = memo(function GameBoard({
         {board
           ? board.map((row, r) =>
               row.map((ch, c) => {
-                const pos: Pos = { r, c };
-                const k = keyOf(pos);
-                const idx = path.findIndex(p => p.r === r && p.c === c);
+                const k = `${r},${c}`;
+                const idx = pathIndexByKey.get(k) ?? -1;
+                const handlers = getTileHandlers(k, r, c);
 
                 return (
                   <GameTile
@@ -125,10 +143,10 @@ export const GameBoard = memo(function GameBoard({
                     skin={skin}
                     benchmarkColor={benchmarkColor}
                     currentGrade={currentGrade}
-                    onPointerDown={makePointerDown(pos)}
-                    onPointerEnter={makePointerEnter(pos)}
-                    onTouchStart={makeTouchStart(pos)}
-                    onClick={makeTap(pos)}
+                    onPointerDown={handlers.onPointerDown}
+                    onPointerEnter={handlers.onPointerEnter}
+                    onTouchStart={handlers.onTouchStart}
+                    onClick={handlers.onClick}
                   />
                 );
               }),

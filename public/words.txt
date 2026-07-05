@@ -4328,6 +4328,7 @@ adorant
 adorantes
 adoration
 adoratory
+adorbs
 adore
 adored
 adorer
@@ -18383,6 +18384,7 @@ aramis
 aramitess
 aramu
 aramus
+arancini
 aranea
 araneae
 araneid
@@ -22543,6 +22545,7 @@ athetotic
 athing
 athink
 athirst
+athleisure
 athlete
 athletehood
 athletes
@@ -24960,6 +24963,7 @@ awes
 awesome
 awesomely
 awesomeness
+awesomesauce
 awest
 awestricken
 awestrike
@@ -31697,9 +31701,11 @@ bentincks
 bentiness
 benting
 bentlet
+bento
 benton
 bentonite
 bentonitic
+bentos
 bents
 bentstar
 bentwood
@@ -34164,11 +34170,13 @@ bineweed
 binful
 bing
 binge
+bingeable
 binged
 bingee
 bingeing
 binger
 binges
+bingeworthy
 bingey
 bingeys
 binghi
@@ -34844,6 +34852,8 @@ birthstones
 birthstool
 birthwort
 birthy
+biryani
+biryanis
 bis
 bisabol
 bisaccate
@@ -36112,7 +36122,10 @@ blindstories
 blindstory
 blindweed
 blindworm
+bling
 blinger
+blings
+blingy
 blini
 blinis
 blink
@@ -37095,6 +37108,8 @@ bodybuild
 bodybuilder
 bodybuilders
 bodybuilding
+bodycam
+bodycams
 bodycheck
 bodyguard
 bodyguards
@@ -41552,6 +41567,7 @@ bruges
 brugh
 brughs
 brugnatellite
+bruh
 bruin
 bruins
 bruise
@@ -49619,7 +49635,9 @@ catfall
 catfalls
 catfight
 catfish
+catfished
 catfishes
+catfishing
 catfoot
 catfooted
 catgut
@@ -53100,6 +53118,8 @@ chasubled
 chasubles
 chat
 chataka
+chatbot
+chatbots
 chatchka
 chatchkas
 chatchke
@@ -54387,6 +54407,10 @@ chilkat
 chill
 chilla
 chillagite
+chillax
+chillaxed
+chillaxes
+chillaxing
 chilled
 chiller
 chillers
@@ -69079,6 +69103,8 @@ cospecific
 cosphered
 cosplay
 cosplayed
+cosplayer
+cosplayers
 cosplaying
 cosplays
 cosplendor
@@ -75056,6 +75082,7 @@ cyberneticist
 cyberneticists
 cybernetics
 cybernion
+cybersecurity
 cybister
 cyborg
 cyborgs
@@ -77035,6 +77062,8 @@ dasewe
 dash
 dashboard
 dashboards
+dashcam
+dashcams
 dashed
 dashedly
 dashee
@@ -79042,6 +79071,7 @@ deepens
 deeper
 deepest
 deepfake
+deepfakes
 deepfreeze
 deepfreezed
 deepfreezing
@@ -82360,6 +82390,8 @@ derotremate
 derotrematous
 derotreme
 derout
+derp
+derps
 derri
 derrick
 derricking
@@ -91227,6 +91259,10 @@ dooming
 doomlike
 dooms
 doomsayer
+doomscroll
+doomscrolled
+doomscrolling
+doomscrolls
 doomsday
 doomsdays
 doomsman
@@ -92081,12 +92117,16 @@ dowsets
 dowsing
 dowve
 dowy
+dox
 doxa
 doxantha
 doxastic
 doxasticon
+doxed
+doxes
 doxie
 doxies
+doxing
 doxographer
 doxographical
 doxography
@@ -92097,6 +92137,10 @@ doxologize
 doxologized
 doxologizing
 doxology
+doxx
+doxxed
+doxxes
+doxxing
 doxy
 doxycycline
 doyen
@@ -93625,6 +93669,7 @@ dugout
 dugouts
 dugs
 dugway
+duh
 duhat
 duhr
 dui
@@ -95940,6 +95985,7 @@ edwina
 ee
 eebree
 eegrass
+eek
 eel
 eelback
 eelblennies
@@ -98519,6 +98565,7 @@ emmew
 emmies
 emmove
 emmy
+emo
 emodin
 emodins
 emoji
@@ -98537,11 +98584,14 @@ emoluments
 emong
 emony
 emory
+emos
 emote
 emoted
 emoter
 emoters
 emotes
+emoticon
+emoticons
 emoting
 emotiometabolic
 emotiomotor
@@ -109755,6 +109805,8 @@ fanfaron
 fanfaronade
 fanfaronading
 fanfarons
+fanfic
+fanfics
 fanfish
 fanfishes
 fanflower
@@ -110520,6 +110572,8 @@ fauvists
 faux
 fauxbourdon
 favaginous
+fave
+faved
 favel
 favela
 favelas
@@ -110537,6 +110591,7 @@ faveoluli
 faveolus
 faverel
 faverole
+faves
 favi
 faviform
 favilla
@@ -118652,6 +118707,8 @@ freedwoman
 freedwomen
 freefd
 freeform
+freegan
+freegans
 freehand
 freehanded
 freehandedly
@@ -118802,6 +118859,8 @@ frenchwise
 frenchwoman
 frenchwomen
 frenchy
+frenemies
+frenemy
 frenetic
 frenetical
 frenetically
@@ -120754,6 +120813,8 @@ futilities
 futility
 futilize
 futilous
+futon
+futons
 futtah
 futter
 futteret
@@ -124816,6 +124877,7 @@ gif
 gifblaar
 giffgaff
 gifola
+gifs
 gift
 giftbook
 gifted
@@ -126985,6 +127047,7 @@ goburra
 goby
 gobylike
 gocart
+gochujang
 goclenian
 god
 godawful
@@ -127616,7 +127679,9 @@ goofing
 goofs
 goofy
 goog
+google
 googled
+googles
 googlies
 googling
 googly
@@ -129824,6 +129889,10 @@ groined
 groinery
 groining
 groins
+grok
+grokked
+grokking
+groks
 grolier
 grolieresque
 groma
@@ -132380,6 +132449,7 @@ haikh
 haiks
 haiku
 haikun
+haikus
 haikwan
 hail
 hailed
@@ -133380,6 +133450,9 @@ hangout
 hangouts
 hangover
 hangovers
+hangrier
+hangriest
+hangry
 hangs
 hangtag
 hangtags
@@ -134100,6 +134173,7 @@ hashishes
 hashiya
 hasht
 hashtag
+hashtagged
 hashtags
 hashy
 hasid
@@ -139270,6 +139344,7 @@ hlithskjalf
 hlorrithi
 hlqn
 hm
+hmm
 hny
 ho
 hoactzin
@@ -142153,6 +142228,10 @@ humation
 humbird
 humble
 humblebee
+humblebrag
+humblebragged
+humblebragging
+humblebrags
 humbled
 humblehearted
 humblemouthed
@@ -159720,6 +159799,7 @@ jeffery
 jeffie
 jeffrey
 jeg
+jeggings
 jehad
 jehads
 jehoshaphat
@@ -160696,6 +160776,7 @@ jornadas
 joropo
 joropos
 jorram
+jorts
 jorum
 jorums
 jos
@@ -163620,6 +163701,7 @@ kimbo
 kimbundu
 kimchee
 kimchi
+kimchis
 kimeridgian
 kimigayo
 kimmer
@@ -173351,6 +173433,7 @@ lokiec
 lokindra
 lokman
 lokshen
+lol
 lola
 loli
 loliginidae
@@ -173391,6 +173474,7 @@ lollygags
 lollypop
 lollypops
 lolo
+lolz
 loma
 lomastome
 lomata
@@ -175641,6 +175725,8 @@ maccaboy
 maccaboys
 maccaroni
 macchia
+macchiato
+macchiatos
 macchie
 macchinetta
 macclesfield
@@ -177594,6 +177680,7 @@ malvin
 malvoisie
 malvolition
 malwa
+malware
 mam
 mama
 mamaguy
@@ -178389,6 +178476,12 @@ manslayers
 manslaying
 manso
 mansonry
+mansplain
+mansplained
+mansplainer
+mansplainers
+mansplaining
+mansplains
 manstealer
 manstealing
 manstopper
@@ -179916,6 +180009,7 @@ matcha
 matchable
 matchableness
 matchably
+matchas
 matchboard
 matchboarding
 matchbook
@@ -181205,6 +181299,7 @@ medrick
 medrinacks
 medrinacles
 medrinaque
+meds
 medscheat
 medula
 medulla
@@ -181544,6 +181639,7 @@ megrim
 megrimish
 megrims
 meguilp
+meh
 mehalla
 mehari
 meharis
@@ -184789,6 +184885,8 @@ microblephary
 microbody
 microbrachia
 microbrachius
+microbrew
+microbrews
 microburet
 microburette
 microburner
@@ -192924,6 +193022,8 @@ mujik
 mujiks
 mujtahid
 mukade
+mukbang
+mukbangs
 mukden
 mukhtar
 mukluk
@@ -195374,6 +195474,8 @@ na
 naa
 naam
 naaman
+naan
+naans
 naassenes
 nab
 nabak
@@ -199790,6 +199892,7 @@ nomologies
 nomologist
 nomology
 nomopelmous
+nomophobia
 nomophylax
 nomophyllous
 nomos
@@ -207280,6 +207383,8 @@ nonzoologic
 nonzoological
 nonzoologically
 noo
+noob
+noobs
 noodle
 noodled
 noodledom
@@ -211372,6 +211477,7 @@ omentums
 omentuta
 omer
 omers
+omg
 omicron
 omicrons
 omikron
@@ -211603,6 +211709,7 @@ onanist
 onanistic
 onanists
 onboard
+onboarding
 onca
 once
 oncer
@@ -220042,6 +220149,10 @@ overshadowingly
 overshadowment
 overshadows
 overshake
+overshare
+overshared
+overshares
+oversharing
 oversharp
 oversharpness
 overshave
@@ -227291,6 +227402,8 @@ paysagist
 paysanne
 payt
 paytamine
+paywall
+paywalls
 payyetan
 pazaree
 pazend
@@ -233764,6 +233877,10 @@ photoset
 photosets
 photosetter
 photosetting
+photoshop
+photoshopped
+photoshopping
+photoshops
 photospectroheliograph
 photospectroscope
 photospectroscopic
@@ -234885,6 +235002,8 @@ pickin
 picking
 pickings
 pickle
+pickleball
+pickleballs
 pickled
 picklelike
 pickleman
@@ -236751,6 +236870,11 @@ pivots
 piwut
 pix
 pixel
+pixelate
+pixelated
+pixelates
+pixelating
+pixelation
 pixels
 pixes
 pixie
@@ -239280,6 +239404,7 @@ podatus
 podaxonia
 podaxonial
 podcast
+podcasted
 podcaster
 podcasters
 podcasting
@@ -256432,6 +256557,7 @@ qindarka
 qindars
 qintar
 qintars
+qis
 qiviut
 qiviuts
 qiyas
@@ -269979,6 +270105,10 @@ returnless
 returnlessly
 returns
 retuse
+retweet
+retweeted
+retweeting
+retweets
 retwine
 retwined
 retwining
@@ -284367,6 +284497,8 @@ sensatory
 sense
 sensed
 senseful
+sensei
+senseis
 senseless
 senselessly
 senselessness
@@ -286668,6 +286800,8 @@ shaw
 shawabti
 shawanese
 shawano
+shawarma
+shawarmas
 shawed
 shawfowl
 shawing
@@ -298717,6 +298851,8 @@ sporification
 sporing
 sporiparity
 sporiparous
+spork
+sporks
 sporoblast
 sporobolus
 sporocarp
@@ -300485,6 +300621,7 @@ stannaries
 stannary
 stannate
 stannator
+stanned
 stannel
 stanner
 stanners
@@ -300493,6 +300630,7 @@ stannic
 stannid
 stannide
 stanniferous
+stanning
 stannite
 stannites
 stanno
@@ -300502,6 +300640,7 @@ stannoxyl
 stannum
 stannums
 stannyl
+stans
 stantibus
 stanza
 stanzaed
@@ -307799,6 +307938,8 @@ sude
 sudes
 sudic
 sudiform
+sudoku
+sudokus
 sudor
 sudoral
 sudoresis
@@ -317106,6 +317247,7 @@ telegraphoscope
 telegraphs
 telegraphy
 telegu
+telehealth
 telehydrobarometer
 telei
 teleia
@@ -341521,9 +341663,11 @@ unfolds
 unfoldure
 unfoliaged
 unfoliated
+unfollow
 unfollowable
 unfollowed
 unfollowing
+unfollows
 unfomented
 unfond
 unfondled
@@ -351236,7 +351380,9 @@ unsubordinative
 unsuborned
 unsubpoenaed
 unsubrogated
+unsubscribe
 unsubscribed
+unsubscribes
 unsubscribing
 unsubscripted
 unsubservient
@@ -353661,6 +353807,10 @@ upcurving
 upcushion
 upcut
 upcutting
+upcycle
+upcycled
+upcycles
+upcycling
 updart
 updarted
 updarting
@@ -356093,12 +356243,18 @@ vantbrass
 vanterie
 vantguard
 vanward
+vape
+vaped
+vaper
+vapers
+vapes
 vapid
 vapidism
 vapidities
 vapidity
 vapidly
 vapidness
+vaping
 vapocauterization
 vapographic
 vapography
@@ -356647,6 +356803,11 @@ vawards
 vawntie
 vaws
 vax
+vaxed
+vaxes
+vaxxed
+vaxxes
+vaxxing
 vayu
 vazimba
 vb
@@ -362738,6 +362899,8 @@ webfeet
 webfoot
 webfooted
 webfooter
+webinar
+webinars
 webless
 weblike
 webmaker
@@ -363518,6 +363681,7 @@ whatabouts
 whatchy
 whatd
 whatever
+whatevs
 whatkin
 whatlike
 whatman
@@ -364721,7 +364885,9 @@ wigwam
 wigwams
 wiikite
 wikeno
+wiki
 wiking
+wikis
 wikiup
 wikiups
 wikiwiki
@@ -368396,6 +368562,7 @@ yepeleic
 yepely
 yephede
 yeply
+yeps
 yer
 yerava
 yeraver
@@ -368665,6 +368832,7 @@ yolkiness
 yolkless
 yolks
 yolky
+yolo
 yom
 yomer
 yomim
@@ -368910,6 +369078,7 @@ yup
 yupon
 yupons
 yuppie
+yups
 yuquilla
 yuquillas
 yurak
@@ -369139,6 +369308,7 @@ zarnich
 zarp
 zarzuela
 zarzuelas
+zas
 zastruga
 zastrugi
 zat
@@ -369802,6 +369972,8 @@ zoocytial
 zoocytium
 zoodendria
 zoodendrium
+zoodle
+zoodles
 zoodynamic
 zoodynamics
 zooecia

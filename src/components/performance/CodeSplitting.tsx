@@ -133,6 +133,15 @@ export function preloadComponents() {
       console.warn('Failed to preload component:', error);
     });
   });
+
+  // Warm the dictionary (fetch + parse of ~370k words) while the user is
+  // still on the title screen, so starting a game doesn't wait on it.
+  // loadDictionary() caches its promise, so the game's own call is a no-op.
+  import('@/utils/dictionaryManager')
+    .then(({ dictionaryManager }) => dictionaryManager.loadDictionary())
+    .catch(error => {
+      console.warn('Failed to preload dictionary:', error);
+    });
 }
 
 // Component preloader
