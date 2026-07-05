@@ -90,7 +90,17 @@ class DictionaryManager {
       }
 
       this.dictionary = processedWords;
-      this.sortedWords = Array.from(processedWords).sort();
+      // words.txt ships pre-sorted, so insertion order is already sorted;
+      // only pay for a sort if that ever stops being true.
+      const wordsArray = Array.from(processedWords);
+      let isSorted = true;
+      for (let i = 1; i < wordsArray.length; i++) {
+        if (wordsArray[i - 1] > wordsArray[i]) {
+          isSorted = false;
+          break;
+        }
+      }
+      this.sortedWords = isSorted ? wordsArray : wordsArray.sort();
       
       const loadTime = Date.now() - startTime;
       this.status = {
@@ -187,22 +197,32 @@ class DictionaryManager {
 
   private findSimilarWords(word: string, maxSuggestions: number = 3): string[] {
     if (word.length < 3) return [];
-    
+
     const suggestions: string[] = [];
-    
+
     // Look for words that start with the same 2-3 letters
     const prefix = word.substring(0, Math.min(3, word.length));
-    
-    for (const dictWord of this.sortedWords) {
+
+    // Binary search for the first word >= prefix, then scan only the
+    // contiguous block of words sharing that prefix.
+    let lo = 0;
+    let hi = this.sortedWords.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (this.sortedWords[mid] < prefix) lo = mid + 1;
+      else hi = mid;
+    }
+
+    for (let i = lo; i < this.sortedWords.length; i++) {
+      const dictWord = this.sortedWords[i];
+      if (!dictWord.startsWith(prefix)) break;
       if (suggestions.length >= maxSuggestions) break;
-      
-      if (dictWord.startsWith(prefix) && 
-          Math.abs(dictWord.length - word.length) <= 2 &&
-          dictWord !== word) {
+
+      if (Math.abs(dictWord.length - word.length) <= 2 && dictWord !== word) {
         suggestions.push(dictWord);
       }
     }
-    
+
     return suggestions;
   }
 
