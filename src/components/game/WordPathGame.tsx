@@ -1,50 +1,44 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { computeBenchmarksFromWordCount, computeBoardSpecificBenchmarks, computeDynamicBenchmarks, type Benchmarks, type BoardAnalysis } from "@/lib/benchmarks";
-import { analyzeBoardComposition, createBoardAnalysisForBenchmarks } from "@/lib/boardAnalysis";
+import { analyzeBoardComposition } from "@/lib/boardAnalysis";
 import { ACHIEVEMENTS, type AchievementId, vowelRatioOfWord } from "@/lib/achievements";
-import { calculateXpGain } from "@/lib/progression";
 import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
 import { useConsumables } from "@/hooks/useConsumables";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/ConsumableInventory";
-import { CONSUMABLES, ACHIEVEMENT_CONSUMABLE_REWARDS, type ConsumableId } from "@/lib/consumables";
+import { CONSUMABLES, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
-import { saveDailyChallengeResultBulletproof, type SaveProgress } from "@/utils/dailyChallengeResultSaver";
-import { DailyChallengeSaveIndicator } from "@/components/ui/daily-challenge-save-indicator";
+import { saveDailyChallengeResultBulletproof } from "@/utils/dailyChallengeResultSaver";
 import { SpecialTilePreview } from "@/components/ui/special-tile-preview";
 import { previewNextSpecialTiles } from "@/utils/specialTilePreview";
 import { dictionaryManager } from "@/utils/dictionaryManager";
-import { getPuzzleById, getNextPuzzle, type PuzzleBoard } from "@/lib/puzzleBoards";
+import { getPuzzleById, getNextPuzzle } from "@/lib/puzzleBoards";
 import { useTileSkin } from "@/hooks/useTileSkin";
-import { getBenchmarkColor } from "@/lib/tileSkins";
 import {
   type WaveChallenge,
   type BossWave,
   type PowerUp,
   type ActivePowerUp,
   type ComboState,
-  type ShopItem,
   type ChoiceEvent,
-  type SurvivalState,
   type PlayerPerformance,
   getRandomWaveChallenge,
   getRandomBossWave,
   getRandomPowerUp,
   POWER_UPS,
-  type PowerUpType,
   shouldShowShop,
   shouldTriggerEvent
 } from "@/lib/survivalMode";
@@ -58,7 +52,6 @@ import {
   generateShopItems,
   generateRandomEvent,
   applyEventEffect,
-  calculateObstacleCount,
   updatePerformance
 } from "@/lib/survivalModeLogic";
 import {
@@ -68,8 +61,7 @@ import {
   ComboDisplay,
   PowerUpsInventory,
   ShopModal,
-  ChoiceEventModal,
-  WaveCompleteModal
+  ChoiceEventModal
 } from "@/components/game/SurvivalModeUI";
 import type { Pos, SpecialTile, SpecialTileType } from "@/types/game";
 import { GameBoard } from "./GameBoard";
@@ -78,7 +70,7 @@ const SHARE_URL = "lexichain.banton-digital.com";
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
 const within = (r: number, c: number, size: number) => r >= 0 && c >= 0 && r < size && c < size;
 const neighbors = (a: Pos, b: Pos) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c)) <= 1;
-type GameMode = "classic" | "target" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
+type GameMode = "classic" | "target" | "daily" | "daily_5x5" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
 type GameSettings = {
   scoreThreshold: number;
   mode: GameMode;
@@ -86,7 +78,6 @@ type GameSettings = {
   difficulty: "easy" | "medium" | "hard" | "expert";
   gridSize: number;
   dailyMovesLimit: number;
-  blitzTimeLimit: number;
 };
 
 // LETTERS is imported from @/lib/letterRarity
@@ -298,13 +289,7 @@ const VOWELS = new Set(["A", "E", "I", "O", "U", "Y"]);
 const VOWEL_POOL = LETTERS.filter(([ch]) => VOWELS.has(ch));
 const CONSONANT_POOL = LETTERS.filter(([ch]) => !VOWELS.has(ch));
 
-// Scoring constants - RECALIBRATED
-const RARITY_MULTIPLIER = 3.0; // increased impact of rare letters
-const ULTRA_RARE_MULTIPLIER = 1.5; // additional multiplier for ultra-rare letters
-const STREAK_TARGET_LEN = 4; // reduced qualifying length for streaks
-
 // Special tiles constants
-const SPECIAL_TILE_SCORE_THRESHOLD = 150;
 const SPECIAL_TILE_RARITIES = {
   stone: 0.15,
   wild: 0.05,
@@ -349,7 +334,6 @@ type ScoreBreakdown = {
   linkBonus: number;
   linkMultiplier: number;
   lengthBonus: number;
-  timeBonus: number;
   multipliers: {
     tileMultiplier: number;
     consumableMultiplier: number;
@@ -368,15 +352,13 @@ function computeScoreBreakdown(params: {
   specialTiles: SpecialTile[][];
   lastWordTiles: Set<string>;
   streak: number;
-  mode: "classic" | "daily" | "daily_5x5" | "target" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
-  blitzMultiplier: number;
+  mode: "classic" | "daily" | "daily_5x5" | "target" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   timeAttackSpeedMultiplier?: number;
   activeEffects: Array<{
     id: string;
     data?: Record<string, unknown>;
   }>;
   baseMode?: "hybrid" | "square";
-  chainMode?: "cappedLinear" | "linear";
 }): ScoreBreakdown {
   const {
     actualWord,
@@ -386,11 +368,9 @@ function computeScoreBreakdown(params: {
     lastWordTiles,
     streak,
     mode,
-    blitzMultiplier,
     timeAttackSpeedMultiplier = 1.0,
     activeEffects,
-    baseMode = "hybrid",
-    chainMode = "cappedLinear"
+    baseMode = "hybrid"
   } = params;
   const wordLen = actualWord.length;
   // NEW: Enhanced word length scoring - quadratic emphasis on length
@@ -445,8 +425,6 @@ function computeScoreBreakdown(params: {
   const taxTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "tax").length;
   const taxMultiplier = taxTilesInPath > 0 ? Math.pow(0.7, taxTilesInPath) : 1;
 
-  const timeBonus = 0; // Removed blitz functionality
-
   const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
   let consumableMultiplier = 1;
   if (scoreMultiplierEffect && typeof scoreMultiplierEffect.data?.multiplier === "number") {
@@ -472,9 +450,6 @@ function computeScoreBreakdown(params: {
     case "zen":
       modeMultiplier = 0.5;
       break;
-    case "blitz":
-      modeMultiplier = blitzMultiplier;
-      break;
     default:
       modeMultiplier = 1;
   }
@@ -482,7 +457,7 @@ function computeScoreBreakdown(params: {
   const combinedMultiplierRaw = tileMultiplier * consumableMultiplier * modeMultiplier;
   const combinedApplied = combinedMultiplierRaw; // No cap - multipliers stack freely
   const capped = false;
-  const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + chainBonus + timeBonus) * linkMultiplier);
+  const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + chainBonus) * linkMultiplier);
   const total = Math.round(totalBeforeMultipliers * combinedApplied * taxMultiplier);
   return {
     base,
@@ -494,7 +469,6 @@ function computeScoreBreakdown(params: {
     linkBonus,
     linkMultiplier,
     lengthBonus,
-    timeBonus,
     multipliers: {
       tileMultiplier,
       consumableMultiplier,
@@ -550,7 +524,6 @@ function probeGrid(grid: string[][], wordSet: Set<string>, sortedArr: string[], 
   // Analysis tracking
   const letterFreq = new Map<string, number>();
   let totalWordLength = 0;
-  let maxWordScore = 0;
   let totalRarityScore = 0;
 
   // Initialize letter frequency map for the board
@@ -582,7 +555,6 @@ function probeGrid(grid: string[][], wordSet: Set<string>, sortedArr: string[], 
         path: pp,
         word
       } = cur;
-      const k = keyOf(pos);
       if (pp.find(p => p.r === pos.r && p.c === pos.c)) continue;
       const nextPath = [...pp, pos];
       const nextWord = word + grid[pos.r][pos.c].toLowerCase();
@@ -592,7 +564,7 @@ function probeGrid(grid: string[][], wordSet: Set<string>, sortedArr: string[], 
           words,
           linkFound,
           usage,
-          analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, maxWordScore, totalRarityScore, N)
+          analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, totalRarityScore)
         } : {
           words,
           linkFound,
@@ -608,8 +580,6 @@ function probeGrid(grid: string[][], wordSet: Set<string>, sortedArr: string[], 
           // Analysis calculations
           if (includeAnalysis) {
             totalWordLength += nextWord.length;
-            const wordScore = calculateWordScore(nextWord, nextPath, grid);
-            maxWordScore = Math.max(maxWordScore, wordScore);
             totalRarityScore += getRarityScore(nextWord);
           }
           for (const s of pathSets) {
@@ -631,7 +601,7 @@ function probeGrid(grid: string[][], wordSet: Set<string>, sortedArr: string[], 
               words,
               linkFound,
               usage,
-              analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, maxWordScore, totalRarityScore, N)
+              analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, totalRarityScore)
             } : {
               words,
               linkFound,
@@ -662,19 +632,18 @@ function probeGrid(grid: string[][], wordSet: Set<string>, sortedArr: string[], 
     words,
     linkFound,
     usage,
-    analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, maxWordScore, totalRarityScore, N)
+    analysis: computeBoardAnalysis(words, letterFreq, totalWordLength, totalRarityScore)
   } : {
     words,
     linkFound,
     usage
   };
 }
-function computeBoardAnalysis(words: Set<string>, letterFreq: Map<string, number>, totalWordLength: number, maxWordScore: number, totalRarityScore: number, gridSize: number): BoardAnalysis {
+function computeBoardAnalysis(words: Set<string>, letterFreq: Map<string, number>, totalWordLength: number, totalRarityScore: number): BoardAnalysis {
   const wordCount = words.size;
   const avgWordLength = wordCount > 0 ? totalWordLength / wordCount : 4;
 
   // Connectivity score based on letter distribution evenness
-  const totalLetters = gridSize * gridSize;
   const uniqueLetters = letterFreq.size;
   const connectivityScore = Math.min(1.5, uniqueLetters / 8); // Higher diversity = better connectivity
 
@@ -712,24 +681,6 @@ function computeBoardAnalysis(words: Set<string>, letterFreq: Map<string, number
     letterDistribution: letterFreq,
     maxScorePotential: estimatedMaxScore
   };
-}
-function calculateWordScore(word: string, path: Pos[], grid: string[][]): number {
-  // Use the same quadratic formula as the actual game scoring
-  const len = word.length;
-  const baseScore = len * len * 4 + len * 12;
-
-  // Calculate rarity bonus using actual game logic
-  const rarityCount = path.reduce((acc, p) => acc + letterRarity(grid[p.r][p.c]), 0);
-  const ultraRareCount = path.reduce((acc, p) => acc + (["J", "Q", "X", "Z"].includes(grid[p.r][p.c].toUpperCase()) ? 1 : 0), 0);
-  const rarityBonus = Math.round(baseScore * (rarityCount * 0.08)) + Math.round(baseScore * (ultraRareCount * 0.12));
-
-  // Add length bonuses
-  let lengthBonus = 0;
-  if (len >= 5) lengthBonus += 25;
-  if (len >= 6) lengthBonus += 50;
-  if (len >= 7) lengthBonus += 100;
-  if (len >= 8) lengthBonus += 150;
-  return baseScore + rarityBonus + lengthBonus;
 }
 function getRarityScore(word: string): number {
   // Updated to match actual game rarity calculation
@@ -1159,25 +1110,24 @@ function WordPathGame({
 }: {
   onBackToTitle?: () => void;
   onBackToAdvancedModes?: () => void;
-  initialMode?: "classic" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
+  initialMode?: "classic" | "daily" | "daily_5x5" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   initialPuzzleId?: string;
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
-  const {
-    updateGoalProgress
-  } = useGoals(user);
+  // Goal tracking runs for its side effects; no return values are consumed here.
+  useGoals(user);
   const dailyChallengeState = useDailyChallengeState(getDailySeed());
   const dailyChallengeState5x5 = useDailyChallengeState(getDailySeed() + "-5x5");
   const {
     inventory: consumableInventory,
     activeEffects,
     useConsumable,
-    awardConsumables,
     addActiveEffect,
     removeActiveEffect
   } = useConsumables(user);
-  const { syncBackupResults } = useOfflineSync();
+  // Offline sync runs for its side effects; no return values are consumed here.
+  useOfflineSync();
   const isMobile = useIsMobile();
   const { skin } = useTileSkin();
   const [size, setSize] = useState(4);
@@ -1205,15 +1155,12 @@ function WordPathGame({
   const [discoverableCount, setDiscoverableCount] = useState(0);
   const [unlocked, setUnlocked] = useState<Set<AchievementId>>(new Set());
   const [gameOver, setGameOver] = useState(false);
-  const [saveProgress, setSaveProgress] = useState<SaveProgress | null>(null);
   const [finalGrade, setFinalGrade] = useState<"None" | "Bronze" | "Silver" | "Gold" | "Platinum">("None");
   const [streak, setStreak] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [usedWordsExpanded, setUsedWordsExpanded] = useState(false);
-  const [xpGained, setXpGained] = useState(0);
-  const [showXpGain, setShowXpGain] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
     scoreThreshold: benchmarks?.bronze || 100,
     // Use Bronze threshold
@@ -1221,12 +1168,10 @@ function WordPathGame({
     targetTier: "silver",
     difficulty: "medium",
     gridSize: 4,
-    dailyMovesLimit: getDailyMovesLimit(),
-    blitzTimeLimit: 60
+    dailyMovesLimit: getDailyMovesLimit()
   });
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [affectedTiles, setAffectedTiles] = useState<Set<string>>(new Set());
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const [touchStartPos, setTouchStartPos] = useState<{
     x: number;
     y: number;
@@ -1242,12 +1187,7 @@ function WordPathGame({
 
   // Consumable activation states
   const [activatedConsumables, setActivatedConsumables] = useState<Set<ConsumableId>>(new Set());
-  const [timeRemaining, setTimeRemaining] = useState(60);
-  const [timerInterval, setTimerInterval] = useState<number | null>(null);
-  const [blitzMultiplier, setBlitzMultiplier] = useState(1);
-  const [blitzStarted, setBlitzStarted] = useState(false);
-  const [blitzPaused, setBlitzPaused] = useState(false);
-  
+
   // Advanced mode states
   const [timeAttackTimeRemaining, setTimeAttackTimeRemaining] = useState(60);
   const [timeAttackStarted, setTimeAttackStarted] = useState(false);
@@ -1291,11 +1231,9 @@ function WordPathGame({
   const [survivalDifficultyFrozen, setSurvivalDifficultyFrozen] = useState(0);
   const [survivalChallengeTimeRemaining, setSurvivalChallengeTimeRemaining] = useState<number | undefined>(undefined);
   const [survivalPointsMultiplier, setSurvivalPointsMultiplier] = useState(1.0);
-  const [survivalShowWaveComplete, setSurvivalShowWaveComplete] = useState(false);
-  const [survivalWaveCompleteData, setSurvivalWaveCompleteData] = useState<any>(null);
 
   const [zenHintsUsed, setZenHintsUsed] = useState(0);
-  const [zenUndoStack, setZenUndoStack] = useState<Array<{board: string[][], specialTiles: SpecialTile[][], usedWords: typeof usedWords, score: number}>>([]);
+  const [zenUndoStack, setZenUndoStack] = useState<Array<{board: string[][], specialTiles: SpecialTile[][], usedWords: typeof usedWords, score: number, lastWordTiles: Set<string>}>>([]);
   
   // Puzzle mode states
   const [puzzleMode, setPuzzleMode] = useState(false);
@@ -1377,53 +1315,6 @@ function WordPathGame({
     setGameStartTime(Date.now());
   }, [board]);
 
-  // Removed blitz timer functionality - TEMPORARILY DISABLED
-  // useEffect(() => {
-  //   if (settings.mode === "blitz" && blitzStarted && !blitzPaused && !gameOver) {
-  //     const interval = setInterval(() => {
-  //       setTimeRemaining(prev => {
-  //         const newTime = prev - 1;
-  //         
-  //         // Update multiplier based on time remaining
-  //         if (newTime <= 10) {
-  //           setBlitzMultiplier(3);
-  //         } else if (newTime <= 30) {
-  //           setBlitzMultiplier(2);
-  //         } else {
-  //           setBlitzMultiplier(1);
-  //         }
-  //         
-  //           if (newTime <= 0) {
-  //             setGameOver(true);
-  //             setFinalGrade(score >= (benchmarks?.platinum || 4000) ? "Platinum"
-  //               : score >= (benchmarks?.gold || 2200) ? "Gold"
-  //               : score >= (benchmarks?.silver || 1200) ? "Silver"
-  //               : score >= (benchmarks?.bronze || 500) ? "Bronze"
-  //               : "None");
-  //             
-  //             // Save state when blitz game ends
-  //             saveGameState();
-  //             
-  //             return 0;
-  //         }
-  //         
-  //         return newTime;
-  //       });
-  //     }, 1000);
-  //     
-  //     setTimerInterval(interval as unknown as number);
-  //     
-  //     return () => {
-  //       if (interval) clearInterval(interval);
-  //     };
-  //   } else {
-  //     if (timerInterval) {
-  //       clearInterval(timerInterval);
-  //       setTimerInterval(null);
-  //     }
-  //   }
-  // }, [settings.mode, blitzStarted, blitzPaused, gameOver, score, benchmarks]);
-
   // Time Attack timer with visual warnings
   useEffect(() => {
     if (settings.mode === "time_attack" && timeAttackStarted && !gameOver) {
@@ -1439,30 +1330,12 @@ function WordPathGame({
           }
           
           if (newTime <= 0) {
-            // Time's up! Calculate and display XP, then end game
-            const longestWord = usedWords.reduce((longest, wordEntry) => 
-              wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-            );
             
-            const xpGain = calculateXpGain({
-              baseScore: score,
-              wordsFound: usedWords.length,
-              longestWord: longestWord.length,
-              gameMode: settings.mode,
-              difficulty: settings.difficulty,
-              timeBonus: 0,
-              streakBonus: 0,
-              perfectGame: false
-            });
             
-            setXpGained(xpGain);
-            setShowXpGain(true);
             
-            // Hide XP gain display after 5 seconds
-            setTimeout(() => setShowXpGain(false), 5000);
             
             // Show completion toast
-            toast.success(`⏱️ Time Attack Complete! Score: ${score} • +${xpGain} XP`, {
+            toast.success(`⏱️ Time Attack Complete! Score: ${score}`, {
               duration: 4000
             });
             
@@ -1481,24 +1354,12 @@ function WordPathGame({
   const saveGameResult = useCallback(async () => {
     if (settings.mode === "daily" || settings.mode === "daily_5x5" || settings.mode === "practice" || !gameOver) return;
     if (!user) {
-      console.log("Cannot save XP - user not logged in");
+      console.log("Cannot save game result - user not logged in");
       return;
     }
-    
+
     const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
-    
-    // Calculate XP gain
-    const xpGain = calculateXpGain({
-      baseScore: score,
-      wordsFound: usedWords.length,
-      longestWord: longestWord.length,
-      gameMode: settings.mode,
-      difficulty: settings.difficulty,
-      timeBonus: 0,
-      streakBonus: 0,
-      perfectGame: finalGrade === "Platinum"
-    });
-    
+
     try {
       const gameResult = {
         user_id: user.id,
@@ -1512,57 +1373,12 @@ function WordPathGame({
         grid_size: size,
         game_mode: settings.mode
       };
-      
-      // Save game result
-      const { data, error } = await supabase
-        .from("standard_game_results")
-        .insert(gameResult)
-        .select()
-        .single();
-      
-      if (error) throw error;
 
-      // Update user's total XP with retry logic for mobile
-      let xpUpdateSuccess = false;
-      let retries = 3;
-      
-      while (!xpUpdateSuccess && retries > 0) {
-        try {
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .select("total_xp")
-            .eq("user_id", user.id)
-            .single();
-          
-          if (profileError) throw profileError;
-          
-          const newTotalXp = (profileData?.total_xp || 0) + xpGain;
-          
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ total_xp: newTotalXp })
-            .eq("user_id", user.id);
-          
-          if (updateError) throw updateError;
-          
-          xpUpdateSuccess = true;
-          console.log(`✅ XP saved: +${xpGain} XP (Total: ${newTotalXp})`);
-        } catch (xpError) {
-          retries--;
-          console.error(`XP save attempt failed (${retries} retries left):`, xpError);
-          
-          if (retries > 0) {
-            // Wait before retry (exponential backoff)
-            await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
-          } else {
-            // Store XP locally for later sync if all retries fail
-            const pendingXp = localStorage.getItem('pending_xp') || '0';
-            localStorage.setItem('pending_xp', String(parseInt(pendingXp) + xpGain));
-            console.log(`📱 XP stored locally for later sync: ${xpGain}`);
-            toast.warning("XP will be synced when connection improves");
-          }
-        }
-      }
+      const { error } = await supabase
+        .from("standard_game_results")
+        .insert(gameResult);
+
+      if (error) throw error;
     } catch (error) {
       console.error("Error saving game result:", error);
       toast.error("Failed to save game result");
@@ -1607,43 +1423,36 @@ function WordPathGame({
       console.warn('Failed to save board analysis (non-critical):', boardAnalysisError);
     }
     
-    // Use bulletproof save with progress feedback
+    // Use bulletproof save (progress feedback UI was removed, so no onProgress callback)
     const saveSuccess = await saveDailyChallengeResultBulletproof(
       user,
       score,
       finalGrade,
       enhancedData,
-      (progress) => {
-        setSaveProgress(progress);
-      },
+      undefined,
       settings.mode
     );
-    
+
     if (!saveSuccess) {
       console.log('[Daily Challenge] Result saved to local backup for later sync');
     }
-    
-    // Clear progress after a delay to show final state
-    setTimeout(() => setSaveProgress(null), 3000);
   };
 
-  // Save game result when game ends
+  // Save game result exactly once when game ends
+  const resultSavedRef = useRef(false);
   useEffect(() => {
-    if (gameOver) {
-      if (settings.mode === "daily" || settings.mode === "daily_5x5") {
-        saveDailyChallengeResult();
-      } else {
-        saveGameResult();
-      }
+    if (!gameOver) {
+      resultSavedRef.current = false;
+      return;
     }
-  }, [gameOver, user, settings.mode]);
-
-  // Auto-save game result when game ends (for standard modes)
-  useEffect(() => {
-    if (gameOver && user && settings.mode !== "daily" && settings.mode !== "daily_5x5" && settings.mode !== "practice") {
+    if (resultSavedRef.current || !user) return;
+    resultSavedRef.current = true;
+    if (settings.mode === "daily" || settings.mode === "daily_5x5") {
+      saveDailyChallengeResult();
+    } else {
       saveGameResult();
     }
-  }, [gameOver, user, settings.mode, saveGameResult]);
+  }, [gameOver, user, settings.mode]);
 
   // Save daily challenge state (shared logic for both daily and daily_5x5 modes)
   const saveDailyStateForMode = async (
@@ -1760,13 +1569,8 @@ function WordPathGame({
         });
       
       if (!error) {
-        // Award XP for puzzle completion
-        const xpGain = puzzle.xpReward + (optionalFound * 20);
-        setXpGained(xpGain);
-        setShowXpGain(true);
-        setTimeout(() => setShowXpGain(false), 5000);
         
-        toast.success(`🧩 Puzzle Complete! +${xpGain} XP`, {
+        toast.success(`🧩 Puzzle Complete!`, {
           description: `All required words found! ${optionalFound} bonus words.`
         });
         
@@ -1819,7 +1623,7 @@ function WordPathGame({
         console.log("📖 Enhanced dictionary loaded:", status);
         
           // Only generate a board for classic mode or when no specific mode is set
-          // Daily and blitz modes handle their own board generation
+          // Daily mode handles its own board generation
           if (!initialMode || initialMode === "classic" || initialMode === "time_attack" || initialMode === "zen" || initialMode === "endless" || initialMode === "puzzle" || initialMode === "survival" || initialMode === "chaos") {
             setIsGenerating(true);
             let newBoard: string[][];
@@ -2048,7 +1852,6 @@ function WordPathGame({
     }
     
     const actualWord = validatedWord;
-    const wildUsed = true;
     const hasStoneTile = wordPath.some(p => specialTiles[p.r][p.c].type === "stone");
     if (hasStoneTile) {
       toast.error("Cannot use words containing Stone tiles!");
@@ -2069,11 +1872,9 @@ function WordPathGame({
       lastWordTiles,
       streak,
       mode: settings.mode,
-      blitzMultiplier,
       timeAttackSpeedMultiplier,
       activeEffects,
-      baseMode: "square",
-      chainMode: "linear"
+      baseMode: "square"
     });
     const totalGain = breakdown.total;
     setUsedWords(prev => [...prev, {
@@ -2128,7 +1929,8 @@ function WordPathGame({
         board: board ? board.map(row => [...row]) : [],
         specialTiles: specialTiles.map(row => row.map(tile => ({ ...tile }))),
         usedWords: [...usedWords],
-        score: score
+        score: score,
+        lastWordTiles: new Set(lastWordTiles)
       }]);
     }
 
@@ -2253,308 +2055,19 @@ function WordPathGame({
         const grade = settings.targetTier[0].toUpperCase() + settings.targetTier.slice(1) as "Bronze" | "Silver" | "Gold" | "Platinum";
         setFinalGrade(grade);
         
-        // Calculate and display XP gained
-        const longestWord = usedWords.reduce((longest, wordEntry) => 
-          wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-        );
         
-        const xpGain = calculateXpGain({
-          baseScore: finalScore,
-          wordsFound: usedWords.length,
-          longestWord: longestWord.length,
-          gameMode: settings.mode,
-          difficulty: settings.difficulty,
-          timeBonus: 0,
-          streakBonus: 0,
-          perfectGame: grade === "Platinum"
-        });
         
-        setXpGained(xpGain);
-        setShowXpGain(true);
-        setTimeout(() => setShowXpGain(false), 5000);
         
         setGameOver(true);
-        toast.success(`🎯 Target reached: ${grade} • +${xpGain} XP`);
+        toast.success(`🎯 Target reached: ${grade}`);
       }
     }
     navigator.vibrate?.(50);
     toast.success(`✓ ${actualWord.toUpperCase()}${multiplier > 1 ? ` (${multiplier}x)` : ""}`);
 
-    // Time Attack mode: Update speed multiplier based on words found
-    if (settings.mode === "time_attack" && timeAttackStarted) {
-      const newWordsFound = timeAttackWordsFound + 1;
-      setTimeAttackWordsFound(newWordsFound);
-      
-      // Speed multiplier increases every 3 words (1.0x -> 1.2x -> 1.4x -> 1.6x -> 2.0x max)
-      const newMultiplier = Math.min(2.0, 1.0 + Math.floor(newWordsFound / 3) * 0.2);
-      if (newMultiplier > timeAttackSpeedMultiplier) {
-        setTimeAttackSpeedMultiplier(newMultiplier);
-        toast.success(`⚡ Speed Multiplier: ${newMultiplier.toFixed(1)}x!`, { duration: 2000 });
-      }
-      
-      // Time bonus: Add 2 seconds for each word found (longer words give more time)
-      const timeBonus = Math.min(5, Math.floor(actualWord.length / 2));
-      setTimeAttackTimeRemaining(prev => Math.min(60, prev + timeBonus));
-      if (timeBonus > 0) {
-        toast.info(`+${timeBonus}s time bonus!`, { duration: 1500 });
-      }
-    }
-    
-    // Enhanced Survival mode: Track words and check for challenge/boss completion
-    if (settings.mode === "survival" && survivalStarted) {
-      // Update combo system
-      const hasSafetyNet = survivalActivePowerUps.some(ap => ap.powerUp.type === 'safety_net' && (ap.remainingUses || 0) > 0);
+    processTimeAttackWord(actualWord);
 
-      // BUG FIX #3: Calculate time before updating combo (to use old timestamp)
-      const timeSpent = survivalComboState.lastWordTime > 0
-        ? (Date.now() - survivalComboState.lastWordTime) / 1000
-        : 5; // Default 5 seconds for first word
-
-      const { newCombo, rewards } = updateCombo(survivalComboState, true, hasSafetyNet);
-      setSurvivalComboState(newCombo);
-
-      // Apply combo multiplier to score
-      const comboScore = Math.floor(totalGain * newCombo.comboMultiplier * survivalPointsMultiplier);
-      const waveScore = survivalWaveScore + comboScore;
-      setSurvivalWaveScore(waveScore);
-
-      // Update performance tracking
-      const updatedPerf = updatePerformance(
-        survivalPerformance,
-        actualWord,
-        newCombo.currentCombo,
-        true,
-        timeSpent
-      );
-      setSurvivalPerformance(updatedPerf);
-
-      // Process combo rewards
-      rewards.forEach(reward => {
-        if (reward === 'common_powerup') {
-          const powerUp = getRandomPowerUp('common');
-          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
-          toast.success(`🎁 Combo reward: ${powerUp.name}!`);
-        } else if (reward === 'rare_powerup') {
-          const powerUp = getRandomPowerUp('rare');
-          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
-          toast.success(`⭐ Rare combo reward: ${powerUp.name}!`);
-        } else if (reward === 'epic_powerup') {
-          const powerUp = getRandomPowerUp('epic');
-          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
-          toast.success(`💎 Epic combo reward: ${powerUp.name}!`);
-        } else if (reward === 'life_fragment') {
-          const newFragments = survivalLifeFragments + 1;
-          if (newFragments >= 3) {
-            setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
-            setSurvivalLifeFragments(0);
-            toast.success('💎 Life fragments combined! +1 life');
-          } else {
-            setSurvivalLifeFragments(newFragments);
-            toast.success(`💎 Life fragment earned! (${newFragments}/3)`);
-          }
-        } else if (reward === 'extra_life') {
-          // BUG FIX #6: Handle 15-word combo reward
-          setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
-          toast.success('❤️ LEGENDARY COMBO! +1 Life!', { duration: 4000 });
-        }
-      });
-
-      // Boss wave logic
-      if (survivalBossWordRequired && survivalCurrentBoss) {
-        const pathPositions = path.map(p => ({ row: p.r, col: p.c }));
-        const bossResult = validateBossWave(
-          survivalCurrentBoss,
-          actualWord,
-          pathPositions,
-          survivalBossProgress,
-          waveScore
-        );
-
-        if (bossResult.valid) {
-          setSurvivalBossProgress(bossResult.progress);
-
-          if (bossResult.complete) {
-            // Boss defeated!
-            toast.success(bossResult.message || '👑 Boss defeated!', { duration: 3000 });
-
-            // Wave complete - check for life recovery and rewards
-            const perfectWave = survivalMistakesThisWave === 0;
-            const newPerfectStreak = perfectWave ? survivalPerfectWaveStreak + 1 : 0;
-            setSurvivalPerfectWaveStreak(newPerfectStreak);
-
-            const recovery = checkLifeRecovery(
-              survivalWave,
-              newPerfectStreak,
-              survivalLifeFragments,
-              true, // boss defeated
-              newCombo.currentCombo
-            );
-
-            if (recovery.lives > 0) {
-              setSurvivalLives(prev => Math.min(prev + recovery.lives, survivalMaxLives));
-              toast.success(recovery.message || `❤️ +${recovery.lives} life!`, { duration: 3000 });
-            }
-            setSurvivalLifeFragments(recovery.fragments);
-
-            // Advance to next wave
-            const nextWave = survivalWave + 1;
-            setSurvivalWave(nextWave);
-            setSurvivalWordsThisWave(0);
-            setSurvivalChallengeProgress(0);
-            setSurvivalBossProgress(0);
-            setSurvivalWaveScore(0);
-            setSurvivalMistakesThisWave(0);
-            setSurvivalBossWordRequired(false);
-            setSurvivalCurrentBoss(null);
-
-            // Check for events or shop
-            if (shouldShowShop(nextWave)) {
-              setSurvivalShowShop(true);
-            } else if (shouldTriggerEvent(nextWave)) {
-              const event = generateRandomEvent(nextWave);
-              if (event) {
-                setSurvivalPendingEvent(event);
-              }
-            } else {
-              // Generate next wave challenge
-              const nextChallenge = getRandomWaveChallenge(nextWave);
-              setSurvivalCurrentChallenge(nextChallenge);
-              toast.info(`🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
-            }
-
-            // BUG FIX #2: Properly expire power-ups and handle durations
-            setSurvivalActivePowerUps(prev =>
-              prev.map(ap => ({
-                ...ap,
-                remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
-              })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
-            );
-
-            if (survivalDifficultyFrozen > 0) {
-              setSurvivalDifficultyFrozen(prev => prev - 1);
-            }
-
-            // BUG FIX #9: Reset double points multiplier after wave
-            if (survivalPointsMultiplier > 1.0) {
-              setSurvivalPointsMultiplier(1.0);
-            }
-          } else if (bossResult.message) {
-            toast.info(bossResult.message);
-          }
-        } else if (bossResult.message) {
-          toast.error(bossResult.message);
-        }
-      }
-      // Regular challenge logic
-      else if (survivalCurrentChallenge) {
-        const pathPositions = path.map(p => ({ row: p.r, col: p.c }));
-        const challengeResult = validateWaveChallenge(
-          survivalCurrentChallenge,
-          actualWord,
-          pathPositions,
-          survivalChallengeProgress,
-          waveScore
-        );
-
-        if (challengeResult.valid) {
-          setSurvivalChallengeProgress(challengeResult.progress);
-          if (challengeResult.message) {
-            toast.info(challengeResult.message);
-          }
-
-          // Check if challenge is complete
-          if (isChallengeComplete(survivalCurrentChallenge, challengeResult.progress)) {
-            const nextWave = survivalWave + 1;
-
-            // Check if next wave is a boss wave
-            if (nextWave % 5 === 0) {
-              // BUG FIX #1: Advance wave counter before boss
-              setSurvivalWave(nextWave);
-              setSurvivalWordsThisWave(0);
-              setSurvivalChallengeProgress(0);
-              setSurvivalWaveScore(0);
-              setSurvivalMistakesThisWave(0);
-
-              const boss = getRandomBossWave(nextWave);
-              setSurvivalCurrentBoss(boss);
-              setSurvivalBossWordRequired(true);
-              setSurvivalCurrentChallenge(null);
-              toast.warning(`${boss.icon} Boss Wave ${nextWave}! ${boss.description}`, { duration: 4000 });
-            } else {
-              // Regular wave complete
-              const perfectWave = survivalMistakesThisWave === 0;
-              const newPerfectStreak = perfectWave ? survivalPerfectWaveStreak + 1 : 0;
-              setSurvivalPerfectWaveStreak(newPerfectStreak);
-
-              const recovery = checkLifeRecovery(
-                survivalWave,
-                newPerfectStreak,
-                survivalLifeFragments,
-                false,
-                newCombo.currentCombo
-              );
-
-              if (recovery.lives > 0) {
-                setSurvivalLives(prev => Math.min(prev + recovery.lives, survivalMaxLives));
-                toast.success(recovery.message || `❤️ +${recovery.lives} life!`, { duration: 3000 });
-              }
-              setSurvivalLifeFragments(recovery.fragments);
-
-              // Advance wave
-              setSurvivalWave(nextWave);
-              setSurvivalWordsThisWave(0);
-              setSurvivalChallengeProgress(0);
-              setSurvivalWaveScore(0);
-              setSurvivalMistakesThisWave(0);
-
-              // Check for shop or events
-              if (shouldShowShop(nextWave)) {
-                setSurvivalShowShop(true);
-              } else if (shouldTriggerEvent(nextWave)) {
-                const event = generateRandomEvent(nextWave);
-                if (event) {
-                  setSurvivalPendingEvent(event);
-                }
-              } else {
-                const nextChallenge = getRandomWaveChallenge(nextWave);
-                setSurvivalCurrentChallenge(nextChallenge);
-                toast.success(`✨ Wave ${survivalWave} complete!\n🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
-              }
-
-              // BUG FIX #2: Properly expire power-ups
-              setSurvivalActivePowerUps(prev =>
-                prev.map(ap => ({
-                  ...ap,
-                  remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
-                })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
-              );
-
-              if (survivalDifficultyFrozen > 0) {
-                setSurvivalDifficultyFrozen(prev => prev - 1);
-              }
-
-              // BUG FIX #9: Reset double points multiplier after wave
-              if (survivalPointsMultiplier > 1.0) {
-                setSurvivalPointsMultiplier(1.0);
-              }
-            }
-          }
-        } else if (challengeResult.message) {
-          toast.error(challengeResult.message);
-          setSurvivalMistakesThisWave(prev => prev + 1);
-        }
-      }
-
-      setSurvivalWordsThisWave(prev => prev + 1);
-
-      // BUG FIX #2: Properly expire word-based power-ups
-      setSurvivalActivePowerUps(prev =>
-        prev.map(ap => ({
-          ...ap,
-          remainingUses: ap.remainingUses !== undefined ? ap.remainingUses - 1 : undefined
-        })).filter(ap => ap.remainingUses === undefined || ap.remainingUses > 0)
-      );
-    }
+    processSurvivalWord(actualWord, wordPath, totalGain);
 
     // Introduce special tiles if conditions are met
     if (shouldIntroduceSpecialTiles(usedWords.length)) {
@@ -2646,7 +2159,9 @@ function WordPathGame({
       if (sorted && dict) {
         // Check if daily challenge is out of moves
         const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
-        const any = hasAnyValidMove(trackedBoard, lastWordTiles.size ? lastWordTiles : new Set(wordPath.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
+        // The just-played word is now the chain link: future words must reuse its tiles,
+        // and it can no longer be replayed.
+        const any = hasAnyValidMove(trackedBoard, new Set(wordPath.map(keyOf)), dict, sorted, new Set([...usedWords.map(entry => entry.word), validatedWord]));
         if (!any || dailyMovesExceeded) {
           if (benchmarks) {
             let grade: "Bronze" | "Silver" | "Gold" | "Platinum" | "None" = "None";
@@ -2678,30 +2193,12 @@ function WordPathGame({
               setSurvivalLives(prev => {
                 const newLives = prev - 1;
                 if (newLives <= 0) {
-                  // Survival mode ended - calculate and display XP
-                  const longestWord = usedWords.reduce((longest, wordEntry) => 
-                    wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-                  );
                   
-                  const xpGain = calculateXpGain({
-                    baseScore: score,
-                    wordsFound: usedWords.length,
-                    longestWord: longestWord.length,
-                    gameMode: settings.mode,
-                    difficulty: settings.difficulty,
-                    timeBonus: 0,
-                    streakBonus: 0,
-                    perfectGame: false
-                  });
                   
-                  setXpGained(xpGain);
-                  setShowXpGain(true);
                   
-                  // Hide XP gain display after 5 seconds
-                  setTimeout(() => setShowXpGain(false), 5000);
                   
                   // Show completion toast
-                  toast.info(`💀 Survival Mode Complete! Wave ${survivalWave} • Score: ${score} • +${xpGain} XP`, {
+                  toast.info(`💀 Survival Mode Complete! Wave ${survivalWave} • Score: ${score}`, {
                     duration: 4000
                   });
                   
@@ -2733,33 +2230,17 @@ function WordPathGame({
             setFinalGrade(grade === "None" ? "None" : grade);
             setGameOver(true);
 
-            // Calculate and display XP gained
-            const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
-            const xpGain = calculateXpGain({
-              baseScore: finalScore,
-              wordsFound: usedWords.length,
-              longestWord: longestWord.length,
-              gameMode: settings.mode,
-              difficulty: settings.difficulty,
-              timeBonus: 0,
-              streakBonus: 0,
-              perfectGame: grade === "Platinum"
-            });
             
-            setXpGained(xpGain);
-            setShowXpGain(true);
             
-            // Hide XP gain display after 5 seconds
-            setTimeout(() => setShowXpGain(false), 5000);
 
             // Save state when game ends
             saveGameState();
             if (dailyMovesExceeded) {
-              toast.info(`Daily Challenge complete! Final score: ${finalScore} (${grade}) • +${xpGain} XP`);
+              toast.info(`Daily Challenge complete! Final score: ${finalScore} (${grade})`);
             } else if (grade !== "None") {
-              toast.info(`Game over • Grade: ${grade} • +${xpGain} XP`);
+              toast.info(`Game over • Grade: ${grade}`);
             } else {
-              toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
+              toast.info(`No valid words remain. Game over!`);
             }
             setUnlocked(prev => {
               const next = new Set(prev);
@@ -2777,29 +2258,13 @@ function WordPathGame({
               return next;
             });
           } else {
-            // Calculate and display XP gained
-            const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
-            const xpGain = calculateXpGain({
-              baseScore: score,
-              wordsFound: usedWords.length,
-              longestWord: longestWord.length,
-              gameMode: settings.mode,
-              difficulty: settings.difficulty,
-              timeBonus: 0,
-              streakBonus: 0,
-              perfectGame: false
-            });
             
-            setXpGained(xpGain);
-            setShowXpGain(true);
             
-            // Hide XP gain display after 5 seconds
-            setTimeout(() => setShowXpGain(false), 5000);
 
             if (dailyMovesExceeded) {
-              toast.info(`Daily Challenge complete! • +${xpGain} XP`);
+              toast.info(`Daily Challenge complete!`);
             } else {
-              toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
+              toast.info(`No valid words remain. Game over!`);
             }
             setGameOver(true);
 
@@ -3062,34 +2527,16 @@ function WordPathGame({
     setShowDifficultyDialog(true);
   }
   
-  // End the current game and collect XP
   async function onEndGame() {
     if (settings.mode === "classic" && !gameOver && (score > 0 || usedWords.length > 0)) {
-      // Calculate and display XP gained
-      const longestWord = usedWords.reduce((longest, wordEntry) => wordEntry.word.length > longest.length ? wordEntry.word : longest, "");
-      const xpGain = calculateXpGain({
-        baseScore: score,
-        wordsFound: usedWords.length,
-        longestWord: longestWord.length,
-        gameMode: settings.mode,
-        difficulty: settings.difficulty,
-        timeBonus: 0,
-        streakBonus: 0,
-        perfectGame: false
-      });
       
-      setXpGained(xpGain);
-      setShowXpGain(true);
       
-      // Hide XP gain display after 5 seconds
-      setTimeout(() => setShowXpGain(false), 5000);
       
       setGameOver(true);
       
-      // Save game result and XP immediately
       await saveGameResult();
       
-      toast.success(`Game ended! Score: ${score.toLocaleString()} • +${xpGain} XP`);
+      toast.success(`Game ended! Score: ${score.toLocaleString()}`);
     } else if (gameOver) {
       toast.info("Game already ended!");
     } else {
@@ -3344,93 +2791,6 @@ function WordPathGame({
     return startDailyChallengeForMode("daily_5x5");
   }
 
-  async function resetDailyChallenge() {
-    // Try to get the saved initial board from the current state
-    const savedState = await dailyChallengeState.loadState();
-    let initialBoard: string[][] | null = null;
-    if (savedState && savedState.initialBoard) {
-      initialBoard = savedState.initialBoard;
-    }
-
-    // Clear saved daily state from both database and localStorage
-    await dailyChallengeState.clearState();
-
-    // Reset to initial state
-    const difficulty = "medium";
-    const config = DIFFICULTY_CONFIG[difficulty];
-    const newSize = config.gridSize;
-    setSettings(prev => ({
-      ...prev,
-      difficulty,
-      gridSize: newSize,
-      mode: "daily",
-      dailyMovesLimit: getDailyMovesLimit()
-    }));
-    setSize(newSize);
-
-    // Reset all game state to initial values
-    setGameOver(false);
-    setFinalGrade("None");
-    setUsedWords([]);
-    setLastWordTiles(new Set());
-    setScore(0);
-    setStreak(0);
-    setMovesUsed(0); // Reset moves to 0 as requested
-    setUnlocked(new Set());
-    setSpecialTiles(createEmptySpecialTilesGrid(newSize)); // Reset to initial grid state
-    setPath([]);
-    setDragging(false);
-    if (dict && sorted) {
-      setIsGenerating(true);
-      try {
-        let resetBoard: string[][];
-        if (initialBoard) {
-          // Use the saved initial board to ensure same letters
-          resetBoard = initialBoard.map(row => [...row]);
-          toast.success("Daily Challenge reset! Same letters, fresh start.");
-        } else {
-          // If no saved board, load from state or show error
-          const savedState = await dailyChallengeState.loadState();
-          if (savedState && savedState.initialBoard) {
-            resetBoard = savedState.initialBoard.map(row => [...row]);
-            toast.success("Daily Challenge reset! Same letters, fresh start.");
-          } else {
-            toast.error("Cannot reset: original board not found. Please restart Daily Challenge.");
-            return;
-          }
-        }
-        const probe = probeGrid(resetBoard, dict, sorted, config.minWords, MAX_DFS_NODES, true);
-        // Try to compute dynamic benchmarks first, fallback to static if needed
-        let bms: Benchmarks;
-        try {
-          if (probe.analysis && user) {
-            bms = await computeDynamicBenchmarks(getDailySeed(), probe.words.size, config.minWords, probe.analysis, supabase, settings.mode);
-          } else if (probe.analysis) {
-            bms = computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis);
-          } else {
-            bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
-          }
-        } catch (error) {
-          console.error('Error computing benchmarks, falling back to static:', error);
-          bms = probe.analysis ? computeBoardSpecificBenchmarks(probe.words.size, config.minWords, probe.analysis) : computeBenchmarksFromWordCount(probe.words.size, config.minWords);
-        }
-        setBoard(resetBoard);
-        setBenchmarks(bms);
-        setDiscoverableCount(probe.words.size);
-        setUnlocked(new Set());
-        setGameOver(false);
-        setFinalGrade("None");
-        setIsGenerating(false);
-
-        // Save the reset state with the original board preserved
-        await saveDailyState(resetBoard, true);
-      } catch (error) {
-        console.error("Error resetting daily board:", error);
-        setIsGenerating(false);
-        toast.error("Failed to generate daily board");
-      }
-    }
-  }
 
   // Consumable handlers
   const handleUseConsumable = async (consumableId: ConsumableId) => {
@@ -3455,27 +2815,10 @@ function WordPathGame({
         // Check if there are words available before consuming
         const availableWords = getAvailableWordsForHint();
         if (availableWords.length === 0) {
-          // No words available, calculate XP and end the game
-          const longestWord = usedWords.reduce((longest, wordEntry) => 
-            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-          );
           
-          const xpGain = calculateXpGain({
-            baseScore: score,
-            wordsFound: usedWords.length,
-            longestWord: longestWord.length,
-            gameMode: settings.mode,
-            difficulty: settings.difficulty,
-            timeBonus: 0,
-            streakBonus: 0,
-            perfectGame: false
-          });
           
-          setXpGained(xpGain);
-          setShowXpGain(true);
-          setTimeout(() => setShowXpGain(false), 5000);
           
-          toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
+          toast.info(`No valid words remain. Game over!`);
           setGameOver(true);
           return;
         }
@@ -3552,27 +2895,10 @@ function WordPathGame({
     if (!dict || !sorted || !board) return;
     const availableWords = getAvailableWordsForHint();
     if (availableWords.length === 0) {
-      // No words available, calculate XP and end the game
-      const longestWord = usedWords.reduce((longest, wordEntry) => 
-        wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-      );
       
-      const xpGain = calculateXpGain({
-        baseScore: score,
-        wordsFound: usedWords.length,
-        longestWord: longestWord.length,
-        gameMode: settings.mode,
-        difficulty: settings.difficulty,
-        timeBonus: 0,
-        streakBonus: 0,
-        perfectGame: false
-      });
       
-      setXpGained(xpGain);
-      setShowXpGain(true);
-      setTimeout(() => setShowXpGain(false), 5000);
       
-      toast.info(`No valid words remain. Game over! • +${xpGain} XP`);
+      toast.info(`No valid words remain. Game over!`);
       setGameOver(true);
       return;
     }
@@ -3706,61 +3032,12 @@ function WordPathGame({
     }));
     toast.success("Added 3 extra moves to your daily challenge!");
   };
-  function startBlitzGame() {
-    const difficulty = settings.difficulty;
-    const config = DIFFICULTY_CONFIG[difficulty];
-    const newSize = config.gridSize;
-    setSettings(prev => ({
-      ...prev,
-      gridSize: newSize,
-      mode: "blitz"
-    }));
-    setSize(newSize);
-    setGameOver(false);
-    setFinalGrade("None");
-    setUsedWords([]);
-    setLastWordTiles(new Set());
-    setScore(0);
-    setStreak(0);
-    setMovesUsed(0);
-    setUnlocked(new Set());
-    setSpecialTiles(createEmptySpecialTilesGrid(newSize));
-    setTimeRemaining(settings.blitzTimeLimit);
-    setBlitzMultiplier(1);
-    setBlitzStarted(false);
-    setBlitzPaused(false);
-    if (dict && sorted) {
-      setIsGenerating(true);
-      setPath([]);
-      setDragging(false);
-      try {
-        const newBoard = generateSolvableBoard(newSize, dict, sorted);
-        const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
-        const adjustedWordCount = Math.floor(probe.words.size * config.scoreMultiplier);
-        const bms = computeBenchmarksFromWordCount(adjustedWordCount, config.minWords);
-        setBoard(newBoard);
-        setBenchmarks(bms);
-        setDiscoverableCount(probe.words.size);
-        toast.success(`Blitz mode started! ${settings.blitzTimeLimit} seconds to score as high as possible!`);
-      } finally {
-        setIsGenerating(false);
-      }
-    } else {
-      const nb = makeBoard(newSize);
-      setBoard(nb);
-      setBenchmarks(null);
-      setDiscoverableCount(0);
-      setPath([]);
-      setDragging(false);
-    }
-  }
   function tryAddToPath(pos: Pos) {
     // Ghost tiles can bridge non-adjacent tiles - only when the last tile in path is a ghost
     const lastTile = path.length > 0 ? specialTiles[path[path.length - 1].r][path[path.length - 1].c] : null;
     const canSkipAdjacency = lastTile?.type === "ghost";
     
     if (path.length && !canSkipAdjacency && !neighbors(path[path.length - 1], pos)) return;
-    const k = keyOf(pos);
     if (path.find(p => p.r === pos.r && p.c === pos.c)) return;
 
     // Check if this is a stone tile and it's blocked
@@ -3806,12 +3083,8 @@ function WordPathGame({
   const [initialTouchTile, setInitialTouchTile] = useState<{pos: Pos, isStone: boolean} | null>(null);
 
   function onTouchStart(e: React.TouchEvent, pos: Pos) {
-    // Only prevent scrolling when game is active
-    if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
-      e.preventDefault(); // Prevent page scrolling
-    } else if (settings.mode !== "blitz") {
-      e.preventDefault(); // Prevent page scrolling for non-blitz modes
-    }
+    // Prevent page scrolling while the game is active
+    e.preventDefault();
     const touch = e.touches[0];
     setTouchStartPos({
       x: touch.clientX,
@@ -3828,7 +3101,7 @@ function WordPathGame({
       setIsTapMode(true);
     } else {
       // On desktop, start dragging if not in tap mode
-      if ((settings.mode !== "blitz" || blitzStarted && !blitzPaused) && !isTapMode) {
+      if (!isTapMode) {
         onTilePointerDown(pos);
       }
     }
@@ -3837,12 +3110,8 @@ function WordPathGame({
     // but we'll handle the hammer logic in onTouchEnd if it remains a tap
   }
   function onTouchMove(e: React.TouchEvent) {
-    // Only prevent scrolling when game is active
-    if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
-      e.preventDefault(); // Prevent page scrolling
-    } else if (settings.mode !== "blitz") {
-      e.preventDefault(); // Prevent page scrolling for non-blitz modes
-    }
+    // Prevent page scrolling while the game is active
+    e.preventDefault();
     if (!touchStartPos) return;
     const touch = e.touches[0];
     const currentPos = {
@@ -3884,18 +3153,14 @@ function WordPathGame({
     }
   }
   function onTouchEnd(e: React.TouchEvent) {
-    // Only prevent scrolling when game is active
-    if (settings.mode === "blitz" && blitzStarted && !blitzPaused) {
-      e.preventDefault(); // Prevent page scrolling
-    } else if (settings.mode !== "blitz") {
-      e.preventDefault(); // Prevent page scrolling for non-blitz modes
-    }
+    // Prevent page scrolling while the game is active
+    e.preventDefault();
     const wasInTapMode = isTapMode;
     setTouchStartPos(null);
     setInitialTouchTile(null); // Clean up initial touch tile tracking
 
     // Handle drag mode - submit word if we were dragging
-    if ((settings.mode !== "blitz" || blitzStarted && !blitzPaused) && dragging) {
+    if (dragging) {
       onPointerUp();
       return;
     }
@@ -3979,6 +3244,289 @@ function WordPathGame({
       submitWord();
     }
   }
+
+  // Shared Time Attack progression — must run for every submitted word,
+  // whether it came through submitWord or the wild-letter path.
+  function processTimeAttackWord(actualWord: string) {
+    if (settings.mode !== "time_attack" || !timeAttackStarted) return;
+    const newWordsFound = timeAttackWordsFound + 1;
+    setTimeAttackWordsFound(newWordsFound);
+
+    // Speed multiplier increases every 3 words (1.0x -> 1.2x -> 1.4x -> 1.6x -> 2.0x max)
+    const newMultiplier = Math.min(2.0, 1.0 + Math.floor(newWordsFound / 3) * 0.2);
+    if (newMultiplier > timeAttackSpeedMultiplier) {
+      setTimeAttackSpeedMultiplier(newMultiplier);
+      toast.success(`⚡ Speed Multiplier: ${newMultiplier.toFixed(1)}x!`, { duration: 2000 });
+    }
+
+    // Time bonus: longer words give more time, capped at +5s
+    const timeBonus = Math.min(5, Math.floor(actualWord.length / 2));
+    setTimeAttackTimeRemaining(prev => Math.min(60, prev + timeBonus));
+    if (timeBonus > 0) {
+      toast.info(`+${timeBonus}s time bonus!`, { duration: 1500 });
+    }
+  }
+
+  // Shared Survival progression — combo, challenge/boss validation, and wave
+  // advancement. Must run for every submitted word, whether it came through
+  // submitWord or the wild-letter path.
+  function processSurvivalWord(actualWord: string, wordPath: Pos[], totalGain: number) {
+    // Enhanced Survival mode: Track words and check for challenge/boss completion
+    if (settings.mode === "survival" && survivalStarted) {
+      // Update combo system
+      const hasSafetyNet = survivalActivePowerUps.some(ap => ap.powerUp.type === 'safety_net' && (ap.remainingUses || 0) > 0);
+
+      // BUG FIX #3: Calculate time before updating combo (to use old timestamp)
+      const timeSpent = survivalComboState.lastWordTime > 0
+        ? (Date.now() - survivalComboState.lastWordTime) / 1000
+        : 5; // Default 5 seconds for first word
+
+      const { newCombo, rewards } = updateCombo(survivalComboState, true, hasSafetyNet);
+      setSurvivalComboState(newCombo);
+
+      // Apply combo multiplier to score
+      const comboScore = Math.floor(totalGain * newCombo.comboMultiplier * survivalPointsMultiplier);
+      const waveScore = survivalWaveScore + comboScore;
+      setSurvivalWaveScore(waveScore);
+
+      // Update performance tracking
+      const updatedPerf = updatePerformance(
+        survivalPerformance,
+        actualWord,
+        newCombo.currentCombo,
+        true,
+        timeSpent
+      );
+      setSurvivalPerformance(updatedPerf);
+
+      // Process combo rewards
+      rewards.forEach(reward => {
+        if (reward === 'common_powerup') {
+          const powerUp = getRandomPowerUp('common');
+          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
+          toast.success(`🎁 Combo reward: ${powerUp.name}!`);
+        } else if (reward === 'rare_powerup') {
+          const powerUp = getRandomPowerUp('rare');
+          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
+          toast.success(`⭐ Rare combo reward: ${powerUp.name}!`);
+        } else if (reward === 'epic_powerup') {
+          const powerUp = getRandomPowerUp('epic');
+          setSurvivalInventoryPowerUps(prev => [...prev, powerUp]);
+          toast.success(`💎 Epic combo reward: ${powerUp.name}!`);
+        } else if (reward === 'life_fragment') {
+          const newFragments = survivalLifeFragments + 1;
+          if (newFragments >= 3) {
+            setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
+            setSurvivalLifeFragments(0);
+            toast.success('💎 Life fragments combined! +1 life');
+          } else {
+            setSurvivalLifeFragments(newFragments);
+            toast.success(`💎 Life fragment earned! (${newFragments}/3)`);
+          }
+        } else if (reward === 'extra_life') {
+          // BUG FIX #6: Handle 15-word combo reward
+          setSurvivalLives(prev => Math.min(prev + 1, survivalMaxLives));
+          toast.success('❤️ LEGENDARY COMBO! +1 Life!', { duration: 4000 });
+        }
+      });
+
+      // Boss wave logic
+      if (survivalBossWordRequired && survivalCurrentBoss) {
+        const pathPositions = wordPath.map(p => ({ row: p.r, col: p.c }));
+        const bossResult = validateBossWave(
+          survivalCurrentBoss,
+          actualWord,
+          pathPositions,
+          survivalBossProgress,
+          waveScore
+        );
+
+        if (bossResult.valid) {
+          setSurvivalBossProgress(bossResult.progress);
+
+          if (bossResult.complete) {
+            // Boss defeated!
+            toast.success(bossResult.message || '👑 Boss defeated!', { duration: 3000 });
+
+            // Wave complete - check for life recovery and rewards
+            const perfectWave = survivalMistakesThisWave === 0;
+            const newPerfectStreak = perfectWave ? survivalPerfectWaveStreak + 1 : 0;
+            setSurvivalPerfectWaveStreak(newPerfectStreak);
+
+            const recovery = checkLifeRecovery(
+              survivalWave,
+              newPerfectStreak,
+              survivalLifeFragments,
+              true, // boss defeated
+              newCombo.currentCombo
+            );
+
+            if (recovery.lives > 0) {
+              setSurvivalLives(prev => Math.min(prev + recovery.lives, survivalMaxLives));
+              toast.success(recovery.message || `❤️ +${recovery.lives} life!`, { duration: 3000 });
+            }
+            setSurvivalLifeFragments(recovery.fragments);
+
+            // Advance to next wave
+            const nextWave = survivalWave + 1;
+            setSurvivalWave(nextWave);
+            setSurvivalWordsThisWave(0);
+            setSurvivalChallengeProgress(0);
+            setSurvivalBossProgress(0);
+            setSurvivalWaveScore(0);
+            setSurvivalMistakesThisWave(0);
+            setSurvivalBossWordRequired(false);
+            setSurvivalCurrentBoss(null);
+
+            // Check for events or shop
+            if (shouldShowShop(nextWave)) {
+              setSurvivalShowShop(true);
+            } else if (shouldTriggerEvent(nextWave)) {
+              const event = generateRandomEvent(nextWave);
+              if (event) {
+                setSurvivalPendingEvent(event);
+              }
+            } else {
+              // Generate next wave challenge
+              const nextChallenge = getRandomWaveChallenge(nextWave);
+              setSurvivalCurrentChallenge(nextChallenge);
+              toast.info(`🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
+            }
+
+            // BUG FIX #2: Properly expire power-ups and handle durations
+            setSurvivalActivePowerUps(prev =>
+              prev.map(ap => ({
+                ...ap,
+                remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
+              })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
+            );
+
+            if (survivalDifficultyFrozen > 0) {
+              setSurvivalDifficultyFrozen(prev => prev - 1);
+            }
+
+            // BUG FIX #9: Reset double points multiplier after wave
+            if (survivalPointsMultiplier > 1.0) {
+              setSurvivalPointsMultiplier(1.0);
+            }
+          } else if (bossResult.message) {
+            toast.info(bossResult.message);
+          }
+        } else if (bossResult.message) {
+          toast.error(bossResult.message);
+        }
+      }
+      // Regular challenge logic
+      else if (survivalCurrentChallenge) {
+        const pathPositions = wordPath.map(p => ({ row: p.r, col: p.c }));
+        const challengeResult = validateWaveChallenge(
+          survivalCurrentChallenge,
+          actualWord,
+          pathPositions,
+          survivalChallengeProgress,
+          waveScore
+        );
+
+        if (challengeResult.valid) {
+          setSurvivalChallengeProgress(challengeResult.progress);
+          if (challengeResult.message) {
+            toast.info(challengeResult.message);
+          }
+
+          // Check if challenge is complete
+          if (isChallengeComplete(survivalCurrentChallenge, challengeResult.progress)) {
+            const nextWave = survivalWave + 1;
+
+            // Check if next wave is a boss wave
+            if (nextWave % 5 === 0) {
+              // BUG FIX #1: Advance wave counter before boss
+              setSurvivalWave(nextWave);
+              setSurvivalWordsThisWave(0);
+              setSurvivalChallengeProgress(0);
+              setSurvivalWaveScore(0);
+              setSurvivalMistakesThisWave(0);
+
+              const boss = getRandomBossWave(nextWave);
+              setSurvivalCurrentBoss(boss);
+              setSurvivalBossWordRequired(true);
+              setSurvivalCurrentChallenge(null);
+              toast.warning(`${boss.icon} Boss Wave ${nextWave}! ${boss.description}`, { duration: 4000 });
+            } else {
+              // Regular wave complete
+              const perfectWave = survivalMistakesThisWave === 0;
+              const newPerfectStreak = perfectWave ? survivalPerfectWaveStreak + 1 : 0;
+              setSurvivalPerfectWaveStreak(newPerfectStreak);
+
+              const recovery = checkLifeRecovery(
+                survivalWave,
+                newPerfectStreak,
+                survivalLifeFragments,
+                false,
+                newCombo.currentCombo
+              );
+
+              if (recovery.lives > 0) {
+                setSurvivalLives(prev => Math.min(prev + recovery.lives, survivalMaxLives));
+                toast.success(recovery.message || `❤️ +${recovery.lives} life!`, { duration: 3000 });
+              }
+              setSurvivalLifeFragments(recovery.fragments);
+
+              // Advance wave
+              setSurvivalWave(nextWave);
+              setSurvivalWordsThisWave(0);
+              setSurvivalChallengeProgress(0);
+              setSurvivalWaveScore(0);
+              setSurvivalMistakesThisWave(0);
+
+              // Check for shop or events
+              if (shouldShowShop(nextWave)) {
+                setSurvivalShowShop(true);
+              } else if (shouldTriggerEvent(nextWave)) {
+                const event = generateRandomEvent(nextWave);
+                if (event) {
+                  setSurvivalPendingEvent(event);
+                }
+              } else {
+                const nextChallenge = getRandomWaveChallenge(nextWave);
+                setSurvivalCurrentChallenge(nextChallenge);
+                toast.success(`✨ Wave ${survivalWave} complete!\n🌊 Wave ${nextWave}: ${nextChallenge.description}`, { duration: 4000 });
+              }
+
+              // BUG FIX #2: Properly expire power-ups
+              setSurvivalActivePowerUps(prev =>
+                prev.map(ap => ({
+                  ...ap,
+                  remainingWaves: ap.remainingWaves !== undefined ? ap.remainingWaves - 1 : undefined
+                })).filter(ap => ap.remainingWaves === undefined || ap.remainingWaves > 0)
+              );
+
+              if (survivalDifficultyFrozen > 0) {
+                setSurvivalDifficultyFrozen(prev => prev - 1);
+              }
+
+              // BUG FIX #9: Reset double points multiplier after wave
+              if (survivalPointsMultiplier > 1.0) {
+                setSurvivalPointsMultiplier(1.0);
+              }
+            }
+          }
+        } else if (challengeResult.message) {
+          toast.error(challengeResult.message);
+          setSurvivalMistakesThisWave(prev => prev + 1);
+        }
+      }
+
+      setSurvivalWordsThisWave(prev => prev + 1);
+
+      // BUG FIX #2: Properly expire word-based power-ups
+      setSurvivalActivePowerUps(prev =>
+        prev.map(ap => ({
+          ...ap,
+          remainingUses: ap.remainingUses !== undefined ? ap.remainingUses - 1 : undefined
+        })).filter(ap => ap.remainingUses === undefined || ap.remainingUses > 0)
+      );
+    }
+  }
   function submitWord() {
     if (gameOver) {
       toast.info("Round over");
@@ -3997,8 +3545,7 @@ function WordPathGame({
       return clearPath();
     }
     const actualWord = wordFromPath;
-    const wildUsed = false;
-    
+
     // Ghost tile: maximum one per word (check before wild dialog to enforce limit)
     const ghostCount = path.filter(p => specialTiles[p.r][p.c].type === "ghost").length;
     if (ghostCount > 1) {
@@ -4010,7 +3557,7 @@ function WordPathGame({
     if (hasWildTile && dict) {
       const wildcardPositions = path.filter(p => specialTiles[p.r][p.c].type === "wild");
       if (wildcardPositions.length > 0) {
-        // Show dialog to let user choose the letter(s) - allow during blitz pause since user is mid-move
+        // Show dialog to let user choose the letter(s)
         setPendingWildPath(path);
         setShowWildDialog(true);
         return clearPath();
@@ -4054,11 +3601,9 @@ function WordPathGame({
       lastWordTiles,
       streak,
       mode: settings.mode,
-      blitzMultiplier,
       timeAttackSpeedMultiplier,
       activeEffects,
-      baseMode: "hybrid",
-      chainMode: "cappedLinear"
+      baseMode: "hybrid"
     });
     const totalGain = breakdown.total;
     setUsedWords(prev => [...prev, {
@@ -4072,11 +3617,12 @@ function WordPathGame({
     
     // Zen mode: save current state before processing word
     if (settings.mode === 'zen') {
-      setZenUndoStack(prev => [...prev, { 
-        board: board.map(r => [...r]), 
+      setZenUndoStack(prev => [...prev, {
+        board: board.map(r => [...r]),
         specialTiles: specialTiles.map(r => [...r]),
         usedWords: [...usedWords],
-        score 
+        score,
+        lastWordTiles: new Set(lastWordTiles)
       }]);
     }
     
@@ -4099,48 +3645,20 @@ function WordPathGame({
       }
       
       if (puzzleMovesRemaining <= 1 && !allRequiredFound) {
-        // Out of moves
+        // Out of moves — count only required words, including the one just played
+        const foundRequired = Array.from(puzzleRequiredWords).filter(w =>
+          puzzleFoundWords.has(w) || w === actualWord.toUpperCase()
+        ).length;
         setTimeout(() => {
           setGameOver(true);
-          toast.error(`Puzzle incomplete! You found ${puzzleFoundWords.size}/${puzzleRequiredWords.size} required words.`);
+          toast.error(`Puzzle incomplete! You found ${foundRequired}/${puzzleRequiredWords.size} required words.`);
         }, 1000);
       }
     }
     
-    // Survival mode: check for boss word completion and increment wave progress
-    if (settings.mode === 'survival') {
-      setSurvivalWordsThisWave(prev => prev + 1);
-      
-      // Check if boss word requirement is met (7+ letter word)
-      if (survivalBossWordRequired && actualWord.length >= 7) {
-        setSurvivalBossWordRequired(false);
-        toast.success('👑 Boss word completed! Wave cleared!', { duration: 3000 });
-      }
-      
-      // Apply progressive difficulty every 5 words within a wave
-      if (survivalWordsThisWave > 0 && survivalWordsThisWave % 5 === 0) {
-        // Add stone tiles as difficulty increases
-        const emptyPositions: Pos[] = [];
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            if (specialTiles[r][c].type === null) {
-              emptyPositions.push({ r, c });
-            }
-          }
-        }
-        
-        if (emptyPositions.length > 0) {
-          const newSpecialTilesForDifficulty = specialTiles.map(row => [...row]);
-          const randomPos = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
-          newSpecialTilesForDifficulty[randomPos.r][randomPos.c] = {
-            type: 'stone',
-            expiryTurns: undefined
-          };
-          setSpecialTiles(newSpecialTilesForDifficulty);
-          toast.warning('⚠️ Difficulty increased! Stone tile added.', { duration: 2000 });
-        }
-      }
-    }
+    // Survival mode: full combo/challenge/boss/wave progression (shared with wild-letter path)
+    processSurvivalWord(actualWord, path, totalGain);
+    processTimeAttackWord(actualWord);
 
     // Legacy variables needed for achievements, toasts, and other legacy code
     const sharedTilesCount = lastWordTiles.size ? path.filter(p => lastWordTiles.has(keyOf(p))).length : 0;
@@ -4477,30 +3995,14 @@ function WordPathGame({
       // Check if Chaos mode move limit reached (15 moves)
       if (movesUsed + 1 >= 15) {
         setTimeout(() => {
-          const longestWord = usedWords.reduce((longest, wordEntry) => 
-            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-          );
           
-          const xpGain = calculateXpGain({
-            baseScore: finalScore,
-            wordsFound: usedWords.length,
-            longestWord: longestWord.length,
-            gameMode: settings.mode,
-            difficulty: settings.difficulty,
-            timeBonus: 0,
-            streakBonus: 0,
-            perfectGame: false
-          });
           
-          setXpGained(xpGain);
-          setShowXpGain(true);
-          setTimeout(() => setShowXpGain(false), 5000);
           
           setFinalGrade("None");
           setGameOver(true);
           saveGameResult();
           
-          toast.success(`🎊 Chaos Round Complete! Score: ${finalScore.toLocaleString()} • +${xpGain} XP`, { duration: 5000 });
+          toast.success(`🎊 Chaos Round Complete! Score: ${finalScore.toLocaleString()}`, { duration: 5000 });
         }, 1500);
       }
     }
@@ -4535,54 +4037,22 @@ function WordPathGame({
           }
         } else if (settings.mode === "endless" && endlessStarted) {
           // Endless mode: Stone tiles blocked all words - end the run
-          const longestWord = usedWords.reduce((longest, wordEntry) => 
-            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-          );
           
-          const xpGain = calculateXpGain({
-            baseScore: score,
-            wordsFound: usedWords.length,
-            longestWord: longestWord.length,
-            gameMode: settings.mode,
-            difficulty: settings.difficulty,
-            timeBonus: 0,
-            streakBonus: 0,
-            perfectGame: false
-          });
           
-          setXpGained(xpGain);
-          setShowXpGain(true);
-          setTimeout(() => setShowXpGain(false), 5000);
           
           setFinalGrade("None");
           setGameOver(true);
           saveGameResult();
           
-          toast.error(`💎 Stone tiles blocked all words! Endless Run Complete • Reached Level ${endlessDifficulty} • Score: ${score.toLocaleString()} • +${xpGain} XP`, { duration: 5000 });
+          toast.error(`💎 Stone tiles blocked all words! Endless Run Complete • Reached Level ${endlessDifficulty} • Score: ${score.toLocaleString()}`, { duration: 5000 });
         } else {
           // Classic mode: Game over due to stones blocking all words
-          const longestWord = usedWords.reduce((longest, wordEntry) => 
-            wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-          );
           
-          const xpGain = calculateXpGain({
-            baseScore: score,
-            wordsFound: usedWords.length,
-            longestWord: longestWord.length,
-            gameMode: settings.mode,
-            difficulty: settings.difficulty,
-            timeBonus: 0,
-            streakBonus: 0,
-            perfectGame: false
-          });
           
-          setXpGained(xpGain);
-          setShowXpGain(true);
-          setTimeout(() => setShowXpGain(false), 5000);
           
           setFinalGrade("None");
           setGameOver(true);
-          toast.error(`💎 Stone tiles blocked all words! Game Over • +${xpGain} XP`);
+          toast.error(`💎 Stone tiles blocked all words! Game Over`);
         }
       }
     }
@@ -4592,7 +4062,9 @@ function WordPathGame({
         const dailyMovesExceeded = (settings.mode === "daily" || settings.mode === "daily_5x5") && movesUsed + 1 >= settings.dailyMovesLimit;
         // Check if puzzle mode is out of moves
         const puzzleMovesExceeded = puzzleMode && puzzleMovesRemaining <= 1;
-        const any = hasAnyValidMove(trackedBoard, lastWordTiles.size ? lastWordTiles : new Set(path.map(keyOf)), dict, sorted, new Set(usedWords.map(entry => entry.word)));
+        // The just-played word is now the chain link: future words must reuse its tiles,
+        // and it can no longer be replayed.
+        const any = hasAnyValidMove(trackedBoard, new Set(path.map(keyOf)), dict, sorted, new Set([...usedWords.map(entry => entry.word), actualWord]));
         if (!any || dailyMovesExceeded || puzzleMovesExceeded) {
           // Handle puzzle mode - check completion on move limit
           if (puzzleMode && puzzleMovesExceeded && currentPuzzleId) {
@@ -4667,7 +4139,6 @@ function WordPathGame({
   function hasAnyValidMove(grid: string[][], mustReuse: Set<string>, wordSet: Set<string>, sortedArr: string[], used: Set<string>) {
     const N = grid.length;
     const dirs = [-1, 0, 1];
-    const visited = new Set<string>();
     const stack: {
       pos: Pos;
       path: Pos[];
@@ -4749,22 +4220,6 @@ function WordPathGame({
   };
   return (
     <section className="container mx-auto py-4 max-w-7xl">
-      {/* XP Gain Display */}
-      {showXpGain && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-500">
-          <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <div className="text-2xl">✨</div>
-                <div>
-                  <div className="font-bold text-lg">+{xpGained} XP</div>
-                  <div className="text-sm opacity-90">Experience Gained!</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       <Dialog open={showDifficultyDialog} onOpenChange={setShowDifficultyDialog}>
         <DialogContent className="sm:max-w-md">
@@ -4855,6 +4310,7 @@ function WordPathGame({
               setSpecialTiles(prevState.specialTiles);
               setUsedWords(prevState.usedWords);
               setScore(prevState.score);
+              setLastWordTiles(prevState.lastWordTiles);
               setZenUndoStack(prev => prev.slice(0, -1));
             }
           }} disabled={zenUndoStack.length === 0} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
@@ -4943,47 +4399,24 @@ function WordPathGame({
             </Button>
           )}
 
-          {settings.mode === "blitz" && blitzStarted && !gameOver && <Button variant="outline" onClick={() => setBlitzPaused(!blitzPaused)} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))] ml-3">
-              {blitzPaused ? "▶️ Resume" : "⏸️ Pause"}
-            </Button>}
-
           {settings.mode === "classic" && !gameOver && <Button variant="outline" onClick={onEndGame} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             End Game
           </Button>}
 
           {settings.mode === "endless" && endlessStarted && !gameOver && <Button variant="outline" onClick={async () => {
-            // End endless run and collect XP
-            const longestWord = usedWords.reduce((longest, wordEntry) => 
-              wordEntry.word.length > longest.length ? wordEntry.word : longest, ""
-            );
-            const xpGain = calculateXpGain({
-              baseScore: score,
-              wordsFound: usedWords.length,
-              longestWord: longestWord.length,
-              gameMode: settings.mode,
-              difficulty: settings.difficulty,
-              timeBonus: 0,
-              streakBonus: 0,
-              perfectGame: false
-            });
             
-            setXpGained(xpGain);
-            setShowXpGain(true);
-            setTimeout(() => setShowXpGain(false), 5000);
             
             setGameOver(true);
             await saveGameResult();
             
-            toast.success(`Endless Run Complete! Reached Level ${endlessDifficulty} • Score: ${score.toLocaleString()} • +${xpGain} XP`);
+            toast.success(`Endless Run Complete! Reached Level ${endlessDifficulty} • Score: ${score.toLocaleString()}`);
           }} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             End Run
           </Button>}
           
-          <Button variant="outline" onClick={onBackToTitle} size="sm" className={`bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]]`}>
+          <Button variant="outline" onClick={onBackToTitle} size="sm" className="bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
             Back to Title
           </Button>
-          
-          {settings.mode === "daily" && gameOver}
         </div>
         
       </div>
@@ -5379,52 +4812,6 @@ function WordPathGame({
               })()}
             </div>}
           
-          {/* Temporarily disabled blitz mode 
-           {settings.mode === "practice" && (
-            <div className="flex justify-center mb-4">
-              <Button 
-                onClick={() => {
-                  // Reset blitz game state and start new game with current time limit
-                  setBlitzStarted(false);
-                  setBlitzPaused(false);
-                  setTimeRemaining(settings.blitzTimeLimit);
-                  setScore(0);
-                  setUsedWords([]);
-                  setLastWordTiles(new Set());
-                  setStreak(0);
-                  setGameOver(false);
-                  setPath([]);
-                  setDragging(false);
-                  setSpecialTiles(createEmptySpecialTilesGrid(size));
-                  
-                  if (dict && sorted) {
-                    setIsGenerating(true);
-                    try {
-                      const newBoard = generateSolvableBoard(size, dict, sorted);
-                      const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
-                      const bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
-                      setBoard(newBoard);
-                      setBenchmarks(bms);
-                      setDiscoverableCount(probe.words.size);
-                      setGameOver(false);
-                    } catch (error) {
-                      console.error("Failed to generate board:", error);
-                      toast.error("Failed to generate new board");
-                    } finally {
-                      setIsGenerating(false);
-                    }
-                  }
-                }}
-                variant="outline" 
-                size="sm"
-                disabled={isGenerating}
-                className="bg-background"
-              >
-                {isGenerating ? "Generating..." : "New Game"}
-              </Button>
-            </div>
-           )}
-           */}
           
           <GameBoard
             board={board}
@@ -5515,7 +4902,7 @@ function WordPathGame({
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Words: {timeAttackWordsFound} • Next ⚡ at {Math.ceil(timeAttackWordsFound / 3) * 3 + 3 - timeAttackWordsFound} words
+                      Words: {timeAttackWordsFound} • Next ⚡ in {3 - (timeAttackWordsFound % 3)} word{3 - (timeAttackWordsFound % 3) === 1 ? "" : "s"}
                     </div>
                   </div>
                 )}
@@ -5898,22 +5285,6 @@ function WordPathGame({
                     </div>
                   );
                 })()}
-                {/* Temporarily disabled blitz timer 
-                 {settings.mode === "blitz" && (
-                  <div className="mt-1 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className={`font-medium ${timeRemaining <= 10 ? 'text-red-500' : timeRemaining <= 30 ? 'text-orange-500' : 'text-muted-foreground'}`}>
-                        ⏰ {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-                      </div>
-                    </div>
-                    {blitzMultiplier > 1 && (
-                      <div className="text-xs text-green-500">
-                        {blitzMultiplier}x multiplier active!
-                      </div>
-                    )}
-                  </div>
-                 )}
-                 */}
                 {(settings.mode === "daily" || settings.mode === "daily_5x5") && gameOver && <Button variant="outline" size="sm" onClick={shareScoreInline} className="mt-2 h-6 px-2 text-xs bg-background text-[hsl(var(--brand-500))] border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]">
                     Share
                   </Button>}
@@ -5958,7 +5329,6 @@ function WordPathGame({
                   <div>Rarity</div><div className="text-right">+{Math.round(bd.rarity.bonus)}{bd.rarity.ultraCount > 0 ? <span className="ml-1 text-[10px] opacity-70">(ultra {bd.rarity.ultraCount})</span> : null}</div>
                   <div>Link</div><div className="text-right">×{bd.linkMultiplier.toFixed(1)}</div>
                   <div>Length</div><div className="text-right">+{bd.lengthBonus}</div>
-                  {bd.timeBonus > 0 ? <><div>Blitz time</div><div className="text-right">+{bd.timeBonus}</div></> : null}
                   <div className="col-span-2 border-t my-1" />
                   <div>Subtotal</div><div className="text-right">+{bd.totalBeforeMultipliers}</div>
                   <div>Multipliers</div>
@@ -6026,11 +5396,6 @@ function WordPathGame({
                                   <div>Rarity</div><div className="text-right">+{Math.round(entry.breakdown.rarity.bonus)}</div>
                                   <div>Link</div><div className="text-right">×{entry.breakdown.linkMultiplier.toFixed(1)}</div>
                                   <div>Length</div><div className="text-right">+{entry.breakdown.lengthBonus}</div>
-                                  {entry.breakdown.timeBonus > 0 ? (
-                                    <>
-                                      <div>Blitz time</div><div className="text-right">+{entry.breakdown.timeBonus}</div>
-                                    </>
-                                  ) : null}
                                   <div className="col-span-2 border-t my-1" />
                                   <div>Subtotal</div><div className="text-right">+{entry.breakdown.totalBeforeMultipliers}</div>
                                   <div>Multipliers</div>
@@ -6060,7 +5425,7 @@ function WordPathGame({
 
 
           {/* Consumables Inventory */}
-          <ConsumableInventoryPanel inventory={consumableInventory} onUseConsumable={handleUseConsumable} gameMode={settings.mode} disabled={gameOver || isGenerating} activatedConsumables={activatedConsumables} user={user} />
+          <ConsumableInventoryPanel inventory={consumableInventory} onUseConsumable={handleUseConsumable} gameMode={settings.mode} disabled={gameOver || isGenerating} activatedConsumables={activatedConsumables} />
 
         </aside>
       </div>

@@ -18,9 +18,6 @@ const MyAccountPage = lazy(() => import("./pages/MyAccountPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
-const StorePage = lazy(() => import("./pages/StorePage"));
-const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
-const PaymentCanceled = lazy(() => import("./pages/PaymentCanceled"));
 const DebugPage = lazy(() => import("./pages/DebugPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
@@ -44,9 +41,6 @@ const App = () => <QueryClientProvider client={queryClient}>
                     <Route path="/stats" element={<StatsPage />} />
                     <Route path="/leaderboard" element={<LeaderboardPage />} />
                     <Route path="/account" element={<MyAccountPage />} />
-                    <Route path="/store" element={<StorePage />} />
-                    <Route path="/payment-success" element={<PaymentSuccess />} />
-                    <Route path="/payment-canceled" element={<PaymentCanceled />} />
                     <Route path="/debug" element={<DebugPage />} />
                     <Route path="/admin" element={<AdminDashboardPage />} />
                     <Route path="/settings" element={<SettingsPage />} />

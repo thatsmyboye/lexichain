@@ -136,11 +136,16 @@ export function useLoginStreak(user: User | null) {
 
       setStreakData(newStreakData);
 
-      // Streak rewards disabled — no bonus consumables for login streaks
       if (newStreak > streakData.currentStreak) {
         toast({
           title: `🔥 ${newStreak} day streak!`,
         });
+
+        // Grant milestone consumables for reaching a streak reward threshold
+        const rewards = STREAK_REWARDS[newStreak];
+        if (rewards) {
+          await awardConsumables(rewards, `login_streak_${newStreak}`);
+        }
       }
     } catch (error) {
       console.error("Error updating login streak:", error);

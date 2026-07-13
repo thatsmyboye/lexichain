@@ -94,10 +94,6 @@ export const LazyStatsPage = withLazyLoading(
   () => import('@/pages/StatsPage')
 );
 
-export const LazyStorePage = withLazyLoading(
-  () => import('@/pages/StorePage')
-);
-
 export const LazyAuthPage = withLazyLoading(
   () => import('@/pages/AuthPage')
 );

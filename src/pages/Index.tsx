@@ -4,8 +4,6 @@ import TitleScreen from "@/components/TitleScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useLoginStreak } from "@/hooks/useLoginStreak";
-import { useProfile } from "@/hooks/useProfile";
-import { calculateLevel } from "@/lib/progression";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes, AdvancedGameMode } from "@/components/game/AdvancedGameModes";
 import { getModeName } from "@/lib/gameModes";
@@ -25,23 +23,16 @@ const Index = () => {
   const [showMiniMarathon, setShowMiniMarathon] = useState(false);
   const [showWeeklyGauntlet, setShowWeeklyGauntlet] = useState(false);
   const [showPrestigeEndless, setShowPrestigeEndless] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
+  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "daily_5x5" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
   const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   // Initialize login streak tracking
   const {
     streakData
   } = useLoginStreak(user);
-
-  // Fetch user profile for XP and level calculation
-  const {
-    profile,
-    refreshProfile
-  } = useProfile(user);
   useEffect(() => {
     // Get current user and set up auth state listener
     supabase.auth.getUser().then(({
@@ -61,25 +52,6 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Check admin status separately to avoid hook ordering issues
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-      try {
-        const {
-          data
-        } = await supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle();
-        setIsAdmin(!!data);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      }
-    };
-    checkAdmin();
-  }, [user]);
   useEffect(() => {
     document.title = "Lexichain | Build word chains by reusing tiles";
     const desc = "Draw paths to make words. Each new word must reuse at least one tile. Keep chaining until no valid word remains.";
@@ -104,7 +76,7 @@ const Index = () => {
   const handlePlayClick = () => {
     setShowModeSelection(true);
   };
-  const handleModeSelect = (mode: "classic" | "daily" | "daily_5x5" | "practice" | "blitz" | "time_attack" | "endless" | "puzzle" | "survival" | "zen") => {
+  const handleModeSelect = (mode: "classic" | "daily" | "daily_5x5" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen") => {
     setSelectedMode(mode);
     setShowModeSelection(false);
     setShowGame(true);
@@ -118,15 +90,12 @@ const Index = () => {
     setShowWeeklyGauntlet(false);
     setShowPrestigeEndless(false);
     setSelectedPuzzleId(null);
-    // Refresh profile to get updated XP
-    refreshProfile();
   };
   const handleBackToAdvancedModes = () => {
     setShowGame(false);
     setShowAdvancedModes(true);
     setSelectedPuzzleId(null);
     // Keep selectedAdvancedMode set so user sees their last selection highlighted
-    refreshProfile();
   };
   const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
     // Special handling for puzzle mode
@@ -188,9 +157,6 @@ const Index = () => {
   const handleStatsClick = () => {
     navigate("/stats");
   };
-  const handleStoreClick = () => {
-    navigate("/store");
-  };
   const handleLeaderboardClick = () => {
     navigate("/leaderboard");
   };
@@ -211,17 +177,8 @@ const Index = () => {
   if (showPuzzleSelector) {
     return <PuzzleSelector onPuzzleSelect={handlePuzzleSelect} onBack={handleBackToPuzzleSelector} user={user} />;
   }
-  const playerLevel = profile ? calculateLevel(profile.total_xp) : {
-    level: 1,
-    xp: 0,
-    xpToNext: 100,
-    totalXp: 0,
-    title: "Word Novice",
-    color: "text-gray-500",
-    unlockedFeatures: []
-  };
   if (showAdvancedModes) {
-    return <AdvancedGameModes onModeSelect={handleAdvancedModeSelect} onBack={handleBackToModeSelection} userLevel={playerLevel.level} totalXp={profile?.total_xp || 0} user={user} isAdmin={isAdmin} />;
+    return <AdvancedGameModes onModeSelect={handleAdvancedModeSelect} onBack={handleBackToModeSelection} />;
   }
   if (showGame) {
     return <main>
@@ -282,6 +239,6 @@ const Index = () => {
         </div>
       </div>;
   }
-  return <TitleScreen onPlayClick={handlePlayClick} onAdvancedModesClick={handleAdvancedModesFromTitle} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} onStoreClick={handleStoreClick} onLeaderboardClick={handleLeaderboardClick} onSettingsClick={handleSettingsClick} streakData={streakData} user={user} />;
+  return <TitleScreen onPlayClick={handlePlayClick} onAdvancedModesClick={handleAdvancedModesFromTitle} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} onLeaderboardClick={handleLeaderboardClick} onSettingsClick={handleSettingsClick} streakData={streakData} user={user} />;
 };
 export default Index;

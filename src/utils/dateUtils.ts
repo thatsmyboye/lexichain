@@ -14,13 +14,7 @@ const EASTERN_TIMEZONE = 'America/New_York';
  */
 export function getDailyChallengeDate(): string {
   const easternTime = toZonedTime(new Date(), EASTERN_TIMEZONE);
-  const formattedDate = format(easternTime, 'yyyy-MM-dd');
-  
-  // Log for debugging timezone issues
-  const localTime = new Date();
-  console.log(`[Date Utils] Local time: ${localTime.toISOString()}, Eastern: ${formattedDate}`);
-  
-  return formattedDate;
+  return format(easternTime, 'yyyy-MM-dd');
 }
 
 /**

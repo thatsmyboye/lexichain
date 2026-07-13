@@ -157,7 +157,7 @@ export const CONSUMABLES_TUTORIAL: TutorialStep[] = [
   {
     id: 'consumables_intro',
     title: 'Consumables',
-    description: 'Consumables are special items that can help you during gameplay. You can earn them through achievements or purchase them in the store.',
+    description: 'Consumables are special items that can help you during gameplay. You earn them through achievements and daily login streaks.',
     position: 'center',
     action: 'wait',
     icon: <Zap className="h-5 w-5 text-primary" />,
