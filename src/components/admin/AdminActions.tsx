@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Database, RefreshCw, Settings, BarChart3, Users, Gamepad2, Store, FileText, Zap } from 'lucide-react';
+import { Shield, Database, Settings, BarChart3, Users, Gamepad2, FileText, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -51,15 +51,6 @@ export function AdminActions() {
             >
               <BarChart3 className="h-6 w-6" />
               <span>Game Statistics</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-24 flex flex-col items-center justify-center gap-2"
-              onClick={() => navigate('/store')}
-            >
-              <Store className="h-6 w-6" />
-              <span>Store Management</span>
             </Button>
 
             <Button

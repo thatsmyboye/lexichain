@@ -1,5 +1,14 @@
 # Advanced Game Modes Unlock Implementation
 
+> **⚠️ SUPERSEDED — this document no longer reflects the app.**
+> The mode-unlock system and the store item that powered it have been removed.
+> **All game modes are now open to every player from the start**, with no purchase,
+> XP, or level gating. The `unlock_all_modes` store item, the Stripe payment
+> functions, and the `user_unlocked_modes`-based gating in
+> `AdvancedGameModes.tsx` are gone. The `user_unlocked_modes` table may still
+> exist in the database but is no longer read or written by the app. This file
+> is retained for historical context only.
+
 ## Overview
 Added a new store item that allows users to instantly unlock all Advanced Game Modes for a one-time purchase of $9.99.
 

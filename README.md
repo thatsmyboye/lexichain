@@ -84,3 +84,14 @@ npm run lint
 - **Tile multipliers** (Multiplier tiles, consumables, mode multipliers) apply on top.
 - **Chain tiles** add +10 per extra path tile (beyond 4) per Chain tile in the word.
 - **Tax tiles** apply a 0.7× penalty per tile.
+
+## Progression & Consumables
+
+Lexichain has no XP, player levels, or paid store. The structure is intentionally flat:
+
+- **All modes are open.** Every game mode is available to everyone from the start — there is nothing to unlock or level up for. Mode selection lives in `src/components/game/AdvancedGameModes.tsx`.
+- **No store or purchases.** There are no in-game purchases, Stripe checkout, or payment routes.
+- **Consumables** (Hint Revealer, Hammer, Score Multiplier, Extra Moves) are earned, not bought:
+  - **Daily login streaks** grant consumables at milestone days (3, 7, 14, 30, 50, 100) — see `src/hooks/useLoginStreak.ts`. This is the only wired source.
+  - Inventory and granting logic live in `src/hooks/useConsumables.ts` (`awardConsumables`).
+  - Note: `ACHIEVEMENT_CONSUMABLE_REWARDS` exists in `src/lib/consumables.ts` as a reward table, but achievement-based granting is **not currently wired up** — no code calls `awardConsumables` with it.

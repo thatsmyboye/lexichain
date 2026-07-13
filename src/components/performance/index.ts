@@ -16,7 +16,6 @@ export {
   LazyLeaderboardPage,
   LazyMyAccountPage,
   LazyStatsPage,
-  LazyStorePage,
   LazyAuthPage,
   LazyDebugPage,
   LazyRoute,

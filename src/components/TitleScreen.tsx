@@ -16,7 +16,6 @@ interface TitleScreenProps {
   onLoginClick: () => void;
   onRegisterClick: () => void;
   onStatsClick: () => void;
-  onStoreClick: () => void;
   onLeaderboardClick: () => void;
   onSettingsClick?: () => void;
   streakData?: LoginStreakData | null;
@@ -28,7 +27,6 @@ const TitleScreen = ({
   onLoginClick,
   onRegisterClick,
   onStatsClick,
-  onStoreClick,
   onLeaderboardClick,
   onSettingsClick,
   streakData,
@@ -193,15 +191,6 @@ const TitleScreen = ({
           </div>
 
           <div className="flex flex-col items-center gap-2.5 animate-in fade-in slide-in-from-bottom duration-700 delay-500">
-            <SoundButton
-              variant="outline"
-              size="lg"
-              onClick={onStoreClick}
-              className="px-6 hover:bg-gradient-to-r hover:from-brand-500/10 hover:to-brand-600/10 hover:border-brand-500/50 transition-all duration-300"
-            >
-              🛒 Store
-            </SoundButton>
-            
             {user && <>
                 <SoundButton
                   variant="outline"
@@ -316,15 +305,6 @@ const TitleScreen = ({
           </div>
 
           <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom duration-700 delay-500">
-            <SoundButton
-              variant="outline"
-              size="lg"
-              onClick={onStoreClick}
-              className="px-8 hover:bg-gradient-to-r hover:from-brand-500/10 hover:to-brand-600/10 hover:border-brand-500/50 transition-all duration-300"
-            >
-              🛒 Store
-            </SoundButton>
-
             {user && <>
                 <SoundButton
                   variant="outline"

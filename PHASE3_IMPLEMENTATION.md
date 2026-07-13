@@ -1,5 +1,15 @@
 # Lexichain Phase 3 Implementation
 
+> **⚠️ PARTIALLY SUPERSEDED — the XP / progression parts are no longer in the app.**
+> The XP system, player levels, skill trees, and level-gated mode unlocks
+> described below have been removed to simplify the game. In particular:
+> `src/lib/progression.ts`, `src/components/progression/ProgressionSystem.tsx`,
+> and `src/components/Phase3Integration.tsx` have been **deleted**, and
+> `AdvancedGameModes.tsx` no longer shows XP, levels, or lock badges — every mode
+> is open to all players. The other Phase 3 features (advanced modes themselves,
+> analytics, themes, achievements, hints) still apply. See the README's
+> "Progression & Consumables" section for the current structure.
+
 ## 🎯 Overview
 
 Phase 3 of Lexichain introduces **Advanced Game Mechanics & Enhanced User Experience** features that build upon the solid foundation established in Phase 1. This phase focuses on sophisticated gameplay systems, deep customization options, and intelligent assistance features.
