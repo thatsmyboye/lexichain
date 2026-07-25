@@ -7,7 +7,7 @@ import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { checkIncompleteGameState } from "@/utils/gameStateUtils";
 import { InteractiveTutorial } from "@/components/tutorial/InteractiveTutorial";
 import { SoundButton } from "@/components/effects/SoundSystem";
-import { BookOpen, Settings, Shield } from "lucide-react";
+import { Settings, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FloatingTiles } from "@/components/effects/FloatingTiles";
 interface TitleScreenProps {
@@ -127,7 +127,7 @@ const TitleScreen = ({
     return localStorage.getItem('lexichain-floating-tiles') !== 'false';
   });
 
-  return <div className="h-screen flex flex-col items-center bg-gradient-to-br from-background via-muted/30 to-background relative px-4 overflow-hidden">
+  return <div className="min-h-[100dvh] flex flex-col items-center bg-gradient-to-br from-background via-muted/30 to-background relative px-4 overflow-x-hidden">
       {/* Background: floating tiles or default gradient blobs */}
       {floatingTilesEnabled ? (
         <FloatingTiles />
@@ -139,7 +139,7 @@ const TitleScreen = ({
       )}
 
       {/* Mobile: Compact layout with justify-between */}
-      <div className="md:hidden h-full flex flex-col items-center justify-between py-[24px] relative z-10">
+      <div className="md:hidden min-h-[100dvh] w-full flex flex-col items-center justify-between py-[24px] relative z-10">
         <div></div> {/* Top spacer */}
 
           <div className="text-center space-y-6 max-w-sm flex-shrink-0">
@@ -222,20 +222,12 @@ const TitleScreen = ({
               </>}
 
             <div className="flex gap-2 mt-2">
-              <SoundButton
-                variant="ghost"
-                size="sm"
-                onClick={() => {}}
-                className="px-3 hover:bg-brand-500/10 transition-all duration-300"
-              >
-                <BookOpen className="h-4 w-4 mr-1" />
-                Tutorial
-              </SoundButton>
               {onSettingsClick && (
                 <SoundButton
                   variant="ghost"
                   size="sm"
                   onClick={onSettingsClick}
+                  aria-label="Settings"
                   className="px-3 hover:bg-brand-500/10 transition-all duration-300"
                 >
                   <Settings className="h-4 w-4" />
@@ -255,7 +247,7 @@ const TitleScreen = ({
       </div>
 
       {/* Desktop: Centered layout with generous spacing */}
-      <div className="hidden md:flex h-full flex-col items-center justify-center relative z-10">
+      <div className="hidden md:flex min-h-[100dvh] flex-col items-center justify-center relative z-10">
           <div className="text-center space-y-8 max-w-none">
             <div className="relative">
               <h1 className="text-7xl lg:text-9xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-2xl animate-in fade-in slide-in-from-top duration-700">
@@ -336,20 +328,12 @@ const TitleScreen = ({
               </>}
 
             <div className="flex gap-3 mt-2">
-              <SoundButton
-                variant="ghost"
-                size="sm"
-                onClick={() => {}}
-                className="px-4 hover:bg-brand-500/10 transition-all duration-300"
-              >
-                <BookOpen className="h-4 w-4 mr-2" />
-                Tutorial
-              </SoundButton>
               {onSettingsClick && (
                 <SoundButton
                   variant="ghost"
                   size="sm"
                   onClick={onSettingsClick}
+                  aria-label="Settings"
                   className="px-4 hover:bg-brand-500/10 transition-all duration-300"
                 >
                   <Settings className="h-4 w-4" />

@@ -3,6 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTheme } from 'next-themes';
+import { getFontSize, setFontSize as persistFontSize, type FontSize } from '@/lib/appearance';
 import { Settings, Accessibility, Volume2, Palette, Zap } from 'lucide-react';
 import { SoundSettings } from '@/components/effects/SoundSystem';
 import { ColorBlindSettings, HighContrastToggle } from '@/components/accessibility/ColorBlindSupport';
@@ -28,6 +31,13 @@ export function GameSettings() {
   const handleFloatingTilesToggle = (checked: boolean) => {
     setFloatingTiles(checked);
     localStorage.setItem('lexichain-floating-tiles', checked ? 'true' : 'false');
+  };
+
+  const { theme, setTheme } = useTheme();
+  const [fontSize, setFontSizeState] = useState<FontSize>(() => getFontSize());
+  const handleFontSizeChange = (value: FontSize) => {
+    setFontSizeState(value);
+    persistFontSize(value);
   };
   const {
     playSound
@@ -172,23 +182,33 @@ export function GameSettings() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Theme</label>
-                  <select className="w-full p-2 border rounded-md">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="system">System</option>
-                  </select>
+                  <Select value={theme} onValueChange={setTheme}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">System</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Font Size</label>
-                  <select className="w-full p-2 border rounded-md">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="large">Large</option>
-                    <option value="extra-large">Extra Large</option>
-                  </select>
+                  <Select value={fontSize} onValueChange={(v) => handleFontSizeChange(v as FontSize)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select font size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Small</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="large">Large</SelectItem>
+                      <SelectItem value="extra-large">Extra Large</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Separator />

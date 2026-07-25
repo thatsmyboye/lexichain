@@ -20,6 +20,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         hero:
           "bg-gradient-to-r from-[hsl(var(--brand-500))] to-[hsl(var(--brand-600))] text-[hsl(var(--hero-foreground))] shadow-[var(--shadow-soft)] hover:brightness-110 focus-visible:ring-[hsl(var(--brand-500))]",
+        brand:
+          "bg-background text-[hsl(var(--brand-500))] border border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]",
       },
       size: {
         default: "h-10 px-4 py-2",
