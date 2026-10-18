@@ -1,11 +1,11 @@
 import { memo } from "react";
 import type React from "react";
-import { Shuffle } from "lucide-react";
 import type { SpecialTile } from "@/types/game";
 import type { TileSkin } from "@/lib/tileSkins";
 import { letterRarity } from "@/lib/letterRarity";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 import { cn } from "@/lib/utils";
+import { SpecialTileIcon } from "./SpecialTileIcon";
 
 interface BenchmarkColor {
   border: string;
@@ -30,6 +30,13 @@ interface GameTileProps {
   skin: TileSkin;
   benchmarkColor: BenchmarkColor;
   currentGrade: Grade;
+  /**
+   * Direction (row/col delta, each -1..1) from this frozen tile toward the
+   * Freeze tile that froze it, so frost can creep in from that edge.
+   * Omitted when unknown: frost then forms evenly around the rim.
+   */
+  frostDr?: number;
+  frostDc?: number;
   onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
   onActivate: () => void;
   onFocus: () => void;
@@ -46,7 +53,10 @@ function getTileClasses(
   benchmarkColor: BenchmarkColor,
   currentGrade: Grade,
 ): string {
-  const shape = SPECIAL_SHAPES[special.type ?? "default"] ?? SPECIAL_SHAPES.default;
+  let shape = SPECIAL_SHAPES[special.type ?? "default"] ?? SPECIAL_SHAPES.default;
+  // Ghosts flicker their mist/outline on a decorative layer instead of fading
+  // the whole tile, so the letter keeps full contrast.
+  if (special.type === "ghost") shape = shape.replace("animate-tile-fade", "");
   let base = `game-tile relative aspect-square w-full flex items-center justify-center border-2 text-card-foreground shadow-sm select-none outline-none focus-visible:ring-4 focus-visible:ring-[hsl(var(--brand-500))] focus-visible:ring-offset-2 focus-visible:ring-offset-background ${shape} ${benchmarkColor.border} transition-[transform,box-shadow,background-color] duration-200 `;
 
   if (isSelected) {
@@ -112,10 +122,55 @@ function getTileClasses(
   return cn(base);
 }
 
-const SPECIAL_ICONS: Partial<Record<NonNullable<SpecialTile["type"]>, string>> = {
-  stone: "🪨", freeze: "❄️", decay: "🦠", mirror: "🪞",
-  magnet: "🧲", bomb: "💣", chain: "⛓️", ghost: "👻", tax: "💰",
-};
+// Types whose corner icon would collide with their own markers
+// (X-Factor corner dots, Multiplier value badge).
+const NO_CORNER_ICON = new Set<SpecialTile["type"]>(["xfactor", "multiplier", null]);
+
+// Bomb fuse: quadratic curve from the bomb's shoulder out to the box corner,
+// in a 24×24 box over the tile's top-right corner. It is trimmed with
+// de Casteljau so the burning tip sits exactly at the end of what's left.
+const FUSE = { p0: [12.5, 11.5], p1: [14.5, 2.5], p2: [22.5, 1.5] } as const;
+const MAX_FUSE_TURNS = 5;
+
+function fuseGeometry(turnsLeft: number | undefined) {
+  const t = turnsLeft === undefined
+    ? 1
+    : Math.max(0.14, Math.min(1, turnsLeft / MAX_FUSE_TURNS));
+  const lerp = (a: readonly number[], b: readonly number[], k: number) =>
+    [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const q0 = lerp(FUSE.p0, FUSE.p1, t);
+  const q1 = lerp(FUSE.p1, FUSE.p2, t);
+  const tip = lerp(q0, q1, t);
+  const f = (n: number) => n.toFixed(2);
+  return {
+    d: `M${f(FUSE.p0[0])} ${f(FUSE.p0[1])} Q${f(q0[0])} ${f(q0[1])} ${f(tip[0])} ${f(tip[1])}`,
+    tip,
+  };
+}
+
+function BombFuse({ turnsLeft }: { turnsLeft: number | undefined }) {
+  const { d, tip } = fuseGeometry(turnsLeft);
+  const urgent = turnsLeft !== undefined && turnsLeft <= 1;
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="pointer-events-none absolute -right-[4%] -top-[4%] z-[15] h-[42%] w-[42%] overflow-visible"
+    >
+      {/* Collar where the fuse leaves the bomb */}
+      <rect x="10.2" y="10.2" width="5" height="3.4" rx="0.8" transform="rotate(-45 12.7 11.9)" fill="#1f2937" stroke="#9ca3af" strokeWidth="0.8" />
+      <path d={d} fill="none" stroke="rgba(0,0,0,0.6)" strokeWidth="3.4" strokeLinecap="round" />
+      <path d={d} fill="none" stroke="#d6a35c" strokeWidth="1.8" strokeLinecap="round" strokeDasharray="1.6 1.1" />
+      <g transform={`translate(${tip[0].toFixed(2)} ${tip[1].toFixed(2)})`}>
+        <g className={cn("tile-bomb-spark", urgent && "tile-bomb-spark-urgent")}>
+          <circle r="4.2" fill="rgba(251,146,60,0.45)" />
+          <path d="M0 -4.6V-2.2M0 2.2V4.6M-4.6 0H-2.2M2.2 0H4.6M-3.2 -3.2L-1.6 -1.6M1.6 1.6L3.2 3.2M3.2 -3.2L1.6 -1.6M-1.6 1.6L-3.2 3.2" stroke="#fde047" strokeWidth="0.9" strokeLinecap="round" />
+          <circle r="1.9" fill="#fef9c3" stroke="#f97316" strokeWidth="0.8" />
+        </g>
+      </g>
+    </svg>
+  );
+}
 
 const SPECIAL_NAMES: Record<NonNullable<SpecialTile["type"]>, string> = {
   stone: "Stone tile, blocked",
@@ -181,6 +236,8 @@ export const GameTile = memo(function GameTile({
   skin,
   benchmarkColor,
   currentGrade,
+  frostDr,
+  frostDc,
   onPointerDown,
   onActivate,
   onFocus,
@@ -191,17 +248,7 @@ export const GameTile = memo(function GameTile({
   );
 
   const reusedBg = (() => {
-    if (currentGrade === "none") {
-      const overlays: Record<string, string> = {
-        original: "rgba(168, 85, 247, 0.2)",
-        ocean: "rgba(34, 211, 238, 0.3)",
-        forest: "rgba(52, 211, 153, 0.3)",
-        sunset: "rgba(251, 146, 60, 0.3)",
-        midnight: "rgba(168, 85, 247, 0.3)",
-        neon: "rgba(34, 211, 238, 0.4)",
-      };
-      return overlays[skin.id] ?? "rgba(168, 85, 247, 0.2)";
-    }
+    if (currentGrade === "none") return skin.reusedTint ?? "rgba(168, 85, 247, 0.2)";
     const colors: Record<string, string> = {
       platinum: "rgba(168, 85, 247, 0.3)",
       gold: "rgba(234, 179, 8, 0.3)",
@@ -212,6 +259,19 @@ export const GameTile = memo(function GameTile({
   })();
 
   const rarity = special.type === "wild" ? 0 : letterRarity(letter);
+
+  // Skin material only on plain tiles: special tiles keep their own colors,
+  // and selected/affected states keep their flat, high-signal fills.
+  const showTexture = special.type === null && !isSelected && !isAffected;
+
+  // Frost creeps in from the edge facing the Freeze tile.
+  const hasFrostDir = frostDr !== undefined && frostDc !== undefined && (frostDr !== 0 || frostDc !== 0);
+  const frostStyle = hasFrostDir
+    ? ({
+        "--frost-angle": `${Math.round((Math.atan2(-frostDc!, frostDr!) * 180) / Math.PI)}deg`,
+        transformOrigin: `${frostDc! < 0 ? "left" : frostDc! > 0 ? "right" : "center"} ${frostDr! < 0 ? "top" : frostDr! > 0 ? "bottom" : "center"}`,
+      } as React.CSSProperties)
+    : undefined;
 
   return (
     <button
@@ -233,6 +293,16 @@ export const GameTile = memo(function GameTile({
       className={classes}
       style={{ touchAction: "none" }}
     >
+      {/* Skin surface: grain, noise, gloss or glow (see index.css) */}
+      {showTexture && (
+        <span aria-hidden="true" className={cn("tile-texture", skin.textureClass)} />
+      )}
+
+      {/* Purposeful idle motion for special tiles (all off under reduced motion) */}
+      {special.type === "freeze" && <span aria-hidden="true" className="tile-freeze-shimmer" />}
+      {special.type === "decay" && <span aria-hidden="true" className="tile-decay-blotch" />}
+      {special.type === "ghost" && <span aria-hidden="true" className="tile-ghost-wisp" />}
+
       {/* Reused tile overlay */}
       {isReused && benchmarkColor.background && (
         <span
@@ -258,10 +328,16 @@ export const GameTile = memo(function GameTile({
 
       {/* Rarity markers */}
       {rarity === 1 && (
-        <span aria-hidden="true" className="absolute top-0.5 right-1 text-[13px] leading-none font-black text-orange-700 dark:text-orange-300 z-10">+</span>
+        <span aria-hidden="true" className={cn(
+          "absolute top-0.5 right-1 text-[13px] leading-none font-black z-10",
+          skin.darkSurface && showTexture ? "text-orange-300" : "text-orange-700 dark:text-orange-300",
+        )}>+</span>
       )}
       {rarity === 2 && (
-        <span aria-hidden="true" className="absolute top-0.5 right-1 text-[13px] leading-none font-black text-purple-700 dark:text-purple-300 z-10">★</span>
+        <span aria-hidden="true" className={cn(
+          "absolute top-0.5 right-1 text-[13px] leading-none font-black z-10",
+          skin.darkSurface && showTexture ? "text-purple-300" : "text-purple-700 dark:text-purple-300",
+        )}>★</span>
       )}
 
       {/* Selection order */}
@@ -288,12 +364,8 @@ export const GameTile = memo(function GameTile({
         </span>
       )}
 
-      {/* Shuffle icon */}
-      {special.type === "shuffle" && (
-        <span aria-hidden="true" className="absolute bottom-1 right-1">
-          <Shuffle className="h-3.5 w-3.5 opacity-80" />
-        </span>
-      )}
+      {/* Bomb fuse: burns down as the expiry counter drops */}
+      {special.type === "bomb" && <BombFuse turnsLeft={special.expiryTurns} />}
 
       {/* Expiry ring: depletes as the tile's remaining turns run out */}
       {special.type !== null && special.expiryTurns !== undefined && (
@@ -309,17 +381,31 @@ export const GameTile = memo(function GameTile({
         </span>
       )}
 
-      {/* Special tile emoji */}
-      {special.type !== null && special.type in SPECIAL_ICONS && (
-        <span aria-hidden="true" className="absolute bottom-0.5 right-0.5 text-xs">
-          {SPECIAL_ICONS[special.type as keyof typeof SPECIAL_ICONS]}
+      {/* Special tile icon */}
+      {!NO_CORNER_ICON.has(special.type) && special.type !== null && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute z-10 leading-none opacity-90",
+            // Bomb tiles are round: tuck the icon inside the circle
+            special.type === "bomb" ? "bottom-[11%] right-[11%]" : "bottom-0.5 right-0.5",
+            special.type === "magnet" && "tile-magnet-tug",
+          )}
+        >
+          <SpecialTileIcon type={special.type} className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
         </span>
       )}
 
-      {/* Frozen indicator */}
+      {/* Frozen indicator: frost creeps in from the Freeze tile's side */}
       {special.frozen && (
         <span aria-hidden="true" className="absolute inset-0 rounded-[inherit] ring-2 ring-inset ring-cyan-300/80 pointer-events-none">
-          <span className="absolute top-0 right-0 text-xs">❄</span>
+          <span
+            className={cn("tile-frost", hasFrostDir ? "tile-frost-directional" : "tile-frost-rim")}
+            style={frostStyle}
+          />
+          <span className="absolute top-0.5 right-0.5 z-10 text-white drop-shadow-[0_0_2px_rgba(8,47,73,0.95)]">
+            <SpecialTileIcon type="freeze" className="h-3 w-3" strokeWidth={2.5} />
+          </span>
         </span>
       )}
     </button>
