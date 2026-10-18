@@ -9,7 +9,13 @@ A strategic word-chain game where each word must share at least one tile with th
 3. Special tiles appear as the game progresses and add risk, reward, or chaos.
 4. Score as many points as possible before time or moves run out.
 
-Tile selection: tap/click a starting tile, then drag or tap adjacent tiles. Release to submit.
+Tile selection works three ways:
+
+- **Drag** through adjacent tiles (diagonals count) and release to submit. Releasing anywhere, even off the board, ends the drag.
+- **Tap** tiles one at a time, then press **Submit** or tap the last tile again. Tapping an earlier tile trims the word back to it; tapping a non-adjacent tile starts a new word.
+- **Type** on a keyboard: letters trace a matching path automatically (preferring one that reuses a tile from your last word), **Enter** submits, **Backspace** removes a letter, **Esc** clears.
+
+Time Attack, Survival, and Chaos keep the board locked behind a Start button so nothing can be played before the round begins.
 
 ## Special Tiles
 
@@ -52,10 +58,11 @@ Special tiles have an **expiry counter** (top-left) — they disappear after tha
 ## Accessibility
 
 - All tile types are distinguishable by **shape and border style** in grayscale (no color required).
-- Animations respect **`prefers-reduced-motion`**; all tile animations are disabled under that setting.
-- Four **colour-blind modes** available (Protanopia, Deuteranopia, Tritanopia, Achromatopsia).
-- **High-contrast mode** toggle in settings.
-- Full **keyboard navigation** and screen-reader ARIA announcements.
+- Animations respect **`prefers-reduced-motion`** everywhere (a global rule in `src/index.css` also covers inline animations; the floating title-screen tiles are not rendered).
+- Four **color-vision modes** (Protanopia, Deuteranopia, Tritanopia, Achromatopsia) remap the valid/invalid/warning feedback colors through CSS tokens (`--ok`, `--bad`, `--warn`); icons and a dashed path line carry the same meaning without color.
+- **High-contrast mode** darkens secondary text, strengthens borders, and thickens tile outlines; it applies on every screen.
+- **Keyboard play**: tiles are buttons with a roving tab stop. Arrow keys move between tiles, Space selects, typing letters traces a word, Enter submits.
+- **Screen readers**: every tile has a descriptive label (letter, position, special tile, selection order); word results, score changes, special-tile spawns, timer warnings, and game over are announced through live regions.
 
 ## Development
 

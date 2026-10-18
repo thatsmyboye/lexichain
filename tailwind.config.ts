@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -11,12 +12,20 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: {
+				DEFAULT: '1rem',
+				sm: '1.5rem',
+				lg: '2rem'
+			},
 			screens: {
 				'2xl': '1400px'
 			}
 		},
 		extend: {
+			screens: {
+				// Phones held sideways: board and controls side by side
+				'landscape-phone': { raw: '(orientation: landscape) and (max-height: 540px)' }
+			},
 			gridTemplateColumns: {
 				'4': 'repeat(4, minmax(0, 1fr))',
 				'5': 'repeat(5, minmax(0, 1fr))',
@@ -101,5 +110,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [tailwindcssAnimate],
 } satisfies Config;

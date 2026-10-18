@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // ARIA context for managing announcements
@@ -7,54 +7,80 @@ interface ARIAContextType {
   clearAnnouncements: () => void;
 }
 
+type Priority = 'polite' | 'assertive';
+
 const ARIAContext = createContext<ARIAContextType | undefined>(undefined);
 
+// How long to leave the region empty before inserting the new text. Clearing first
+// (and alternating a zero-width suffix) makes screen readers re-announce identical
+// consecutive messages such as "Not a word" twice in a row.
+const ANNOUNCE_DELAY_MS = 50;
+const ANNOUNCE_CLEAR_MS = 5000;
+
 export function ARIAProvider({ children }: { children: React.ReactNode }) {
-  const [announcements, setAnnouncements] = useState<Array<{
-    id: string;
-    message: string;
-    priority: 'polite' | 'assertive';
-  }>>([]);
+  const [messages, setMessages] = useState<Record<Priority, string>>({ polite: '', assertive: '' });
+  const counterRef = useRef(0);
+  const timersRef = useRef<Record<Priority, { set?: ReturnType<typeof setTimeout>; clear?: ReturnType<typeof setTimeout> }>>({
+    polite: {},
+    assertive: {}
+  });
 
-  const announce = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    const id = Math.random().toString(36).substr(2, 9);
-    setAnnouncements(prev => [...prev, { id, message, priority }]);
-    
-    // Remove announcement after 5 seconds
-    setTimeout(() => {
-      setAnnouncements(prev => prev.filter(a => a.id !== id));
-    }, 5000);
-  };
+  const clearTimers = useCallback((priority: Priority) => {
+    const timers = timersRef.current[priority];
+    if (timers.set) clearTimeout(timers.set);
+    if (timers.clear) clearTimeout(timers.clear);
+    timersRef.current[priority] = {};
+  }, []);
 
-  const clearAnnouncements = () => {
-    setAnnouncements([]);
-  };
+  const announce = useCallback((message: string, priority: Priority = 'polite') => {
+    clearTimers(priority);
+    counterRef.current += 1;
+    const suffix = counterRef.current % 2 === 0 ? '\u200B' : '';
+
+    setMessages(prev => ({ ...prev, [priority]: '' }));
+    timersRef.current[priority].set = setTimeout(() => {
+      setMessages(prev => ({ ...prev, [priority]: message + suffix }));
+      // Remove the text after a while so stale messages aren't re-read on navigation
+      timersRef.current[priority].clear = setTimeout(() => {
+        setMessages(prev => ({ ...prev, [priority]: '' }));
+      }, ANNOUNCE_CLEAR_MS);
+    }, ANNOUNCE_DELAY_MS);
+  }, [clearTimers]);
+
+  const clearAnnouncements = useCallback(() => {
+    clearTimers('polite');
+    clearTimers('assertive');
+    setMessages({ polite: '', assertive: '' });
+  }, [clearTimers]);
+
+  useEffect(() => {
+    return () => {
+      clearTimers('polite');
+      clearTimers('assertive');
+    };
+  }, [clearTimers]);
+
+  const value = useMemo(() => ({ announce, clearAnnouncements }), [announce, clearAnnouncements]);
 
   return (
-    <ARIAContext.Provider value={{ announce, clearAnnouncements }}>
+    <ARIAContext.Provider value={value}>
       {children}
-      {/* Live regions for announcements */}
+      {/* Live regions for announcements: always mounted so screen readers track them */}
       <div
         aria-live="polite"
         aria-atomic="true"
+        role="status"
         className="sr-only"
       >
-        {announcements
-          .filter(a => a.priority === 'polite')
-          .map(a => (
-            <div key={a.id}>{a.message}</div>
-          ))}
+        {messages.polite}
       </div>
       <div
         aria-live="assertive"
         aria-atomic="true"
+        role="alert"
         className="sr-only"
       >
-        {announcements
-          .filter(a => a.priority === 'assertive')
-          .map(a => (
-            <div key={a.id}>{a.message}</div>
-          ))}
+        {messages.assertive}
       </div>
     </ARIAContext.Provider>
   );
@@ -394,7 +420,7 @@ export function AccessibleFormField({
   children,
   className
 }: AccessibleFormFieldProps) {
-  const fieldId = Math.random().toString(36).substr(2, 9);
+  const fieldId = useId();
   const errorId = `${fieldId}-error`;
 
   return (

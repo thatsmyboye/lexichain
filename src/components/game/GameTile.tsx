@@ -1,10 +1,11 @@
 import { memo } from "react";
 import type React from "react";
-import { Card } from "@/components/ui/card";
+import { Shuffle } from "lucide-react";
 import type { SpecialTile } from "@/types/game";
 import type { TileSkin } from "@/lib/tileSkins";
 import { letterRarity } from "@/lib/letterRarity";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
+import { cn } from "@/lib/utils";
 
 interface BenchmarkColor {
   border: string;
@@ -16,19 +17,22 @@ type Grade = "bronze" | "silver" | "gold" | "platinum" | "none";
 interface GameTileProps {
   letter: string;
   tileKey: string;
+  row: number;
+  col: number;
   special: SpecialTile;
   isSelected: boolean;
   selectionIndex: number;
   isReused: boolean;
   isAffected: boolean;
   isNewWild: boolean;
+  isHint: boolean;
+  isFocusTarget: boolean;
   skin: TileSkin;
   benchmarkColor: BenchmarkColor;
   currentGrade: Grade;
-  onPointerDown: () => void;
-  onPointerEnter: () => void;
-  onTouchStart: (e: React.TouchEvent) => void;
-  onClick: () => void;
+  onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onActivate: () => void;
+  onFocus: () => void;
 }
 
 function getTileClasses(
@@ -37,17 +41,18 @@ function getTileClasses(
   isReused: boolean,
   isAffected: boolean,
   isNewWild: boolean,
+  isHint: boolean,
   skin: TileSkin,
   benchmarkColor: BenchmarkColor,
   currentGrade: Grade,
 ): string {
   const shape = SPECIAL_SHAPES[special.type ?? "default"] ?? SPECIAL_SHAPES.default;
-  let base = `relative aspect-square flex items-center justify-center ${shape} ${benchmarkColor.border} transition-[transform,box-shadow,background-color] duration-300 `;
+  let base = `game-tile relative aspect-square w-full flex items-center justify-center border-2 text-card-foreground shadow-sm select-none outline-none focus-visible:ring-4 focus-visible:ring-[hsl(var(--brand-500))] focus-visible:ring-offset-2 focus-visible:ring-offset-background ${shape} ${benchmarkColor.border} transition-[transform,box-shadow,background-color] duration-200 `;
 
   if (isSelected) {
-    base += skin.selectedClasses + " shadow-[0_0_20px_rgba(34,197,94,0.4)] ";
+    base += skin.selectedClasses + " tile-selected shadow-[0_0_20px_hsl(var(--ok)/0.4)] ";
   } else if (isAffected) {
-    base += "bg-gradient-to-br from-yellow-300 to-orange-400 text-white animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
+    base += "bg-gradient-to-br from-yellow-300 to-orange-400 text-gray-900 animate-tile-flip shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
   } else if (isReused) {
     base += "relative ";
     if (currentGrade !== "none") {
@@ -66,39 +71,45 @@ function getTileClasses(
       else if (currentGrade === "silver") base += "shadow-[0_0_8px_rgba(156,163,175,0.4)] ";
       else base += "shadow-[0_0_8px_rgba(217,119,6,0.4)] ";
     }
+    base += skin.baseClasses + " ";
   } else {
     base += skin.baseClasses + " ";
   }
 
+  if (isHint && !isSelected) {
+    base += "ring-4 ring-[hsl(var(--brand-500))] animate-tile-pulse ";
+  }
+
   if (special.type === "stone") {
-    base += "bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-[0_0_15px_rgba(75,85,99,0.4)] ";
+    base += "bg-gradient-to-br from-gray-500 to-gray-700 text-white shadow-[0_0_15px_rgba(75,85,99,0.4)] ";
   } else if (special.type === "wild") {
-    base += `bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] ${isNewWild ? "animate-blink-twice" : ""} `;
+    base += `bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] ${isNewWild ? "animate-blink-twice" : ""} `;
   } else if (special.type === "xfactor") {
-    base += "bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-[0_0_20px_rgba(251,146,60,0.5)] ";
+    base += "bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-[0_0_20px_rgba(251,146,60,0.5)] ";
   } else if (special.type === "multiplier") {
-    base += "bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] ";
+    base += "bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)] ";
   } else if (special.type === "shuffle") {
-    base += "bg-gradient-to-br from-red-200 to-red-300 text-red-800 shadow-[0_0_15px_rgba(239,68,68,0.3)] ";
+    base += "bg-gradient-to-br from-red-200 to-red-300 text-red-900 shadow-[0_0_15px_rgba(239,68,68,0.3)] ";
   } else if (special.type === "freeze") {
-    base += "bg-gradient-to-br from-cyan-300 to-blue-400 text-white shadow-[0_0_20px_rgba(34,211,238,0.5)] ";
+    base += "bg-gradient-to-br from-cyan-200 to-blue-300 text-blue-950 shadow-[0_0_20px_rgba(34,211,238,0.5)] ";
   } else if (special.type === "decay") {
-    base += "bg-gradient-to-br from-yellow-300 to-green-500 text-white shadow-[0_0_15px_rgba(132,204,22,0.4)] ";
+    base += "bg-gradient-to-br from-yellow-200 to-green-400 text-green-950 shadow-[0_0_15px_rgba(132,204,22,0.4)] ";
   } else if (special.type === "mirror") {
-    base += "bg-gradient-to-br from-gray-200 to-gray-400 text-gray-800 shadow-[0_0_20px_rgba(156,163,175,0.5)] ";
+    base += "bg-gradient-to-br from-gray-200 to-gray-400 text-gray-900 shadow-[0_0_20px_rgba(156,163,175,0.5)] ";
   } else if (special.type === "magnet") {
-    base += "bg-gradient-to-br from-red-400 to-gray-400 text-white shadow-[0_0_15px_rgba(248,113,113,0.4)] ";
+    base += "bg-gradient-to-br from-red-500 to-gray-600 text-white shadow-[0_0_15px_rgba(248,113,113,0.4)] ";
   } else if (special.type === "bomb") {
     base += "bg-gradient-to-br from-red-600 to-gray-900 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] ";
   } else if (special.type === "chain") {
-    base += "bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-[0_0_15px_rgba(217,119,6,0.4)] ";
+    base += "bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-[0_0_15px_rgba(217,119,6,0.4)] ";
   } else if (special.type === "ghost") {
-    base += "bg-gradient-to-br from-white/60 to-gray-200/60 text-gray-400 shadow-[0_0_15px_rgba(255,255,255,0.3)] opacity-70 ";
+    base += "bg-gradient-to-br from-white to-gray-200 text-gray-700 border-dashed shadow-[0_0_15px_rgba(255,255,255,0.3)] dark:from-slate-700 dark:to-slate-800 dark:text-gray-200 ";
   } else if (special.type === "tax") {
-    base += "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-[0_0_15px_rgba(234,179,8,0.4)] ";
+    base += "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-950 shadow-[0_0_15px_rgba(234,179,8,0.4)] ";
   }
 
-  return base;
+  // twMerge so later text/background classes (skin, special) win cleanly
+  return cn(base);
 }
 
 const SPECIAL_ICONS: Partial<Record<NonNullable<SpecialTile["type"]>, string>> = {
@@ -106,25 +117,76 @@ const SPECIAL_ICONS: Partial<Record<NonNullable<SpecialTile["type"]>, string>> =
   magnet: "🧲", bomb: "💣", chain: "⛓️", ghost: "👻", tax: "💰",
 };
 
+const SPECIAL_NAMES: Record<NonNullable<SpecialTile["type"]>, string> = {
+  stone: "Stone tile, blocked",
+  wild: "Wild tile, any letter",
+  xfactor: "X-Factor tile",
+  multiplier: "Multiplier tile",
+  shuffle: "Shuffle tile",
+  freeze: "Freeze tile",
+  decay: "Decay tile",
+  mirror: "Mirror tile, copies previous letter",
+  magnet: "Magnet tile",
+  bomb: "Bomb tile",
+  chain: "Chain tile",
+  ghost: "Ghost tile, no letter, bridges to any tile",
+  tax: "Tax tile",
+};
+
+function ordinal(n: number) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+export function describeTile(
+  letter: string,
+  row: number,
+  col: number,
+  special: SpecialTile,
+  selectionIndex: number,
+  isReused: boolean,
+): string {
+  const parts: string[] = [];
+  parts.push(special.type === "wild" ? "Wild" : special.type === "ghost" ? "Ghost" : letter);
+  parts.push(`row ${row + 1}, column ${col + 1}`);
+  if (special.type) {
+    let name = SPECIAL_NAMES[special.type];
+    if (special.type === "multiplier" && special.value) name += ` ${special.value} times`;
+    parts.push(name);
+    if (special.expiryTurns !== undefined) parts.push(`expires in ${special.expiryTurns} turn${special.expiryTurns === 1 ? "" : "s"}`);
+  }
+  if (special.frozen) parts.push("frozen");
+  const rarity = special.type === "wild" ? 0 : letterRarity(letter);
+  if (rarity === 2) parts.push("very rare letter");
+  else if (rarity === 1) parts.push("rare letter");
+  if (isReused) parts.push("in last word");
+  if (selectionIndex >= 0) parts.push(`selected ${ordinal(selectionIndex + 1)}`);
+  return parts.join(", ");
+}
+
 export const GameTile = memo(function GameTile({
   letter,
   tileKey,
+  row,
+  col,
   special,
   isSelected,
   selectionIndex,
   isReused,
   isAffected,
   isNewWild,
+  isHint,
+  isFocusTarget,
   skin,
   benchmarkColor,
   currentGrade,
   onPointerDown,
-  onPointerEnter,
-  onTouchStart,
-  onClick,
+  onActivate,
+  onFocus,
 }: GameTileProps) {
   const classes = getTileClasses(
-    special, isSelected, isReused, isAffected, isNewWild,
+    special, isSelected, isReused, isAffected, isNewWild, isHint,
     skin, benchmarkColor, currentGrade,
   );
 
@@ -149,93 +211,117 @@ export const GameTile = memo(function GameTile({
     return colors[currentGrade] ?? "rgba(168, 85, 247, 0.2)";
   })();
 
+  const rarity = special.type === "wild" ? 0 : letterRarity(letter);
+
   return (
-    <Card
-      key={tileKey}
+    <button
+      type="button"
       data-tile-pos={tileKey}
+      data-selected={isSelected || undefined}
+      tabIndex={isFocusTarget ? 0 : -1}
+      aria-label={describeTile(letter, row, col, special, selectionIndex, isReused)}
+      aria-pressed={isSelected}
       onPointerDown={onPointerDown}
-      onPointerEnter={onPointerEnter}
-      onTouchStart={onTouchStart}
-      onClick={onClick}
+      onFocus={onFocus}
+      onClick={(e) => {
+        // Pointer input is handled on pointerdown/up; only keyboard and
+        // assistive-tech activations are handled here. Touch taps can also
+        // produce detail === 0 clicks, so require an empty pointerType too.
+        const pointerType = (e.nativeEvent as PointerEvent).pointerType;
+        if (e.detail === 0 && !pointerType) onActivate();
+      }}
       className={classes}
       style={{ touchAction: "none" }}
     >
       {/* Reused tile overlay */}
       {isReused && benchmarkColor.background && (
-        <div
-          className="absolute inset-0 rounded-lg pointer-events-none z-0"
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-[inherit] pointer-events-none z-0"
           style={{ backgroundColor: reusedBg }}
         />
       )}
 
-      {/* Reusable glyph so "reused" reads without color */}
+      {/* Foil sheen on rare letters instead of relying on a tiny glyph */}
+      {rarity > 0 && (
+        <span aria-hidden="true" className={`tile-foil ${rarity === 2 ? "tile-foil-strong" : ""}`} />
+      )}
+
+      {/* Chain-link glyph so "reused" reads without color */}
       {isReused && !isSelected && (
-        <div className="absolute bottom-0.5 left-0.5 text-[10px] leading-none opacity-70 z-10 pointer-events-none">↻</div>
+        <span aria-hidden="true" className="absolute bottom-0.5 left-1 text-[11px] leading-none opacity-80 z-10 pointer-events-none">⛓</span>
       )}
 
-      <div className="text-3xl font-semibold tracking-wide relative z-10">
+      <span aria-hidden="true" className="text-[clamp(1.25rem,6vw,1.875rem)] font-semibold tracking-wide relative z-10">
         {special.type === "wild" ? "?" : letter}
-      </div>
+      </span>
 
-      {/* Rarity indicators */}
-      {special.type !== "wild" && letterRarity(letter) === 1 && (
-        <div className="absolute top-0.5 right-0.5 text-xs font-bold text-orange-600 dark:text-orange-400 z-10">+</div>
+      {/* Rarity markers */}
+      {rarity === 1 && (
+        <span aria-hidden="true" className="absolute top-0.5 right-1 text-[13px] leading-none font-black text-orange-700 dark:text-orange-300 z-10">+</span>
       )}
-      {special.type !== "wild" && letterRarity(letter) === 2 && (
-        <div className="absolute top-0.5 right-0.5 text-xs font-bold text-purple-600 dark:text-purple-400 z-10">★</div>
+      {rarity === 2 && (
+        <span aria-hidden="true" className="absolute top-0.5 right-1 text-[13px] leading-none font-black text-purple-700 dark:text-purple-300 z-10">★</span>
       )}
 
       {/* Selection order */}
       {isSelected && (
-        <div className="absolute top-1 right-2 text-xs font-medium text-muted-foreground">
+        <span aria-hidden="true" className="absolute top-1 right-1 z-20 min-w-[18px] rounded-full bg-foreground px-1 text-[11px] font-bold leading-[18px] text-background">
           {selectionIndex + 1}
-        </div>
+        </span>
       )}
 
       {/* X-Factor corner dots */}
       {special.type === "xfactor" && (
-        <>
-          <div className="absolute top-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-          <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-          <div className="absolute bottom-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-          <div className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-        </>
+        <span aria-hidden="true">
+          <span className="absolute top-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
+          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
+          <span className="absolute bottom-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
+          <span className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
+        </span>
       )}
 
       {/* Multiplier value */}
       {special.type === "multiplier" && special.value && (
-        <div className="absolute bottom-1 text-xs font-bold bg-white/20 px-1 rounded">
+        <span aria-hidden="true" className="absolute bottom-1 text-xs font-bold bg-black/30 px-1 rounded">
           {special.value}x
-        </div>
+        </span>
       )}
 
       {/* Shuffle icon */}
       {special.type === "shuffle" && (
-        <div className="absolute top-0.5 right-0.5">
-          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" className="opacity-60">
-            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke="currentColor" strokeWidth="2" />
-          </svg>
-        </div>
+        <span aria-hidden="true" className="absolute bottom-1 right-1">
+          <Shuffle className="h-3.5 w-3.5 opacity-80" />
+        </span>
       )}
 
-      {/* Expiry counter */}
+      {/* Expiry ring: depletes as the tile's remaining turns run out */}
       {special.type !== null && special.expiryTurns !== undefined && (
-        <div className="absolute top-1 left-1 text-xs font-bold bg-black/30 text-white px-1 rounded-full min-w-[16px] text-center">
-          {special.expiryTurns}
-        </div>
+        <span aria-hidden="true" className="absolute top-1 left-1 z-10 flex h-[18px] w-[18px] items-center justify-center">
+          <svg viewBox="0 0 20 20" className="absolute inset-0 -rotate-90">
+            <circle cx="10" cy="10" r="8" fill="rgba(0,0,0,0.7)" />
+            <circle
+              cx="10" cy="10" r="8" fill="none" stroke="white" strokeWidth="2"
+              strokeDasharray={`${Math.min(1, special.expiryTurns / 5) * 50.3} 50.3`}
+            />
+          </svg>
+          <span className="relative text-[10px] font-bold text-white">{special.expiryTurns}</span>
+        </span>
       )}
 
       {/* Special tile emoji */}
       {special.type !== null && special.type in SPECIAL_ICONS && (
-        <div className="absolute bottom-0.5 right-0.5 text-xs opacity-80">
+        <span aria-hidden="true" className="absolute bottom-0.5 right-0.5 text-xs">
           {SPECIAL_ICONS[special.type as keyof typeof SPECIAL_ICONS]}
-        </div>
+        </span>
       )}
 
       {/* Frozen indicator */}
       {special.frozen && (
-        <div className="absolute top-0 right-0 text-xs opacity-60">❄</div>
+        <span aria-hidden="true" className="absolute inset-0 rounded-[inherit] ring-2 ring-inset ring-cyan-300/80 pointer-events-none">
+          <span className="absolute top-0 right-0 text-xs">❄</span>
+        </span>
       )}
-    </Card>
+    </button>
   );
 });

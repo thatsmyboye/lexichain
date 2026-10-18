@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Zap, Puzzle, Infinity, Star, Flame, Shuffle, Flag, Sword, TrendingUp } from 'lucide-react';
+import { Clock, Zap, Puzzle, Infinity as InfinityIcon, Star, Flame, Shuffle, Flag, Sword, TrendingUp } from 'lucide-react';
 import { useSound } from '@/components/effects';
 import { FloatingTiles } from '@/components/effects/FloatingTiles';
 export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos' | 'mini_marathon' | 'weekly_gauntlet' | 'prestige_endless';
@@ -43,7 +43,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [{
   id: 'endless',
   name: '(Almost) Endless',
   description: 'Keep playing until you can\'t find any more words. How long can you last?',
-  icon: <Infinity className="h-6 w-6" />,
+  icon: <InfinityIcon className="h-6 w-6" />,
   difficulty: 'Hard',
   specialRules: ['No time limit', 'Board regenerates when no words remain', 'Difficulty increases over time', 'Special tiles become more common'],
   rewards: {
@@ -152,21 +152,22 @@ export function AdvancedGameModes({
       onModeSelect(selectedMode);
     }
   };
+  // Dark text on light tints (and the inverse in dark mode) keeps badges at >= 4.5:1 contrast.
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'Easy':
-        return 'bg-green-500';
+        return 'bg-green-100 text-green-900 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-100 dark:hover:bg-green-900/40';
       case 'Medium':
-        return 'bg-yellow-500';
+        return 'bg-amber-100 text-amber-900 hover:bg-amber-100 dark:bg-amber-900/40 dark:text-amber-100 dark:hover:bg-amber-900/40';
       case 'Hard':
-        return 'bg-orange-500';
+        return 'bg-orange-100 text-orange-900 hover:bg-orange-100 dark:bg-orange-900/40 dark:text-orange-100 dark:hover:bg-orange-900/40';
       case 'Expert':
-        return 'bg-red-500';
+        return 'bg-red-100 text-red-900 hover:bg-red-100 dark:bg-red-900/40 dark:text-red-100 dark:hover:bg-red-900/40';
       default:
-        return 'bg-gray-500';
+        return 'bg-gray-100 text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-800';
     }
   };
-  return <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-6 relative overflow-hidden">
+  return <main className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background px-4 py-6 sm:p-6 relative overflow-hidden">
       <FloatingTiles />
 
       <div className="container mx-auto max-w-6xl relative z-10">
@@ -178,7 +179,7 @@ export function AdvancedGameModes({
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg">
+                <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg">
                   Advanced Modes
                 </h1>
                 <div className="absolute -inset-1 bg-gradient-to-r from-brand-400/10 to-brand-600/10 blur-xl -z-10"></div>
@@ -213,7 +214,7 @@ export function AdvancedGameModes({
                       </div>
                       <div>
                         <CardTitle className="text-lg group-hover:text-primary transition-colors duration-300">{mode.name}</CardTitle>
-                        <Badge className={`text-xs mt-1 ${getDifficultyColor(mode.difficulty)} text-white font-semibold shadow-sm`}>
+                        <Badge className={`text-xs mt-1 border-transparent ${getDifficultyColor(mode.difficulty)} font-semibold shadow-sm`}>
                           {mode.difficulty}
                         </Badge>
                       </div>
@@ -258,6 +259,6 @@ export function AdvancedGameModes({
             </Button>
           </div>}
       </div>
-    </div>;
+    </main>;
 }
 export default AdvancedGameModes;

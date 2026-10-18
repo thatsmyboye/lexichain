@@ -1,14 +1,20 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Button, ButtonProps } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 
 interface SoundContextType {
-  playSound: (soundType: SoundType) => void;
+  /**
+   * Play a sound effect. `index` is optional and only used by sounds that vary
+   * per call — e.g. `playSound('tile_select', n)` raises the pitch by n semitones.
+   */
+  playSound: (soundType: SoundType, index?: number) => void;
   setVolume: (volume: number) => void;
   setMuted: (muted: boolean) => void;
   isMuted: boolean;
   volume: number;
 }
 
-export type SoundType = 
+export type SoundType =
   | 'word_complete'
   | 'word_invalid'
   | 'achievement'
@@ -23,21 +29,24 @@ export type SoundType =
   | 'skill_unlock'
   | 'theme_change'
   | 'achievement_unlock'
-  | 'hint_used';
+  | 'hint_used'
+  | 'tile_select'
+  | 'tier_up'
+  | 'tick';
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
 
-// Web Audio API sound generator
+type WindowWithWebkitAudio = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
+// Web Audio API sound generator.
+// The AudioContext is created lazily on the first play (which happens inside a
+// user gesture), so browsers' autoplay policies don't leave it suspended.
 class SoundGenerator {
   private audioContext: AudioContext | null = null;
   private volume: number = 0.5;
   private muted: boolean = false;
-
-  constructor() {
-    if (typeof window !== 'undefined') {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-  }
 
   setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));
@@ -47,37 +56,72 @@ class SoundGenerator {
     this.muted = muted;
   }
 
-  private createOscillator(frequency: number, type: OscillatorType = 'sine') {
-    if (!this.audioContext || this.muted) return null;
+  private getContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
 
-    const oscillator = this.audioContext.createOscillator();
-    const gainNode = this.audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(this.audioContext.destination);
-    
-    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-    oscillator.type = type;
-    
-    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(this.volume * 0.3, this.audioContext.currentTime + 0.01);
-    
-    return { oscillator, gainNode };
+    if (!this.audioContext) {
+      const AudioContextCtor = window.AudioContext ?? (window as WindowWithWebkitAudio).webkitAudioContext;
+      if (!AudioContextCtor) return null;
+      try {
+        this.audioContext = new AudioContextCtor();
+      } catch {
+        return null;
+      }
+    }
+
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume().catch(() => {
+        // Ignore: resume can be rejected outside a user gesture; next play will retry.
+      });
+    }
+
+    return this.audioContext;
   }
 
-  private playTone(frequency: number, duration: number, type: OscillatorType = 'sine', fadeOut: boolean = true) {
-    const sound = this.createOscillator(frequency, type);
+  close() {
+    this.audioContext?.close().catch(() => {});
+    this.audioContext = null;
+  }
+
+  private createOscillator(frequency: number, type: OscillatorType = 'sine', gainScale: number = 1) {
+    if (this.muted) return null;
+    const ctx = this.getContext();
+    if (!ctx) return null;
+
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+    oscillator.type = type;
+
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(this.volume * 0.3 * gainScale, ctx.currentTime + 0.005);
+
+    return { ctx, oscillator, gainNode };
+  }
+
+  private playTone(
+    frequency: number,
+    duration: number,
+    type: OscillatorType = 'sine',
+    fadeOut: boolean = true,
+    gainScale: number = 1
+  ) {
+    const sound = this.createOscillator(frequency, type, gainScale);
     if (!sound) return;
 
-    const { oscillator, gainNode } = sound;
-    
-    oscillator.start(this.audioContext!.currentTime);
-    
+    const { ctx, oscillator, gainNode } = sound;
+
+    oscillator.start(ctx.currentTime);
+
     if (fadeOut) {
-      gainNode.gain.linearRampToValueAtTime(0, this.audioContext!.currentTime + duration);
+      gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
     }
-    
-    oscillator.stop(this.audioContext!.currentTime + duration);
+
+    oscillator.stop(ctx.currentTime + duration);
   }
 
   private playChord(frequencies: number[], duration: number, type: OscillatorType = 'sine') {
@@ -152,6 +196,26 @@ class SoundGenerator {
     this.playTone(800, 0.1, 'sine');
     setTimeout(() => this.playTone(1000, 0.1, 'sine'), 100);
   }
+
+  playTileSelect(index: number = 0) {
+    // Short soft blip; rises one semitone per letter (capped at two octaves)
+    const step = Math.max(0, Math.min(24, Math.floor(index)));
+    const frequency = 440 * Math.pow(2, step / 12);
+    this.playTone(frequency, 0.07, 'sine', true, 0.6);
+  }
+
+  playTierUp() {
+    // Short, bright major arpeggio
+    const notes = [659.25, 830.61, 987.77, 1318.51];
+    notes.forEach((note, index) => {
+      setTimeout(() => this.playTone(note, index === notes.length - 1 ? 0.18 : 0.09, 'triangle'), index * 55);
+    });
+  }
+
+  playTick() {
+    // Very short click for countdowns
+    this.playTone(1200, 0.02, 'square', true, 0.4);
+  }
 }
 
 export function SoundProvider({ children }: { children: React.ReactNode }) {
@@ -160,7 +224,9 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   const soundGeneratorRef = useRef<SoundGenerator | null>(null);
 
   useEffect(() => {
-    soundGeneratorRef.current = new SoundGenerator();
+    // No AudioContext is created here; SoundGenerator creates it on first play.
+    const generator = new SoundGenerator();
+    soundGeneratorRef.current = generator;
 
     // Load user preferences; default to muted if no saved preference
     const savedVolume = localStorage.getItem('lexichain-sound-volume');
@@ -168,81 +234,98 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
     if (savedVolume) {
       const vol = parseFloat(savedVolume);
-      setVolume(vol);
-      soundGeneratorRef.current.setVolume(vol);
+      if (!Number.isNaN(vol)) {
+        setVolume(vol);
+        generator.setVolume(vol);
+      }
     }
 
     const muted = savedMuted !== null ? savedMuted === 'true' : true;
     setMuted(muted);
-    soundGeneratorRef.current.setMuted(muted);
+    generator.setMuted(muted);
 
     return () => {
+      generator.close();
       soundGeneratorRef.current = null;
     };
   }, []);
 
-  const handleSetVolume = (newVolume: number) => {
+  const handleSetVolume = useCallback((newVolume: number) => {
     setVolume(newVolume);
     soundGeneratorRef.current?.setVolume(newVolume);
     localStorage.setItem('lexichain-sound-volume', newVolume.toString());
-  };
+  }, []);
 
-  const handleSetMuted = (muted: boolean) => {
+  const handleSetMuted = useCallback((muted: boolean) => {
     setMuted(muted);
     soundGeneratorRef.current?.setMuted(muted);
     localStorage.setItem('lexichain-sound-muted', muted.toString());
-  };
+  }, []);
 
-  const playSound = (soundType: SoundType) => {
-    if (!soundGeneratorRef.current) return;
+  const playSound = useCallback((soundType: SoundType, index?: number) => {
+    const generator = soundGeneratorRef.current;
+    if (!generator) return;
 
     switch (soundType) {
       case 'word_complete':
-        soundGeneratorRef.current.playWordComplete();
+        generator.playWordComplete();
         break;
       case 'word_invalid':
-        soundGeneratorRef.current.playWordInvalid();
+        generator.playWordInvalid();
         break;
       case 'achievement':
-        soundGeneratorRef.current.playAchievement();
+      case 'achievement_unlock':
+        generator.playAchievement();
         break;
       case 'button_click':
-        soundGeneratorRef.current.playButtonClick();
+        generator.playButtonClick();
         break;
       case 'button_hover':
-        soundGeneratorRef.current.playButtonHover();
+        generator.playButtonHover();
         break;
       case 'game_start':
-        soundGeneratorRef.current.playGameStart();
+        generator.playGameStart();
         break;
       case 'game_over':
-        soundGeneratorRef.current.playGameOver();
+        generator.playGameOver();
         break;
       case 'level_up':
-        soundGeneratorRef.current.playLevelUp();
+        generator.playLevelUp();
         break;
       case 'error':
-        soundGeneratorRef.current.playError();
+        generator.playError();
         break;
       case 'success':
-        soundGeneratorRef.current.playSuccess();
+      case 'skill_unlock':
+        generator.playSuccess();
         break;
       case 'notification':
-        soundGeneratorRef.current.playNotification();
+      case 'theme_change':
+      case 'hint_used':
+        generator.playNotification();
+        break;
+      case 'tile_select':
+        generator.playTileSelect(index ?? 0);
+        break;
+      case 'tier_up':
+        generator.playTierUp();
+        break;
+      case 'tick':
+        generator.playTick();
         break;
     }
-  };
+  }, []);
+
+  const value = useMemo<SoundContextType>(() => ({
+    playSound,
+    setVolume: handleSetVolume,
+    setMuted: handleSetMuted,
+    isMuted,
+    volume
+  }), [playSound, handleSetVolume, handleSetMuted, isMuted, volume]);
 
   return (
-    <SoundContext.Provider
-      value={{
-        playSound,
-        setVolume: handleSetVolume,
-        setMuted: handleSetMuted,
-        isMuted,
-        volume
-      }}
-    >
+    <SoundContext.Provider value={value}>
       {children}
     </SoundContext.Provider>
   );
@@ -257,16 +340,14 @@ export function useSound() {
 }
 
 // Sound button component
-import { Button, ButtonProps } from '@/components/ui/button';
-
 export interface SoundButtonProps extends ButtonProps {
   soundType?: SoundType;
 }
 
-export function SoundButton({ 
-  children, 
-  soundType = 'button_click', 
-  onClick, 
+export function SoundButton({
+  children,
+  soundType = 'button_click',
+  onClick,
   disabled = false,
   ...props
 }: SoundButtonProps) {
@@ -299,39 +380,54 @@ export function SoundButton({
 
 // Sound settings component
 export function SoundSettings() {
-  const { volume, isMuted, setVolume, setMuted } = useSound();
+  const { volume, isMuted, setVolume, setMuted, playSound } = useSound();
+  const switchId = useId();
+  const volumeId = useId();
+  const descriptionId = useId();
+
+  const handleToggle = (enabled: boolean) => {
+    setMuted(!enabled);
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">Sound Effects</label>
-        <button
-          onClick={() => setMuted(!isMuted)}
-          className={`w-12 h-6 rounded-full transition-colors ${
-            isMuted ? 'bg-muted' : 'bg-primary'
-          }`}
-        >
-          <div
-            className={`w-5 h-5 rounded-full bg-white transition-transform ${
-              isMuted ? 'translate-x-1' : 'translate-x-6'
-            }`}
-          />
-        </button>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <label htmlFor={switchId} className="text-sm font-medium">Sound Effects</label>
+          <p id={descriptionId} className="text-xs text-muted-foreground">
+            Sounds are off by default. Turn them on to hear feedback for tiles, words, and timers.
+          </p>
+        </div>
+        <Switch
+          id={switchId}
+          checked={!isMuted}
+          onCheckedChange={handleToggle}
+          aria-label="Sound effects"
+          aria-describedby={descriptionId}
+        />
       </div>
-      
+
       {!isMuted && (
         <div className="space-y-2">
-          <label className="text-sm text-muted-foreground">Volume</label>
+          <label htmlFor={volumeId} className="text-sm font-medium">Volume</label>
           <input
+            id={volumeId}
             type="range"
             min="0"
             max="1"
             step="0.1"
             value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-full"
+            onPointerUp={() => playSound('tile_select', 4)}
+            onKeyUp={(e) => {
+              if (e.key.startsWith('Arrow') || ['Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+                playSound('tile_select', 4);
+              }
+            }}
+            aria-valuetext={`${Math.round(volume * 100)}%`}
+            className="w-full accent-[hsl(var(--brand-500))]"
           />
-          <div className="text-xs text-muted-foreground text-center">
+          <div className="text-xs text-muted-foreground text-center" aria-hidden="true">
             {Math.round(volume * 100)}%
           </div>
         </div>

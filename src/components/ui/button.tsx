@@ -21,7 +21,7 @@ const buttonVariants = cva(
         hero:
           "bg-gradient-to-r from-[hsl(var(--brand-500))] to-[hsl(var(--brand-600))] text-[hsl(var(--hero-foreground))] shadow-[var(--shadow-soft)] hover:brightness-110 focus-visible:ring-[hsl(var(--brand-500))]",
         brand:
-          "bg-background text-[hsl(var(--brand-500))] border border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-50))] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-950))]",
+          "bg-background text-[hsl(var(--brand-500))] border border-[hsl(var(--brand-500))] hover:bg-[hsl(var(--brand-500)/0.08)] hover:text-[hsl(var(--brand-600))] dark:hover:bg-[hsl(var(--brand-500)/0.15)]",
       },
       size: {
         default: "h-10 px-4 py-2",

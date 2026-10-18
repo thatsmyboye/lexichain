@@ -92,12 +92,23 @@ export function ColorBlindProvider({ children }: { children: React.ReactNode }) 
   const [colorBlindType, setColorBlindType] = useState<ColorBlindType>('none');
 
   useEffect(() => {
-    // Load user preference
+    // Load user preferences. High contrast is applied here (not only when the
+    // Settings toggle mounts) so it takes effect on every screen.
     const saved = localStorage.getItem('lexichain-colorblind-type');
     if (saved && saved in colorTransformations) {
       setColorBlindType(saved as ColorBlindType);
     }
+    document.documentElement.classList.toggle('high-contrast', localStorage.getItem('lexichain-high-contrast') === 'true');
   }, []);
+
+  // Drive the CSS color tokens (see index.css) from the selected mode
+  useEffect(() => {
+    if (colorBlindType === 'none') {
+      delete document.documentElement.dataset.cvd;
+    } else {
+      document.documentElement.dataset.cvd = colorBlindType;
+    }
+  }, [colorBlindType]);
 
   const handleSetColorBlindType = (type: ColorBlindType) => {
     setColorBlindType(type);
@@ -226,13 +237,13 @@ export function ColorBlindSettings() {
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-sm font-medium">Color Vision</label>
-        <p className="text-xs text-muted-foreground">
-          Adjust colors for different types of color blindness
+        <span id="cvd-label" className="text-sm font-medium">Color Vision</span>
+        <p id="cvd-desc" className="text-xs text-muted-foreground">
+          Swaps red/green game feedback (valid/invalid words, path line) for colors you can tell apart. Icons and line styles always carry the same meaning.
         </p>
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-2" role="radiogroup" aria-labelledby="cvd-label" aria-describedby="cvd-desc">
         {options.map((option) => (
           <label
             key={option.value}
@@ -244,7 +255,7 @@ export function ColorBlindSettings() {
               value={option.value}
               checked={colorBlindType === option.value}
               onChange={(e) => setColorBlindType(e.target.value as ColorBlindType)}
-              className="h-4 w-4 text-primary"
+              className="h-5 w-5 accent-[hsl(var(--brand-500))]"
             />
             <div className="flex-1">
               <div className="font-medium text-sm">{option.label}</div>
@@ -309,12 +320,14 @@ export function HighContrastToggle() {
 
   return (
     <button
+      type="button"
+      role="switch"
       onClick={toggleHighContrast}
-      className="flex items-center gap-2 p-2 rounded-lg border hover:bg-muted/50"
-      aria-pressed={isHighContrast}
+      className="flex min-h-11 items-center gap-2 p-2 rounded-lg border hover:bg-muted/50"
+      aria-checked={isHighContrast}
     >
-      <div className={cn(
-        "w-4 h-4 rounded border-2",
+      <div aria-hidden="true" className={cn(
+        "w-5 h-5 rounded border-2",
         isHighContrast ? "bg-primary border-primary" : "bg-background border-muted-foreground"
       )} />
       <span className="text-sm">High Contrast</span>

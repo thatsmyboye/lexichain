@@ -8,7 +8,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative overflow-hidden min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
+    <main className="relative overflow-hidden min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
       <FloatingTiles />
       <div className="relative z-10 container mx-auto max-w-4xl">
         <div className="mb-6">
@@ -17,13 +17,13 @@ export default function SettingsPage() {
             onClick={() => navigate(-1)}
             className="mb-4"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
             Back
           </Button>
         </div>
         <GameSettings />
       </div>
-    </div>
+    </main>
   );
 }
 

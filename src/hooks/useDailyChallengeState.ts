@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { AchievementId } from '@/lib/achievements';
 import type { SpecialTile, UsedWord, FinalGrade, Benchmarks, BoardAnalysis } from '@/types/game';
+import type { Json } from '@/integrations/supabase/types';
 
 export type DailyChallengeGameState = {
   board: string[][];
@@ -21,6 +22,34 @@ export type DailyChallengeGameState = {
   boardAnalysis?: BoardAnalysis;
   lastSaved?: number;
 };
+
+// BoardAnalysis.letterDistribution is a Map, which JSON.stringify silently
+// turns into {}. Convert it to a plain object so it survives the round trip.
+function toSerializableState(state: DailyChallengeGameState): Json {
+  const { boardAnalysis, ...rest } = state;
+  const serializable = boardAnalysis
+    ? {
+        ...rest,
+        boardAnalysis: {
+          ...boardAnalysis,
+          letterDistribution: boardAnalysis.letterDistribution instanceof Map
+            ? Object.fromEntries(boardAnalysis.letterDistribution)
+            : boardAnalysis.letterDistribution,
+        },
+      }
+    : rest;
+  // Strip undefined values and anything else JSON can't represent
+  return JSON.parse(JSON.stringify(serializable)) as Json;
+}
+
+function fromSerializedState(json: Json): DailyChallengeGameState {
+  const state = json as unknown as DailyChallengeGameState;
+  const dist = state.boardAnalysis?.letterDistribution as unknown;
+  if (state.boardAnalysis && dist && !(dist instanceof Map) && typeof dist === 'object') {
+    state.boardAnalysis.letterDistribution = new Map(Object.entries(dist as Record<string, number>));
+  }
+  return state;
+}
 
 export const useDailyChallengeState = (challengeDate: string) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -125,7 +154,7 @@ export const useDailyChallengeState = (challengeDate: string) => {
             .upsert({
               user_id: user.id,
               challenge_date: challengeDate,
-              game_state: compressedState
+              game_state: toSerializableState(compressedState)
             }, {
               onConflict: 'user_id,challenge_date',
               ignoreDuplicates: false
@@ -135,20 +164,20 @@ export const useDailyChallengeState = (challengeDate: string) => {
             saved = true;
             setLastSaveStatus('success');
             // Sync to localStorage for consistency and offline access
-            localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(compressedState));
+            localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(toSerializableState(compressedState)));
           } else {
             console.error(`Error saving daily challenge state to database (attempt ${4-retries}):`, error);
             retries--;
             if (retries === 0) {
               setLastSaveStatus('error');
               // Final fallback to localStorage
-              localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(compressedState));
+              localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(toSerializableState(compressedState)));
             }
           }
         }
       } else {
         // Use localStorage for guests
-        localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(compressedState));
+        localStorage.setItem(`daily-challenge-${challengeDate}`, JSON.stringify(toSerializableState(compressedState)));
         setLastSaveStatus('success');
       }
     } catch (e) {
@@ -191,7 +220,7 @@ export const useDailyChallengeState = (challengeDate: string) => {
             .maybeSingle();
           
           if (data && !error) {
-            const gameState = data.game_state as DailyChallengeGameState;
+            const gameState = fromSerializedState(data.game_state);
             // Enhanced validation with progressive recovery
             const hasValidCore = gameState.seed === challengeDate && 
                                 gameState.initialBoard && 
@@ -214,7 +243,7 @@ export const useDailyChallengeState = (challengeDate: string) => {
         const savedState = localStorage.getItem(`daily-challenge-${challengeDate}`);
         if (savedState) {
           try {
-            const gameState = JSON.parse(savedState) as DailyChallengeGameState;
+            const gameState = fromSerializedState(JSON.parse(savedState));
             const hasValidCore = gameState.seed === challengeDate && 
                                 gameState.initialBoard && 
                                 gameState.board;
@@ -288,7 +317,7 @@ export const useDailyChallengeState = (challengeDate: string) => {
   }, []);
 
   // Enhanced state validation
-  const validateGameState = useCallback((state: any): { isValid: boolean; canRecover: boolean; errors: string[] } => {
+  const validateGameState = useCallback((state: Partial<DailyChallengeGameState> | null | undefined): { isValid: boolean; canRecover: boolean; errors: string[] } => {
     const errors: string[] = [];
     let isValid = true;
     let canRecover = false;
@@ -339,7 +368,7 @@ export const useDailyChallengeState = (challengeDate: string) => {
           const localState = localStorage.getItem(`daily-challenge-${challengeDate}`);
           if (localState) {
             try {
-              const gameState = JSON.parse(localState) as DailyChallengeGameState;
+              const gameState = fromSerializedState(JSON.parse(localState));
               const validation = validateGameState(gameState);
               
               if (validation.isValid) {

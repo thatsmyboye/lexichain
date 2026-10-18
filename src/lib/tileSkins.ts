@@ -23,7 +23,7 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     name: 'Original',
     description: 'The classic Lexichain design',
     baseClasses: 'bg-card',
-    selectedClasses: 'ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] dark:bg-green-950 dark:ring-green-500',
+    selectedClasses: 'ring-2 ring-green-400 bg-green-50 shadow-[0_4px_12px_-4px_rgba(34,197,94,0.3)] scale-[0.98] text-green-950 dark:bg-green-950 dark:ring-green-500 dark:text-green-50',
     reusedOverlay: 'bg-primary/20 dark:bg-primary/30',
     benchmarkColors: {
       bronze: {
@@ -49,7 +49,7 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     name: 'Ocean Depths',
     description: 'Deep blue ocean with aquatic colors',
     baseClasses: 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950',
-    selectedClasses: 'ring-2 ring-cyan-400 bg-cyan-50 shadow-[0_4px_12px_-4px_rgba(34,211,238,0.3)] scale-[0.98] dark:bg-cyan-950 dark:ring-cyan-500',
+    selectedClasses: 'ring-2 ring-cyan-400 bg-cyan-50 shadow-[0_4px_12px_-4px_rgba(34,211,238,0.3)] scale-[0.98] text-cyan-950 dark:bg-cyan-950 dark:ring-cyan-500 dark:text-cyan-50',
     reusedOverlay: 'bg-cyan-400/30 dark:bg-cyan-400/40',
     benchmarkColors: {
       bronze: {
@@ -75,7 +75,7 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     name: 'Forest Canopy',
     description: 'Natural greens and earth tones',
     baseClasses: 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950',
-    selectedClasses: 'ring-2 ring-emerald-400 bg-emerald-50 shadow-[0_4px_12px_-4px_rgba(16,185,129,0.3)] scale-[0.98] dark:bg-emerald-950 dark:ring-emerald-500',
+    selectedClasses: 'ring-2 ring-emerald-400 bg-emerald-50 shadow-[0_4px_12px_-4px_rgba(16,185,129,0.3)] scale-[0.98] text-emerald-950 dark:bg-emerald-950 dark:ring-emerald-500 dark:text-emerald-50',
     reusedOverlay: 'bg-emerald-400/30 dark:bg-emerald-400/40',
     benchmarkColors: {
       bronze: {
@@ -101,7 +101,7 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     name: 'Sunset Glow',
     description: 'Warm oranges, reds, and pinks',
     baseClasses: 'bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-950 dark:to-pink-950',
-    selectedClasses: 'ring-2 ring-orange-400 bg-orange-50 shadow-[0_4px_12px_-4px_rgba(251,146,60,0.3)] scale-[0.98] dark:bg-orange-950 dark:ring-orange-500',
+    selectedClasses: 'ring-2 ring-orange-400 bg-orange-50 shadow-[0_4px_12px_-4px_rgba(251,146,60,0.3)] scale-[0.98] text-orange-950 dark:bg-orange-950 dark:ring-orange-500 dark:text-orange-50',
     reusedOverlay: 'bg-orange-400/30 dark:bg-orange-400/40',
     benchmarkColors: {
       bronze: {
@@ -127,7 +127,7 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     name: 'Midnight Sky',
     description: 'Dark purples and blues with starry accents',
     baseClasses: 'bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950',
-    selectedClasses: 'ring-2 ring-purple-400 bg-purple-50 shadow-[0_4px_12px_-4px_rgba(168,85,247,0.3)] scale-[0.98] dark:bg-purple-950 dark:ring-purple-500',
+    selectedClasses: 'ring-2 ring-purple-400 bg-purple-50 shadow-[0_4px_12px_-4px_rgba(168,85,247,0.3)] scale-[0.98] text-purple-950 dark:bg-purple-950 dark:ring-purple-500 dark:text-purple-50',
     reusedOverlay: 'bg-purple-400/30 dark:bg-purple-400/40',
     benchmarkColors: {
       bronze: {
@@ -152,8 +152,10 @@ export const TILE_SKINS: Record<TileSkinId, TileSkin> = {
     id: 'neon',
     name: 'Neon Cyber',
     description: 'Bright neon colors with cyberpunk aesthetic',
-    baseClasses: 'bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900',
-    selectedClasses: 'ring-2 ring-cyan-400 bg-cyan-500/20 shadow-[0_4px_12px_-4px_rgba(34,211,238,0.5)] scale-[0.98] dark:bg-cyan-500/10 dark:ring-cyan-400',
+    // Neon tiles are dark in both themes, so letters need their own light color
+    // (otherwise they inherit the near-black light-mode card foreground).
+    baseClasses: 'bg-gradient-to-br from-slate-900 to-slate-800 text-cyan-100 dark:from-slate-950 dark:to-slate-900',
+    selectedClasses: 'ring-2 ring-cyan-400 bg-cyan-500/20 shadow-[0_4px_12px_-4px_rgba(34,211,238,0.5)] scale-[0.98] text-cyan-50 dark:bg-cyan-500/10 dark:ring-cyan-400',
     reusedOverlay: 'bg-cyan-400/40 dark:bg-cyan-400/50',
     benchmarkColors: {
       bronze: {
