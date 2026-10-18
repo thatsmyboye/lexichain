@@ -15,6 +15,61 @@ interface WordValidationResult {
   suggestions?: string[];
 }
 
+const GZIP_DICTIONARY_URL = "/words.txt.gz";
+const PLAIN_DICTIONARY_URL = "/words.txt";
+
+/**
+ * Fetch the pre-gzipped dictionary and decompress it client-side.
+ * Some hosts serve .gz files with `Content-Encoding: gzip`, in which case the
+ * browser has already decompressed the body; we detect that by checking for
+ * the gzip magic bytes (0x1f 0x8b) before running DecompressionStream.
+ */
+async function fetchGzippedDictionaryText(): Promise<string> {
+  const response = await fetch(GZIP_DICTIONARY_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${GZIP_DICTIONARY_URL}: ${response.status} ${response.statusText}`);
+  }
+
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const isGzipped = bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+
+  if (!isGzipped) {
+    // Already decoded by the browser (Content-Encoding: gzip).
+    return new TextDecoder().decode(bytes);
+  }
+
+  const decompressed = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return new Response(decompressed).text();
+}
+
+async function fetchPlainDictionaryText(): Promise<string> {
+  const response = await fetch(PLAIN_DICTIONARY_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch dictionary: ${response.status} ${response.statusText}`);
+  }
+  return response.text();
+}
+
+/**
+ * Prefer the gzipped dictionary (~0.3 MB vs ~1 MB) when the browser supports
+ * DecompressionStream; fall back to the plain-text file on any failure.
+ */
+async function fetchDictionaryText(): Promise<string> {
+  if (typeof DecompressionStream !== "undefined") {
+    try {
+      const text = await fetchGzippedDictionaryText();
+      if (text && text.length >= 1000) {
+        return text;
+      }
+      console.warn(`⚠️ ${GZIP_DICTIONARY_URL} looked empty; falling back to ${PLAIN_DICTIONARY_URL}`);
+    } catch (error) {
+      console.warn(`⚠️ Could not load ${GZIP_DICTIONARY_URL}; falling back to ${PLAIN_DICTIONARY_URL}`, error);
+    }
+  }
+  return fetchPlainDictionaryText();
+}
+
 class DictionaryManager {
   private dictionary: Set<string> = new Set();
   private sortedWords: string[] = [];
@@ -37,14 +92,9 @@ class DictionaryManager {
     const errors: string[] = [];
 
     try {
-      console.log("🔄 Loading dictionary from /words.txt...");
-      
-      const response = await fetch("/words.txt");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch dictionary: ${response.status} ${response.statusText}`);
-      }
+      console.log("🔄 Loading dictionary...");
 
-      const text = await response.text();
+      const text = await fetchDictionaryText();
       if (!text || text.length < 1000) {
         throw new Error("Dictionary file appears to be empty or corrupted");
       }
