@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
             urlPattern: /\/words\.txt(\.gz)?$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'dictionary-cache',
+              cacheName: 'dictionary-cache-v2', // bump when words.txt changes
               expiration: { maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7 days
             },
           },

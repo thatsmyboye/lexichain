@@ -52,7 +52,7 @@ async function fetchPlainDictionaryText(): Promise<string> {
 }
 
 /**
- * Prefer the gzipped dictionary (~0.3 MB vs ~1 MB) when the browser supports
+ * Prefer the gzipped dictionary (~1.1 MB vs ~3.9 MB) when the browser supports
  * DecompressionStream; fall back to the plain-text file on any failure.
  */
 async function fetchDictionaryText(): Promise<string> {
