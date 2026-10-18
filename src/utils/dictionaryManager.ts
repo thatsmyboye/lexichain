@@ -2,6 +2,8 @@
  * Dictionary manager for enhanced word validation with debugging capabilities
  */
 
+import { BLOCKED_WORDS } from "@/lib/blockedWords";
+
 interface DictionaryStatus {
   loaded: boolean;
   wordCount: number;
@@ -98,18 +100,6 @@ class DictionaryManager {
       if (!text || text.length < 1000) {
         throw new Error("Dictionary file appears to be empty or corrupted");
       }
-
-      // Proper nouns and offensive terms to exclude (no valid alternate lowercase definition)
-      const BLOCKED_WORDS = new Set([
-        'hitler', 'hitlerian', 'hitlerism', 'hitlerite',
-        'stalin', 'stalinist', 'stalinism',
-        'mussolini', 'mao', 'lenin', 'leninist', 'leninism',
-        'nazi', 'nazis', 'nazism', 'nazify',
-        'gestapo',
-        'nigger', 'niggers',
-        'faggot', 'faggots',
-        'retard', 'retards', 'retarded',
-      ]);
 
       // Process words with enhanced validation
       const rawWords = text.split(/\r?\n/);
