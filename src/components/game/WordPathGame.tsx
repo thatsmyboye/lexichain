@@ -38,6 +38,10 @@ import { useSound } from "@/components/effects/SoundSystem";
 import { useARIA } from "@/components/accessibility/ARIAComponents";
 import { haptic } from "@/lib/feedback";
 import { buildShareText, shareText } from "@/lib/share";
+import { shareCardImage } from "@/lib/shareCard";
+import { getPersonalBest, markModePlayed, recordResult } from "@/lib/personalBests";
+import { recordTrophies } from "@/lib/trophies";
+import { DefinableWord, DefinitionContent } from "./WordDefinition";
 import {
   type WaveChallenge,
   type BossWave,
@@ -305,6 +309,12 @@ function WordPathGame({
   // Board at the start of the round, used for "words you missed" and daily resume
   const roundBoardRef = useRef<string[][] | null>(null);
   const timeAttackDeadlineRef = useRef(0);
+  // Highest-scoring play this round, with the board it was played on (share card)
+  const bestPlayRef = useRef<{ word: string; score: number; path: Pos[]; board: string[][] } | null>(null);
+  // First-ever trophy unlocks earned this round, and whether we've already
+  // celebrated beating the personal best
+  const roundFirstTrophiesRef = useRef<AchievementId[]>([]);
+  const bestCelebratedRef = useRef(false);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const hintTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const { playSound, isMuted, setMuted } = useSound();
@@ -367,6 +377,11 @@ function WordPathGame({
       setSettings(prev => ({ ...prev, mode: "chaos" }));
     }
   }, [initialMode, dailyChallengeInitialized]);
+
+  // Modes you've opened lose their "New" badge in the mode picker
+  useEffect(() => {
+    markModePlayed(initialMode);
+  }, [initialMode]);
 
   // Time Attack clock: driven by a deadline so re-renders and word submissions
   // never gain or lose time. Word bonuses push the deadline out.
@@ -822,6 +837,9 @@ function WordPathGame({
 
   function markRoundStart(newBoard: string[][]) {
     setGameStartTime(Date.now());
+    bestPlayRef.current = null;
+    roundFirstTrophiesRef.current = [];
+    bestCelebratedRef.current = false;
     roundBoardRef.current = newBoard.map(row => [...row]);
     setShowResults(false);
     setResults(null);
@@ -956,6 +974,8 @@ function WordPathGame({
       }
     }
 
+    const playBoard = trackedBoard.map(row => [...row]);
+
     // 2. Score (one formula for every path)
     const breakdown = computeScoreBreakdown({
       actualWord,
@@ -1044,6 +1064,9 @@ function WordPathGame({
     const countsMove = isDailyMode || settings.mode === "puzzle" || settings.mode === "chaos" || settings.mode === "practice";
     const movesAfter = movesUsed + (countsMove ? 1 : 0);
 
+    if (!bestPlayRef.current || gain > bestPlayRef.current.score) {
+      bestPlayRef.current = { word: actualWord, score: gain, path: wordPath, board: playBoard };
+    }
     const nextUsedWords = [...usedWords, { word: actualWord, score: gain, breakdown }];
     setUsedWords(nextUsedWords);
     setScore(finalScore);
@@ -1059,7 +1082,10 @@ function WordPathGame({
     clearPath();
 
     // 8. Feedback
-    setStamp({ id: Date.now(), label: reactionFor(gain), points: gain });
+    const previousBest = getPersonalBest(settings.mode)?.score ?? null;
+    const beatBest = previousBest !== null && !bestCelebratedRef.current && prevScore <= previousBest && finalScore > previousBest;
+    if (beatBest) bestCelebratedRef.current = true;
+    setStamp({ id: Date.now(), label: beatBest ? "New best!" : reactionFor(gain), points: gain });
     playSound("word_complete");
     haptic("valid");
     const prevGrade = gradeForScore(prevScore, benchmarks);
@@ -1069,11 +1095,18 @@ function WordPathGame({
       setTimeout(() => playSound("tier_up"), 250);
       haptic("tierUp");
     }
-    announce(`${actualWord.toUpperCase()} accepted, plus ${gain} points. Score ${finalScore}.${tierUp ? ` ${newGrade} medal reached!` : ""}`);
+    if (beatBest && !tierUp) {
+      setTimeout(() => playSound("tier_up"), 250);
+      haptic("tierUp");
+    }
+    announce(`${actualWord.toUpperCase()} accepted, plus ${gain} points. Score ${finalScore}.${tierUp ? ` ${newGrade} medal reached!` : ""}${beatBest ? " New personal best!" : ""}`);
+    const firstUnlocks = recordTrophies(newAchievements);
+    roundFirstTrophiesRef.current.push(...firstUnlocks);
     newAchievements.forEach(id => {
       const achievement = ACHIEVEMENTS[id];
       const rarityEmoji = { common: "🏆", rare: "⭐", epic: "💎", legendary: "👑" }[achievement.rarity];
-      toast.success(`${rarityEmoji} ${achievement.label} (+${achievement.scoreBonus} pts)`);
+      const first = firstUnlocks.includes(id);
+      toast.success(`${rarityEmoji} ${first ? "New trophy: " : ""}${achievement.label} (+${achievement.scoreBonus} pts)`);
     });
     if (newAchievements.length) playSound("achievement");
 
@@ -1393,6 +1426,7 @@ function WordPathGame({
     ) {
       finalScore += ACHIEVEMENTS.clutch.scoreBonus;
       setUnlocked(prev => new Set([...prev, "clutch" as AchievementId]));
+      roundFirstTrophiesRef.current.push(...recordTrophies(["clutch"]));
       toast.success(`💎 ${ACHIEVEMENTS.clutch.label} (+${ACHIEVEMENTS.clutch.scoreBonus} pts)`);
     }
     const showGrade = opts.showGrade ?? (!!benchmarks && settings.mode !== "endless" && settings.mode !== "puzzle");
@@ -1420,6 +1454,7 @@ function WordPathGame({
         .sort((a, b) => b.length - a.length || a.localeCompare(b))
         .slice(0, 10);
     }
+    const pb = recordResult(settings.mode, { score: finalScore, words: wordsList.length, longestWord, grade });
     const stats = [...(opts.extraStats ?? [])];
     if (settings.mode === "endless") stats.push({ label: "Level reached", value: String(endlessDifficulty) });
     if (isDailyMode) stats.push({ label: "Moves used", value: `${Math.min(opts.movesUsedFinal ?? movesUsed, settings.dailyMovesLimit)}/${settings.dailyMovesLimit}` });
@@ -1436,6 +1471,8 @@ function WordPathGame({
       bestWord,
       missedWords,
       stats,
+      personalBest: { isNew: pb.isNewBest, previous: pb.previous?.score ?? null },
+      newTrophies: [...roundFirstTrophiesRef.current],
     });
     // Let the last word's stamp land before the results appear
     setTimeout(() => setShowResults(true), 900);
@@ -2929,6 +2966,25 @@ function WordPathGame({
     shareText(`Lexichain ${modeLabel}`, text);
   }
 
+  function shareResultImage() {
+    const grade = finalGrade !== "None" ? finalGrade : gradeForScore(score, benchmarks);
+    const extra =
+      settings.mode === "survival" ? `Wave ${survivalWave}`
+        : settings.mode === "endless" ? `Level ${endlessDifficulty}`
+        : undefined;
+    const text = buildShareText({ modeLabel, score, grade, words: usedWords, extra });
+    shareCardImage({
+      modeLabel,
+      score,
+      grade,
+      wordCount: usedWords.length,
+      best: bestPlayRef.current,
+      // Daily boards are shared by everyone, so don't reveal the letters
+      spoilerFree: isDailyMode,
+      extra,
+    }, text);
+  }
+
   const pathTone: PathTone =
     !pathWordStatus ? "neutral"
       : pathWordStatus.state === "valid" ? "valid"
@@ -3141,6 +3197,7 @@ function WordPathGame({
         summary={results}
         primaryAction={resultsPrimary}
         onShare={shareResult}
+        onShareImage={shareResultImage}
         secondaryActions={
           <div className="grid grid-cols-2 gap-2">
             {onBackToAdvancedModes ? (
@@ -3213,6 +3270,7 @@ function WordPathGame({
         benchmarks={benchmarks}
         showTrack={settings.mode !== "endless" && settings.mode !== "puzzle"}
         stat={hudStat}
+        best={getPersonalBest(settings.mode)?.score ?? null}
       />
       </div>
 
@@ -3450,8 +3508,8 @@ function WordPathGame({
                 const sortedWords = [...usedWords].sort((a, b) => a.word.localeCompare(b.word)).slice(0, limit);
                 return <ul className="flex flex-wrap gap-1">
                     {sortedWords.map((entry, index) => (
-                      <li key={`${entry.word}-${index}`} className="px-1.5 py-0.5 rounded text-xs bg-secondary text-secondary-foreground">
-                        {entry.word.toUpperCase()}
+                      <li key={`${entry.word}-${index}`}>
+                        <DefinableWord word={entry.word} className="bg-secondary text-secondary-foreground" />
                       </li>
                     ))}
                   </ul>;
@@ -3479,6 +3537,9 @@ function WordPathGame({
                         ) : (
                           <div className="text-foreground/75">No breakdown available</div>
                         )}
+                        <div className="mt-2 border-t pt-2">
+                          <DefinitionContent word={entry.word} />
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                   ))}

@@ -12,6 +12,7 @@ import { SoundProvider } from "@/components/effects/SoundSystem";
 import { ColorBlindProvider } from "@/components/accessibility/ColorBlindSupport";
 import { ARIAProvider } from "@/components/accessibility/ARIAComponents";
 import { ComponentPreloader, PerformanceMetrics } from "@/components/performance/CodeSplitting";
+import { AccountSync } from "@/components/AccountSync";
 
 // Lazy load non-critical pages using optimized components
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
@@ -22,6 +23,7 @@ const StatsPage = lazy(() => import("./pages/StatsPage"));
 const DebugPage = lazy(() => import("./pages/DebugPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const TrophiesPage = lazy(() => import("./pages/TrophiesPage"));
 const LoadingSpinner = () => <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
   </div>;
@@ -35,6 +37,7 @@ const App = () => <QueryClientProvider client={queryClient}>
             <ComponentPreloader>
               <Toaster />
               <Sonner />
+              <AccountSync />
               <BrowserRouter>
                 <Suspense fallback={<LoadingSpinner />}>
                   <Routes>
@@ -46,6 +49,7 @@ const App = () => <QueryClientProvider client={queryClient}>
                     <Route path="/debug" element={<DebugPage />} />
                     <Route path="/admin" element={<AdminDashboardPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/trophies" element={<TrophiesPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
