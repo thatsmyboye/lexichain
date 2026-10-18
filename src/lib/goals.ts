@@ -10,7 +10,7 @@ export type GoalDifficulty = "easy" | "medium" | "hard" | "expert";
 export type GoalCondition = {
   type: "score_in_game" | "words_in_game" | "total_games" | "streak_games" | "longest_word" | "specific_achievement" | "total_score";
   target: number;
-  data?: any; // For specific conditions like achievement type
+  data?: { grade?: string; minGrade?: string }; // For specific conditions like achievement type
 };
 
 export type GoalReward = {
@@ -227,9 +227,10 @@ export function calculateGoalProgress(
       return Math.min(gameStats.highestScore, condition.target);
     case "longest_word":
       return Math.min(gameStats.longestWord, condition.target);
-    case "specific_achievement":
+    case "specific_achievement": {
       const hasAchievement = gameStats.achievementGrades.includes(condition.data.grade);
       return hasAchievement ? condition.target : 0;
+    }
     case "streak_games":
       if (gameStats.recentStreak.minGrade === condition.data.minGrade || 
           ["Bronze", "Silver", "Gold", "Platinum"].indexOf(gameStats.recentStreak.minGrade) >= 

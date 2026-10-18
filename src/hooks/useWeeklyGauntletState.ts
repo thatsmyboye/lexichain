@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { SpecialTile, UsedWord } from '@/types/game';
 
 export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
@@ -8,9 +9,9 @@ export type PuzzleState = {
   theme: string;
   constraint: string;
   seed: string;
-  board: any[][];
-  specialTiles: any[][];
-  usedWords: any[];
+  board: string[][];
+  specialTiles: SpecialTile[][];
+  usedWords: UsedWord[];
   score: number;
   movesUsed: number;
   movesLimit: number;
@@ -48,6 +49,10 @@ export type WeeklyGauntletState = {
   weeklyGrade?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | null;
   isWeekComplete: boolean;
   lastSaved?: number;
+};
+
+type SerializedWeeklyGauntletState = Omit<WeeklyGauntletState, 'completedPuzzles'> & {
+  completedPuzzles?: DayOfWeek[];
 };
 
 export const useWeeklyGauntletState = (weekIdentifier: string) => {
@@ -94,6 +99,7 @@ export const useWeeklyGauntletState = (weekIdentifier: string) => {
 
         while (retries > 0 && !saved) {
           const { error } = await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('weekly_gauntlet_states')
             .upsert({
               user_id: user.id,
@@ -153,6 +159,7 @@ export const useWeeklyGauntletState = (weekIdentifier: string) => {
       if (user) {
         try {
           const { data, error } = await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('weekly_gauntlet_states')
             .select('game_state')
             .eq('user_id', user.id)
@@ -160,7 +167,7 @@ export const useWeeklyGauntletState = (weekIdentifier: string) => {
             .maybeSingle();
 
           if (data && !error) {
-            const gameState = data.game_state as any;
+            const gameState = data.game_state as SerializedWeeklyGauntletState;
             loadedState = {
               ...gameState,
               completedPuzzles: new Set(gameState.completedPuzzles || [])
@@ -204,6 +211,7 @@ export const useWeeklyGauntletState = (weekIdentifier: string) => {
       if (user) {
         try {
           await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('weekly_gauntlet_states')
             .delete()
             .eq('user_id', user.id)

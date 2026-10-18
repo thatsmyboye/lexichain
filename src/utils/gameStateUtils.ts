@@ -96,7 +96,7 @@ export function formatTimeSince(timestamp: number): string {
   }
 }
 
-export function validateGameStateIntegrity(gameState: any): {
+export function validateGameStateIntegrity(gameState: Partial<DailyChallengeGameState> | null | undefined): {
   isValid: boolean;
   canRecover: boolean;
   issues: string[];
@@ -104,7 +104,7 @@ export function validateGameStateIntegrity(gameState: any): {
 } {
   const issues: string[] = [];
   let canRecover = false;
-  let recoveredState: Partial<DailyChallengeGameState> = {};
+  const recoveredState: Partial<DailyChallengeGameState> = {};
 
   if (!gameState) {
     return {

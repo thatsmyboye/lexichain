@@ -8,6 +8,7 @@ import { Trophy, Medal, Award } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { toZonedTime, format } from 'date-fns-tz';
 import { getDailyChallengeDate } from "@/utils/dateUtils";
+import type { User } from "@supabase/supabase-js";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -17,7 +18,7 @@ interface LeaderboardEntry {
 }
 
 interface DailyChallengeLeaderboardProps {
-  currentUser?: any;
+  currentUser?: User | null;
 }
 
 export function DailyChallengeLeaderboard({ currentUser }: DailyChallengeLeaderboardProps) {

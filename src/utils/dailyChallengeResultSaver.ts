@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getDailyChallengeDate, isNetworkAvailable, retryWithBackoff } from "@/utils/dateUtils";
 import type { User } from "@supabase/supabase-js";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface BasicDailyChallengeResult {
   user_id: string;
@@ -12,7 +13,7 @@ export interface BasicDailyChallengeResult {
 }
 
 export interface EnhancedDailyChallengeResult extends BasicDailyChallengeResult {
-  board_analysis?: Record<string, any>;
+  board_analysis?: Record<string, Json>;
   word_count?: number;
   grid_size?: number;
 }

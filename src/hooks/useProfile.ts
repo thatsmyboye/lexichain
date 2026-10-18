@@ -109,9 +109,10 @@ export function useProfile(user: User | null) {
         description: "Display name updated successfully",
       });
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating display name:', error);
-      const errorMessage = error.message || error.details || 'Unknown database error';
+      const err = error as { message?: string; details?: string };
+      const errorMessage = err.message || err.details || 'Unknown database error';
       toast({
         title: "Error",
         description: `Failed to update display name: ${errorMessage}`,

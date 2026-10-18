@@ -14,10 +14,10 @@ interface ErrorBoundaryState {
 }
 
 class LazyErrorBoundary extends React.Component<
-  React.PropsWithChildren<{}>,
+  React.PropsWithChildren,
   ErrorBoundaryState
 > {
-  constructor(props: React.PropsWithChildren<{}>) {
+  constructor(props: React.PropsWithChildren) {
     super(props);
     this.state = { hasError: false };
   }
@@ -57,13 +57,14 @@ class LazyErrorBoundary extends React.Component<
 }
 
 // Higher-order component for lazy loading with error boundary
-export function withLazyLoading<T extends ComponentType<any>>(
-  importFunc: () => Promise<{ default: T }>,
+export function withLazyLoading<P extends object>(
+  importFunc: () => Promise<{ default: ComponentType<P> }>,
   fallback?: React.ReactNode
 ) {
-  const LazyComponent = lazy(importFunc);
+  // Cast needed: TS can't relate generic props P to LazyExoticComponent's ref-aware props
+  const LazyComponent = lazy(importFunc) as unknown as ComponentType<P>;
 
-  const WrappedComponent = (props: React.ComponentProps<T>) => (
+  const WrappedComponent = (props: P) => (
     <LazyErrorBoundary>
       <Suspense fallback={fallback || <LoadingSpinner />}>
         <LazyComponent {...props} />
@@ -157,7 +158,7 @@ export function ComponentPreloader({ children }: { children: React.ReactNode }) 
 // Lazy route component
 interface LazyRouteProps {
   path: string;
-  component: ComponentType<any>;
+  component: ComponentType;
   fallback?: React.ReactNode;
 }
 
@@ -175,6 +176,10 @@ export function BundleAnalyzer() {
     return null;
   }
 
+  return <BundleAnalyzerPanel />;
+}
+
+function BundleAnalyzerPanel() {
   const [bundleSize, setBundleSize] = React.useState<number>(0);
 
   React.useEffect(() => {
@@ -198,6 +203,12 @@ export function BundleAnalyzer() {
 }
 
 // Performance metrics
+interface PerformanceWithMemory extends Performance {
+  memory: {
+    usedJSHeapSize: number;
+  };
+}
+
 export function PerformanceMetrics() {
   const [metrics, setMetrics] = React.useState({
     renderTime: 0,
@@ -207,8 +218,8 @@ export function PerformanceMetrics() {
 
   React.useEffect(() => {
     const measurePerformance = () => {
-      if ('performance' in window && 'memory' in (performance as any)) {
-        const memory = (performance as any).memory;
+      if ('performance' in window && 'memory' in performance) {
+        const memory = (performance as PerformanceWithMemory).memory;
         setMetrics(prev => ({
           ...prev,
           memoryUsage: memory.usedJSHeapSize / 1024 / 1024, // MB

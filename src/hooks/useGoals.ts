@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 import type { User } from "@supabase/supabase-js";
 import { GOAL_DEFINITIONS, getAvailableGoals, calculateGoalProgress, type GoalDefinition } from "@/lib/goals";
 import { toast } from "sonner";
@@ -11,7 +12,7 @@ export type PlayerGoal = {
   status: string;
   current_progress: number;
   target_value: number;
-  goal_data?: any;
+  goal_data?: Json | null;
   started_at: string;
   completed_at: string | null;
   expires_at: string | null;
@@ -183,7 +184,7 @@ export function useGoals(user: User | null) {
 
       // Update goals in database
       for (const update of updates) {
-        const updateData: any = {
+        const updateData: TablesUpdate<"player_goals"> = {
           current_progress: update.progress
         };
         

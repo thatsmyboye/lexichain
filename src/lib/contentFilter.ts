@@ -32,7 +32,7 @@ function normalizeText(text: string): string {
   let normalized = text.toLowerCase().trim();
   
   // Remove spaces, underscores, dashes, dots
-  normalized = normalized.replace(/[\s_\-\.]/g, '');
+  normalized = normalized.replace(/[\s_\-.]/g, '');
   
   // Apply character substitutions
   SUBSTITUTION_PATTERNS.forEach(({ pattern, replacement }) => {
