@@ -140,7 +140,7 @@ const TitleScreen = ({
           <div className="absolute -inset-6 rounded-full bg-[radial-gradient(ellipse_at_center,hsl(var(--brand-500)/0.18),transparent_70%)] blur-2xl -z-10" aria-hidden="true"></div>
           <Logo as="h1" size="lg" animated />
           <p className="text-sm text-muted-foreground md:text-base">
-            Trace words. Reuse a tile. Keep the chain going.
+            Keep the chain going.
           </p>
         </div>
 
