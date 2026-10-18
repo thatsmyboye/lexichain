@@ -10,6 +10,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // Top-center keeps toasts clear of the pinned action bar on phones;
+      // they pause on hover/focus and can be dismissed.
+      position="top-center"
+      visibleToasts={3}
+      closeButton
+      duration={3000}
       toastOptions={{
         classNames: {
           toast:

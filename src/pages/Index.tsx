@@ -15,6 +15,21 @@ import { FloatingTiles } from "@/components/effects/FloatingTiles";
 
 // Lazy load game component
 const WordPathGame = lazy(() => import("@/components/game/WordPathGame"));
+
+type SelectedGameMode = "classic" | "daily" | "daily_5x5" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
+
+// Modes that can be deep-linked via ?mode=
+const URL_MODES = ["time_attack", "endless", "puzzle", "survival", "zen", "chaos"] as const;
+type UrlMode = typeof URL_MODES[number];
+const isUrlMode = (mode: string): mode is UrlMode => (URL_MODES as readonly string[]).includes(mode);
+
+// Display names for modes started from the main mode select (advanced modes use getModeName)
+const BASIC_MODE_NAMES: Partial<Record<SelectedGameMode, string>> = {
+  classic: "Classic",
+  daily: "Daily Challenge",
+  daily_5x5: "Daily Challenge 5x5",
+  practice: "Challenge Practice"
+};
 const Index = () => {
   const [showGame, setShowGame] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
@@ -23,7 +38,7 @@ const Index = () => {
   const [showMiniMarathon, setShowMiniMarathon] = useState(false);
   const [showWeeklyGauntlet, setShowWeeklyGauntlet] = useState(false);
   const [showPrestigeEndless, setShowPrestigeEndless] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"classic" | "daily" | "daily_5x5" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen">("classic");
+  const [selectedMode, setSelectedMode] = useState<SelectedGameMode>("classic");
   const [selectedAdvancedMode, setSelectedAdvancedMode] = useState<AdvancedGameMode | null>(null);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -67,17 +82,19 @@ const Index = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
-    if (mode && ['time_attack', 'endless', 'puzzle', 'survival', 'zen', 'chaos'].includes(mode)) {
-      setSelectedMode(mode as any);
-      setSelectedAdvancedMode(mode as AdvancedGameMode);
+    if (mode && isUrlMode(mode)) {
+      setSelectedMode(mode);
+      setSelectedAdvancedMode(mode);
       setShowGame(true);
     }
   }, []);
   const handlePlayClick = () => {
     setShowModeSelection(true);
   };
-  const handleModeSelect = (mode: "classic" | "daily" | "daily_5x5" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen") => {
+  const handleModeSelect = (mode: SelectedGameMode) => {
     setSelectedMode(mode);
+    // Clear any previous advanced-mode selection so the header and back target match this mode
+    setSelectedAdvancedMode(null);
     setShowModeSelection(false);
     setShowGame(true);
   };
@@ -121,7 +138,7 @@ const Index = () => {
       setShowPrestigeEndless(true);
       return;
     }
-    setSelectedMode(mode as any); // Convert AdvancedGameMode to broader type
+    setSelectedMode(mode); // Remaining modes (classic, time_attack, endless, survival, zen, chaos) are all SelectedGameMode
     setSelectedAdvancedMode(mode);
     setShowAdvancedModes(false);
     setShowGame(true);
@@ -181,14 +198,17 @@ const Index = () => {
     return <AdvancedGameModes onModeSelect={handleAdvancedModeSelect} onBack={handleBackToModeSelection} />;
   }
   if (showGame) {
+    const modeName = selectedAdvancedMode ? getModeName(selectedAdvancedMode) : BASIC_MODE_NAMES[selectedMode] ?? null;
     return <main>
-        <header className="container mx-auto pt-4 md:pt-10 pb-2 md:pb-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">Lexichain</h1>
-          {selectedAdvancedMode && (
-            <p className="text-lg md:text-xl font-semibold text-muted-foreground mt-2 text-center">
-              {getModeName(selectedAdvancedMode)}
-            </p>
-          )}
+        <header className="container mx-auto px-4 md:px-8 pt-3 md:pt-6 pb-2 md:pb-4 landscape-phone:sr-only">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">Lexichain</h1>
+            {modeName && (
+              <p className="text-base sm:text-lg md:text-xl font-semibold text-foreground/80">
+                {modeName}
+              </p>
+            )}
+          </div>
         </header>
         <Suspense fallback={<div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
@@ -198,10 +218,10 @@ const Index = () => {
       </main>;
   }
   if (showModeSelection) {
-    return <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative overflow-hidden">
+    return <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted relative overflow-hidden px-4">
         <FloatingTiles />
         <div className="text-center space-y-8 relative z-10">
-          <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+          <h1 className="text-5xl sm:text-6xl md:text-8xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
             Lexichain
           </h1>
           
@@ -237,7 +257,7 @@ const Index = () => {
             </Button>
           </div>
         </div>
-      </div>;
+      </main>;
   }
   return <TitleScreen onPlayClick={handlePlayClick} onAdvancedModesClick={handleAdvancedModesFromTitle} onLoginClick={handleLoginClick} onRegisterClick={handleRegisterClick} onStatsClick={handleStatsClick} onLeaderboardClick={handleLeaderboardClick} onSettingsClick={handleSettingsClick} streakData={streakData} user={user} />;
 };

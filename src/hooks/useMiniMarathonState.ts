@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { SpecialTile, UsedWord } from '@/types/game';
 
 export type BoardState = {
-  board: any[][];
-  specialTiles: any[][];
-  usedWords: any[];
+  board: string[][];
+  specialTiles: SpecialTile[][];
+  usedWords: UsedWord[];
   score: number;
   movesUsed: number;
   seed: string;
@@ -51,6 +52,10 @@ export type MiniMarathonGameState = {
     platinum: number;
   };
   lastSaved?: number;
+};
+
+type SerializedMiniMarathonGameState = Omit<MiniMarathonGameState, 'completedBoards'> & {
+  completedBoards?: (1 | 2 | 3)[];
 };
 
 export const useMiniMarathonState = (marathonDate: string) => {
@@ -100,6 +105,7 @@ export const useMiniMarathonState = (marathonDate: string) => {
 
         while (retries > 0 && !saved) {
           const { error } = await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('mini_marathon_states')
             .upsert({
               user_id: user.id,
@@ -160,6 +166,7 @@ export const useMiniMarathonState = (marathonDate: string) => {
       if (user) {
         try {
           const { data, error } = await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('mini_marathon_states')
             .select('game_state')
             .eq('user_id', user.id)
@@ -167,7 +174,7 @@ export const useMiniMarathonState = (marathonDate: string) => {
             .maybeSingle();
 
           if (data && !error) {
-            const gameState = data.game_state as any;
+            const gameState = data.game_state as SerializedMiniMarathonGameState;
             // Restore Set from Array
             loadedState = {
               ...gameState,
@@ -214,6 +221,7 @@ export const useMiniMarathonState = (marathonDate: string) => {
       if (user) {
         try {
           await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('mini_marathon_states')
             .delete()
             .eq('user_id', user.id)

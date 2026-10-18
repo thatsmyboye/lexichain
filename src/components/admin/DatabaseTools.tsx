@@ -8,9 +8,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Database, Play, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+type QueryResults =
+  | { type: 'select'; data: unknown[] | null; count: number }
+  | { type: 'error'; message: string; data?: undefined; count?: undefined };
+
 export function DatabaseTools() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<QueryResults | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingQuery, setPendingQuery] = useState('');
@@ -50,6 +54,7 @@ export function DatabaseTools() {
         if (match) {
           const tableName = match[1];
           const { data, error } = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table name is user-provided at runtime
             .from(tableName as any)
             .select('*')
             .limit(100);
@@ -68,11 +73,11 @@ export function DatabaseTools() {
           message: 'For security reasons, only SELECT queries are supported here. Use migrations or RPC functions for DDL/DML operations.'
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error executing query:', error);
       setResults({
         type: 'error',
-        message: error.message || 'Failed to execute query'
+        message: (error instanceof Error ? error.message : (error as { message?: string } | null)?.message) || 'Failed to execute query'
       });
       toast.error('Query execution failed');
     } finally {

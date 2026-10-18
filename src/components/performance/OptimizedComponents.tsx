@@ -176,7 +176,7 @@ export const OptimizedList = memo(<T,>({
 }) as <T>(props: OptimizedListProps<T>) => React.ReactElement;
 
 // Set displayName after the cast
-(OptimizedList as any).displayName = 'OptimizedList';
+(OptimizedList as { displayName?: string }).displayName = 'OptimizedList';
 
 // Memoized image component with lazy loading
 interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -365,14 +365,14 @@ export function useDebouncedValue<T>(value: T, delay: number): T {
 }
 
 // Throttled callback hook
-export function useThrottledCallback<T extends (...args: any[]) => any>(
+export function useThrottledCallback<T extends (...args: never[]) => unknown>(
   callback: T,
   delay: number
 ): T {
   const lastRun = React.useRef(Date.now());
 
   return React.useCallback(
-    ((...args: any[]) => {
+    ((...args: Parameters<T>) => {
       if (Date.now() - lastRun.current >= delay) {
         callback(...args);
         lastRun.current = Date.now();

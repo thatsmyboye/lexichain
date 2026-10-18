@@ -1,3 +1,6 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
+
 export type Benchmarks = {
   bronze: number;
   silver: number;
@@ -54,6 +57,16 @@ export function computeBoardSpecificBenchmarks(
   return { bronze, silver, gold, platinum, rating, wordCount };
 }
 
+type EnhancedBenchmarkData = {
+  totalScores: number;
+  bronzePercentile?: number;
+  silverPercentile?: number;
+  goldPercentile?: number;
+  platinumPercentile?: number;
+};
+
+type EnhancedBenchmarkArgs = Database['public']['Functions']['get_enhanced_benchmark_data']['Args'];
+
 const benchmarkCache = new Map<string, { benchmarks: Benchmarks; timestamp: number }>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
@@ -62,7 +75,7 @@ export async function computeDynamicBenchmarks(
   wordCount: number,
   kMin: number,
   analysis: BoardAnalysis,
-  supabaseClient: any,
+  supabaseClient: SupabaseClient<Database>,
   gameMode: string = 'daily'
 ): Promise<Benchmarks> {
   const cacheKey = `${challengeDate}-${wordCount}-${kMin}-${analysis.maxScorePotential}-${gameMode}`;
@@ -78,10 +91,12 @@ export async function computeDynamicBenchmarks(
     console.log(`Calculating dynamic benchmarks for ${challengeDate} (${gameMode}) using service function...`);
     
     // Use the enhanced benchmark function that includes board analysis
-    const { data: benchmarkData, error } = await supabaseClient.rpc('get_enhanced_benchmark_data', {
+    // p_game_mode is accepted by the function but missing from the generated types
+    const { data, error } = await supabaseClient.rpc('get_enhanced_benchmark_data', {
       challenge_date: challengeDate,
       p_game_mode: gameMode
-    });
+    } as EnhancedBenchmarkArgs);
+    const benchmarkData = data as EnhancedBenchmarkData | null;
 
     if (error) {
       console.error('Error calling benchmark service function:', error);

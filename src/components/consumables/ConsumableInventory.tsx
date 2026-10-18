@@ -91,7 +91,7 @@ interface QuickUseBarProps {
   inventory: ConsumableInventory;
   onUseConsumable: (id: ConsumableId) => void;
   gameMode: string;
-  gameState?: any;
+  gameState?: { gameOver?: boolean; isGenerating?: boolean };
   disabled?: boolean;
 }
 

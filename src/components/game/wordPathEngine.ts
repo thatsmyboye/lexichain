@@ -840,7 +840,8 @@ export function applyMagnetSpawnEffect(
   pos: Pos,
   board: string[][],
   specialTiles: SpecialTile[][],
-  size: number
+  size: number,
+  rng: () => number = Math.random
 ): string[][] {
   const newBoard = board.map(row => [...row]);
   const orthogonal = [
@@ -853,7 +854,7 @@ export function applyMagnetSpawnEffect(
     if (within(adj.r, adj.c, size) && specialTiles[adj.r][adj.c].type === null) {
       const currentLetter = newBoard[adj.r][adj.c];
       if (!MAGNET_VOWELS.includes(currentLetter.toUpperCase())) {
-        newBoard[adj.r][adj.c] = MAGNET_VOWELS[Math.floor(Math.random() * MAGNET_VOWELS.length)];
+        newBoard[adj.r][adj.c] = MAGNET_VOWELS[Math.floor(rng() * MAGNET_VOWELS.length)];
       }
     }
   }
@@ -885,7 +886,8 @@ export function applyFreezeSpawnEffect(
 export function processDecaySpread(
   specialTiles: SpecialTile[][],
   board: string[][],
-  size: number
+  size: number,
+  rng: () => number = Math.random
 ): { tiles: SpecialTile[][], board: string[][] } {
   const newTiles = specialTiles.map(row => row.map(t => ({ ...t })));
   const newBoard = board.map(row => [...row]);
@@ -894,7 +896,7 @@ export function processDecaySpread(
     for (let c = 0; c < size; c++) {
       if (specialTiles[r][c].type === "decay") {
         // 40% chance to spread to one random orthogonal neighbor
-        if (Math.random() < 0.4) {
+        if (rng() < 0.4) {
           const orthogonal = [
             { r: r - 1, c: c },
             { r: r + 1, c: c },
@@ -903,9 +905,9 @@ export function processDecaySpread(
           ].filter(p => within(p.r, p.c, size) && newTiles[p.r][p.c].type === null && !newTiles[p.r][p.c].frozen);
 
           if (orthogonal.length > 0) {
-          const target = orthogonal[Math.floor(Math.random() * orthogonal.length)];
+          const target = orthogonal[Math.floor(rng() * orthogonal.length)];
           // Convert neighbor's letter to a random low-value letter
-          newBoard[target.r][target.c] = LOW_VALUE_LETTERS[Math.floor(Math.random() * LOW_VALUE_LETTERS.length)];
+          newBoard[target.r][target.c] = LOW_VALUE_LETTERS[Math.floor(rng() * LOW_VALUE_LETTERS.length)];
           // Spread copy becomes decay with 2 turns (set to 3 since expireSpecialTiles decrements in same turn)
           newTiles[target.r][target.c] = { type: "decay", expiryTurns: 3 };
           }
@@ -973,7 +975,7 @@ export function handleBombBlast(
 export function checkAndAwardAchievements(
   actualWord: string,
   wordPath: Pos[],
-  usedWords: Array<{word: string, score: number, breakdown?: any}>,
+  usedWords: Array<{word: string, score: number, breakdown?: unknown}>,
   unlocked: Set<AchievementId>,
   discoverableCount: number,
   sharedTilesCount: number,
@@ -1042,4 +1044,84 @@ export function checkAndAwardAchievements(
   const achievementBonus = newAchievements.reduce((total, id) => total + ACHIEVEMENTS[id].scoreBonus, 0);
   
   return { newAchievements, achievementBonus };
+}
+
+export type PlayableWord = { word: string; path: Pos[] };
+const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
+
+// Finds words that can legally be played right now: Stone tiles are blocked,
+// Wild tiles stand for any letter, Mirror repeats the previous letter, a Ghost
+// contributes no letter but lets the next tile be anywhere (one Ghost per
+// word), and when `mustReuse` is non-empty the path must touch one of those
+// tiles (the chain rule). `truncated` is true when the node budget ran out
+// before the search finished, so an empty result is not proof of no moves.
+export function findPlayableWords(params: {
+  board: string[][];
+  specialTiles: SpecialTile[][];
+  mustReuse: Set<string>;
+  wordSet: Set<string>;
+  sortedArr: string[];
+  used: Set<string>;
+  limit?: number;
+  minLength?: number;
+  maxNodes?: number;
+}): { words: PlayableWord[]; truncated: boolean } {
+  const { board, specialTiles, mustReuse, wordSet, sortedArr, used, limit = Infinity, minLength = 3, maxNodes = 250000 } = params;
+  const N = board.length;
+  const found = new Map<string, Pos[]>();
+  const visited = Array.from({ length: N }, () => Array<boolean>(N).fill(false));
+  const path: Pos[] = [];
+  let nodes = 0;
+  const done = () => found.size >= limit || nodes > maxNodes;
+
+  const visit = (r: number, c: number, word: string, reuse: boolean, ghostUsed: boolean) => {
+    if (done()) return;
+    const type = specialTiles[r]?.[c]?.type ?? null;
+    if (type === "stone" || (type === "ghost" && ghostUsed)) return;
+    nodes++;
+
+    let options: string[];
+    if (type === "ghost") options = [""];
+    else if (type === "mirror") options = [word.length ? word[word.length - 1] : ""];
+    else if (type === "wild") options = ALPHABET;
+    else options = [board[r][c].toLowerCase()];
+
+    visited[r][c] = true;
+    path.push({ r, c });
+    const nextReuse = reuse || mustReuse.size === 0 || mustReuse.has(keyOf({ r, c }));
+    const bridging = type === "ghost";
+    for (const ch of options) {
+      const nextWord = word + ch;
+      if (ch && !binaryHasPrefix(sortedArr, nextWord)) continue;
+      if (ch && nextReuse && nextWord.length >= minLength && wordSet.has(nextWord) && !used.has(nextWord) && !found.has(nextWord)) {
+        found.set(nextWord, [...path]);
+        if (done()) break;
+      }
+      for (let nr = 0; nr < N && !done(); nr++) {
+        for (let nc = 0; nc < N && !done(); nc++) {
+          if (visited[nr][nc]) continue;
+          if (!bridging && Math.max(Math.abs(nr - r), Math.abs(nc - c)) > 1) continue;
+          visit(nr, nc, nextWord, nextReuse, ghostUsed || bridging);
+        }
+      }
+    }
+    path.pop();
+    visited[r][c] = false;
+  };
+
+  for (let r = 0; r < N && !done(); r++) {
+    for (let c = 0; c < N && !done(); c++) visit(r, c, "", false, false);
+  }
+  const words = Array.from(found, ([word, p]) => ({ word, path: p }));
+  return { words, truncated: nodes > maxNodes };
+}
+
+export type Grade = "None" | "Bronze" | "Silver" | "Gold" | "Platinum";
+export function gradeForScore(score: number, benchmarks: { bronze: number; silver: number; gold: number; platinum: number } | null): Grade {
+  if (!benchmarks) return "None";
+  if (score >= benchmarks.platinum) return "Platinum";
+  if (score >= benchmarks.gold) return "Gold";
+  if (score >= benchmarks.silver) return "Silver";
+  if (score >= benchmarks.bronze) return "Bronze";
+  return "None";
 }

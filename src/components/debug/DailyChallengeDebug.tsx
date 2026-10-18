@@ -9,23 +9,36 @@ import { toZonedTime } from 'date-fns-tz';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { toast } from 'sonner';
 import { syncOfflineDailyChallengeResults, getLocalBackupStats } from '@/utils/dailyChallengeResultSaver';
+import type { User } from '@supabase/supabase-js';
+import type { Database, Tables } from '@/integrations/supabase/types';
+
+interface BackupResult {
+  key: string;
+  data: {
+    challenge_date?: string;
+    score?: number;
+    synced?: boolean;
+  } | null;
+}
+
+type LeaderboardEntry = Database['public']['Functions']['get_daily_leaderboard']['Returns'][number];
 
 interface DebugInfo {
   localTime: string;
   easternTime: string;
   challengeDate: string;
   userTimezone: string;
-  backupResults: any[];
+  backupResults: BackupResult[];
   networkStatus: boolean;
 }
 
 export function DailyChallengeDebug() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
-  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
-  const [userResults, setUserResults] = useState<any[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [userResults, setUserResults] = useState<Tables<'daily_challenge_results'>[]>([]);
   const { syncBackupResults } = useOfflineSync();
-  const [backupStats, setBackupStats] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
+  const [backupStats, setBackupStats] = useState<ReturnType<typeof getLocalBackupStats> | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const refreshDebugInfo = () => {
     const now = new Date();
@@ -37,7 +50,7 @@ export function DailyChallengeDebug() {
     setBackupStats(stats);
     
     // Get backup results from localStorage for display
-    const backupResults = stats.backupKeys.map(key => {
+    const backupResults: BackupResult[] = stats.backupKeys.map(key => {
       try {
         return { key, data: JSON.parse(localStorage.getItem(key) || '{}') };
       } catch {

@@ -66,13 +66,14 @@ export function validateWaveChallenge(
         message: `Word too short! Need ${challenge.minLength}+ letters`
       };
 
-    case 'score_target':
+    case 'score_target': {
       const newScore = waveScore;
       return {
         valid: true,
         progress: newScore,
         message: `${newScore}/${challenge.target} points earned`
       };
+    }
 
     case 'speed_round':
       return {
@@ -81,7 +82,7 @@ export function validateWaveChallenge(
         message: `${currentProgress + 1}/${challenge.target} words in time!`
       };
 
-    case 'vowel_hunt':
+    case 'vowel_hunt': {
       const vowelCount = countVowels(word);
       if (vowelCount >= (challenge.minLength || 3)) {
         return {
@@ -95,8 +96,9 @@ export function validateWaveChallenge(
         progress: currentProgress,
         message: `Not enough vowels! Need ${challenge.minLength}+`
       };
+    }
 
-    case 'consonant_chain':
+    case 'consonant_chain': {
       const consonantCount = countConsonants(word);
       if (consonantCount >= (challenge.minLength || 4)) {
         return {
@@ -110,6 +112,7 @@ export function validateWaveChallenge(
         progress: currentProgress,
         message: `Not enough consonants! Need ${challenge.minLength}+`
       };
+    }
 
     case 'no_repeat_letters':
       if (!hasRepeatedLetters(word)) {
@@ -139,7 +142,7 @@ export function validateWaveChallenge(
         message: `Path too short! Need ${challenge.minTiles}+ tiles`
       };
 
-    case 'corner_to_corner':
+    case 'corner_to_corner': {
       const firstPos = pathPositions[0];
       const lastPos = pathPositions[pathPositions.length - 1];
       if (isCornerPosition(firstPos.row, firstPos.col) && isCornerPosition(lastPos.row, lastPos.col)) {
@@ -154,6 +157,7 @@ export function validateWaveChallenge(
         progress: currentProgress,
         message: 'Must start and end in corners!'
       };
+    }
 
     case 'perfect_round':
       return {
@@ -223,7 +227,7 @@ export function validateBossWave(
         message: `Need ${boss.minLength}+ letter words!`
       };
 
-    case 'point_threshold':
+    case 'point_threshold': {
       const complete = waveScore >= boss.requirement;
       return {
         valid: true,
@@ -233,8 +237,9 @@ export function validateBossWave(
           ? `${boss.icon} Boss defeated! ${waveScore} points!`
           : `${waveScore}/${boss.requirement} points`
       };
+    }
 
-    case 'time_trial':
+    case 'time_trial': {
       const newProgress = currentProgress + 1;
       return {
         valid: true,
@@ -242,8 +247,9 @@ export function validateBossWave(
         complete: newProgress >= boss.requirement,
         message: `${boss.icon} ${newProgress}/${boss.requirement} in time!`
       };
+    }
 
-    case 'stone_gauntlet':
+    case 'stone_gauntlet': {
       const gauntletProgress = currentProgress + 1;
       return {
         valid: true,
@@ -251,8 +257,9 @@ export function validateBossWave(
         complete: gauntletProgress >= boss.requirement,
         message: `${boss.icon} ${gauntletProgress}/${boss.requirement} through stones!`
       };
+    }
 
-    case 'letter_lockout':
+    case 'letter_lockout': {
       const wordUpper = word.toUpperCase();
       const bannedLetters = boss.bannedLetters || [];
       const hasBannedLetter = bannedLetters.some(letter => wordUpper.includes(letter));
@@ -273,8 +280,9 @@ export function validateBossWave(
         complete: lockoutProgress >= boss.requirement,
         message: `${boss.icon} ${lockoutProgress}/${boss.requirement} valid words!`
       };
+    }
 
-    case 'perfect_wave':
+    case 'perfect_wave': {
       const perfectProgress = currentProgress + 1;
       return {
         valid: true,
@@ -282,6 +290,7 @@ export function validateBossWave(
         complete: perfectProgress >= boss.requirement,
         message: `${boss.icon} ${perfectProgress}/${boss.requirement} perfect!`
       };
+    }
 
     case 'mega_word':
       if (word.length >= boss.requirement) {
@@ -362,10 +371,24 @@ export function updateCombo(
 // POWER-UP EFFECTS
 // ============================================================================
 
+export interface PowerUpEffect {
+  lives?: number;
+  removeStones?: boolean;
+  refreshBoard?: boolean;
+  shield?: number;
+  revealHints?: number;
+  freezeDifficulty?: number;
+  wildcardActive?: boolean;
+  pointsMultiplier?: number;
+  comboBoost?: boolean;
+  lifeLink?: boolean;
+  safetyNet?: boolean;
+}
+
 export function applyPowerUpEffect(
   powerUpType: PowerUpType,
   state: Partial<SurvivalState>
-): { success: boolean; message: string; effect?: any } {
+): { success: boolean; message: string; effect?: PowerUpEffect } {
   switch (powerUpType) {
     case 'extra_life':
       return {

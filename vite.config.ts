@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,svg,ico}'],
         runtimeCaching: [
           {
-            urlPattern: /\/words\.txt$/,
+            urlPattern: /\/words\.txt(\.gz)?$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'dictionary-cache',

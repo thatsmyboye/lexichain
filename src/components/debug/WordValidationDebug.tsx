@@ -4,9 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { dictionaryManager, debugWordValidation } from '@/utils/dictionaryManager';
 
+interface ValidationResultEntry {
+  word: string;
+  result: ReturnType<typeof dictionaryManager.validateWord>;
+  status: ReturnType<typeof dictionaryManager.getStatus>;
+  timestamp: string;
+}
+
 export function WordValidationDebug() {
   const [testWord, setTestWord] = useState('');
-  const [validationResults, setValidationResults] = useState<any[]>([]);
+  const [validationResults, setValidationResults] = useState<ValidationResultEntry[]>([]);
 
   const testWordValidation = () => {
     if (!testWord.trim()) return;

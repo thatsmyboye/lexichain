@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Infinity, Sparkles, Trophy, Award, ArrowLeft, Zap } from 'lucide-react';
+import { TrendingUp, Infinity as InfinityIcon, Sparkles, Trophy, Award, ArrowLeft, Zap } from 'lucide-react';
 import { FloatingTiles } from '@/components/effects/FloatingTiles';
 
 interface PrestigeEndlessProps {
@@ -52,7 +52,7 @@ export function PrestigeEndless({ onBack }: PrestigeEndlessProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-2xl flex items-center gap-2">
-                  <Infinity className="h-6 w-6 text-blue-500" />
+                  <InfinityIcon className="h-6 w-6 text-blue-500" />
                   Enhanced Endless Mode
                 </CardTitle>
                 <CardDescription className="text-lg mt-2">

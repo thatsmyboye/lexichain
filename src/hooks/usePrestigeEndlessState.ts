@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { SpecialTile, UsedWord } from '@/types/game';
 
 export type ActiveBuff = {
   id: string;
@@ -34,9 +35,9 @@ export type PrestigeEndlessState = {
   highestWaveEver: number;
   sessionStartTime: number;
   lastWaveTime?: number;
-  board: any[][];
-  specialTiles: any[][];
-  usedWords: any[];
+  board: string[][];
+  specialTiles: SpecialTile[][];
+  usedWords: UsedWord[];
   currentScore: number;
   gameOver: boolean;
   canPrestige: boolean;
@@ -73,6 +74,7 @@ export const usePrestigeEndlessState = () => {
 
         while (retries > 0 && !saved) {
           const { error } = await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('prestige_endless_states')
             .upsert({
               user_id: user.id,
@@ -128,6 +130,7 @@ export const usePrestigeEndlessState = () => {
       if (user) {
         try {
           const { data, error } = await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('prestige_endless_states')
             .select('game_state')
             .eq('user_id', user.id)
@@ -179,6 +182,7 @@ export const usePrestigeEndlessState = () => {
       if (user) {
         try {
           await (supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
             .from as any)('prestige_endless_states')
             .delete()
             .eq('user_id', user.id);
@@ -200,6 +204,7 @@ export const usePrestigeEndlessState = () => {
       if (!user) return null;
 
       const { data, error } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
         .from as any)('prestige_endless_player_stats')
         .select('*')
         .eq('user_id', user.id)
@@ -230,6 +235,7 @@ export const usePrestigeEndlessState = () => {
       if (!user) return;
 
       const { error } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated Supabase types
         .from as any)('prestige_endless_player_stats')
         .upsert({
           user_id: user.id,

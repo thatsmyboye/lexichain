@@ -46,10 +46,11 @@ export function LivesDisplay({ lives, maxLives, shields, lifeFragments }: LivesD
     <div className="flex items-center gap-3">
       <div>
         <div className="text-xs text-muted-foreground mb-1">Lives</div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" role="img" aria-label={`${lives} of ${maxLives} lives`}>
           {Array.from({ length: maxLives }).map((_, i) => (
             <span
               key={i}
+              aria-hidden="true"
               className={`text-xl transition-all duration-300 ${
                 i < lives ? '' : 'opacity-30 grayscale'
               }`}
@@ -62,15 +63,15 @@ export function LivesDisplay({ lives, maxLives, shields, lifeFragments }: LivesD
 
       {shields > 0 && (
         <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 rounded-lg border border-blue-500/30">
-          <Shield className="w-4 h-4 text-blue-400" />
-          <span className="text-sm text-blue-400 font-medium">×{shields}</span>
+          <Shield aria-hidden="true" className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+          <span className="text-sm text-blue-700 dark:text-blue-300 font-medium"><span className="sr-only">Shields: </span>×{shields}</span>
         </div>
       )}
 
       {lifeFragments > 0 && (
         <div className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 rounded-lg border border-purple-500/30">
-          <span className="text-sm">💎</span>
-          <span className="text-sm text-purple-400 font-medium">{lifeFragments}/3</span>
+          <span aria-hidden="true" className="text-sm">💎</span>
+          <span className="text-sm text-purple-700 dark:text-purple-300 font-medium"><span className="sr-only">Life fragments: </span>{lifeFragments}/3</span>
         </div>
       )}
     </div>

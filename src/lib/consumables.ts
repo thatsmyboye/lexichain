@@ -13,7 +13,7 @@ export type ActiveEffect = {
   type: string;
   duration?: number;
   expiresAt?: Date;
-  data?: any;
+  data?: Record<string, unknown>;
 };
 
 export type ConsumableReward = {

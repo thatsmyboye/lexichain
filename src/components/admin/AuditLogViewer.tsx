@@ -8,12 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, FileText, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 interface AuditLog {
   id: string;
   event_type: string;
   event_level: string;
-  event_details: any;
+  event_details: Json | null;
   user_id: string | null;
   created_at: string;
 }

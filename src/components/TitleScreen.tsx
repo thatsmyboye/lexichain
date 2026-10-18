@@ -9,7 +9,7 @@ import { InteractiveTutorial } from "@/components/tutorial/InteractiveTutorial";
 import { SoundButton } from "@/components/effects/SoundSystem";
 import { Settings, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { FloatingTiles } from "@/components/effects/FloatingTiles";
+import { FloatingTiles, useFloatingTilesEnabled } from "@/components/effects/FloatingTiles";
 interface TitleScreenProps {
   onPlayClick: () => void;
   onAdvancedModesClick?: () => void;
@@ -123,18 +123,17 @@ const TitleScreen = ({
 
     checkAdmin();
   }, [user]);
-  const [floatingTilesEnabled] = useState(() => {
-    return localStorage.getItem('lexichain-floating-tiles') !== 'false';
-  });
+  // Respects both the Settings toggle and prefers-reduced-motion.
+  const floatingTilesEnabled = useFloatingTilesEnabled();
 
-  return <div className="min-h-[100dvh] flex flex-col items-center bg-gradient-to-br from-background via-muted/30 to-background relative px-4 overflow-x-hidden">
+  return <main className="min-h-[100dvh] flex flex-col items-center bg-gradient-to-br from-background via-muted/30 to-background relative px-4 overflow-x-hidden">
       {/* Background: floating tiles or default gradient blobs */}
       {floatingTilesEnabled ? (
         <FloatingTiles />
       ) : (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl motion-safe:animate-pulse" style={{ animationDuration: '4s' }}></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand-400/10 rounded-full blur-3xl motion-safe:animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
         </div>
       )}
 
@@ -358,6 +357,6 @@ const TitleScreen = ({
       
       {/* Interactive Tutorial - Hidden for now but retained for later use */}
       {/* <InteractiveTutorial /> */}
-    </div>;
+    </main>;
 };
 export default TitleScreen;
