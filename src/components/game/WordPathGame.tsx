@@ -3307,7 +3307,7 @@ function WordPathGame({
             <div className="mx-auto flex max-w-md items-center gap-2 lg:max-w-none">
               <div className={`min-w-0 flex-1 rounded-lg border px-3 py-1.5 ${feedback ? "border-[hsl(var(--bad))] bg-[hsl(var(--bad)/0.08)]" : "border-transparent bg-muted/60"}`}>
                 <div className="truncate text-lg font-bold tracking-wide" aria-hidden="true">
-                  {displayWordFromPath || (usedWords.length ? <span className="text-sm font-medium text-foreground/70">Reuse a ⛓ tile to chain</span> : <span className="text-sm font-medium text-foreground/70">Your chain starts here</span>)}
+                  {displayWordFromPath || <span className="text-sm font-medium text-foreground/70">{usedWords.length ? "Reuse a ⛓ tile" : "Start a chain"}</span>}
                 </div>
                 <div role="status" aria-live="polite" className="truncate text-xs font-semibold">
                   {feedback ? (
@@ -3324,7 +3324,7 @@ function WordPathGame({
                       {pathWordStatus.label}
                     </span>
                   ) : (
-                    <span className="text-foreground/70">Drag, tap, or type a word</span>
+                    <span className="text-foreground/70">Drag, tap, or type</span>
                   )}
                 </div>
               </div>

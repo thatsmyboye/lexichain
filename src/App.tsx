@@ -13,6 +13,8 @@ import { ColorBlindProvider } from "@/components/accessibility/ColorBlindSupport
 import { ARIAProvider } from "@/components/accessibility/ARIAComponents";
 import { ComponentPreloader, PerformanceMetrics } from "@/components/performance/CodeSplitting";
 import { AccountSync } from "@/components/AccountSync";
+import { SkinThemeSync } from "@/components/effects/SkinTheme";
+import { useTileSkin } from "@/hooks/useTileSkin";
 
 // Lazy load non-critical pages using optimized components
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
@@ -28,8 +30,12 @@ const LoadingSpinner = () => <div className="min-h-screen flex items-center just
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
   </div>;
 const queryClient = new QueryClient();
-const App = () => <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+const App = () => {
+  // Skins with a dark surface (Neon) force the dark theme so every dark:
+  // style applies, not just the CSS color variables
+  const { skin } = useTileSkin();
+  return <QueryClientProvider client={queryClient}>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange forcedTheme={skin.darkSurface ? "dark" : undefined}>
     <SoundProvider>
       <ColorBlindProvider>
         <ARIAProvider>
@@ -38,6 +44,7 @@ const App = () => <QueryClientProvider client={queryClient}>
               <Toaster />
               <Sonner />
               <AccountSync />
+              <SkinThemeSync />
               <BrowserRouter>
                 <Suspense fallback={<LoadingSpinner />}>
                   <Routes>
@@ -63,4 +70,5 @@ const App = () => <QueryClientProvider client={queryClient}>
     </SoundProvider>
     </ThemeProvider>
   </QueryClientProvider>;
+};
 export default App;

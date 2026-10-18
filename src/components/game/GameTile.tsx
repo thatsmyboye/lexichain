@@ -59,6 +59,11 @@ function getTileClasses(
   if (special.type === "ghost") shape = shape.replace("animate-tile-fade", "");
   let base = `game-tile relative aspect-square w-full flex items-center justify-center border-2 text-card-foreground shadow-sm select-none outline-none focus-visible:ring-4 focus-visible:ring-[hsl(var(--brand-500))] focus-visible:ring-offset-2 focus-visible:ring-offset-background ${shape} ${benchmarkColor.border} transition-[transform,box-shadow,background-color] duration-200 `;
 
+  // Special tiles bring their own fill and letter color. Skipping the skin
+  // fill matters: its dark: variants would otherwise survive twMerge and
+  // repaint special tiles in the skin's colors in dark mode.
+  const skinFill = special.type ? "" : skin.baseClasses + " ";
+
   if (isSelected) {
     base += skin.selectedClasses + " tile-selected shadow-[0_0_20px_hsl(var(--ok)/0.4)] ";
   } else if (isAffected) {
@@ -81,9 +86,9 @@ function getTileClasses(
       else if (currentGrade === "silver") base += "shadow-[0_0_8px_rgba(156,163,175,0.4)] ";
       else base += "shadow-[0_0_8px_rgba(217,119,6,0.4)] ";
     }
-    base += skin.baseClasses + " ";
+    base += skinFill;
   } else {
-    base += skin.baseClasses + " ";
+    base += skinFill;
   }
 
   if (isHint && !isSelected) {
@@ -126,41 +131,50 @@ function getTileClasses(
 // (X-Factor corner dots, Multiplier value badge).
 const NO_CORNER_ICON = new Set<SpecialTile["type"]>(["xfactor", "multiplier", null]);
 
-// Bomb fuse: quadratic curve from the bomb's shoulder out to the box corner,
-// in a 24×24 box over the tile's top-right corner. It is trimmed with
+// Bomb fuse: an S-curve from the bomb's shoulder (45° on the round tile) up
+// past the tile's top-right corner. The 24×24 box covers the tile's top-right
+// corner with a small overhang that stays inside the grid gap. The cubic is trimmed with
 // de Casteljau so the burning tip sits exactly at the end of what's left.
-const FUSE = { p0: [12.5, 11.5], p1: [14.5, 2.5], p2: [22.5, 1.5] } as const;
+const FUSE = [[11.7, 12.3], [9.6, 3.8], [20, 10.2], [22.3, 1.2]] as const;
 const MAX_FUSE_TURNS = 5;
 
 function fuseGeometry(turnsLeft: number | undefined) {
   const t = turnsLeft === undefined
     ? 1
-    : Math.max(0.14, Math.min(1, turnsLeft / MAX_FUSE_TURNS));
-  const lerp = (a: readonly number[], b: readonly number[], k: number) =>
-    [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-  const q0 = lerp(FUSE.p0, FUSE.p1, t);
-  const q1 = lerp(FUSE.p1, FUSE.p2, t);
-  const tip = lerp(q0, q1, t);
+    : Math.max(0.12, Math.min(1, turnsLeft / MAX_FUSE_TURNS));
+  const lerp = (a: readonly number[], b: readonly number[]) =>
+    [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  const [p0, p1, p2, p3] = FUSE;
+  const a = lerp(p0, p1);
+  const b = lerp(p1, p2);
+  const c = lerp(p2, p3);
+  const ab = lerp(a, b);
+  const bc = lerp(b, c);
+  const tip = lerp(ab, bc);
   const f = (n: number) => n.toFixed(2);
   return {
-    d: `M${f(FUSE.p0[0])} ${f(FUSE.p0[1])} Q${f(q0[0])} ${f(q0[1])} ${f(tip[0])} ${f(tip[1])}`,
+    d: `M${f(p0[0])} ${f(p0[1])} C${f(a[0])} ${f(a[1])} ${f(ab[0])} ${f(ab[1])} ${f(tip[0])} ${f(tip[1])}`,
+    full: `M${p0.join(" ")} C${p1.join(" ")} ${p2.join(" ")} ${p3.join(" ")}`,
     tip,
   };
 }
 
 function BombFuse({ turnsLeft }: { turnsLeft: number | undefined }) {
-  const { d, tip } = fuseGeometry(turnsLeft);
+  const { d, full, tip } = fuseGeometry(turnsLeft);
   const urgent = turnsLeft !== undefined && turnsLeft <= 1;
   return (
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      className="pointer-events-none absolute -right-[4%] -top-[4%] z-[15] h-[42%] w-[42%] overflow-visible"
+      className="pointer-events-none absolute -right-[14%] -top-[14%] z-[15] h-[56%] w-[56%] overflow-visible"
     >
+      {/* Ash trail: the burnt-off length, so what's left reads as a gauge */}
+      <path d={full} fill="none" stroke="rgba(100,100,100,0.55)" strokeWidth="1.1" strokeLinecap="round" strokeDasharray="0.6 1.2" />
+      <path d={d} fill="none" stroke="rgba(0,0,0,0.65)" strokeWidth="3.6" strokeLinecap="round" />
+      <path d={d} fill="none" stroke="#e0b46e" strokeWidth="2" strokeLinecap="round" />
+      <path d={d} fill="none" stroke="#7c4a1e" strokeWidth="2" strokeLinecap="butt" strokeDasharray="0.9 1.5" />
       {/* Collar where the fuse leaves the bomb */}
-      <rect x="10.2" y="10.2" width="5" height="3.4" rx="0.8" transform="rotate(-45 12.7 11.9)" fill="#1f2937" stroke="#9ca3af" strokeWidth="0.8" />
-      <path d={d} fill="none" stroke="rgba(0,0,0,0.6)" strokeWidth="3.4" strokeLinecap="round" />
-      <path d={d} fill="none" stroke="#d6a35c" strokeWidth="1.8" strokeLinecap="round" strokeDasharray="1.6 1.1" />
+      <rect x="9" y="11.4" width="5" height="3.2" rx="0.8" transform="rotate(-45 11.5 13)" fill="#1f2937" stroke="#d1d5db" strokeWidth="0.8" />
       <g transform={`translate(${tip[0].toFixed(2)} ${tip[1].toFixed(2)})`}>
         <g className={cn("tile-bomb-spark", urgent && "tile-bomb-spark-urgent")}>
           <circle r="4.2" fill="rgba(251,146,60,0.45)" />
