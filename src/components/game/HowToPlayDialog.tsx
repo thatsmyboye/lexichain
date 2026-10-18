@@ -1,6 +1,31 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import type { SpecialTileType } from "@/types/game";
+import { SpecialTileIcon } from "./SpecialTileIcon";
+
+// Same fills, letter colors and border shapes as the board's special tiles
+const SPECIAL_SWATCHES: Array<{
+  type: NonNullable<SpecialTileType>;
+  name: string;
+  desc: string;
+  shape: string;
+  classes: string;
+}> = [
+  { type: "stone", name: "Stone", desc: "Cannot be used", shape: "rounded-none border-4 border-double border-gray-300", classes: "bg-gradient-to-br from-gray-500 to-gray-700 text-white" },
+  { type: "wild", name: "Wild", desc: "Any letter", shape: "rounded border-2 border-dashed border-white/70", classes: "bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 text-white" },
+  { type: "xfactor", name: "X-Factor", desc: "Changes adjacent corner tiles", shape: "rounded border-2 border-orange-200/70", classes: "bg-gradient-to-br from-orange-500 to-red-600 text-white" },
+  { type: "multiplier", name: "Multiplier", desc: "Boost word score", shape: "rounded border-2 border-blue-200/70", classes: "bg-gradient-to-br from-blue-500 to-blue-700 text-white" },
+  { type: "shuffle", name: "Shuffle", desc: "Randomizes all unfrozen letters", shape: "rounded border-2 border-red-400/60", classes: "bg-gradient-to-br from-red-200 to-red-300 text-red-900" },
+  { type: "freeze", name: "Freeze", desc: "Locks neighbors in place", shape: "rounded-sm border-2 border-dotted border-blue-500/70", classes: "bg-gradient-to-br from-cyan-200 to-blue-300 text-blue-950" },
+  { type: "decay", name: "Decay", desc: "Spreads, degrades letters", shape: "rounded border-2 border-green-600/50", classes: "bg-gradient-to-br from-yellow-200 to-green-400 text-green-950" },
+  { type: "mirror", name: "Mirror", desc: "Copies previous letter", shape: "rounded border-2 border-gray-500/50", classes: "bg-gradient-to-br from-gray-200 to-gray-400 text-gray-900" },
+  { type: "magnet", name: "Magnet", desc: "Pulls vowels nearby", shape: "rounded border-2 border-red-300/60", classes: "bg-gradient-to-br from-red-500 to-gray-600 text-white" },
+  { type: "bomb", name: "Bomb", desc: "Blasts nearby tiles", shape: "rounded-full border-2 border-red-300/60", classes: "bg-gradient-to-br from-red-600 to-gray-900 text-white" },
+  { type: "chain", name: "Chain", desc: "Bonus for long words", shape: "rounded border-2 border-amber-300/60", classes: "bg-gradient-to-br from-amber-600 to-amber-800 text-white" },
+  { type: "ghost", name: "Ghost", desc: "Bridge tile, no letter", shape: "rounded border-2 border-dashed border-gray-400", classes: "bg-gradient-to-br from-white to-gray-200 text-gray-700 dark:from-slate-700 dark:to-slate-800 dark:text-gray-200" },
+  { type: "tax", name: "Tax", desc: "-30% word score", shape: "rounded border-2 border-yellow-600/50", classes: "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-950" },
+];
 
 export function HowToPlayDialog({
   open,
@@ -100,136 +125,28 @@ export function HowToPlayDialog({
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-3 pt-2">
                 <div className="grid grid-cols-2 gap-y-3 gap-x-2 sm:grid-cols-3">
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-bold">
-                      A
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Stone</div>
-                      <div className="text-muted-foreground">Cannot be used</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-purple-400 via-pink-400 to-red-400 flex items-center justify-center text-white text-xs font-bold">
-                      ?
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Wild</div>
-                      <div className="text-muted-foreground">Any letter</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-xs font-bold relative">
-                      A
-                      <div className="absolute top-0 left-0 w-1 h-1 bg-white/30 rounded-full"></div>
-                      <div className="absolute top-0 right-0 w-1 h-1 bg-white/30 rounded-full"></div>
-                      <div className="absolute bottom-0 left-0 w-1 h-1 bg-white/30 rounded-full"></div>
-                      <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/30 rounded-full"></div>
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">X-Factor</div>
-                      <div className="text-muted-foreground">Changes adjacent corner tiles</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold relative">
-                      A
-                      <div className="absolute bottom-0 right-0 text-xs font-bold bg-white/20 px-0.5 rounded text-[10px]">
-                        2x
+                  {SPECIAL_SWATCHES.map((swatch) => (
+                    <div key={swatch.type} className="flex items-center gap-2">
+                      <div aria-hidden="true" className={`relative w-8 h-8 flex-shrink-0 flex items-center justify-center ${swatch.shape} ${swatch.classes}`}>
+                        <SpecialTileIcon type={swatch.type} className="h-4 w-4" />
+                        {swatch.type === "multiplier" && (
+                          <span className="absolute -bottom-1 -right-1 rounded bg-black/60 px-0.5 text-[9px] font-bold leading-tight text-white">2x</span>
+                        )}
+                        {swatch.type === "xfactor" && (
+                          <>
+                            <span className="absolute top-0.5 left-0.5 w-1 h-1 bg-white/80 rounded-full" />
+                            <span className="absolute top-0.5 right-0.5 w-1 h-1 bg-white/80 rounded-full" />
+                            <span className="absolute bottom-0.5 left-0.5 w-1 h-1 bg-white/80 rounded-full" />
+                            <span className="absolute bottom-0.5 right-0.5 w-1 h-1 bg-white/80 rounded-full" />
+                          </>
+                        )}
+                      </div>
+                      <div className="text-xs">
+                        <div className="font-medium">{swatch.name}</div>
+                        <div className="text-muted-foreground">{swatch.desc}</div>
                       </div>
                     </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Multiplier</div>
-                      <div className="text-muted-foreground">Boost word score</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-red-200 to-red-300 flex items-center justify-center text-red-800 text-xs font-bold relative">
-                      A
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="relative">
-                          <div className="w-3 h-3 border border-red-700 rounded-full opacity-70"></div>
-                          <div className="absolute inset-0.5 w-2 h-2 border border-red-700 rounded-full opacity-50"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Shuffle</div>
-                      <div className="text-muted-foreground">Randomizes all unfrozen letters</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-cyan-300 to-blue-400 flex items-center justify-center text-white text-xs">
-                      ❄️
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Freeze</div>
-                      <div className="text-muted-foreground">Locks neighbors in place</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-yellow-300 to-green-500 flex items-center justify-center text-white text-xs">
-                      🦠
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Decay</div>
-                      <div className="text-muted-foreground">Spreads, degrades letters</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-gray-200 to-gray-400 flex items-center justify-center text-gray-800 text-xs">
-                      🪞
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Mirror</div>
-                      <div className="text-muted-foreground">Copies previous letter</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-red-400 to-gray-400 flex items-center justify-center text-white text-xs">
-                      🧲
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Magnet</div>
-                      <div className="text-muted-foreground">Pulls vowels nearby</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-red-600 to-gray-900 flex items-center justify-center text-white text-xs">
-                      💣
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Bomb</div>
-                      <div className="text-muted-foreground">Blasts nearby tiles</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white text-xs">
-                      ⛓️
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Chain</div>
-                      <div className="text-muted-foreground">Bonus for long words</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-white/60 to-gray-200/60 flex items-center justify-center text-gray-400 text-xs opacity-70">
-                      👻
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Ghost</div>
-                      <div className="text-muted-foreground">Bridge tile, no letter</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div aria-hidden="true" className="w-8 h-8 rounded bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white text-xs">
-                      💰
-                    </div>
-                    <div className="text-xs">
-                      <div className="font-medium">Tax</div>
-                      <div className="text-muted-foreground">-30% word score</div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   Special tiles appear after forming your first valid word and expire after a few turns.

@@ -2,6 +2,8 @@ import type React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Grade } from "./wordPathEngine";
+import { DefinableWord } from "./WordDefinition";
+import { ACHIEVEMENTS, type AchievementId } from "@/lib/achievements";
 
 const MEDALS: Record<Grade, { emoji: string; ring: string; label: string }> = {
   Platinum: { emoji: "💎", ring: "from-purple-400 to-fuchsia-500", label: "Platinum" },
@@ -23,6 +25,8 @@ export interface ResultsSummary {
   bestWord: { word: string; score: number } | null;
   missedWords: string[];
   stats?: { label: string; value: string }[];
+  personalBest?: { isNew: boolean; previous: number | null };
+  newTrophies?: AchievementId[];
 }
 
 export function ResultsDialog({
@@ -31,6 +35,7 @@ export function ResultsDialog({
   summary,
   primaryAction,
   onShare,
+  onShareImage,
   secondaryActions,
 }: {
   open: boolean;
@@ -38,6 +43,7 @@ export function ResultsDialog({
   summary: ResultsSummary | null;
   primaryAction?: { label: string; onClick: () => void };
   onShare: () => void;
+  onShareImage?: () => void;
   secondaryActions?: React.ReactNode;
 }) {
   if (!summary) return null;
@@ -62,7 +68,27 @@ export function ResultsDialog({
           <div className="text-sm text-foreground/80">
             points{summary.showGrade ? ` · ${medal.label}` : ""}
           </div>
+          {summary.personalBest?.isNew && (
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-[hsl(var(--brand-500)/0.15)] px-3 py-1 text-sm font-bold text-[hsl(var(--brand-600))] animate-in zoom-in-75 duration-500">
+              <span aria-hidden="true">🏅</span> New personal best!
+              {summary.personalBest.previous ? <span className="font-medium"> (was {summary.personalBest.previous.toLocaleString()})</span> : null}
+            </div>
+          )}
+          {summary.personalBest && !summary.personalBest.isNew && summary.personalBest.previous !== null && (
+            <div className="mt-1 text-xs text-foreground/75">Your best: {summary.personalBest.previous.toLocaleString()}</div>
+          )}
         </div>
+
+        {summary.newTrophies && summary.newTrophies.length > 0 && (
+          <div className="rounded-lg border border-[hsl(var(--brand-500)/0.4)] bg-[hsl(var(--brand-500)/0.08)] p-2">
+            <h3 className="mb-1 text-sm font-semibold">New trophies</h3>
+            <ul className="space-y-0.5 text-sm">
+              {summary.newTrophies.map(id => (
+                <li key={id}><span aria-hidden="true">🏆 </span>{ACHIEVEMENTS[id].label}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <dl className="grid grid-cols-2 gap-2 text-sm">
           <div className="rounded-lg bg-muted p-2">
@@ -91,10 +117,12 @@ export function ResultsDialog({
 
         {summary.missedWords.length > 0 && (
           <div>
-            <h3 className="mb-1 text-sm font-semibold">Words you missed</h3>
+            <h3 className="mb-1 text-sm font-semibold">Words you missed <span className="font-normal text-foreground/70">(tap for meaning)</span></h3>
             <ul className="flex flex-wrap gap-1.5">
               {summary.missedWords.map(w => (
-                <li key={w} className="rounded bg-secondary px-2 py-0.5 text-xs font-medium uppercase text-secondary-foreground">{w}</li>
+                <li key={w}>
+                  <DefinableWord word={w} className="bg-secondary text-secondary-foreground" />
+                </li>
               ))}
             </ul>
           </div>
@@ -106,9 +134,16 @@ export function ResultsDialog({
               {primaryAction.label}
             </Button>
           )}
-          <Button variant="outline" size="lg" onClick={onShare} className="w-full">
-            Share result
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" size="lg" onClick={onShare} className={onShareImage ? "" : "col-span-2"}>
+              Share text
+            </Button>
+            {onShareImage && (
+              <Button variant="outline" size="lg" onClick={onShareImage}>
+                Share image
+              </Button>
+            )}
+          </div>
           {secondaryActions}
         </div>
       </DialogContent>

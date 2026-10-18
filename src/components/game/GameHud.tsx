@@ -12,7 +12,7 @@ const TIERS = [
 
 // One medal track instead of four stacked tier rows: markers sit at each
 // threshold along a bar scaled to the Platinum target.
-function MedalTrack({ score, benchmarks }: { score: number; benchmarks: Benchmarks }) {
+function MedalTrack({ score, benchmarks, best }: { score: number; benchmarks: Benchmarks; best?: number | null }) {
   const max = Math.max(1, benchmarks.platinum);
   const pct = Math.min(100, (score / max) * 100);
   const grade = gradeForScore(score, benchmarks);
@@ -54,6 +54,7 @@ function MedalTrack({ score, benchmarks }: { score: number; benchmarks: Benchmar
       </div>
       <div className="mt-1.5 truncate text-[11px] font-medium text-foreground/80">
         {next ? `${(benchmarks[next.key] - score).toLocaleString()} to ${next.label}` : "✨ Platinum reached"}
+        {best ? <span className="text-foreground/70"> · {score > best ? "New best!" : `Best ${best.toLocaleString()}`}</span> : null}
       </div>
     </div>
   );
@@ -64,12 +65,14 @@ export function GameHud({
   benchmarks,
   showTrack,
   stat,
+  best,
   className = "",
 }: {
   score: number;
   benchmarks: Benchmarks | null;
   showTrack: boolean;
   stat?: React.ReactNode;
+  best?: number | null;
   className?: string;
 }) {
   const shown = useAnimatedNumber(score);
@@ -83,7 +86,13 @@ export function GameHud({
         </div>
         <span className="sr-only">{score} points</span>
       </div>
-      {showTrack && benchmarks ? <MedalTrack score={score} benchmarks={benchmarks} /> : <div className="flex-1" />}
+      {showTrack && benchmarks ? (
+        <MedalTrack score={score} benchmarks={benchmarks} best={best} />
+      ) : (
+        <div className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground/75">
+          {best ? (score > best ? "New personal best!" : `Personal best ${best.toLocaleString()}`) : null}
+        </div>
+      )}
       {stat && <div className="shrink-0 text-right">{stat}</div>}
     </div>
   );

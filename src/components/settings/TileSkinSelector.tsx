@@ -1,14 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription } from '@/components/ui/card';
-import { TILE_SKINS, TileSkinId } from '@/lib/tileSkins';
+import { getAvailableSkins, getSeasonEnd, TileSkinId } from '@/lib/tileSkins';
 import { useTileSkin } from '@/hooks/useTileSkin';
 import { useSound } from '@/components/effects/SoundSystem';
 import { cn } from '@/lib/utils';
 
-const SKINS = Object.values(TILE_SKINS);
+const endFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
 
 export function TileSkinSelector() {
   const { skinId, changeSkin } = useTileSkin();
+  // Permanent skins plus whichever seasonal sets are live today
+  const SKINS = useMemo(() => getAvailableSkins(), []);
   const { playSound } = useSound();
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
@@ -55,7 +57,7 @@ export function TileSkinSelector() {
       <div>
         <h3 id="tile-skin-heading" className="text-sm font-medium mb-2">Tile Grid Skin</h3>
         <p id="tile-skin-description" className="text-xs text-muted-foreground mb-4">
-          Customize the appearance of game tiles. Colors change based on your score achievements.
+          Each skin restyles the tiles, board frame, trail and screen colors. Tile edges change color as your score reaches each medal.
         </p>
       </div>
 
@@ -67,6 +69,8 @@ export function TileSkinSelector() {
       >
         {SKINS.map((skin, index) => {
           const isSelected = skinId === skin.id;
+          const seasonEnd = getSeasonEnd(skin);
+          const limitedLabel = seasonEnd ? `Limited · ends ${endFormatter.format(seasonEnd)}` : null;
 
           return (
             <Card
@@ -74,7 +78,7 @@ export function TileSkinSelector() {
               ref={(el) => { optionRefs.current[index] = el; }}
               role="radio"
               aria-checked={isSelected}
-              aria-label={`${skin.name}: ${skin.description}`}
+              aria-label={`${skin.name}: ${skin.description}${limitedLabel ? `. ${limitedLabel.replace(' · ', ', ')}` : ''}`}
               tabIndex={index === selectedIndex ? 0 : -1}
               className={cn(
                 'cursor-pointer transition-all duration-200 hover:shadow-md',
@@ -86,18 +90,20 @@ export function TileSkinSelector() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  {/* Preview Box */}
-                  <div aria-hidden="true" className={cn(
-                    'w-16 h-16 rounded-lg border-2 flex items-center justify-center flex-shrink-0',
-                    skin.baseClasses,
-                    isSelected ? skin.selectedClasses : '',
-                    isSelected ? skin.benchmarkColors.gold.border : 'border-border'
-                  )}>
-                    <span className="text-2xl font-semibold">A</span>
+                  {/* Preview: a tile on the skin's own screen + frame colors */}
+                  <div aria-hidden="true" className="skin-scene flex-shrink-0 rounded-xl p-2" data-skin-preview={skin.id}>
+                    <div className={cn(
+                      'relative w-14 h-14 rounded-lg border-2 flex items-center justify-center text-card-foreground',
+                      skin.baseClasses,
+                      isSelected ? skin.benchmarkColors.gold.border : 'border-border'
+                    )}>
+                      <span className={cn('tile-texture', skin.textureClass)} />
+                      <span className="relative text-2xl font-semibold">A</span>
+                    </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-base font-semibold leading-none tracking-tight">
                         {skin.name}
                       </span>
@@ -105,6 +111,11 @@ export function TileSkinSelector() {
                         <div className="w-2 h-2 rounded-full bg-primary" aria-hidden="true" />
                       )}
                     </div>
+                    {limitedLabel && (
+                      <span className="mb-1 inline-flex items-center rounded-full border border-[hsl(var(--brand-500))] px-2 py-0.5 text-[11px] font-semibold leading-none text-foreground">
+                        {limitedLabel}
+                      </span>
+                    )}
                     <CardDescription className="text-xs">
                       {skin.description}
                     </CardDescription>

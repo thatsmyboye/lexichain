@@ -55,6 +55,15 @@ Special tiles have an **expiry counter** (top-left) — they disappear after tha
 | **Puzzle** | Curated boards with specific constraints to solve. |
 | **Chaos** | High volatility — anything goes. |
 
+## Progress and sharing
+
+- **Daily hub** on the title screen: today's Daily and 5×5 status, streak calendar, countdown to the next puzzle, and (signed in) how many played and your percentile.
+- **Trophy case** at `/trophies`: every achievement, with hints for locked ones. Unlocks are kept in localStorage and merged from saved results when you sign in (`src/lib/trophies.ts`).
+- **Personal bests** per mode in the HUD, mode tiles, and results screen (`src/lib/personalBests.ts`).
+- **Results screen** with missed words, word definitions (Wiktionary via dictionaryapi.dev; only the word is sent), text sharing, and a PNG share card (Daily cards hide the letters).
+- **Guided first game** on first visit (`src/components/tutorial/FirstRunTutorial.tsx`), replayable from the title screen.
+- **Skins** theme the whole screen (background, accents, path color, board frame) with CSS tile textures; Neon forces dark mode. Seasonal skins appear in their date windows (`src/lib/tileSkins.ts`).
+
 ## Accessibility
 
 - All tile types are distinguishable by **shape and border style** in grayscale (no color required).

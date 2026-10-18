@@ -74,7 +74,8 @@ function PathOverlay({ gridRef, path, size, tone }: {
     tone === "valid" ? "hsl(var(--ok))"
       : tone === "invalid" ? "hsl(var(--bad))"
       : tone === "warn" ? "hsl(var(--warn))"
-      : "hsl(var(--brand-500))";
+      // Skins can retint the trail (index.css "Skin themes"); brand otherwise
+      : "hsl(var(--path-color, var(--brand-500)))";
   const strokeWidth = Math.max(6, cell * 0.12);
 
   return (
@@ -175,6 +176,28 @@ export const GameBoard = memo(function GameBoard({
     return map;
   }, [path]);
 
+  // For each frozen tile, which side its Freeze tile is on (sum of the
+  // directions to adjacent Freeze tiles, clamped to -1..1) so frost can creep
+  // in from that edge. Keys absent when frost has no single source side.
+  const frostDirByKey = useMemo(() => {
+    const map = new Map<string, { dr: number; dc: number }>();
+    specialTiles.forEach((row, r) => row?.forEach((tile, c) => {
+      if (!tile?.frozen) return;
+      let dr = 0;
+      let dc = 0;
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          if ((i || j) && specialTiles[r + i]?.[c + j]?.type === "freeze") {
+            dr += i;
+            dc += j;
+          }
+        }
+      }
+      if (dr || dc) map.set(keyOf({ r, c }), { dr: Math.sign(dr), dc: Math.sign(dc) });
+    }));
+    return map;
+  }, [specialTiles]);
+
   // Roving tabindex: arrow keys move focus between tiles
   const onGridKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const deltas: Record<string, [number, number]> = {
@@ -202,6 +225,8 @@ export const GameBoard = memo(function GameBoard({
   const safeFocus = focusPos.r < size && focusPos.c < size ? focusPos : { r: 0, c: 0 };
 
   return (
+    // .board-frame: sizing, plus a per-skin frame (padding, border, surface)
+    // from index.css "Skin themes & textures"
     <div className="relative mx-auto w-full board-frame">
       {/* Dictionary loading overlay */}
       {isInitializing && (
@@ -240,6 +265,7 @@ export const GameBoard = memo(function GameBoard({
                   const k = `${r},${c}`;
                   const idx = pathIndexByKey.get(k) ?? -1;
                   const handlers = getTileHandlers(k, r, c);
+                  const frost = frostDirByKey.get(k);
 
                   return (
                     <GameTile
@@ -259,6 +285,8 @@ export const GameBoard = memo(function GameBoard({
                       skin={skin}
                       benchmarkColor={benchmarkColor}
                       currentGrade={currentGrade}
+                      frostDr={frost?.dr}
+                      frostDc={frost?.dc}
                       onPointerDown={handlers.onPointerDown}
                       onActivate={handlers.onActivate}
                       onFocus={handlers.onFocus}

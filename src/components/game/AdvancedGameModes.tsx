@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Clock, Zap, Puzzle, Infinity as InfinityIcon, Star, Flame, Shuffle, Flag, Sword, TrendingUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, ChevronRight, Clock, Puzzle, Infinity as InfinityIcon, Star, Flame, Shuffle, Flag, Sword, TrendingUp, Leaf } from 'lucide-react';
 import { useSound } from '@/components/effects';
 import { FloatingTiles } from '@/components/effects/FloatingTiles';
-export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' | 'survival' | 'zen' | 'chaos' | 'mini_marathon' | 'weekly_gauntlet' | 'prestige_endless';
+import { usePersonalBests, useModesPlayed } from '@/lib/personalBests';
+import { MODE_BLURBS, getPersonalBestKey, type AdvancedGameMode } from '@/lib/gameModes';
+import { cn } from '@/lib/utils';
+export type { AdvancedGameMode } from '@/lib/gameModes';
 interface AdvancedModeConfig {
   id: AdvancedGameMode;
   name: string;
@@ -82,7 +84,7 @@ const ADVANCED_MODES: AdvancedModeConfig[] = [{
   id: 'zen',
   name: 'Zen',
   description: 'Relaxed gameplay with no pressure. Perfect for learning and practice.',
-  icon: <Star className="h-6 w-6" />,
+  icon: <Leaf className="h-6 w-6" />,
   difficulty: 'Easy',
   specialRules: ['No time pressure', 'Hints available', 'Unlimited undo', 'Focus on learning'],
   rewards: {
@@ -133,131 +135,143 @@ interface AdvancedGameModesProps {
   onModeSelect: (mode: AdvancedGameMode) => void;
   onBack: () => void;
 }
+
+const numberFormat = new Intl.NumberFormat();
+
+// Dark text on light tints (and the inverse in dark mode) keeps badges at >= 4.5:1 contrast.
+const getDifficultyColor = (difficulty: string) => {
+  switch (difficulty) {
+    case 'Easy':
+      return 'bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100';
+    case 'Medium':
+      return 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100';
+    case 'Hard':
+      return 'bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100';
+    case 'Expert':
+      return 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100';
+    default:
+      return 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100';
+  }
+};
+
+interface ModeTileProps {
+  mode: AdvancedModeConfig;
+  best: number | null;
+  isNew: boolean;
+  onStart: (mode: AdvancedGameMode) => void;
+}
+
+function ModeTile({ mode, best, isNew, onStart }: ModeTileProps) {
+  const blurbId = React.useId();
+  const metaId = React.useId();
+  const [open, setOpen] = React.useState(false);
+
+  return <li className="flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card/95 text-card-foreground shadow-sm transition-shadow hover:shadow-md">
+      <button
+        type="button"
+        onClick={() => onStart(mode.id)}
+        aria-label={`Play ${mode.name}`}
+        aria-describedby={`${blurbId} ${metaId}`}
+        className="group flex min-h-[44px] w-full items-start gap-3 p-3 text-left transition-colors hover:bg-[hsl(var(--brand-500)/0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:p-4"
+      >
+        <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[hsl(265_80%_58%)] to-[hsl(265_84%_42%)] text-white shadow-sm [&_svg]:h-6 [&_svg]:w-6">
+          {mode.icon}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-base font-bold leading-tight">{mode.name}</span>
+            {isNew && <span className="rounded-full bg-[hsl(var(--brand-600))] px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-white">
+                New
+              </span>}
+          </span>
+          <span id={blurbId} className="mt-0.5 block text-sm text-muted-foreground">
+            {MODE_BLURBS[mode.id]}
+          </span>
+          <span id={metaId} className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+            <span className={cn('rounded-full px-2 py-0.5 font-semibold', getDifficultyColor(mode.difficulty))}>
+              {mode.difficulty}
+            </span>
+            {best !== null && <span className="font-semibold tabular-nums text-foreground">
+                Best {numberFormat.format(best)}
+              </span>}
+            {isNew && <span className="sr-only">Not played yet.</span>}
+          </span>
+        </span>
+        <ChevronRight aria-hidden="true" className="mt-3 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+      </button>
+
+      <Collapsible open={open} onOpenChange={setOpen} className="mt-auto border-t">
+        <CollapsibleTrigger className="flex min-h-[44px] w-full items-center justify-between gap-2 px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4">
+          <span>Rules & details<span className="sr-only"> for {mode.name}</span></span>
+          <ChevronDown aria-hidden="true" className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-3 pb-3 text-sm sm:px-4">
+          <p className="text-muted-foreground">{mode.description}</p>
+          <ul className="mt-2 space-y-1 text-muted-foreground">
+            {mode.specialRules.map(rule => <li key={rule} className="flex items-start gap-2">
+                <span aria-hidden="true" className="text-[hsl(var(--brand-500))]">•</span>
+                <span>{rule}</span>
+              </li>)}
+          </ul>
+          <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-xs">
+            <div className="flex gap-1">
+              <dt className="text-muted-foreground">Score multiplier</dt>
+              <dd className="font-semibold">{mode.rewards.scoreMultiplier}x</dd>
+            </div>
+            {mode.timeLimit && <div className="flex items-center gap-1">
+                <dt className="flex items-center gap-1 text-muted-foreground"><Clock aria-hidden="true" className="h-3 w-3" />Time limit</dt>
+                <dd className="font-semibold">{mode.timeLimit}s</dd>
+              </div>}
+          </dl>
+        </CollapsibleContent>
+      </Collapsible>
+    </li>;
+}
+
 export function AdvancedGameModes({
   onModeSelect,
   onBack
 }: AdvancedGameModesProps) {
-  const [selectedMode, setSelectedMode] = useState<AdvancedGameMode | null>(null);
   const {
     playSound
   } = useSound();
+  const bests = usePersonalBests();
+  const played = useModesPlayed();
 
-  const handleModeClick = (mode: AdvancedModeConfig) => {
-    setSelectedMode(mode.id);
-    playSound('button_click');
+  const handleStart = (mode: AdvancedGameMode) => {
+    playSound('game_start');
+    onModeSelect(mode);
   };
-  const handleStartGame = () => {
-    if (selectedMode) {
-      playSound('game_start');
-      onModeSelect(selectedMode);
-    }
-  };
-  // Dark text on light tints (and the inverse in dark mode) keeps badges at >= 4.5:1 contrast.
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Easy':
-        return 'bg-green-100 text-green-900 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-100 dark:hover:bg-green-900/40';
-      case 'Medium':
-        return 'bg-amber-100 text-amber-900 hover:bg-amber-100 dark:bg-amber-900/40 dark:text-amber-100 dark:hover:bg-amber-900/40';
-      case 'Hard':
-        return 'bg-orange-100 text-orange-900 hover:bg-orange-100 dark:bg-orange-900/40 dark:text-orange-100 dark:hover:bg-orange-900/40';
-      case 'Expert':
-        return 'bg-red-100 text-red-900 hover:bg-red-100 dark:bg-red-900/40 dark:text-red-100 dark:hover:bg-red-900/40';
-      default:
-        return 'bg-gray-100 text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-800';
-    }
-  };
+
   return <main className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background px-4 py-6 sm:p-6 relative overflow-hidden">
       <FloatingTiles />
 
-      <div className="container mx-auto max-w-6xl relative z-10">
+      <div className="container mx-auto max-w-5xl px-0 relative z-10">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8 animate-in fade-in slide-in-from-top duration-500">
-          <Button variant="outline" onClick={onBack} className="flex items-center gap-2 hover:bg-muted/80 transition-all duration-300">
-            ← Back
+        <div className="flex items-start gap-3 mb-6 sm:mb-8 sm:items-center sm:gap-4">
+          <Button variant="outline" onClick={onBack} className="h-11 shrink-0 hover:bg-muted/80">
+            <span aria-hidden="true">←</span> Back
           </Button>
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg">
-                  Advanced Modes
-                </h1>
-                <div className="absolute -inset-1 bg-gradient-to-r from-brand-400/10 to-brand-600/10 blur-xl -z-10"></div>
-              </div>
-            </div>
-            <p className="text-muted-foreground mt-2">
-              Challenge yourself with specialized game modes
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              More modes
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              Pick a mode to start. Open "Rules & details" to learn more.
             </p>
           </div>
         </div>
 
-        {/* Mode Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {ADVANCED_MODES.filter(mode => mode.id !== 'weekly_gauntlet').map((mode, index) => {
-          const isSelected = selectedMode === mode.id;
-          return <Card key={mode.id} role="button" tabIndex={0} aria-pressed={isSelected} aria-label={`${mode.name} mode, ${mode.difficulty}`} className={`cursor-pointer transition-all duration-300 relative overflow-hidden group animate-in fade-in slide-in-from-bottom focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? 'ring-2 ring-primary shadow-2xl scale-105 bg-gradient-to-br from-primary/10 to-primary/5' : 'hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1'}`} style={{
-            animationDelay: `${index * 100}ms`,
-            animationDuration: '500ms'
-          }} onClick={() => handleModeClick(mode)} onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleModeClick(mode);
-            }
-          }}>
-                {/* Gradient overlay on hover */}
-                {!isSelected && <div className="absolute inset-0 bg-gradient-to-br from-brand-400/0 to-brand-600/0 group-hover:from-brand-400/5 group-hover:to-brand-600/5 transition-all duration-300 pointer-events-none"></div>}
-                <CardHeader className="relative z-10">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-lg transition-all duration-300 ${isSelected ? 'bg-primary text-primary-foreground shadow-lg scale-110' : 'bg-gradient-to-br from-muted to-muted/70 group-hover:from-brand-500/20 group-hover:to-brand-600/20'}`}>
-                        {mode.icon}
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg group-hover:text-primary transition-colors duration-300">{mode.name}</CardTitle>
-                        <Badge className={`text-xs mt-1 border-transparent ${getDifficultyColor(mode.difficulty)} font-semibold shadow-sm`}>
-                          {mode.difficulty}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <CardDescription className="text-sm">
-                    {mode.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Special Rules:</h4>
-                      <ul className="text-xs text-muted-foreground space-y-1">
-                        {mode.specialRules.map((rule, index) => <li key={index} className="flex items-start gap-2">
-                            <span className="text-primary">•</span>
-                            <span>{rule}</span>
-                          </li>)}
-                      </ul>
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <div className="text-xs text-muted-foreground">
-                        <div>Score: {mode.rewards.scoreMultiplier}x</div>
-                      </div>
-                      {mode.timeLimit && <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {mode.timeLimit}s
-                        </div>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>;
-        })}
-        </div>
-
-        {/* Start Button */}
-        {selectedMode && <div className="flex justify-center animate-in fade-in slide-in-from-bottom duration-500">
-            <Button size="lg" onClick={handleStartGame} className="px-10 py-6 text-lg font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500">
-              <Zap className="h-5 w-5 mr-2 animate-pulse" />
-              Start {ADVANCED_MODES.find(m => m.id === selectedMode)?.name}
-            </Button>
-          </div>}
+        {/* Mode tiles */}
+        <ul className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
+          {ADVANCED_MODES.filter(mode => mode.id !== 'weekly_gauntlet').map(mode => {
+            const bestKey = getPersonalBestKey(mode.id);
+            const best = bestKey ? bests[bestKey]?.score ?? null : null;
+            // Modes without tracked results never get marked played, so only badge tracked ones
+            const isNew = bestKey !== null && !played.includes(bestKey);
+            return <ModeTile key={mode.id} mode={mode} best={best} isNew={isNew} onStart={handleStart} />;
+          })}
+        </ul>
       </div>
     </main>;
 }

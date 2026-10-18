@@ -293,3 +293,826 @@ All colors MUST be HSL.
   }
   .tile-foil { animation: none !important; }
 }
+
+
+/* ==========================================================================
+   ---- Skin themes & textures ----
+   Owned by the tile-skin system (src/lib/tileSkins.ts, SkinThemeSync).
+   1. Texture assets          4. Special-tile idle motion
+   2. Tile materials          5. Whole-screen skin themes (html[data-skin])
+   3. Board frames            6. Accessibility (high contrast, reduced motion)
+   Everything here is decorative: layers are pointer-events:none and the
+   elements that use them are aria-hidden.
+   ========================================================================== */
+
+/* 1. Texture assets: inline SVG noise as data URIs (no network requests) */
+:root {
+  /* Fine paper/acrylic grain (black, low alpha) */
+  --tex-noise-fine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Wood grain: noise stretched along x, tinted brown, thresholded into streaks */
+  --tex-wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008 0.32' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.2 0 0 0 0 0.07 1.6 0 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  /* Slate speckle: sparse dark and light flecks */
+  --tex-speckle-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.3' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.07 0 0 0 0 0.2 4 0 0 0 -2.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  --tex-speckle-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='110' height='110'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.1' numOctaves='1' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 4 0 0 -2.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  /* Softer grain for paper-like surfaces */
+  --tex-noise-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Ice crystals: blotchy white frost */
+  --tex-ice: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='i'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='4' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 2.2 0 0 0 -0.95'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23i)'/%3E%3C/svg%3E");
+}
+
+/* 2. Tile materials (GameTile .tile-texture layer + selector previews) */
+.tile-texture {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Original: clean card with a soft top light and grounded bottom edge */
+.tile-tex-card {
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.55), hsl(0 0% 100% / 0) 45%);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.9), inset 0 -2px 0 hsl(var(--foreground) / 0.07);
+}
+.dark .tile-tex-card {
+  background: linear-gradient(180deg, hsl(210 40% 98% / 0.06), transparent 45%);
+  box-shadow: inset 0 1px 0 hsl(210 40% 98% / 0.08), inset 0 -2px 0 hsl(0 0% 0% / 0.25);
+}
+
+/* Ocean: sea glass. Fill is translucent (bg-white/60 + backdrop blur); this
+   adds the diagonal reflection and a bright bevel. */
+.tile-tex-glass {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.15) 34%, rgba(255, 255, 255, 0) 52%, rgba(255, 255, 255, 0.12) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 3px rgba(8, 145, 178, 0.18);
+}
+.dark .tile-tex-glass {
+  background:
+    linear-gradient(135deg, rgba(186, 230, 253, 0.22) 0%, rgba(186, 230, 253, 0.05) 34%, rgba(186, 230, 253, 0) 52%);
+  box-shadow:
+    inset 0 1px 0 rgba(186, 230, 253, 0.35),
+    inset 0 0 0 1px rgba(125, 211, 252, 0.16),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Forest: carved wood with grain streaks and growth rings */
+.tile-tex-wood {
+  background:
+    var(--tex-wood),
+    repeating-linear-gradient(177deg, rgba(120, 72, 30, 0) 0 6px, rgba(120, 72, 30, 0.1) 6px 7px, rgba(120, 72, 30, 0) 7px 13px);
+  background-size: 160px 160px, auto;
+  box-shadow: inset 0 1px 0 rgba(255, 244, 222, 0.65), inset 0 -2px 4px rgba(80, 45, 15, 0.28);
+}
+.dark .tile-tex-wood {
+  box-shadow: inset 0 1px 0 rgba(255, 228, 190, 0.14), inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+}
+
+/* Sunset: glazed ceramic, glossy highlight top-left, warm pooling glaze */
+.tile-tex-ceramic {
+  background:
+    radial-gradient(120% 70% at 28% 0%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 55%),
+    radial-gradient(90% 60% at 85% 115%, rgba(190, 18, 60, 0.12), transparent 70%);
+  box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.85), inset 0 -3px 5px rgba(154, 52, 18, 0.16);
+}
+.dark .tile-tex-ceramic {
+  background:
+    radial-gradient(120% 70% at 28% 0%, rgba(255, 237, 213, 0.2), rgba(255, 237, 213, 0) 55%),
+    radial-gradient(90% 60% at 85% 115%, rgba(0, 0, 0, 0.3), transparent 70%);
+  box-shadow: inset 0 1px 1px rgba(255, 237, 213, 0.22), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
+}
+
+/* Midnight: speckled slate (the light flecks read as stars in dark mode) */
+.tile-tex-slate {
+  background:
+    var(--tex-speckle-light),
+    var(--tex-speckle-dark),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 45%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -2px 4px rgba(30, 27, 75, 0.2);
+}
+.dark .tile-tex-slate {
+  background:
+    var(--tex-speckle-light),
+    var(--tex-speckle-dark),
+    linear-gradient(165deg, rgba(199, 210, 254, 0.1), rgba(199, 210, 254, 0) 45%);
+  box-shadow: inset 0 1px 0 rgba(199, 210, 254, 0.14), inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Neon: dark acrylic with a lit edge that hums */
+.tile-tex-acrylic {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 38%),
+    var(--tex-noise-fine);
+  box-shadow:
+    inset 0 0 0 1px rgba(34, 211, 238, 0.6),
+    inset 0 0 10px rgba(34, 211, 238, 0.22),
+    0 0 10px rgba(34, 211, 238, 0.3);
+  animation: skin-neon-hum 4s ease-in-out infinite;
+}
+
+/* Harvest Moon: pumpkin parchment, fibrous with a burnt edge */
+.tile-tex-parchment {
+  background:
+    radial-gradient(closest-side, rgba(255, 255, 255, 0) 60%, rgba(124, 45, 18, 0.2) 100%),
+    var(--tex-noise-fine);
+  box-shadow: inset 0 1px 0 rgba(255, 247, 237, 0.7), inset 0 -2px 4px rgba(124, 45, 18, 0.22);
+}
+.dark .tile-tex-parchment {
+  background:
+    radial-gradient(closest-side, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.35) 100%),
+    var(--tex-noise-fine);
+  box-shadow: inset 0 1px 0 rgba(253, 186, 116, 0.18), 0 0 8px rgba(249, 115, 22, 0.18);
+}
+
+/* Frost Festival: frosted ice with crystal bloom at the rim */
+.tile-tex-ice {
+  background:
+    radial-gradient(closest-side, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.55) 100%),
+    var(--tex-ice),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 40%);
+  -webkit-mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 0.35) 45%, #000 100%);
+  mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 0.35) 45%, #000 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(30, 64, 175, 0.15);
+}
+.dark .tile-tex-ice {
+  background:
+    radial-gradient(closest-side, rgba(186, 230, 253, 0) 60%, rgba(186, 230, 253, 0.2) 100%),
+    linear-gradient(140deg, rgba(186, 230, 253, 0.16), rgba(186, 230, 253, 0) 40%);
+  box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* Lunar New Year: red lacquer, mirror gloss, double gold inlay */
+.tile-tex-lacquer {
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(80% 50% at 50% 120%, rgba(0, 0, 0, 0.3), transparent 70%);
+  box-shadow:
+    inset 0 0 0 2px rgba(251, 191, 36, 0.85),
+    inset 0 0 0 4px rgba(127, 29, 29, 0.6),
+    inset 0 0 0 5px rgba(251, 191, 36, 0.4);
+}
+
+/* Bloom: pressed-petal paper */
+.tile-tex-petal {
+  background:
+    radial-gradient(14% 10% at 18% 22%, rgba(244, 114, 182, 0.28), transparent 70%),
+    radial-gradient(10% 14% at 82% 76%, rgba(236, 72, 153, 0.22), transparent 70%),
+    radial-gradient(9% 7% at 78% 18%, rgba(132, 204, 22, 0.25), transparent 70%),
+    var(--tex-noise-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), inset 0 -2px 4px rgba(157, 23, 77, 0.12);
+}
+.dark .tile-tex-petal {
+  background:
+    radial-gradient(14% 10% at 18% 22%, rgba(244, 114, 182, 0.2), transparent 70%),
+    radial-gradient(10% 14% at 82% 76%, rgba(236, 72, 153, 0.16), transparent 70%),
+    radial-gradient(9% 7% at 78% 18%, rgba(132, 204, 22, 0.18), transparent 70%),
+    var(--tex-noise-soft);
+  box-shadow: inset 0 1px 0 rgba(251, 207, 232, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* 3. Board frames: per-skin surround for the grid (GameBoard .board-frame)
+   and the matching mini scene in the skin selector. */
+:root[data-skin] .board-frame {
+  padding: clamp(5px, 1.6vw, 12px);
+  border-radius: 1.25rem;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+.skin-scene {
+  border: 1px solid hsl(var(--border));
+}
+
+:root[data-skin="original"] .board-frame,
+.skin-scene[data-skin-preview="original"] {
+  background: hsl(var(--muted) / 0.6);
+  border-color: hsl(var(--border));
+  box-shadow: 0 10px 30px -18px hsl(var(--foreground) / 0.35);
+}
+
+:root[data-skin="ocean"] .board-frame,
+.skin-scene[data-skin-preview="ocean"] {
+  background:
+    radial-gradient(40% 28% at 22% 18%, rgba(255, 255, 255, 0.55), transparent 70%),
+    radial-gradient(30% 22% at 78% 62%, rgba(255, 255, 255, 0.4), transparent 70%),
+    radial-gradient(26% 20% at 35% 85%, rgba(255, 255, 255, 0.3), transparent 70%),
+    linear-gradient(160deg, #7dd3fc, #0891b2);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 14px 32px -16px rgba(8, 145, 178, 0.6);
+}
+.dark[data-skin="ocean"] .board-frame,
+.dark .skin-scene[data-skin-preview="ocean"] {
+  background:
+    radial-gradient(40% 28% at 22% 18%, rgba(125, 211, 252, 0.18), transparent 70%),
+    radial-gradient(30% 22% at 78% 62%, rgba(125, 211, 252, 0.12), transparent 70%),
+    linear-gradient(160deg, #0c4a6e, #082f49);
+  border-color: rgba(125, 211, 252, 0.25);
+}
+
+:root[data-skin="forest"] .board-frame,
+.skin-scene[data-skin-preview="forest"] {
+  background: var(--tex-noise-fine), linear-gradient(160deg, #4d7c0f, #166534);
+  border: 3px solid #8b5a2b;
+  box-shadow: inset 0 0 0 1px rgba(255, 237, 213, 0.35), 0 14px 30px -16px rgba(20, 83, 45, 0.7);
+}
+.dark[data-skin="forest"] .board-frame,
+.dark .skin-scene[data-skin-preview="forest"] {
+  background: var(--tex-noise-fine), linear-gradient(160deg, #1a2e05, #052e16);
+  border-color: #5b3716;
+}
+
+:root[data-skin="sunset"] .board-frame,
+.skin-scene[data-skin-preview="sunset"] {
+  background: linear-gradient(165deg, #fdba74 0%, #fb7185 60%, #c084fc 100%);
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 14px 32px -16px rgba(225, 29, 72, 0.55);
+}
+.dark[data-skin="sunset"] .board-frame,
+.dark .skin-scene[data-skin-preview="sunset"] {
+  background: linear-gradient(165deg, #7c2d12 0%, #881337 60%, #3b0764 100%);
+  border-color: rgba(253, 186, 116, 0.25);
+}
+
+:root[data-skin="midnight"] .board-frame,
+.skin-scene[data-skin-preview="midnight"] {
+  background:
+    radial-gradient(1.5px 1.5px at 12% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 68% 12%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 88% 54%, #e0e7ff, transparent),
+    radial-gradient(1px 1px at 34% 78%, #fff, transparent),
+    radial-gradient(1px 1px at 52% 46%, #c7d2fe, transparent),
+    linear-gradient(160deg, #3730a3, #1e1b4b);
+  border-color: rgba(165, 180, 252, 0.4);
+  box-shadow: 0 14px 32px -16px rgba(49, 46, 129, 0.7);
+}
+
+:root[data-skin="neon"] .board-frame,
+.skin-scene[data-skin-preview="neon"] {
+  background:
+    linear-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px) 0 0 / 16px 16px,
+    linear-gradient(90deg, rgba(236, 72, 153, 0.08) 1px, transparent 1px) 0 0 / 16px 16px,
+    #050816;
+  border-color: rgba(34, 211, 238, 0.65);
+  box-shadow: 0 0 22px rgba(34, 211, 238, 0.28), inset 0 0 22px rgba(236, 72, 153, 0.16);
+}
+
+:root[data-skin="harvest"] .board-frame,
+.skin-scene[data-skin-preview="harvest"] {
+  background:
+    radial-gradient(16% 16% at 88% 10%, #fef3c7 0%, #fcd34d 55%, rgba(252, 211, 77, 0) 72%),
+    linear-gradient(170deg, #4c1d95 0%, #7c2d12 100%);
+  border-color: rgba(251, 146, 60, 0.6);
+  box-shadow: 0 14px 32px -16px rgba(124, 45, 18, 0.7);
+}
+
+:root[data-skin="frost"] .board-frame,
+.skin-scene[data-skin-preview="frost"] {
+  background:
+    radial-gradient(2px 2px at 10% 15%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 40% 8%, #fff, transparent),
+    radial-gradient(2px 2px at 75% 22%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 90% 70%, #fff, transparent),
+    radial-gradient(2px 2px at 20% 88%, #fff, transparent),
+    linear-gradient(160deg, #bae6fd, #3b82f6);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(225, 29, 72, 0.35), 0 14px 32px -16px rgba(30, 64, 175, 0.6);
+}
+.dark[data-skin="frost"] .board-frame,
+.dark .skin-scene[data-skin-preview="frost"] {
+  background:
+    radial-gradient(2px 2px at 10% 15%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 40% 8%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(2px 2px at 75% 22%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(2px 2px at 20% 88%, rgba(255, 255, 255, 0.6), transparent),
+    linear-gradient(160deg, #1e3a8a, #0f172a);
+  border-color: rgba(186, 230, 253, 0.45);
+}
+
+:root[data-skin="lunar"] .board-frame,
+.skin-scene[data-skin-preview="lunar"] {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.12) 0 2px, transparent 3px) 0 0 / 18px 18px,
+    linear-gradient(160deg, #991b1b, #450a0a);
+  border: 3px double #f59e0b;
+  box-shadow: 0 14px 32px -16px rgba(127, 29, 29, 0.75);
+}
+
+:root[data-skin="bloom"] .board-frame,
+.skin-scene[data-skin-preview="bloom"] {
+  background:
+    radial-gradient(10% 8% at 8% 12%, rgba(255, 255, 255, 0.6), transparent 70%),
+    radial-gradient(8% 10% at 92% 86%, rgba(255, 255, 255, 0.5), transparent 70%),
+    linear-gradient(160deg, #fbcfe8, #bbf7d0);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 14px 32px -16px rgba(190, 24, 93, 0.45);
+}
+.dark[data-skin="bloom"] .board-frame,
+.dark .skin-scene[data-skin-preview="bloom"] {
+  background: linear-gradient(160deg, #500724, #14532d);
+  border-color: rgba(251, 207, 232, 0.25);
+}
+
+/* 4. Special-tile idle motion. Layers sit under the letter (z-auto/z-0) and
+   never animate the letter itself, so text contrast is constant. */
+
+/* Bomb: the spark at the end of the fuse flickers; faster on the last turn */
+.tile-bomb-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: skin-spark 0.55s steps(4, jump-none) infinite;
+}
+.tile-bomb-spark-urgent { animation-duration: 0.28s; }
+
+/* Freeze: an icy glint sweeps across the tile */
+.tile-freeze-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.7) 47%, rgba(186, 230, 253, 0.45) 53%, transparent 65%);
+  background-size: 260% 100%;
+  animation: skin-freeze-glint 3.4s ease-in-out infinite;
+}
+
+/* Frozen neighbours: frost creeps in from the edge facing the Freeze tile
+   (--frost-angle / transform-origin set inline), then breathes. */
+.tile-frost {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.tile-frost-directional {
+  background: var(--tex-ice), var(--tex-ice), linear-gradient(var(--frost-angle, 180deg), rgba(240, 249, 255, 0.95), rgba(207, 236, 254, 0.6));
+  background-size: 60px 60px, 120px 120px, auto;
+  -webkit-mask-image: linear-gradient(var(--frost-angle, 180deg), #000 0%, rgba(0, 0, 0, 0.75) 20%, transparent 48%);
+  mask-image: linear-gradient(var(--frost-angle, 180deg), #000 0%, rgba(0, 0, 0, 0.75) 20%, transparent 48%);
+  animation: skin-frost-creep 1.4s ease-out, skin-frost-breathe 4.5s ease-in-out 1.4s infinite;
+}
+.tile-frost-rim {
+  background: var(--tex-ice), rgba(224, 242, 254, 0.7);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 62%, #000 100%);
+  mask-image: radial-gradient(closest-side, transparent 62%, #000 100%);
+  animation: skin-frost-fade 1.4s ease-out, skin-frost-breathe 4.5s ease-in-out 1.4s infinite;
+}
+/* On dark tiles a white rime would wash out light letters: use a cool tint */
+.dark .tile-frost-directional,
+:root[data-skin="neon"] .tile-frost-directional,
+:root[data-skin="lunar"] .tile-frost-directional {
+  background: linear-gradient(var(--frost-angle, 180deg), rgba(125, 211, 252, 0.5), rgba(125, 211, 252, 0.2));
+}
+.dark .tile-frost-rim,
+:root[data-skin="neon"] .tile-frost-rim,
+:root[data-skin="lunar"] .tile-frost-rim {
+  background: rgba(125, 211, 252, 0.4);
+}
+
+/* Decay: a slow blotch spreading across the tile */
+.tile-decay-blotch {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.tile-decay-blotch::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(30% 26% at 30% 70%, rgba(77, 124, 15, 0.4), transparent 70%),
+    radial-gradient(22% 20% at 70% 32%, rgba(63, 98, 18, 0.32), transparent 70%),
+    radial-gradient(14% 13% at 62% 80%, rgba(101, 163, 13, 0.35), transparent 70%);
+  animation: skin-decay-creep 9s ease-in-out infinite alternate;
+}
+
+/* Ghost: mist and outline flicker; the letter stays solid */
+.tile-ghost-wisp {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.tile-ghost-wisp::before,
+.tile-ghost-wisp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.tile-ghost-wisp::before {
+  background: radial-gradient(70% 55% at 50% 35%, rgba(255, 255, 255, 0.85), transparent 75%);
+  opacity: 0.6;
+  animation: skin-ghost-flicker 3.2s linear infinite;
+}
+.tile-ghost-wisp::after {
+  box-shadow: inset 0 0 0 2px rgba(100, 116, 139, 0.55), inset 0 0 12px rgba(148, 163, 184, 0.45);
+  opacity: 0.7;
+  animation: skin-ghost-flicker 2.3s linear infinite reverse;
+}
+.dark .tile-ghost-wisp::before {
+  background: radial-gradient(70% 55% at 50% 35%, rgba(2, 6, 23, 0.45), transparent 75%);
+}
+.dark .tile-ghost-wisp::after {
+  box-shadow: inset 0 0 0 2px rgba(203, 213, 225, 0.5), inset 0 0 12px rgba(148, 163, 184, 0.35);
+}
+
+/* Magnet: the icon gives a periodic tug with a pulse of field */
+.tile-magnet-tug {
+  animation: skin-magnet-tug 2.8s ease-in-out infinite;
+}
+.tile-magnet-tug::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  border: 1.5px solid currentColor;
+  opacity: 0;
+  animation: skin-magnet-field 2.8s ease-out infinite;
+}
+
+@keyframes skin-neon-hum {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+@keyframes skin-spark {
+  0% { transform: scale(1); opacity: 1; }
+  33% { transform: scale(0.72) rotate(30deg); opacity: 0.8; }
+  66% { transform: scale(1.18) rotate(-20deg); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.9; }
+}
+@keyframes skin-freeze-glint {
+  0%, 100% { background-position: 110% 0; }
+  55% { background-position: -10% 0; }
+}
+@keyframes skin-frost-creep {
+  from { transform: scale(0); opacity: 0.4; }
+}
+@keyframes skin-frost-fade {
+  from { opacity: 0; }
+}
+@keyframes skin-frost-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+@keyframes skin-decay-creep {
+  0% { transform: scale(0.8) rotate(0deg) translate(-3%, 2%); }
+  100% { transform: scale(1.12) rotate(14deg) translate(3%, -2%); }
+}
+@keyframes skin-ghost-flicker {
+  0%, 100% { opacity: 0.6; }
+  7% { opacity: 0.25; }
+  9% { opacity: 0.7; }
+  12% { opacity: 0.35; }
+  40% { opacity: 0.8; }
+  62% { opacity: 0.3; }
+  64% { opacity: 0.65; }
+  85% { opacity: 0.45; }
+}
+@keyframes skin-magnet-tug {
+  0%, 68%, 100% { transform: translate(0, 0) rotate(0deg); }
+  74% { transform: translate(-2.5px, -1px) rotate(-14deg); }
+  80% { transform: translate(1px, 0) rotate(5deg); }
+  86% { transform: translate(-1px, 0) rotate(-3deg); }
+}
+@keyframes skin-magnet-field {
+  0%, 68% { transform: scale(0.6); opacity: 0; }
+  74% { opacity: 0.7; }
+  96%, 100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* 5. Whole-screen skin themes (html[data-skin], set by <SkinThemeSync />).
+   Accents (brand, path, background tint) are skipped under high contrast
+   and achromatopsia so those settings win; the frame and tiles still apply. */
+
+/* Neon always renders on the dark palette, whatever the theme (copied from
+   .dark). Feedback colors follow the dark variants of the color-vision modes. */
+:root[data-skin="neon"] {
+  color-scheme: dark;
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+  --brand-400: 265 84% 70%;
+  --brand-500: 265 84% 66%;
+  --brand-600: 265 84% 60%;
+  --shadow-soft: 0 12px 30px -12px hsl(var(--brand-500) / 0.45);
+  --shadow-glow: 0 0 0 8px hsl(var(--brand-500) / 0.25);
+  --sidebar-background: 240 5.9% 10%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 224.3 76.3% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 240 4.8% 95.9%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
+}
+:root[data-skin="neon"]:not([data-cvd]) {
+  --ok: 142 69% 58%;
+  --bad: 0 91% 71%;
+  --warn: 38 92% 60%;
+}
+:root[data-skin="neon"][data-cvd="protanopia"],
+:root[data-skin="neon"][data-cvd="deuteranopia"] {
+  --ok: 212 92% 68%;
+  --bad: 30 97% 62%;
+  --warn: 50 95% 60%;
+}
+:root[data-skin="neon"][data-cvd="tritanopia"] {
+  --ok: 175 70% 55%;
+  --bad: 340 85% 70%;
+  --warn: 0 0% 80%;
+}
+:root[data-skin="neon"][data-cvd="achromatopsia"] {
+  --ok: 0 0% 95%;
+  --bad: 0 0% 70%;
+  --warn: 0 0% 80%;
+  --brand-500: 0 0% 85%;
+}
+/* Neon + high contrast: the dark high-contrast values */
+:root.high-contrast[data-skin="neon"] {
+  --background: 0 0% 0%;
+  --card: 0 0% 6%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 88%;
+  --border: 0 0% 75%;
+  --input: 0 0% 75%;
+  --ring: 50 100% 60%;
+}
+
+/* Accents: brand (buttons, HUD, focus rings), trail color, background tint.
+   In dark mode the hero button text flips to ink so bright accents stay
+   legible (≥4.5:1). */
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="ocean"] {
+  --brand-400: 199 89% 44%; --brand-500: 199 89% 37%; --brand-600: 200 90% 31%;
+  --path-color: 192 85% 38%;
+  --background: 200 60% 98%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="ocean"] {
+  --brand-400: 195 85% 64%; --brand-500: 195 85% 58%; --brand-600: 195 85% 52%;
+  --path-color: 190 90% 55%;
+  --background: 210 65% 6%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="forest"] {
+  --brand-400: 152 60% 34%; --brand-500: 152 62% 28%; --brand-600: 153 64% 23%;
+  --path-color: 205 70% 36%;
+  --background: 80 30% 97%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="forest"] {
+  --brand-400: 150 55% 56%; --brand-500: 150 55% 50%; --brand-600: 150 55% 45%;
+  --path-color: 200 75% 62%;
+  --background: 140 35% 5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="sunset"] {
+  --brand-400: 18 85% 48%; --brand-500: 16 85% 42%; --brand-600: 14 85% 36%;
+  --path-color: 280 70% 50%;
+  --background: 25 80% 98%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="sunset"] {
+  --brand-400: 22 92% 64%; --brand-500: 22 90% 58%; --brand-600: 22 88% 52%;
+  --path-color: 285 85% 72%;
+  --background: 345 35% 6%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="midnight"] {
+  --brand-400: 245 70% 62%; --brand-500: 245 62% 52%; --brand-600: 245 60% 45%;
+  --path-color: 250 85% 60%;
+  --background: 235 40% 97%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="midnight"] {
+  --brand-400: 245 90% 80%; --brand-500: 245 90% 76%; --brand-600: 245 88% 71%;
+  --path-color: 250 90% 74%;
+  --background: 245 45% 5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="neon"] {
+  --brand-400: 300 90% 70%; --brand-500: 300 85% 64%; --brand-600: 300 80% 58%;
+  --path-color: 300 100% 62%;
+  --background: 235 50% 5%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="harvest"] {
+  --brand-400: 24 90% 46%; --brand-500: 22 88% 40%; --brand-600: 20 86% 34%;
+  --path-color: 275 70% 45%;
+  --background: 30 70% 97%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="harvest"] {
+  --brand-400: 28 95% 60%; --brand-500: 26 92% 55%; --brand-600: 24 90% 50%;
+  --path-color: 275 85% 72%;
+  --background: 265 35% 6%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="frost"] {
+  --brand-400: 350 75% 50%; --brand-500: 350 72% 43%; --brand-600: 350 70% 37%;
+  --path-color: 200 90% 40%;
+  --background: 205 70% 98%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="frost"] {
+  --brand-400: 350 90% 74%; --brand-500: 350 88% 70%; --brand-600: 350 85% 66%;
+  --path-color: 195 95% 62%;
+  --background: 220 55% 6%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="lunar"] {
+  --brand-400: 0 75% 48%; --brand-500: 0 72% 41%; --brand-600: 0 70% 35%;
+  --path-color: 45 100% 50%;
+  --background: 20 70% 98%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="lunar"] {
+  --brand-400: 40 95% 62%; --brand-500: 38 92% 56%; --brand-600: 36 90% 50%;
+  --path-color: 48 100% 60%;
+  --background: 0 45% 5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+:root:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="bloom"] {
+  --brand-400: 322 70% 52%; --brand-500: 322 68% 44%; --brand-600: 322 66% 38%;
+  --path-color: 290 60% 50%;
+  --background: 330 60% 98%;
+  --muted-foreground: 215 19% 38%;
+}
+:root.dark:not(.high-contrast):not([data-cvd="achromatopsia"])[data-skin="bloom"] {
+  --brand-400: 322 85% 75%; --brand-500: 322 80% 70%; --brand-600: 322 75% 65%;
+  --path-color: 290 80% 74%;
+  --background: 320 30% 6%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --hero-foreground: 222 47% 8%;
+}
+
+/* Page backdrop. Kept pale (light) / deep (dark) so body text keeps contrast. */
+:root:not(.high-contrast)[data-skin] body {
+  background-attachment: fixed;
+}
+:root:not(.high-contrast)[data-skin="ocean"] body {
+  background-image:
+    radial-gradient(1000px 520px at 5% -10%, hsl(190 90% 93%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(215 85% 93%), transparent 60%),
+    linear-gradient(180deg, hsl(200 70% 98%), hsl(205 70% 95%));
+}
+:root.dark:not(.high-contrast)[data-skin="ocean"] body {
+  background-image:
+    radial-gradient(1000px 520px at 5% -10%, hsl(195 80% 14%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(225 70% 13%), transparent 60%),
+    linear-gradient(180deg, hsl(210 70% 6%), hsl(220 70% 4%));
+}
+:root:not(.high-contrast)[data-skin="forest"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(95 45% 92%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(35 55% 92%), transparent 60%),
+    linear-gradient(180deg, hsl(85 30% 97%), hsl(100 25% 94%));
+}
+:root.dark:not(.high-contrast)[data-skin="forest"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(140 40% 11%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(30 40% 10%), transparent 60%),
+    linear-gradient(180deg, hsl(140 35% 6%), hsl(150 40% 4%));
+}
+:root:not(.high-contrast)[data-skin="sunset"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(30 95% 92%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(330 85% 94%), transparent 60%),
+    linear-gradient(180deg, hsl(35 90% 97%), hsl(345 80% 95%));
+}
+:root.dark:not(.high-contrast)[data-skin="sunset"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(15 70% 13%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(330 60% 13%), transparent 60%),
+    linear-gradient(180deg, hsl(345 35% 7%), hsl(260 35% 5%));
+}
+:root:not(.high-contrast)[data-skin="midnight"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(250 60% 94%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(220 60% 93%), transparent 60%),
+    linear-gradient(180deg, hsl(235 45% 97%), hsl(250 40% 94%));
+}
+:root.dark:not(.high-contrast)[data-skin="midnight"] body {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, hsl(0 0% 100% / 0.55), transparent),
+    radial-gradient(1px 1px at 140px 90px, hsl(0 0% 100% / 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 90px 170px, hsl(230 100% 90% / 0.5), transparent),
+    radial-gradient(1000px 520px at 0% -10%, hsl(255 60% 15%), transparent 60%),
+    linear-gradient(180deg, hsl(240 50% 7%), hsl(250 55% 4%));
+  background-size: 200px 200px, 200px 200px, 200px 200px, auto, auto;
+}
+:root:not(.high-contrast)[data-skin="neon"] body {
+  background-image:
+    radial-gradient(800px 420px at 10% -10%, hsl(300 90% 30% / 0.4), transparent 60%),
+    radial-gradient(800px 500px at 100% 105%, hsl(190 95% 30% / 0.35), transparent 60%),
+    linear-gradient(180deg, hsl(235 50% 6%), hsl(250 60% 3%));
+}
+:root:not(.high-contrast)[data-skin="harvest"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(28 95% 92%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(275 50% 94%), transparent 60%),
+    linear-gradient(180deg, hsl(35 80% 97%), hsl(25 60% 94%));
+}
+:root.dark:not(.high-contrast)[data-skin="harvest"] body {
+  background-image:
+    radial-gradient(420px 420px at 88% 4%, hsl(40 90% 50% / 0.16), transparent 60%),
+    radial-gradient(1000px 520px at 0% 110%, hsl(275 60% 14%), transparent 60%),
+    linear-gradient(180deg, hsl(265 40% 7%), hsl(20 45% 5%));
+}
+:root:not(.high-contrast)[data-skin="frost"] body {
+  background-image:
+    radial-gradient(1.5px 1.5px at 30px 40px, hsl(205 80% 80% / 0.8), transparent),
+    radial-gradient(2px 2px at 150px 120px, hsl(205 80% 82% / 0.7), transparent),
+    radial-gradient(1000px 520px at 0% -10%, hsl(200 90% 93%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(350 70% 96%), transparent 60%),
+    linear-gradient(180deg, hsl(205 80% 98%), hsl(215 60% 95%));
+  background-size: 180px 180px, 180px 180px, auto, auto, auto;
+}
+:root.dark:not(.high-contrast)[data-skin="frost"] body {
+  background-image:
+    radial-gradient(1.5px 1.5px at 30px 40px, hsl(0 0% 100% / 0.35), transparent),
+    radial-gradient(2px 2px at 150px 120px, hsl(0 0% 100% / 0.25), transparent),
+    radial-gradient(1000px 520px at 0% -10%, hsl(210 70% 15%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(350 50% 12%), transparent 60%),
+    linear-gradient(180deg, hsl(220 55% 7%), hsl(225 60% 4%));
+  background-size: 180px 180px, 180px 180px, auto, auto, auto;
+}
+:root:not(.high-contrast)[data-skin="lunar"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(0 80% 95%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(42 95% 92%), transparent 60%),
+    linear-gradient(180deg, hsl(30 80% 98%), hsl(10 70% 95%));
+}
+:root.dark:not(.high-contrast)[data-skin="lunar"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(0 70% 14%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(40 80% 11%), transparent 60%),
+    linear-gradient(180deg, hsl(0 45% 6%), hsl(350 50% 4%));
+}
+:root:not(.high-contrast)[data-skin="bloom"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(330 85% 95%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(100 55% 93%), transparent 60%),
+    linear-gradient(180deg, hsl(320 70% 98%), hsl(90 45% 96%));
+}
+:root.dark:not(.high-contrast)[data-skin="bloom"] body {
+  background-image:
+    radial-gradient(1000px 520px at 0% -10%, hsl(325 55% 13%), transparent 60%),
+    radial-gradient(900px 520px at 105% 110%, hsl(120 35% 10%), transparent 60%),
+    linear-gradient(180deg, hsl(320 30% 7%), hsl(150 30% 4%));
+}
+
+/* 6. Accessibility */
+/* High contrast: crisp frame edge, quieter tile materials */
+:root.high-contrast[data-skin] .board-frame {
+  border: 2px solid hsl(var(--foreground));
+}
+.high-contrast .tile-texture {
+  opacity: 0.35;
+}
+.high-contrast .tile-tex-acrylic {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-tex-acrylic,
+  .tile-bomb-spark,
+  .tile-freeze-shimmer,
+  .tile-frost-directional,
+  .tile-frost-rim,
+  .tile-decay-blotch::before,
+  .tile-ghost-wisp::before,
+  .tile-ghost-wisp::after,
+  .tile-magnet-tug,
+  .tile-magnet-tug::after {
+    animation: none !important;
+  }
+}
