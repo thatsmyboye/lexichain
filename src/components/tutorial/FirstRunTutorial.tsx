@@ -426,6 +426,7 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
       <DialogPortal>
         <DialogOverlay className="bg-background/95" />
         <DialogPrimitive.Content
+          data-game-session
           onKeyDown={onKeyDown}
           onOpenAutoFocus={(e) => {
             e.preventDefault();

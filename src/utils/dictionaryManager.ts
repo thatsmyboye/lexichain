@@ -17,8 +17,10 @@ interface WordValidationResult {
   suggestions?: string[];
 }
 
-const GZIP_DICTIONARY_URL = "/words.txt.gz";
-const PLAIN_DICTIONARY_URL = "/words.txt";
+// The version query changes whenever the word list does, so browsers and the
+// service worker never reuse a stale copy.
+const GZIP_DICTIONARY_URL = `/words.txt.gz?v=${__DICTIONARY_VERSION__}`;
+const PLAIN_DICTIONARY_URL = `/words.txt?v=${__DICTIONARY_VERSION__}`;
 
 /**
  * Fetch the pre-gzipped dictionary and decompress it client-side.
