@@ -3106,7 +3106,7 @@ function WordPathGame({
   })();
 
   return (
-    <section className="container mx-auto max-w-6xl pb-32 lg:pb-8 landscape-phone:pb-4">
+    <section data-game-session className="container mx-auto max-w-6xl pb-32 lg:pb-8 landscape-phone:pb-4">
 
       <Dialog open={showDifficultyDialog} onOpenChange={setShowDifficultyDialog}>
         <DialogContent className="sm:max-w-md">

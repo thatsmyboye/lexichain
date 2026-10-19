@@ -1,11 +1,44 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import fs from "fs";
+import crypto from "crypto";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+import type { Plugin } from "vite";
+
+// Identifies this build. The running app compares it with /version.json to
+// notice a newer deploy (see src/lib/appUpdates.ts).
+const APP_BUILD_ID = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) || String(Date.now());
+
+// Content hash of the dictionary. It is added to the dictionary URL so a
+// changed word list is never served from an old cache.
+const DICTIONARY_VERSION = crypto
+  .createHash("sha256")
+  .update(fs.readFileSync(path.resolve(__dirname, "public/words.txt.gz")))
+  .digest("hex")
+  .slice(0, 12);
+
+function emitVersionFile(): Plugin {
+  return {
+    name: "lexichain-version-file",
+    apply: "build",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "version.json",
+        source: JSON.stringify({ buildId: APP_BUILD_ID }),
+      });
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    __APP_BUILD_ID__: JSON.stringify(APP_BUILD_ID),
+    __DICTIONARY_VERSION__: JSON.stringify(DICTIONARY_VERSION),
+  },
   server: {
     host: "::",
     port: 8080,
@@ -13,19 +46,42 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
+    emitVersionFile(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Registered from src/lib/appUpdates.ts, which also handles updates.
+      injectRegister: false,
       includeAssets: ['favicon.ico', 'icons/*.svg'],
       manifest: false, // use our hand-crafted public/manifest.json
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,ico}'],
+        // The page itself is not precached: it is fetched network-first below
+        // so every launch picks up the latest deploy.
+        globPatterns: ['**/*.{js,css,svg,ico}'],
+        globIgnores: ['sw-upgrade.js'],
+        navigateFallback: null,
+        cleanupOutdatedCaches: true,
+        // Activate a new worker immediately and take over open tabs.
+        skipWaiting: true,
+        clientsClaim: true,
+        // One-time reload of tabs controlled by an older cache-first worker.
+        importScripts: ['sw-upgrade.js'],
         runtimeCaching: [
           {
-            urlPattern: /\/words\.txt(\.gz)?$/,
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages',
+              expiration: { maxEntries: 10 },
+            },
+          },
+          {
+            // The URL carries a content hash (?v=...), so a new word list is a
+            // cache miss and old copies age out.
+            urlPattern: /\/words\.txt(\.gz)?(\?.*)?$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'dictionary-cache',
-              expiration: { maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7 days
+              cacheName: 'dictionary-cache-v2',
+              expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
         ],

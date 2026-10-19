@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/((?!assets/)[^.]*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(sw.js|sw-upgrade.js|version.json|manifest.json|index.html)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    },
+    {
+      "source": "/((?!assets/)[^.]*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    }
+  ]
+}

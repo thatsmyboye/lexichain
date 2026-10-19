@@ -2,6 +2,8 @@
  * Dictionary manager for enhanced word validation with debugging capabilities
  */
 
+import { BLOCKED_WORDS } from "@/lib/blockedWords";
+
 interface DictionaryStatus {
   loaded: boolean;
   wordCount: number;
@@ -15,8 +17,10 @@ interface WordValidationResult {
   suggestions?: string[];
 }
 
-const GZIP_DICTIONARY_URL = "/words.txt.gz";
-const PLAIN_DICTIONARY_URL = "/words.txt";
+// The version query changes whenever the word list does, so browsers and the
+// service worker never reuse a stale copy.
+const GZIP_DICTIONARY_URL = `/words.txt.gz?v=${__DICTIONARY_VERSION__}`;
+const PLAIN_DICTIONARY_URL = `/words.txt?v=${__DICTIONARY_VERSION__}`;
 
 /**
  * Fetch the pre-gzipped dictionary and decompress it client-side.
@@ -52,7 +56,7 @@ async function fetchPlainDictionaryText(): Promise<string> {
 }
 
 /**
- * Prefer the gzipped dictionary (~0.3 MB vs ~1 MB) when the browser supports
+ * Prefer the gzipped dictionary (~1.1 MB vs ~3.9 MB) when the browser supports
  * DecompressionStream; fall back to the plain-text file on any failure.
  */
 async function fetchDictionaryText(): Promise<string> {
@@ -98,18 +102,6 @@ class DictionaryManager {
       if (!text || text.length < 1000) {
         throw new Error("Dictionary file appears to be empty or corrupted");
       }
-
-      // Proper nouns and offensive terms to exclude (no valid alternate lowercase definition)
-      const BLOCKED_WORDS = new Set([
-        'hitler', 'hitlerian', 'hitlerism', 'hitlerite',
-        'stalin', 'stalinist', 'stalinism',
-        'mussolini', 'mao', 'lenin', 'leninist', 'leninism',
-        'nazi', 'nazis', 'nazism', 'nazify',
-        'gestapo',
-        'nigger', 'niggers',
-        'faggot', 'faggots',
-        'retard', 'retards', 'retarded',
-      ]);
 
       // Process words with enhanced validation
       const rawWords = text.split(/\r?\n/);
