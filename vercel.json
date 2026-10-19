@@ -5,10 +5,6 @@
   ],
   "headers": [
     {
-      "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-    },
-    {
       "source": "/(sw.js|sw-upgrade.js|version.json|manifest.json|index.html)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     },
