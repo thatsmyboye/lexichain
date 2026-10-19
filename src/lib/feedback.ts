@@ -2,6 +2,7 @@
 // devices (and iOS Safari) that don't support it.
 const PATTERNS = {
   select: 8,
+  info: 12,
   valid: [20, 30, 40],
   invalid: [60, 40, 60],
   tierUp: [30, 40, 30, 40, 80],
