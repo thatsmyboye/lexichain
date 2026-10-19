@@ -4,19 +4,66 @@
  * in Daily Challenge mode (without revealing their positions)
  */
 
+import { useRef, useState } from "react";
+import type React from "react";
 import { SpecialTile } from "@/utils/specialTilePreview";
 import { Card } from "@/components/ui/card";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 import { SpecialTileIcon } from "@/components/game/SpecialTileIcon";
+import { haptic } from "@/lib/feedback";
+import {
+  LONG_PRESS_MS,
+  LONG_PRESS_SLOP_PX,
+  SpecialTileTooltip,
+  type TileTip,
+} from "@/components/game/SpecialTileTooltip";
 
 interface SpecialTilePreviewProps {
   tiles: SpecialTile[];
 }
 
 export function SpecialTilePreview({ tiles }: SpecialTilePreviewProps) {
+  const [tip, setTip] = useState<TileTip | null>(null);
+  const hold = useRef<{ pointerId: number; x: number; y: number; timer: number } | null>(null);
+
   if (tiles.length === 0) {
     return null;
   }
+
+  const cancelHold = () => {
+    if (hold.current) window.clearTimeout(hold.current.timer);
+    hold.current = null;
+  };
+
+  // Touch and hold an upcoming tile to see what it does
+  const holdHandlers = (tile: SpecialTile) => ({
+    onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      cancelHold();
+      if (e.pointerType === "mouse" || !tile.type) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const timer = window.setTimeout(() => {
+        hold.current = null;
+        haptic("info");
+        setTip({
+          type: tile.type,
+          value: tile.value,
+          expiryTurns: tile.expiryTurns,
+          upcoming: true,
+          anchor: { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        });
+      }, LONG_PRESS_MS);
+      hold.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, timer };
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+      const h = hold.current;
+      if (h && e.pointerId === h.pointerId && Math.hypot(e.clientX - h.x, e.clientY - h.y) > LONG_PRESS_SLOP_PX) {
+        cancelHold();
+      }
+    },
+    onPointerUp: cancelHold,
+    onPointerCancel: cancelHold,
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+  });
 
   return (
     <div className="flex flex-col gap-1 sm:gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg border border-border">
@@ -25,14 +72,20 @@ export function SpecialTilePreview({ tiles }: SpecialTilePreviewProps) {
       </div>
       <div className="flex gap-1.5 sm:gap-2">
         {tiles.map((tile, index) => (
-          <TileIcon key={index} tile={tile} />
+          <TileIcon key={index} tile={tile} {...holdHandlers(tile)} />
         ))}
       </div>
+      <SpecialTileTooltip tip={tip} onDismiss={() => setTip(null)} />
     </div>
   );
 }
 
-function TileIcon({ tile }: { tile: SpecialTile }) {
+type TileIconProps = { tile: SpecialTile } & Pick<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onPointerDown" | "onPointerMove" | "onPointerUp" | "onPointerCancel" | "onContextMenu"
+>;
+
+function TileIcon({ tile, ...handlers }: TileIconProps) {
   const getTileClasses = () => {
     const shape = SPECIAL_SHAPES[tile.type ?? "default"] ?? SPECIAL_SHAPES.default;
     let baseClasses = `relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center ${shape} border-white/40 transition-all duration-300 `;
@@ -82,7 +135,11 @@ function TileIcon({ tile }: { tile: SpecialTile }) {
   };
 
   return (
-    <Card className={getTileClasses()}>
+    <Card
+      {...handlers}
+      className={`${getTileClasses()} select-none`}
+      style={{ WebkitTouchCallout: "none" }}
+    >
       {/* One consistent icon per special type (decorative; the panel text names it) */}
       {tile.type && tile.type !== "multiplier" && (
         <SpecialTileIcon type={tile.type} className="h-5 w-5 sm:h-6 sm:w-6" />

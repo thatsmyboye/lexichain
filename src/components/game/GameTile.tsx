@@ -296,6 +296,9 @@ export const GameTile = memo(function GameTile({
       aria-label={describeTile(letter, row, col, special, selectionIndex, isReused)}
       aria-pressed={isSelected}
       onPointerDown={onPointerDown}
+      // Touch and hold shows a special tile's tooltip; keep the browser's
+      // long-press menu and callout out of the way.
+      onContextMenu={(e) => e.preventDefault()}
       onFocus={onFocus}
       onClick={(e) => {
         // Pointer input is handled on pointerdown/up; only keyboard and
@@ -305,7 +308,7 @@ export const GameTile = memo(function GameTile({
         if (e.detail === 0 && !pointerType) onActivate();
       }}
       className={classes}
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "none", WebkitTouchCallout: "none" }}
     >
       {/* Skin surface: grain, noise, gloss or glow (see index.css) */}
       {showTexture && (

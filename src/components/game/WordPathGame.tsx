@@ -30,6 +30,8 @@ import { useTheme } from "next-themes";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof } from "@/utils/dailyChallengeResultSaver";
 import { SpecialTilePreview } from "@/components/ui/special-tile-preview";
+import { LONG_PRESS_MS, LONG_PRESS_SLOP_PX, SpecialTileTooltip, type TileTip } from "./SpecialTileTooltip";
+import { hasTileInfo } from "@/lib/specialTileInfo";
 import { previewNextSpecialTiles } from "@/utils/specialTilePreview";
 import { dictionaryManager } from "@/utils/dictionaryManager";
 import { getPuzzleById, getNextPuzzle } from "@/lib/puzzleBoards";
@@ -2214,7 +2216,24 @@ function WordPathGame({
   // ---------------------------------------------------------------------------
   const pathRef = useRef<Pos[]>([]);
   pathRef.current = path;
-  const gestureRef = useRef<{ pointerId: number; start: Pos; dragged: boolean } | null>(null);
+  const gestureRef = useRef<{
+    pointerId: number;
+    start: Pos;
+    dragged: boolean;
+    startX: number;
+    startY: number;
+    /** Pending touch-and-hold timer for a special tile's tooltip. */
+    holdTimer?: number;
+    /** The hold fired: the tooltip is showing and release must not tap. */
+    held: boolean;
+    /** This press dismissed a tooltip, so a plain tap does nothing. */
+    suppressTap: boolean;
+  } | null>(null);
+  // Touch-and-hold tooltip for special tiles (touch only; no board UI)
+  const [tileTip, setTileTip] = useState<TileTip | null>(null);
+  const tileTipOpenRef = useRef(false);
+  tileTipOpenRef.current = tileTip !== null;
+  const closeTileTip = useCallback(() => setTileTip(null), []);
   // Letters typed on a keyboard since the path was last built by pointer
   const typedRef = useRef<string | null>(null);
 
@@ -2294,6 +2313,9 @@ function WordPathGame({
 
   function onTilePointerDown(pos: Pos, e: React.PointerEvent<HTMLButtonElement>) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    // A touch while a tooltip is showing dismisses it instead of selecting
+    const dismissedTip = tileTipOpenRef.current;
+    if (dismissedTip) setTileTip(null);
     if (!canInteract()) return;
     // Prevent text selection and the emulated mouse events that follow touch
     e.preventDefault();
@@ -2304,16 +2326,60 @@ function WordPathGame({
     } catch {
       // Not captured
     }
-    gestureRef.current = { pointerId: e.pointerId, start: pos, dragged: false };
+    const gesture: NonNullable<typeof gestureRef.current> = {
+      pointerId: e.pointerId,
+      start: pos,
+      dragged: false,
+      startX: e.clientX,
+      startY: e.clientY,
+      held: false,
+      suppressTap: dismissedTip,
+    };
+    // Touch and hold a special tile to see what it does
+    const tile = specialTiles[pos.r]?.[pos.c];
+    if (e.pointerType !== "mouse" && hasTileInfo(tile)) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      gesture.holdTimer = window.setTimeout(() => {
+        gesture.holdTimer = undefined;
+        if (gestureRef.current !== gesture || gesture.dragged) return;
+        gesture.held = true;
+        haptic("info");
+        setTileTip({
+          type: tile.type,
+          value: tile.value,
+          expiryTurns: tile.expiryTurns,
+          frozen: tile.frozen,
+          anchor: { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        });
+      }, LONG_PRESS_MS);
+    }
+    gestureRef.current = gesture;
+  }
+
+  function cancelHold(g: NonNullable<typeof gestureRef.current>) {
+    if (g.holdTimer !== undefined) {
+      window.clearTimeout(g.holdTimer);
+      g.holdTimer = undefined;
+    }
   }
 
   function handlePointerMove(e: PointerEvent) {
     const g = gestureRef.current;
     if (!g || e.pointerId !== g.pointerId) return;
+    if (g.holdTimer !== undefined && Math.hypot(e.clientX - g.startX, e.clientY - g.startY) > LONG_PRESS_SLOP_PX) {
+      cancelHold(g);
+    }
     const pos = tileAtPoint(e.clientX, e.clientY);
     if (!pos) return;
+    if (g.held) {
+      // Sliding on after the tooltip appears closes it and carries on as a drag
+      if (samePos(pos, g.start)) return;
+      g.held = false;
+      setTileTip(null);
+    }
     if (!g.dragged) {
       if (samePos(pos, g.start)) return;
+      cancelHold(g);
       if (specialTiles[g.start.r][g.start.c].type === "stone") {
         gestureRef.current = null;
         return;
@@ -2342,6 +2408,7 @@ function WordPathGame({
     const g = gestureRef.current;
     if (!g || e.pointerId !== g.pointerId) return;
     gestureRef.current = null;
+    cancelHold(g);
     setDragging(false);
     if (g.dragged) {
       const current = pathRef.current;
@@ -2349,6 +2416,8 @@ function WordPathGame({
       else clearPath();
       return;
     }
+    // A hold showed a tooltip, or this touch only dismissed one
+    if (g.held || g.suppressTap) return;
     tapTile(g.start);
   }
 
@@ -2356,6 +2425,7 @@ function WordPathGame({
     const g = gestureRef.current;
     if (!g || e.pointerId !== g.pointerId) return;
     gestureRef.current = null;
+    cancelHold(g);
     setDragging(false);
     if (g.dragged) clearPath();
   }
@@ -3277,6 +3347,7 @@ function WordPathGame({
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] landscape-phone:grid-cols-[auto_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className={`relative rounded-2xl p-1 ${timeLow ? "animate-vignette" : ""} ${settings.mode === "survival" && survivalBossWordRequired ? "ring-4 ring-orange-500/70" : ""}`}>
+            <SpecialTileTooltip tip={tileTip} onDismiss={closeTileTip} />
             <GameBoard
               board={board}
               specialTiles={specialTiles}

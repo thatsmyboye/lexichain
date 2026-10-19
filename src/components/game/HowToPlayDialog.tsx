@@ -3,28 +3,27 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/component
 import { ChevronDown } from "lucide-react";
 import type { SpecialTileType } from "@/types/game";
 import { SpecialTileIcon } from "./SpecialTileIcon";
+import { SPECIAL_TILE_INFO } from "@/lib/specialTileInfo";
 
 // Same fills, letter colors and border shapes as the board's special tiles
 const SPECIAL_SWATCHES: Array<{
   type: NonNullable<SpecialTileType>;
-  name: string;
-  desc: string;
   shape: string;
   classes: string;
 }> = [
-  { type: "stone", name: "Stone", desc: "Cannot be used", shape: "rounded-none border-4 border-double border-gray-300", classes: "bg-gradient-to-br from-gray-500 to-gray-700 text-white" },
-  { type: "wild", name: "Wild", desc: "Any letter", shape: "rounded border-2 border-dashed border-white/70", classes: "bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 text-white" },
-  { type: "xfactor", name: "X-Factor", desc: "Changes adjacent corner tiles", shape: "rounded border-2 border-orange-200/70", classes: "bg-gradient-to-br from-orange-500 to-red-600 text-white" },
-  { type: "multiplier", name: "Multiplier", desc: "Boost word score", shape: "rounded border-2 border-blue-200/70", classes: "bg-gradient-to-br from-blue-500 to-blue-700 text-white" },
-  { type: "shuffle", name: "Shuffle", desc: "Randomizes all unfrozen letters", shape: "rounded border-2 border-red-400/60", classes: "bg-gradient-to-br from-red-200 to-red-300 text-red-900" },
-  { type: "freeze", name: "Freeze", desc: "Locks neighbors in place", shape: "rounded-sm border-2 border-dotted border-blue-500/70", classes: "bg-gradient-to-br from-cyan-200 to-blue-300 text-blue-950" },
-  { type: "decay", name: "Decay", desc: "Spreads, degrades letters", shape: "rounded border-2 border-green-600/50", classes: "bg-gradient-to-br from-yellow-200 to-green-400 text-green-950" },
-  { type: "mirror", name: "Mirror", desc: "Copies previous letter", shape: "rounded border-2 border-gray-500/50", classes: "bg-gradient-to-br from-gray-200 to-gray-400 text-gray-900" },
-  { type: "magnet", name: "Magnet", desc: "Pulls vowels nearby", shape: "rounded border-2 border-red-300/60", classes: "bg-gradient-to-br from-red-500 to-gray-600 text-white" },
-  { type: "bomb", name: "Bomb", desc: "Blasts nearby tiles", shape: "rounded-full border-2 border-red-300/60", classes: "bg-gradient-to-br from-red-600 to-gray-900 text-white" },
-  { type: "chain", name: "Chain", desc: "Bonus for long words", shape: "rounded border-2 border-amber-300/60", classes: "bg-gradient-to-br from-amber-600 to-amber-800 text-white" },
-  { type: "ghost", name: "Ghost", desc: "Bridge tile, no letter", shape: "rounded border-2 border-dashed border-gray-400", classes: "bg-gradient-to-br from-white to-gray-200 text-gray-700 dark:from-slate-700 dark:to-slate-800 dark:text-gray-200" },
-  { type: "tax", name: "Tax", desc: "-30% word score", shape: "rounded border-2 border-yellow-600/50", classes: "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-950" },
+  { type: "stone", shape: "rounded-none border-4 border-double border-gray-300", classes: "bg-gradient-to-br from-gray-500 to-gray-700 text-white" },
+  { type: "wild", shape: "rounded border-2 border-dashed border-white/70", classes: "bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 text-white" },
+  { type: "xfactor", shape: "rounded border-2 border-orange-200/70", classes: "bg-gradient-to-br from-orange-500 to-red-600 text-white" },
+  { type: "multiplier", shape: "rounded border-2 border-blue-200/70", classes: "bg-gradient-to-br from-blue-500 to-blue-700 text-white" },
+  { type: "shuffle", shape: "rounded border-2 border-red-400/60", classes: "bg-gradient-to-br from-red-200 to-red-300 text-red-900" },
+  { type: "freeze", shape: "rounded-sm border-2 border-dotted border-blue-500/70", classes: "bg-gradient-to-br from-cyan-200 to-blue-300 text-blue-950" },
+  { type: "decay", shape: "rounded border-2 border-green-600/50", classes: "bg-gradient-to-br from-yellow-200 to-green-400 text-green-950" },
+  { type: "mirror", shape: "rounded border-2 border-gray-500/50", classes: "bg-gradient-to-br from-gray-200 to-gray-400 text-gray-900" },
+  { type: "magnet", shape: "rounded border-2 border-red-300/60", classes: "bg-gradient-to-br from-red-500 to-gray-600 text-white" },
+  { type: "bomb", shape: "rounded-full border-2 border-red-300/60", classes: "bg-gradient-to-br from-red-600 to-gray-900 text-white" },
+  { type: "chain", shape: "rounded border-2 border-amber-300/60", classes: "bg-gradient-to-br from-amber-600 to-amber-800 text-white" },
+  { type: "ghost", shape: "rounded border-2 border-dashed border-gray-400", classes: "bg-gradient-to-br from-white to-gray-200 text-gray-700 dark:from-slate-700 dark:to-slate-800 dark:text-gray-200" },
+  { type: "tax", shape: "rounded border-2 border-yellow-600/50", classes: "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-950" },
 ];
 
 export function HowToPlayDialog({
@@ -123,6 +122,9 @@ export function HowToPlayDialog({
                 <h3 className="text-sm font-semibold text-foreground">Special Tiles</h3>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
+              <p className="text-sm text-muted-foreground">
+                On a touchscreen, touch and hold a special tile on the board or in the Next Tile preview to see what it does.
+              </p>
               <CollapsibleContent className="space-y-3 pt-2">
                 <div className="grid grid-cols-2 gap-y-3 gap-x-2 sm:grid-cols-3">
                   {SPECIAL_SWATCHES.map((swatch) => (
@@ -142,8 +144,8 @@ export function HowToPlayDialog({
                         )}
                       </div>
                       <div className="text-xs">
-                        <div className="font-medium">{swatch.name}</div>
-                        <div className="text-muted-foreground">{swatch.desc}</div>
+                        <div className="font-medium">{SPECIAL_TILE_INFO[swatch.type].name}</div>
+                        <div className="text-muted-foreground">{SPECIAL_TILE_INFO[swatch.type].summary}</div>
                       </div>
                     </div>
                   ))}
