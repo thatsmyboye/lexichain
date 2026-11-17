@@ -188,6 +188,13 @@ function WordPathGame({
   const { skin } = useTileSkin();
   const [size, setSize] = useState(4);
   const [board, setBoard] = useState<string[][] | null>(null);
+  // Counts dealt boards. Tiles drop in when it changes; any other board
+  // update (tile effects, undo) flips just the letters that changed.
+  const [boardEpoch, setBoardEpoch] = useState(0);
+  const dealBoard = useCallback((next: string[][]) => {
+    setBoard(next);
+    setBoardEpoch(e => e + 1);
+  }, []);
   const [specialTiles, setSpecialTiles] = useState<SpecialTile[][]>(() => Array.from({
     length: size
   }, () => Array.from({
@@ -563,7 +570,7 @@ function WordPathGame({
     if (gameState && gameState.board && gameState.initialBoard) {
       roundBoardRef.current = gameState.initialBoard;
       setGameStartTime(Date.now());
-      setBoard(gameState.board);
+      dealBoard(gameState.board);
       setSpecialTiles(gameState.specialTiles);
       setUsedWords(gameState.usedWords);
       setScore(gameState.score);
@@ -640,7 +647,7 @@ function WordPathGame({
     setPuzzleOptionalWords(new Set((puzzle.optionalWords || []).map(w => w.toUpperCase())));
     
     // Set the fixed puzzle board
-    setBoard(puzzle.board.map(row => [...row]));
+    dealBoard(puzzle.board.map(row => [...row]));
     setSize(puzzle.board.length);
     setUsedWords([]);
     setScore(0);
@@ -691,7 +698,7 @@ function WordPathGame({
               bms = computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS);
               
               if (!mounted) return;
-              setBoard(newBoard);
+              dealBoard(newBoard);
               if (bms) setBenchmarks(bms);
               setDiscoverableCount(probe.words.size);
               setUnlocked(new Set());
@@ -1355,7 +1362,7 @@ function WordPathGame({
     if (!dict || !sorted) return;
     const newBoard = generateSolvableBoard(size, dict, sorted);
     const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
-    setBoard(newBoard);
+    dealBoard(newBoard);
     setSpecialTiles(createEmptySpecialTilesGrid(size));
     setUsedWords([]);
     setLastWordTiles(new Set());
@@ -1364,8 +1371,6 @@ function WordPathGame({
     setDiscoverableCount(probe.words.size);
     roundBoardRef.current = newBoard.map(row => [...row]);
     setZenUndoStack([]);
-    setAffectedTiles(new Set(newBoard.flatMap((row, r) => row.map((_, c) => keyOf({ r, c })))));
-    setTimeout(() => setAffectedTiles(new Set()), 600);
   }
 
   // Survival: shields and Life Link absorb a hit before a life is lost
@@ -1775,7 +1780,7 @@ function WordPathGame({
         const probe = probeGrid(newBoard, dict, sorted, config.minWords, MAX_DFS_NODES);
         const adjustedWordCount = Math.floor(probe.words.size * config.scoreMultiplier);
         const bms = computeBenchmarksFromWordCount(adjustedWordCount, config.minWords);
-        setBoard(newBoard);
+        dealBoard(newBoard);
         setBenchmarks(bms);
         setDiscoverableCount(probe.words.size);
         setUnlocked(new Set());
@@ -1788,7 +1793,7 @@ function WordPathGame({
       }
     } else {
       const nb = makeBoard(newSize);
-      setBoard(nb);
+      dealBoard(nb);
       setBenchmarks(null);
       setDiscoverableCount(0);
       setUnlocked(new Set());
@@ -1850,7 +1855,7 @@ function WordPathGame({
           console.warn("Failed to compute dynamic benchmarks, falling back to static:", error);
           bms = computeBenchmarksFromWordCount(probe.words.size, config.minWords);
         }
-        setBoard(newBoard);
+        dealBoard(newBoard);
         setBenchmarks(bms);
         setDiscoverableCount(probe.words.size);
         markRoundStart(newBoard);
@@ -1863,7 +1868,7 @@ function WordPathGame({
       }
     } else {
       const nb = makeBoard(newSize);
-      setBoard(nb);
+      dealBoard(nb);
       setBenchmarks(null);
       setDiscoverableCount(0);
       setUnlocked(new Set());
@@ -1924,7 +1929,7 @@ function WordPathGame({
     setGameOver(false);
     setFinalGrade("None");
     setSpecialTiles(createEmptySpecialTilesGrid(newSize));
-    setBoard(newBoard);
+    dealBoard(newBoard);
     markRoundStart(newBoard);
 
     if (dict && sorted) {
@@ -2938,7 +2943,7 @@ function WordPathGame({
     try {
       const newBoard = generateSolvableBoard(size, dict, sorted);
       const probe = probeGrid(newBoard, dict, sorted, K_MIN_WORDS, MAX_DFS_NODES);
-      setBoard(newBoard);
+      dealBoard(newBoard);
       setBenchmarks(computeBenchmarksFromWordCount(probe.words.size, K_MIN_WORDS));
       setDiscoverableCount(probe.words.size);
       setSpecialTiles(createEmptySpecialTilesGrid(size));
@@ -3355,6 +3360,7 @@ function WordPathGame({
               pathTone={pathTone}
               lastWordTiles={lastWordTiles}
               affectedTiles={affectedTiles}
+              boardEpoch={boardEpoch}
               newWildTiles={newWildTiles}
               hintTiles={hintTiles}
               size={size}

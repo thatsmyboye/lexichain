@@ -550,15 +550,20 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
                       }}
                       style={{ touchAction: "none" }}
                       className={cn(
-                        "relative flex h-full w-full items-center justify-center rounded-xl border-2 border-border bg-card text-card-foreground shadow-sm outline-none",
+                        // Keycap: a solid offset shadow is the tile's edge; a selected
+                        // tile travels down onto it.
+                        "relative flex h-full w-full items-center justify-center rounded-xl border-2 border-border bg-card text-card-foreground outline-none",
                         "transition-[transform,box-shadow,background-color,border-color] duration-150",
+                        sel >= 0
+                          ? "translate-y-[3px] shadow-[0_1px_0_var(--tile-edge)]"
+                          : "shadow-[0_4px_0_var(--tile-edge),0_6px_5px_-1px_rgb(15_23_42/0.22)]",
                         "focus-visible:ring-4 focus-visible:ring-[hsl(var(--brand-500))] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         inLast && "border-[hsl(var(--brand-500)/0.6)] bg-[hsl(var(--brand-500)/0.08)]",
                         step === "done" && inChain && !inLast && "border-[hsl(var(--ok))] bg-[hsl(var(--ok)/0.12)]",
                         isHint && "ring-4 ring-[hsl(var(--brand-500))]",
                         isHint && !reducedMotion && "animate-tile-pulse",
                         glowT && "border-[hsl(var(--brand-500))] shadow-[0_0_0_3px_hsl(var(--brand-500)/0.35),0_0_18px_4px_hsl(var(--brand-500)/0.55)]",
-                        sel >= 0 && "scale-[0.97] border-[hsl(var(--ok))] bg-[hsl(var(--ok)/0.14)] ring-2 ring-[hsl(var(--ok))]",
+                        sel >= 0 && "border-[hsl(var(--ok))] bg-[hsl(var(--ok)/0.14)] ring-2 ring-[hsl(var(--ok))]",
                         inFlash && flash?.tone === "bad" && "border-[hsl(var(--bad))] bg-[hsl(var(--bad)/0.12)]",
                         inFlash && flash?.tone === "bad" && !reducedMotion && "animate-shake",
                         inFlash && flash?.tone === "ok" && "border-[hsl(var(--ok))] bg-[hsl(var(--ok)/0.14)]",
