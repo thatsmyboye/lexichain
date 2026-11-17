@@ -1,5 +1,9 @@
 # Lexichain UI Asset Recommendations
 
+> **Superseded.** The current list is [`docs/art-asset-list.md`](docs/art-asset-list.md) (November 2026).
+> This file is kept for history. It predates the logo, skins, trophies, and board depth work,
+> and several entries below (store, bundles, payment pages) describe features that have been removed.
+
 **Prepared for:** Banton Games / Lexichain
 **Scope:** Visual asset opportunities identified across all UI screens
 **Current state:** The app relies entirely on CSS gradients, Tailwind utilities, Lucide vector icons, and inline emoji. There are zero custom image assets beyond `placeholder.svg`. The UX has strong bones but lacks visual identity and personality.
