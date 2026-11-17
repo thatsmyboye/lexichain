@@ -22,6 +22,8 @@ interface GameBoardProps {
   pathTone: PathTone;
   lastWordTiles: Set<string>;
   affectedTiles: Set<string>;
+  /** Bumps when a whole new board is dealt, so tiles drop in. */
+  boardEpoch: number;
   newWildTiles: Set<string>;
   hintTiles: Set<string>;
   size: number;
@@ -41,6 +43,7 @@ interface GameBoardProps {
 
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
 
+
 // SVG polyline through the centers of the selected tiles. Geometry is
 // measured from the grid so it stays aligned at every size and gap.
 function PathOverlay({ gridRef, path, size, tone }: {
@@ -49,14 +52,17 @@ function PathOverlay({ gridRef, path, size, tone }: {
   size: number;
   tone: PathTone;
 }) {
-  const [geom, setGeom] = useState({ width: 0, height: 0, gap: 0 });
+  const [geom, setGeom] = useState({ width: 0, height: 0, gap: 0, rowGap: 0 });
 
   useLayoutEffect(() => {
     const el = gridRef.current;
     if (!el) return;
     const measure = () => {
-      const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
-      setGeom({ width: el.clientWidth, height: el.clientHeight, gap });
+      const styles = getComputedStyle(el);
+      const gap = parseFloat(styles.columnGap) || 0;
+      // Rows sit further apart than columns: each tile has an edge below it
+      const rowGap = parseFloat(styles.rowGap) || gap;
+      setGeom({ width: el.clientWidth, height: el.clientHeight, gap, rowGap });
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -66,9 +72,9 @@ function PathOverlay({ gridRef, path, size, tone }: {
 
   if (path.length < 2 || !geom.width) return null;
   const cell = (geom.width - geom.gap * (size - 1)) / size;
-  const rowCell = (geom.height - geom.gap * (size - 1)) / size;
+  const rowCell = (geom.height - geom.rowGap * (size - 1)) / size;
   const points = path
-    .map(p => `${p.c * (cell + geom.gap) + cell / 2},${p.r * (rowCell + geom.gap) + rowCell / 2}`)
+    .map(p => `${p.c * (cell + geom.gap) + cell / 2},${p.r * (rowCell + geom.rowGap) + rowCell / 2}`)
     .join(" ");
   const color =
     tone === "valid" ? "hsl(var(--ok))"
@@ -107,6 +113,7 @@ export const GameBoard = memo(function GameBoard({
   pathTone,
   lastWordTiles,
   affectedTiles,
+  boardEpoch,
   newWildTiles,
   hintTiles,
   size,
@@ -133,6 +140,7 @@ export const GameBoard = memo(function GameBoard({
 
   const benchmarkColor = getBenchmarkColor(skin, currentGrade);
   const gridRef = useRef<HTMLDivElement>(null);
+
   const [shaking, setShaking] = useState(false);
 
   useEffect(() => {
@@ -249,12 +257,12 @@ export const GameBoard = memo(function GameBoard({
 
       {overlay}
 
-      <div className={`relative ${shaking ? "animate-shake" : ""}`}>
+      <div className={`relative tile-grid-wrap ${shaking ? "animate-shake" : ""}`}>
         <div
           ref={gridRef}
           role="group"
           aria-label={`Letter board, ${size} by ${size}. Use arrow keys to move, Space to select a tile, type letters to trace a word, Enter to submit.`}
-          className="grid gap-2 sm:gap-3 select-none"
+          className="grid tile-grid select-none"
           data-grid-container
           onKeyDown={onGridKeyDown}
           style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
@@ -285,6 +293,7 @@ export const GameBoard = memo(function GameBoard({
                       skin={skin}
                       benchmarkColor={benchmarkColor}
                       currentGrade={currentGrade}
+                      boardEpoch={boardEpoch}
                       frostDr={frost?.dr}
                       frostDc={frost?.dc}
                       onPointerDown={handlers.onPointerDown}

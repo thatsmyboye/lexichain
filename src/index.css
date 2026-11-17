@@ -240,7 +240,6 @@ All colors MUST be HSL.
   .animate-tile-pulse { animation: tile-pulse 1.4s ease-in-out infinite; }
   .animate-tile-flip { animation: tile-flip 0.5s ease-out; }
   .animate-stamp { animation: stamp 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards; }
-  .animate-board-in > * { animation: tile-in 0.4s ease-out both; }
   .animate-vignette { animation: vignette 1s ease-in-out infinite; }
 }
 
@@ -258,12 +257,8 @@ All colors MUST be HSL.
   50% { transform: scale(1.05); }
 }
 @keyframes tile-flip {
-  0% { transform: rotateX(90deg); }
-  100% { transform: rotateX(0deg); }
-}
-@keyframes tile-in {
-  0% { opacity: 0; transform: scale(0.6) rotateX(60deg); }
-  100% { opacity: 1; transform: none; }
+  0% { transform: perspective(480px) rotateX(90deg); }
+  100% { transform: perspective(480px) rotateX(0deg); }
 }
 @keyframes stamp {
   0% { opacity: 0; transform: scale(1.8) rotate(-6deg); }
@@ -300,7 +295,8 @@ All colors MUST be HSL.
    Owned by the tile-skin system (src/lib/tileSkins.ts, SkinThemeSync).
    1. Texture assets          4. Special-tile idle motion
    2. Tile materials          5. Whole-screen skin themes (html[data-skin])
-   3. Board frames            6. Accessibility (high contrast, reduced motion)
+   3. Board frames            5b. Board depth (keycap tiles, tray, flips)
+                              6. Accessibility (high contrast, reduced motion)
    Everything here is decorative: layers are pointer-events:none and the
    elements that use them are aria-hidden.
    ========================================================================== */
@@ -486,7 +482,7 @@ All colors MUST be HSL.
 
 :root[data-skin="original"] .board-frame,
 .skin-scene[data-skin-preview="original"] {
-  background: hsl(var(--muted) / 0.6);
+  background: hsl(var(--muted));
   border-color: hsl(var(--border));
   box-shadow: 0 10px 30px -18px hsl(var(--foreground) / 0.35);
 }
@@ -1090,6 +1086,222 @@ All colors MUST be HSL.
     linear-gradient(180deg, hsl(320 30% 7%), hsl(150 30% 4%));
 }
 
+/* 5b. Board depth: keycap tiles in a recessed tray
+   (GameTile .tile-cell > .tile-drop > .tile-body > .tile-side + .tile-face)
+   The button (.tile-cell) is the fixed grid cell that input hit-tests. Only
+   the layers inside it move, so pressing a tile never shifts its hit box.
+   Light comes from the top left: highlights on top edges, shade below. */
+:root {
+  --tile-depth: 4px;
+  /* The tile's visible side. Skins override it to suit their material. */
+  --tile-edge: hsl(214 22% 74%);
+  --tile-cast: 0 2px 3px hsl(222 47% 11% / 0.22);
+  --tray-shade: hsl(222 47% 11% / 0.14);
+  --tray-lip: hsl(0 0% 100% / 0.8);
+}
+@media (min-width: 640px) {
+  :root { --tile-depth: 5px; }
+}
+.dark {
+  --tile-edge: hsl(217 30% 26%);
+  --tile-cast: 0 2px 4px hsl(0 0% 0% / 0.6);
+  --tray-shade: hsl(0 0% 0% / 0.55);
+  --tray-lip: hsl(0 0% 100% / 0.07);
+}
+
+/* Rows sit one tile-depth further apart than columns, so the gap you see
+   between tiles is even on all sides. */
+.tile-grid {
+  gap: 0.5rem;
+  row-gap: calc(0.5rem + var(--tile-depth));
+}
+@media (min-width: 640px) {
+  .tile-grid {
+    gap: 0.75rem;
+    row-gap: calc(0.75rem + var(--tile-depth));
+  }
+}
+/* Faces rise above their cells; keep the top row clear of the tray rim */
+.tile-grid-wrap {
+  margin-top: var(--tile-depth);
+}
+
+/* The edge: a strip along the bottom of the cell, tall enough to tuck its
+   rounded corners under the face. Round tiles get a full disc. */
+.tile-side {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--tile-depth) + 0.75rem);
+  box-shadow: var(--tile-cast);
+  pointer-events: none;
+}
+.tile-side.rounded-full {
+  top: 0;
+  height: auto;
+}
+.tile-side-skin {
+  background: var(--tile-edge);
+}
+/* A pressed tile sits flush with the tray, so its edge is out of sight.
+   Hiding it also keeps it from showing through translucent selected faces. */
+.tile-side {
+  transition: opacity 120ms ease-out 60ms;
+}
+.tile-cell[data-selected] .tile-side {
+  opacity: 0;
+  transition: opacity 60ms ease-out;
+}
+
+/* The face rests one tile-depth above the cell and springs back on release.
+   `translate` (not `transform`) so it composes with scale/rotate animations. */
+.tile-face {
+  translate: 0 calc(-1 * var(--tile-depth));
+  transition:
+    translate 240ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 200ms,
+    box-shadow 200ms,
+    background-color 200ms;
+}
+/* Pressed: the face travels down until it is almost flush with the tray */
+.tile-cell[data-selected] .tile-face,
+.tile-cell:active .tile-face {
+  translate: 0 -1px;
+  transition:
+    translate 70ms ease-out,
+    transform 200ms,
+    box-shadow 200ms,
+    background-color 200ms;
+}
+
+/* The tray: the frame's floor sits below its rim */
+.board-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 3px 7px var(--tray-shade),
+    inset 0 1px 1px var(--tray-shade),
+    inset 0 -1px 0 var(--tray-lip);
+}
+
+/* New board: tiles drop into the tray one by one (delay set per tile) */
+.tile-drop {
+  animation: tile-drop 440ms cubic-bezier(0.3, 0.7, 0.4, 1) both;
+}
+@keyframes tile-drop {
+  0% { opacity: 0; transform: translateY(-34px) scale(0.9); }
+  60% { opacity: 1; transform: translateY(3px) scale(1.03, 0.96); }
+  80% { transform: translateY(-1px) scale(1); }
+  100% { opacity: 1; transform: none; }
+}
+/* Letter change: a true flip. The old face turns away, the new one turns in
+   (GameTile swaps the letter at the edge-on midpoint). */
+.tile-flip-out {
+  animation: tile-flip-out 150ms ease-in forwards;
+}
+.tile-flip-in {
+  animation: tile-flip-in 260ms cubic-bezier(0.2, 0.8, 0.3, 1.25) both;
+}
+@keyframes tile-flip-out {
+  from { transform: perspective(480px) rotateX(0deg); }
+  to { transform: perspective(480px) rotateX(-90deg); }
+}
+@keyframes tile-flip-in {
+  from { transform: perspective(480px) rotateX(90deg); }
+  to { transform: perspective(480px) rotateX(0deg); }
+}
+
+/* Per-skin edges and tray depth (also applied to the skin picker previews) */
+:root[data-skin="ocean"],
+.skin-scene[data-skin-preview="ocean"] {
+  --tile-edge: rgba(14, 116, 144, 0.8);
+  --tray-shade: rgba(8, 51, 68, 0.35);
+}
+.dark[data-skin="ocean"],
+.dark .skin-scene[data-skin-preview="ocean"] {
+  --tile-edge: rgba(56, 189, 248, 0.32);
+  --tray-shade: rgba(0, 0, 0, 0.55);
+}
+:root[data-skin="forest"],
+.skin-scene[data-skin-preview="forest"] {
+  --tile-edge: #a57a43;
+  --tray-shade: rgba(5, 46, 22, 0.55);
+  --tray-lip: rgba(255, 237, 213, 0.2);
+}
+.dark[data-skin="forest"],
+.dark .skin-scene[data-skin-preview="forest"] {
+  --tile-edge: #1d1109;
+  --tray-shade: rgba(0, 0, 0, 0.6);
+}
+:root[data-skin="sunset"],
+.skin-scene[data-skin-preview="sunset"] {
+  --tile-edge: #d98a7a;
+  --tray-shade: rgba(136, 19, 55, 0.3);
+}
+.dark[data-skin="sunset"],
+.dark .skin-scene[data-skin-preview="sunset"] {
+  --tile-edge: #1f0c0e;
+  --tray-shade: rgba(0, 0, 0, 0.55);
+}
+:root[data-skin="midnight"],
+.skin-scene[data-skin-preview="midnight"] {
+  --tile-edge: #8189c4;
+  --tray-shade: rgba(10, 8, 40, 0.55);
+  --tray-lip: rgba(165, 180, 252, 0.2);
+}
+.dark[data-skin="midnight"],
+.dark .skin-scene[data-skin-preview="midnight"] {
+  --tile-edge: #0b0a1d;
+}
+:root[data-skin="neon"],
+.skin-scene[data-skin-preview="neon"] {
+  /* Underglow instead of a solid edge */
+  --tile-edge: #0e7490;
+  --tile-cast: 0 3px 10px rgba(34, 211, 238, 0.45);
+  --tray-shade: rgba(0, 0, 0, 0.7);
+  --tray-lip: rgba(34, 211, 238, 0.25);
+}
+:root[data-skin="harvest"],
+.skin-scene[data-skin-preview="harvest"] {
+  --tile-edge: #c2863a;
+  --tray-shade: rgba(30, 10, 60, 0.5);
+  --tray-lip: rgba(251, 146, 60, 0.25);
+}
+.dark[data-skin="harvest"],
+.dark .skin-scene[data-skin-preview="harvest"] {
+  --tile-edge: #120a05;
+}
+:root[data-skin="frost"],
+.skin-scene[data-skin-preview="frost"] {
+  --tile-edge: #7fb2ee;
+  --tray-shade: rgba(30, 64, 175, 0.35);
+}
+.dark[data-skin="frost"],
+.dark .skin-scene[data-skin-preview="frost"] {
+  --tile-edge: #091729;
+  --tray-shade: rgba(0, 0, 0, 0.55);
+}
+:root[data-skin="lunar"],
+.skin-scene[data-skin-preview="lunar"] {
+  --tile-edge: #4c0b0b;
+  --tray-shade: rgba(40, 4, 4, 0.6);
+  --tray-lip: rgba(245, 158, 11, 0.3);
+}
+:root[data-skin="bloom"],
+.skin-scene[data-skin-preview="bloom"] {
+  --tile-edge: #e08fae;
+  --tray-shade: rgba(157, 23, 77, 0.22);
+}
+.dark[data-skin="bloom"],
+.dark .skin-scene[data-skin-preview="bloom"] {
+  --tile-edge: #160a19;
+  --tray-shade: rgba(0, 0, 0, 0.55);
+}
+
 /* 6. Accessibility */
 /* High contrast: crisp frame edge, quieter tile materials */
 :root.high-contrast[data-skin] .board-frame {
@@ -1098,11 +1310,21 @@ All colors MUST be HSL.
 .high-contrast .tile-texture {
   opacity: 0.35;
 }
+/* High contrast: a solid, full-strength tile edge */
+.high-contrast .tile-side {
+  background: hsl(var(--foreground));
+}
 .high-contrast .tile-tex-acrylic {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Depth stays; the drop-in and flips don't play */
+  .tile-drop,
+  .tile-flip-out,
+  .tile-flip-in {
+    animation: none !important;
+  }
   .tile-tex-acrylic,
   .tile-bomb-spark,
   .tile-freeze-shimmer,

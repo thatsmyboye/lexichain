@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type React from "react";
 import type { SpecialTile } from "@/types/game";
 import type { TileSkin } from "@/lib/tileSkins";
@@ -6,6 +6,7 @@ import { letterRarity } from "@/lib/letterRarity";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 import { cn } from "@/lib/utils";
 import { SpecialTileIcon } from "./SpecialTileIcon";
+import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 
 interface BenchmarkColor {
   border: string;
@@ -30,6 +31,11 @@ interface GameTileProps {
   skin: TileSkin;
   benchmarkColor: BenchmarkColor;
   currentGrade: Grade;
+  /**
+   * Bumps when a whole new board is dealt. Tiles then drop in instead of
+   * flipping letter by letter.
+   */
+  boardEpoch: number;
   /**
    * Direction (row/col delta, each -1..1) from this frozen tile toward the
    * Freeze tile that froze it, so frost can creep in from that edge.
@@ -57,7 +63,9 @@ function getTileClasses(
   // Ghosts flicker their mist/outline on a decorative layer instead of fading
   // the whole tile, so the letter keeps full contrast.
   if (special.type === "ghost") shape = shape.replace("animate-tile-fade", "");
-  let base = `game-tile relative aspect-square w-full flex items-center justify-center border-2 text-card-foreground shadow-sm select-none outline-none focus-visible:ring-4 focus-visible:ring-[hsl(var(--brand-500))] focus-visible:ring-offset-2 focus-visible:ring-offset-background ${shape} ${benchmarkColor.border} transition-[transform,box-shadow,background-color] duration-200 `;
+  // The face of the tile. It sits raised above the cell and presses down when
+  // selected (see ".tile-face" in index.css); the button around it never moves.
+  let base = `game-tile tile-face absolute inset-0 flex items-center justify-center border-2 text-card-foreground group-focus-visible:ring-4 group-focus-visible:ring-[hsl(var(--brand-500))] group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-background ${shape} ${benchmarkColor.border} `;
 
   // Special tiles bring their own fill and letter color. Skipping the skin
   // fill matters: its dark: variants would otherwise survive twMerge and
@@ -67,9 +75,8 @@ function getTileClasses(
   if (isSelected) {
     base += skin.selectedClasses + " tile-selected shadow-[0_0_20px_hsl(var(--ok)/0.4)] ";
   } else if (isAffected) {
-    base += "bg-gradient-to-br from-yellow-300 to-orange-400 text-gray-900 animate-tile-flip shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
+    base += "bg-gradient-to-br from-yellow-300 to-orange-400 text-gray-900 shadow-[0_0_20px_rgba(251,191,36,0.5)] ";
   } else if (isReused) {
-    base += "relative ";
     if (currentGrade !== "none") {
       const ringColor = benchmarkColor.border.replace("border-", "ring-")
         .replace("-600", "-400").replace("-500", "-300").replace("-400", "-300");
@@ -125,6 +132,91 @@ function getTileClasses(
 
   // twMerge so later text/background classes (skin, special) win cleanly
   return cn(base);
+}
+
+// The visible edge under each tile face: a darker shade of the face so the
+// tile reads as a solid block. Plain tiles take the skin's edge color.
+const SPECIAL_SIDES: Record<NonNullable<SpecialTile["type"]>, string> = {
+  stone: "bg-gray-900",
+  wild: "bg-fuchsia-950",
+  xfactor: "bg-red-900",
+  multiplier: "bg-blue-950",
+  shuffle: "bg-red-400",
+  freeze: "bg-blue-500",
+  decay: "bg-green-700",
+  mirror: "bg-gray-500",
+  magnet: "bg-gray-800",
+  bomb: "bg-black",
+  chain: "bg-amber-950",
+  ghost: "bg-gray-400 dark:bg-slate-950",
+  tax: "bg-yellow-700",
+};
+
+const FLIP_OUT_MS = 150;
+const FLIP_IN_MS = 260;
+/** Per-step delay so flips and drops ripple from the top-left corner. */
+const FLIP_STAGGER_MS = 28;
+const DROP_STAGGER_MS = 40;
+
+interface TileVisual {
+  letter: string;
+  special: SpecialTile;
+  isAffected: boolean;
+}
+
+const glyphOf = (v: TileVisual) => (v.special.type === "wild" ? "?" : v.letter);
+
+/**
+ * Turns a letter change into a real flip: the old face stays up while the
+ * tile rotates away, then the new face rotates in. Returns the visual to
+ * draw right now and which half of the flip is playing.
+ */
+function useFlipReveal(current: TileVisual, boardEpoch: number, delayMs: number) {
+  const [held, setHeld] = useState<TileVisual | null>(null);
+  const [phase, setPhase] = useState<"out" | "in" | null>(null);
+  const prev = useRef(current);
+  const prevEpoch = useRef(boardEpoch);
+  const heldRef = useRef<TileVisual | null>(null);
+  heldRef.current = held;
+  const timers = useRef<number[]>([]);
+
+  // Layout effect: decide before the browser paints, so the new letter never
+  // shows for a frame ahead of the flip.
+  useLayoutEffect(() => {
+    const before = prev.current;
+    prev.current = current;
+    const newBoard = prevEpoch.current !== boardEpoch;
+    prevEpoch.current = boardEpoch;
+
+    const changed = glyphOf(before) !== glyphOf(current) || (current.isAffected && !before.isAffected);
+    if (!changed && !newBoard) return;
+
+    timers.current.forEach(window.clearTimeout);
+    timers.current = [];
+    // A fresh board drops in as a whole (see .tile-drop); no per-tile flip.
+    if (newBoard || prefersReducedMotion()) {
+      setHeld(null);
+      setPhase(null);
+      return;
+    }
+
+    setHeld(heldRef.current ?? before);
+    setPhase(null);
+    const start = () => {
+      setPhase("out");
+      timers.current.push(window.setTimeout(() => {
+        setHeld(null);
+        setPhase("in");
+        timers.current.push(window.setTimeout(() => setPhase(null), FLIP_IN_MS));
+      }, FLIP_OUT_MS));
+    };
+    if (delayMs > 0) timers.current.push(window.setTimeout(start, delayMs));
+    else start();
+  });
+
+  useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
+
+  return { shown: held ?? current, phase };
 }
 
 // Types whose corner icon would collide with their own markers
@@ -235,31 +327,50 @@ export function describeTile(
 }
 
 export const GameTile = memo(function GameTile({
-  letter,
+  letter: liveLetter,
   tileKey,
   row,
   col,
-  special,
+  special: liveSpecial,
   isSelected,
   selectionIndex,
   isReused,
-  isAffected,
+  isAffected: liveAffected,
   isNewWild,
   isHint,
   isFocusTarget,
   skin,
   benchmarkColor,
   currentGrade,
+  boardEpoch,
   frostDr,
   frostDc,
   onPointerDown,
   onActivate,
   onFocus,
 }: GameTileProps) {
+  // What the tile is, for assistive tech and input, is always the live props.
+  // What it looks like lags behind for the first half of a flip.
+  const flip = useFlipReveal(
+    { letter: liveLetter, special: liveSpecial, isAffected: liveAffected },
+    boardEpoch,
+    (row + col) * FLIP_STAGGER_MS,
+  );
+  const { letter, special, isAffected } = flip.shown;
+
   const classes = getTileClasses(
     special, isSelected, isReused, isAffected, isNewWild, isHint,
     skin, benchmarkColor, currentGrade,
   );
+
+  // The edge matches the face's corner shape (round for bombs, square for stone)
+  const shape = SPECIAL_SHAPES[special.type ?? "default"] ?? SPECIAL_SHAPES.default;
+  const sideRadius = shape.match(/rounded(-\S+)?/)?.[0] ?? "rounded-lg";
+  const sideColor = isAffected && !isSelected
+    ? "bg-orange-700"
+    : special.type
+      ? SPECIAL_SIDES[special.type]
+      : "tile-side-skin";
 
   const reusedBg = (() => {
     if (currentGrade === "none") return skin.reusedTint ?? "rgba(168, 85, 247, 0.2)";
@@ -293,7 +404,7 @@ export const GameTile = memo(function GameTile({
       data-tile-pos={tileKey}
       data-selected={isSelected || undefined}
       tabIndex={isFocusTarget ? 0 : -1}
-      aria-label={describeTile(letter, row, col, special, selectionIndex, isReused)}
+      aria-label={describeTile(liveLetter, row, col, liveSpecial, selectionIndex, isReused)}
       aria-pressed={isSelected}
       onPointerDown={onPointerDown}
       // Touch and hold shows a special tile's tooltip; keep the browser's
@@ -307,9 +418,20 @@ export const GameTile = memo(function GameTile({
         const pointerType = (e.nativeEvent as PointerEvent).pointerType;
         if (e.detail === 0 && !pointerType) onActivate();
       }}
-      className={classes}
+      className="tile-cell group relative aspect-square w-full select-none outline-none"
       style={{ touchAction: "none", WebkitTouchCallout: "none" }}
     >
+      {/* Remounts on a new board so the drop-in replays; the button (and
+          keyboard focus) stays put. */}
+      <span
+        key={boardEpoch}
+        className="tile-drop absolute inset-0"
+        style={{ animationDelay: `${(row + col) * DROP_STAGGER_MS}ms` }}
+      >
+      <span className={cn("tile-body absolute inset-0", flip.phase === "out" && "tile-flip-out", flip.phase === "in" && "tile-flip-in")}>
+      {/* The tile's edge: what shows beneath the raised face */}
+      <span aria-hidden="true" className={cn("tile-side", sideRadius, sideColor)} />
+      <span className={classes}>
       {/* Skin surface: grain, noise, gloss or glow (see index.css) */}
       {showTexture && (
         <span aria-hidden="true" className={cn("tile-texture", skin.textureClass)} />
@@ -425,6 +547,9 @@ export const GameTile = memo(function GameTile({
           </span>
         </span>
       )}
+      </span>
+      </span>
+      </span>
     </button>
   );
 });

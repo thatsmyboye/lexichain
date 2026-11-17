@@ -92,13 +92,17 @@ export function TileSkinSelector() {
                 <div className="flex items-start gap-3">
                   {/* Preview: a tile on the skin's own screen + frame colors */}
                   <div aria-hidden="true" className="skin-scene flex-shrink-0 rounded-xl p-2" data-skin-preview={skin.id}>
-                    <div className={cn(
-                      'relative w-14 h-14 rounded-lg border-2 flex items-center justify-center text-card-foreground',
-                      skin.baseClasses,
-                      isSelected ? skin.benchmarkColors.gold.border : 'border-border'
-                    )}>
-                      <span className={cn('tile-texture', skin.textureClass)} />
-                      <span className="relative text-2xl font-semibold">A</span>
+                    {/* Raised like a board tile: an edge strip under a lifted face */}
+                    <div className="relative mt-1 h-14 w-14">
+                      <span className="tile-side tile-side-skin rounded-lg" />
+                      <div className={cn(
+                        'tile-face absolute inset-0 rounded-lg border-2 flex items-center justify-center text-card-foreground',
+                        skin.baseClasses,
+                        isSelected ? skin.benchmarkColors.gold.border : 'border-border'
+                      )}>
+                        <span className={cn('tile-texture', skin.textureClass)} />
+                        <span className="relative text-2xl font-semibold">A</span>
+                      </div>
                     </div>
                   </div>
 
