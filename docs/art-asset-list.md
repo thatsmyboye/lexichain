@@ -1,6 +1,6 @@
 # Lexichain custom art and asset list
 
-An itemized list of the custom art, audio, and platform assets that would lift the game, written against the build on `main` as of November 2026. It replaces `UI_ASSET_RECOMMENDATIONS.md`, which predates the logo, skins, trophies, and board depth work and lists store screens that no longer exist.
+An itemized list of the custom art, audio, and platform assets that would lift the game, written against the build on `main` as of November 2026. It replaces an earlier asset recommendations file from February 2026, since removed, which predated the logo, skins, trophies, and board depth work.
 
 ## What exists today
 
