@@ -461,7 +461,7 @@ export const GameTile = memo(function GameTile({
         <span aria-hidden="true" className="absolute bottom-0.5 left-1 text-[11px] leading-none opacity-80 z-10 pointer-events-none">⛓</span>
       )}
 
-      <span aria-hidden="true" className="text-[clamp(1.25rem,6vw,1.875rem)] font-semibold tracking-wide relative z-10">
+      <span aria-hidden="true" className="font-display text-[clamp(1.25rem,6vw,1.875rem)] font-bold tracking-wide relative z-10">
         {special.type === "wild" ? "?" : letter}
       </span>
 
@@ -498,7 +498,7 @@ export const GameTile = memo(function GameTile({
 
       {/* Multiplier value */}
       {special.type === "multiplier" && special.value && (
-        <span aria-hidden="true" className="absolute bottom-1 text-xs font-bold bg-black/30 px-1 rounded">
+        <span aria-hidden="true" className="font-display-num absolute bottom-1 text-xs font-bold bg-black/30 px-1 rounded">
           {special.value}x
         </span>
       )}

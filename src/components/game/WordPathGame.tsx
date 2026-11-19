@@ -3080,7 +3080,7 @@ function WordPathGame({
         return (
           <div>
             {label("Time")}
-            <div className={`text-2xl font-extrabold leading-none tabular-nums ${timeAttackTimeRemaining <= 10 ? "text-[hsl(var(--bad))]" : timeAttackTimeRemaining <= 30 ? "text-[hsl(var(--warn))]" : ""}`}>
+            <div className={`font-display-num text-2xl font-extrabold leading-none tabular-nums ${timeAttackTimeRemaining <= 10 ? "text-[hsl(var(--bad))]" : timeAttackTimeRemaining <= 30 ? "text-[hsl(var(--warn))]" : ""}`}>
               {Math.floor(timeAttackTimeRemaining / 60)}:{(timeAttackTimeRemaining % 60).toString().padStart(2, "0")}
             </div>
             <div className="text-[11px] font-semibold text-foreground/80">⚡ {timeAttackSpeedMultiplier.toFixed(1)}x</div>
@@ -3101,21 +3101,21 @@ function WordPathGame({
         return (
           <div>
             {label("Moves left")}
-            <div className="text-2xl font-extrabold leading-none tabular-nums">{Math.max(0, settings.dailyMovesLimit - movesUsed)}</div>
+            <div className="font-display-num text-2xl font-extrabold leading-none tabular-nums">{Math.max(0, settings.dailyMovesLimit - movesUsed)}</div>
           </div>
         );
       case "chaos":
         return (
           <div>
             {label("Moves")}
-            <div className={`text-2xl font-extrabold leading-none tabular-nums ${movesUsed >= 13 ? "text-[hsl(var(--bad))]" : ""}`}>{movesUsed}/15</div>
+            <div className={`font-display-num text-2xl font-extrabold leading-none tabular-nums ${movesUsed >= 13 ? "text-[hsl(var(--bad))]" : ""}`}>{movesUsed}/15</div>
           </div>
         );
       case "endless":
         return (
           <div>
             {label("Level")}
-            <div className="text-2xl font-extrabold leading-none tabular-nums">{endlessDifficulty}</div>
+            <div className="font-display-num text-2xl font-extrabold leading-none tabular-nums">{endlessDifficulty}</div>
           </div>
         );
       case "puzzle": {
@@ -3123,7 +3123,7 @@ function WordPathGame({
         return puzzle ? (
           <div>
             {label("Moves left")}
-            <div className="text-2xl font-extrabold leading-none tabular-nums">{puzzleMovesRemaining}</div>
+            <div className="font-display-num text-2xl font-extrabold leading-none tabular-nums">{puzzleMovesRemaining}</div>
           </div>
         ) : null;
       }
@@ -3131,14 +3131,14 @@ function WordPathGame({
         return (
           <div>
             {label("Words")}
-            <div className="text-2xl font-extrabold leading-none tabular-nums">{usedWords.length}</div>
+            <div className="font-display-num text-2xl font-extrabold leading-none tabular-nums">{usedWords.length}</div>
           </div>
         );
       default:
         return (
           <div>
             {label("Words")}
-            <div className="text-2xl font-extrabold leading-none tabular-nums">{usedWords.length}</div>
+            <div className="font-display-num text-2xl font-extrabold leading-none tabular-nums">{usedWords.length}</div>
           </div>
         );
     }
@@ -3383,7 +3383,7 @@ function WordPathGame({
           <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:static lg:mt-3 lg:rounded-xl lg:border lg:p-3 landscape-phone:static landscape-phone:mt-3 landscape-phone:rounded-xl landscape-phone:border landscape-phone:p-2">
             <div className="mx-auto flex max-w-md items-center gap-2 lg:max-w-none">
               <div className={`min-w-0 flex-1 rounded-lg border px-3 py-1.5 ${feedback ? "border-[hsl(var(--bad))] bg-[hsl(var(--bad)/0.08)]" : "border-transparent bg-muted/60"}`}>
-                <div className="truncate text-lg font-bold tracking-wide" aria-hidden="true">
+                <div className={`truncate text-lg font-bold tracking-wide ${displayWordFromPath ? "font-display" : ""}`} aria-hidden="true">
                   {displayWordFromPath || <span className="text-sm font-medium text-foreground/70">{usedWords.length ? "Reuse a ⛓ tile" : "Start a chain"}</span>}
                 </div>
                 <div role="status" aria-live="polite" className="truncate text-xs font-semibold">

@@ -140,7 +140,7 @@ export function BossWaveDisplay({ boss, progress, timeRemaining }: BossWaveDispl
         <div className="flex items-center gap-2">
           <span className="text-2xl">{boss.icon}</span>
           <div>
-            <div className="text-lg font-bold text-orange-500">BOSS WAVE!</div>
+            <div className="font-display text-lg font-bold text-orange-500">BOSS WAVE!</div>
             <div className="text-xs text-muted-foreground">{boss.description}</div>
           </div>
         </div>
@@ -203,13 +203,13 @@ export function ComboDisplay({ comboState }: ComboDisplayProps) {
         <div className="flex items-center gap-2">
           <Flame className="w-5 h-5 text-orange-400" />
           <div>
-            <div className="text-sm font-bold text-orange-500">{getComboLabel(comboState.currentCombo)}</div>
+            <div className="font-display text-sm font-bold text-orange-500">{getComboLabel(comboState.currentCombo)}</div>
             <div className="text-xs text-muted-foreground">
               {comboState.currentCombo} words • {comboState.comboMultiplier.toFixed(1)}x multiplier
             </div>
           </div>
         </div>
-        <div className="text-2xl font-bold text-orange-500">
+        <div className="font-display-num text-2xl font-bold text-orange-500">
           {comboState.currentCombo}
         </div>
       </div>
@@ -445,7 +445,7 @@ export function WaveCompleteModal({
       <div className="bg-background rounded-lg border border-border max-w-md w-full">
         <div className="p-6 text-center">
           <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold mb-2">Wave {wave} Complete!</h2>
+          <h2 className="font-display text-2xl font-bold mb-2">Wave {wave} Complete!</h2>
 
           <div className="space-y-3 my-6">
             <div className="flex items-center justify-between py-2 border-b border-border">

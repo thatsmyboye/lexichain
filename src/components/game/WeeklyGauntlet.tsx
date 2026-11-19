@@ -41,7 +41,7 @@ export function WeeklyGauntlet({ onBack }: WeeklyGauntletProps) {
             <div className="flex items-center gap-3">
               <Sword className="h-8 w-8 text-primary" />
               <div>
-                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+                <h1 className="font-display text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
                   Weekly Gauntlet
                 </h1>
                 <p className="text-muted-foreground">{weekId}</p>

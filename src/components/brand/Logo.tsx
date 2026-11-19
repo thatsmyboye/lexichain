@@ -79,7 +79,7 @@ export function Logo({ size = "md", animated = false, as: Tag = "div", className
     <Tag
       aria-label="Lexichain"
       role={isHeading ? undefined : "img"}
-      className={cn("m-0 inline-flex max-w-full select-none items-center font-extrabold leading-none", sizeClass, className)}
+      className={cn("font-display m-0 inline-flex max-w-full select-none items-center font-extrabold leading-none", sizeClass, className)}
       style={style}
     >
       <span aria-hidden="true" className="inline-flex items-center">

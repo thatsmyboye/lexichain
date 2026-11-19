@@ -82,7 +82,7 @@ export default function MyAccountPage() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4">
       <div className="container mx-auto py-8 max-w-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">My Account</h1>
+          <h1 className="font-display text-4xl font-bold mb-2">My Account</h1>
           <p className="text-muted-foreground">
             Manage your profile settings
           </p>

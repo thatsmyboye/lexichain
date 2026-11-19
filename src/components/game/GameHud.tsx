@@ -81,7 +81,7 @@ export function GameHud({
     <div className={`flex items-center gap-3 rounded-xl border bg-card/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/80 ${className}`}>
       <div className="shrink-0">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/75">Score</div>
-        <div className="text-2xl font-extrabold leading-none tabular-nums text-[hsl(var(--brand-600))]" aria-live="off">
+        <div className="font-display-num text-2xl font-extrabold leading-none tabular-nums text-[hsl(var(--brand-600))]" aria-live="off">
           {shown.toLocaleString()}
         </div>
         <span className="sr-only">{score} points</span>

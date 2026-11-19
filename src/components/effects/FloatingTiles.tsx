@@ -126,7 +126,7 @@ export function FloatingTiles() {
           } as React.CSSProperties}
         >
           <div
-            className="flex items-center justify-center rounded-lg border-2 border-primary/30 bg-card/60 font-bold text-primary/50 select-none backdrop-blur-[1px]"
+            className="flex items-center justify-center rounded-lg border-2 border-primary/30 bg-card/60 font-display font-bold text-primary/50 select-none backdrop-blur-[1px]"
             style={{
               width: tile.size,
               height: tile.size,

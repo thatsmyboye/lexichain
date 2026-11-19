@@ -30,7 +30,7 @@ export function MiniMarathon({ onBack }: MiniMarathonProps) {
             <div className="flex items-center gap-3">
               <Flag className="h-8 w-8 text-primary" />
               <div>
-                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+                <h1 className="font-display text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
                   Daily Mini-Marathon
                 </h1>
                 <p className="text-muted-foreground">{today}</p>

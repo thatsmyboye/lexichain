@@ -243,7 +243,7 @@ export const GameBoard = memo(function GameBoard({
             {"LEXI".split("").map((ch, i) => (
               <span
                 key={ch}
-                className="flex h-9 w-9 items-center justify-center rounded-md border-2 border-[hsl(var(--brand-500))] font-bold text-[hsl(var(--brand-500))] animate-tile-flip"
+                className="flex h-9 w-9 items-center justify-center rounded-md border-2 border-[hsl(var(--brand-500))] font-display font-bold text-[hsl(var(--brand-500))] animate-tile-flip"
                 style={{ animationDelay: `${i * 120}ms`, animationIterationCount: "infinite" }}
               >
                 {ch}
@@ -322,8 +322,8 @@ export const GameBoard = memo(function GameBoard({
             className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
           >
             <div className="animate-stamp rounded-2xl border-4 border-[hsl(var(--brand-500))] bg-background/90 px-5 py-2 text-center shadow-xl -rotate-6">
-              <div className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-[hsl(var(--brand-600))]">{stamp.label}</div>
-              <div className="text-lg font-bold text-foreground">+{stamp.points}</div>
+              <div className="font-display text-2xl sm:text-3xl font-black uppercase tracking-wider text-[hsl(var(--brand-600))]">{stamp.label}</div>
+              <div className="font-display-num text-lg font-bold text-foreground">+{stamp.points}</div>
             </div>
           </div>
         )}

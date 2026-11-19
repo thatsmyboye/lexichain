@@ -156,7 +156,7 @@ export function DailyChallengeLeaderboard({ currentUser }: DailyChallengeLeaderb
               </div>
               
               <div className="text-right">
-                <p className="font-bold text-lg">{entry.score.toLocaleString()}</p>
+                <p className="font-display-num font-bold text-lg">{entry.score.toLocaleString()}</p>
               </div>
             </div>
           );

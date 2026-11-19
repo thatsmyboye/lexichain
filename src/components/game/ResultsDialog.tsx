@@ -64,7 +64,7 @@ export function ResultsDialog({
         </DialogHeader>
 
         <div className="text-center">
-          <div className="text-4xl font-extrabold tabular-nums text-[hsl(var(--brand-600))]">{summary.score.toLocaleString()}</div>
+          <div className="font-display-num text-4xl font-extrabold tabular-nums text-[hsl(var(--brand-600))]">{summary.score.toLocaleString()}</div>
           <div className="text-sm text-foreground/80">
             points{summary.showGrade ? ` · ${medal.label}` : ""}
           </div>

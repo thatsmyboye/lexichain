@@ -234,7 +234,36 @@ All colors MUST be HSL.
   }
 }
 
+/* Display typeface: Sora, weights 500-800, for tile letters, the wordmark,
+   scores, and titles only. Body copy stays on the system font.
+   The file is a subset of Sora[wght].ttf from github.com/sora-xor/sora-font
+   (SIL OFL 1.1, see public/fonts/OFL.txt). To rebuild it:
+     fonttools varLib.instancer "Sora[wght].ttf" wght=500:800 -o sora-500-800.ttf
+     pyftsubset sora-500-800.ttf --output-file=public/fonts/sora-display.woff2 \
+       --flavor=woff2 --no-hinting --layout-features="kern,tnum,case,ss01" \
+       --unicodes="U+0020-007E,U+00D7,U+2013-2014,U+2026,U+2212"
+   Characters outside that set (accents, curly quotes) fall back to the system font. */
+@font-face {
+  font-family: "Sora Display";
+  src: url("/fonts/sora-display.woff2") format("woff2");
+  font-weight: 500 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer utilities {
+  /* ss01 gives the barred capital I, so a lone I on a tile reads as a letter. */
+  .font-display {
+    font-family: "Sora Display", ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "ss01" 1;
+  }
+  /* Equal-width digits, so scores and timers do not shift as they count. */
+  .font-display-num {
+    font-family: "Sora Display", ui-sans-serif, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "ss01" 1, "tnum" 1;
+  }
+
   .animate-shake { animation: shake 0.45s ease-in-out; }
   .animate-blink-twice { animation: blink 0.6s ease-in-out 2; }
   .animate-tile-pulse { animation: tile-pulse 1.4s ease-in-out infinite; }

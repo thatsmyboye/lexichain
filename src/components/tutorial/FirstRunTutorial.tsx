@@ -497,7 +497,7 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
                 className="flex h-9 items-center justify-center [grid-area:word] landscape-phone:justify-self-start"
               >
                 {currentWord ? (
-                  <span className="text-2xl font-bold tracking-[0.2em] text-foreground">{currentWord}</span>
+                  <span className="font-display text-2xl font-bold tracking-[0.2em] text-foreground">{currentWord}</span>
                 ) : (
                   <span className="text-sm text-muted-foreground">Drag, tap, or type</span>
                 )}
@@ -569,7 +569,7 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
                         inFlash && flash?.tone === "ok" && "border-[hsl(var(--ok))] bg-[hsl(var(--ok)/0.14)]",
                       )}
                     >
-                      <span aria-hidden="true" className="relative z-10 text-[clamp(1.25rem,7vmin,2.25rem)] font-semibold">
+                      <span aria-hidden="true" className="font-display relative z-10 text-[clamp(1.25rem,7vmin,2.25rem)] font-bold">
                         {letter}
                       </span>
                       {inLast && sel < 0 && (

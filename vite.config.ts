@@ -56,7 +56,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         // The page itself is not precached: it is fetched network-first below
         // so every launch picks up the latest deploy.
-        globPatterns: ['**/*.{js,css,svg,ico}'],
+        // woff2: the display font, so installed and offline play keeps it.
+        globPatterns: ['**/*.{js,css,svg,ico,woff2}'],
         globIgnores: ['sw-upgrade.js'],
         navigateFallback: null,
         cleanupOutdatedCaches: true,
