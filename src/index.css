@@ -219,18 +219,23 @@ All colors MUST be HSL.
     }
   }
 
-  /* Foil sheen for rare letters */
+  /* Foil sheen for rare letters: a diagonal band that sweeps across once,
+     then rests off the tile for the remainder of the cycle. The image is one
+     band per 280px, so the start and end positions below park it clear of
+     any tile up to about 120px wide. */
   .tile-foil {
     position: absolute;
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(115deg, transparent 30%, hsl(32 100% 70% / 0.35) 45%, transparent 60%);
-    background-size: 250% 100%;
+    background-image: url("/assets/board/foil-rare.webp");
+    background-size: 280px 280px;
+    background-repeat: repeat;
+    background-position: 118px 0;
     animation: foil-sweep 4.5s ease-in-out infinite;
   }
   .tile-foil-strong {
-    background-image: linear-gradient(115deg, transparent 25%, hsl(280 100% 75% / 0.45) 40%, hsl(190 100% 75% / 0.35) 55%, transparent 70%);
+    background-image: url("/assets/board/foil-rare-strong.webp");
   }
 }
 
@@ -296,8 +301,8 @@ All colors MUST be HSL.
   100% { opacity: 0; transform: scale(0.95) translateY(-12px) rotate(-6deg); }
 }
 @keyframes foil-sweep {
-  0%, 100% { background-position: 100% 0; }
-  50% { background-position: 0% 0; }
+  0% { background-position: 118px 0; }
+  44%, 100% { background-position: 398px 0; }
 }
 @keyframes vignette {
   0%, 100% { box-shadow: inset 0 0 0 0 hsl(var(--bad) / 0); }
@@ -315,7 +320,11 @@ All colors MUST be HSL.
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .tile-foil { animation: none !important; }
+  /* At rest the foil is a small glint in the top-left corner, clear of the letter */
+  .tile-foil {
+    animation: none !important;
+    background-position: 144px 0;
+  }
 }
 
 
@@ -354,14 +363,25 @@ All colors MUST be HSL.
   pointer-events: none;
 }
 
-/* Original: clean card with a soft top light and grounded bottom edge */
+/* Original: matte ceramic in light, anodized slate in dark, under a soft top
+   light. The image is drawn at half size (128px) and each tile starts it at
+   its own offset (--tile-tex-x/y, set by GameTile from row and column) so no
+   two tiles show the same patch of grain.
+   Files come from scripts/generate-original-materials.mjs. */
 .tile-tex-card {
-  background: linear-gradient(180deg, hsl(0 0% 100% / 0.55), hsl(0 0% 100% / 0) 45%);
+  background-image:
+    linear-gradient(180deg, hsl(0 0% 100% / 0.3), transparent 45%),
+    url("/assets/board/tile-face-original-light.webp");
+  background-size: 100% 100%, 128px 128px;
+  background-position: 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, repeat;
   box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.9), inset 0 -2px 0 hsl(var(--foreground) / 0.07);
 }
 .dark .tile-tex-card {
-  background: linear-gradient(180deg, hsl(210 40% 98% / 0.06), transparent 45%);
-  box-shadow: inset 0 1px 0 hsl(210 40% 98% / 0.08), inset 0 -2px 0 hsl(0 0% 0% / 0.25);
+  background-image:
+    linear-gradient(180deg, hsl(210 40% 98% / 0.05), transparent 45%),
+    url("/assets/board/tile-face-original-dark.webp");
+  box-shadow: inset 0 1px 0 hsl(210 40% 98% / 0.09), inset 0 -2px 0 hsl(0 0% 0% / 0.3);
 }
 
 /* Ocean: sea glass. Fill is translucent (bg-white/60 + backdrop blur); this
@@ -509,11 +529,20 @@ All colors MUST be HSL.
   border: 1px solid hsl(var(--border));
 }
 
+/* Original: a recessed matte bed. The colors are the fallback while the
+   floor image loads. */
 :root[data-skin="original"] .board-frame,
 .skin-scene[data-skin-preview="original"] {
-  background: hsl(var(--muted));
-  border-color: hsl(var(--border));
+  background-color: #e3e9f2;
+  background-image: url("/assets/board/tray-floor-original-light.webp");
+  background-size: 128px 128px;
+  border-color: transparent;
   box-shadow: 0 10px 30px -18px hsl(var(--foreground) / 0.35);
+}
+.dark[data-skin="original"] .board-frame,
+.dark .skin-scene[data-skin-preview="original"] {
+  background-color: #090e1a;
+  background-image: url("/assets/board/tray-floor-original-dark.webp");
 }
 
 :root[data-skin="ocean"] .board-frame,
@@ -1152,6 +1181,10 @@ All colors MUST be HSL.
 }
 /* Faces rise above their cells; keep the top row clear of the tray rim */
 .tile-grid-wrap {
+  /* Above the tray's bezel (.board-frame::after), so focus rings on edge
+     tiles are not clipped by it */
+  position: relative;
+  z-index: 1;
   margin-top: var(--tile-depth);
 }
 
@@ -1172,6 +1205,21 @@ All colors MUST be HSL.
 }
 .tile-side-skin {
   background: var(--tile-edge);
+}
+/* Original: a machined edge strip. It is anchored to the bottom because only
+   the lowest tile-depth of this element shows below the face; the strip's
+   light-catching bevel sits in those rows. High contrast keeps its solid edge. */
+:root:not(.high-contrast)[data-skin="original"] .tile-side-skin,
+:root:not(.high-contrast) .skin-scene[data-skin-preview="original"] .tile-side-skin {
+  background-color: var(--tile-edge);
+  background-image: url("/assets/board/tile-edge-original-light.webp");
+  background-size: 128px 16px;
+  background-position: var(--tile-tex-x, 0px) bottom;
+  background-repeat: repeat-x;
+}
+.dark:not(.high-contrast)[data-skin="original"] .tile-side-skin,
+.dark:not(.high-contrast) .skin-scene[data-skin-preview="original"] .tile-side-skin {
+  background-image: url("/assets/board/tile-edge-original-dark.webp");
 }
 /* A pressed tile sits flush with the tray, so its edge is out of sight.
    Hiding it also keeps it from showing through translucent selected faces. */
@@ -1215,6 +1263,20 @@ All colors MUST be HSL.
     inset 0 3px 7px var(--tray-shade),
     inset 0 1px 1px var(--tray-shade),
     inset 0 -1px 0 var(--tray-lip);
+}
+/* Original: a chamfered bezel around the tray, stretched from a 9-slice image
+   so it fits any board size. It sits under the tiles. */
+:root[data-skin="original"]:not(.high-contrast) .board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 32px solid transparent;
+  border-image: url("/assets/board/tray-frame-original-light.webp") 64 / 32px stretch;
+}
+.dark[data-skin="original"]:not(.high-contrast) .board-frame::after {
+  border-image-source: url("/assets/board/tray-frame-original-dark.webp");
 }
 
 /* New board: tiles drop into the tray one by one (delay set per tile) */

@@ -390,6 +390,14 @@ export const GameTile = memo(function GameTile({
   // and selected/affected states keep their flat, high-signal fills.
   const showTexture = special.type === null && !isSelected && !isAffected;
 
+  // Where this tile starts its skin's material image, so neighbors never show
+  // the same patch of grain. The multipliers map every (row, col) to a distinct
+  // offset within the 128px repeat; the face and edge both read these.
+  const textureOffset = {
+    "--tile-tex-x": `${(col * 47 + row * 83) % 128}px`,
+    "--tile-tex-y": `${(col * 31 + row * 52) % 128}px`,
+  } as React.CSSProperties;
+
   // Frost creeps in from the edge facing the Freeze tile.
   const hasFrostDir = frostDr !== undefined && frostDc !== undefined && (frostDr !== 0 || frostDc !== 0);
   const frostStyle = hasFrostDir
@@ -420,7 +428,7 @@ export const GameTile = memo(function GameTile({
         if (e.detail === 0 && !pointerType) onActivate();
       }}
       className="tile-cell group relative aspect-square w-full select-none outline-none"
-      style={{ touchAction: "none", WebkitTouchCallout: "none" }}
+      style={{ touchAction: "none", WebkitTouchCallout: "none", ...textureOffset }}
     >
       {/* Remounts on a new board so the drop-in replays; the button (and
           keyboard focus) stays put. */}
