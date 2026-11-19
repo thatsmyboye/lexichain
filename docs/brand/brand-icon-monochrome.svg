@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-im-title">
+  <title id="lc-im-title">Lexichain monochrome icon</title>
+  <!-- Solid keycap tile with L and beveled chain ring knocked out -->
+  <path fill-rule="evenodd" fill="#000000" d="
+    M43 29 H85 A13 13 0 0 1 98 42 V86 A13 13 0 0 1 85 99 H43 A13 13 0 0 1 30 86 V42 A13 13 0 0 1 43 29 Z
+    M43 43 V85 H85 V74 H54 V43 Z
+    M74 41 L84 51 L71 64 L61 54 Z
+  " />
+  <!-- Inner island of the knocked-out chain link so the ring stays open -->
+  <path fill="#000000" d="M74 47.5 L77.5 51 L71 57.5 L67.5 54 Z" />
+</svg>

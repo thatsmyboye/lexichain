@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 532 168" width="532" height="168" role="img" aria-labelledby="lc-sb-title">
+  <title id="lc-sb-title">Lexichain</title>
+  <defs>
+    <linearGradient id="lc-sb-face" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F1F5F9" />
+    </linearGradient>
+    <linearGradient id="lc-sb-link" gradientUnits="userSpaceOnUse" x1="0" y1="-8" x2="0" y2="8">
+      <stop offset="0%" stop-color="#EDE9FE" />
+      <stop offset="55%" stop-color="#C4B5FD" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+
+    <g id="lc-sb-tile">
+      <rect x="0" y="8" width="56" height="56" rx="8" fill="#1E0542" fill-opacity="0.34" />
+      <rect x="0" y="5" width="56" height="56" rx="8" fill="#4C1D95" />
+      <rect x="0" y="0" width="56" height="56" rx="8" fill="url(#lc-sb-face)" stroke="#6D28D9" stroke-width="1.25" />
+      <path d="M8 1.5 H48" stroke="#FFFFFF" stroke-width="1.5" />
+    </g>
+
+    <g id="lc-sb-chain">
+      <path fill-rule="evenodd" d="M-16 -3.5 L-13 -6.5 H2 L5 -3.5 V6.5 L2 9.5 H-13 L-16 6.5 Z M-12 -1.5 L-10.5 -3 H-0.5 L1 -1.5 V4.5 L-0.5 6 H-10.5 L-12 4.5 Z" fill="#1E0542" fill-opacity="0.32" />
+      <path fill-rule="evenodd" d="M-5 -3.5 L-2 -6.5 H13 L16 -3.5 V6.5 L13 9.5 H-2 L-5 6.5 Z M-1 -1.5 L0.5 -3 H10.5 L12 -1.5 V4.5 L10.5 6 H0.5 L-1 4.5 Z" fill="#1E0542" fill-opacity="0.32" />
+      <path fill-rule="evenodd" d="M-16 -5 L-13 -8 H2 L5 -5 V5 L2 8 H-13 L-16 5 Z M-12 -2.5 L-10.5 -4 H-0.5 L1 -2.5 V2.5 L-0.5 4 H-10.5 L-12 2.5 Z" fill="url(#lc-sb-link)" stroke="#2E1065" stroke-width="1.5" stroke-linejoin="bevel" />
+      <path fill-rule="evenodd" d="M-5 -5 L-2 -8 H13 L16 -5 V5 L13 8 H-2 L-5 5 Z M-1 -2.5 L0.5 -4 H10.5 L12 -2.5 V2.5 L10.5 4 H0.5 L-1 2.5 Z" fill="url(#lc-sb-link)" stroke="#2E1065" stroke-width="1.5" stroke-linejoin="bevel" />
+      <path d="M-7 -8 H1 V-4 H-7 Z" fill="url(#lc-sb-link)" />
+      <path d="M-7 -8 H1 M-7 -4 H1" fill="none" stroke="#2E1065" stroke-width="1.5" />
+      <path d="M1 1.5 H5 V5 L2 8 H-1 V4 H1 Z" fill="url(#lc-sb-link)" />
+      <path d="M1 1.5 V4 H-1 M5 1.5 V5 L2 8 H-1" fill="none" stroke="#2E1065" stroke-width="1.5" stroke-linejoin="bevel" />
+    </g>
+  </defs>
+
+  <g transform="translate(16 16)">
+    <use href="#lc-sb-tile" />
+    <path d="M20.2 15 H25.8 V36 H36.6 V41 H20.2 Z" fill="#1E0542" />
+  </g>
+  <g transform="translate(90 16)">
+    <use href="#lc-sb-tile" />
+    <path d="M19.7 15 H36.4 V20 H25.3 V25.4 H34.8 V30.2 H25.3 V36 H36.4 V41 H19.7 Z" fill="#1E0542" />
+  </g>
+  <g transform="translate(164 16)">
+    <use href="#lc-sb-tile" />
+    <path d="M15.6 15 H22.2 L28 23.3 L33.8 15 H40.4 L31.3 28 L40.4 41 H33.8 L28 32.7 L22.2 41 H15.6 L24.7 28 Z" fill="#1E0542" />
+  </g>
+  <g transform="translate(238 16)">
+    <use href="#lc-sb-tile" />
+    <path d="M21.8 15 H34.2 V19.4 H30.8 V36.6 H34.2 V41 H21.8 V36.6 H25.2 V19.4 H21.8 Z" fill="#1E0542" />
+  </g>
+
+  <g transform="translate(164 90)">
+    <use href="#lc-sb-tile" />
+    <path d="M38.5 22.6 C37.6 18.8 33.8 17.3 28.6 17.3 C21.2 17.3 17.5 21.4 17.5 28.0 C17.5 34.6 21.2 38.7 28.6 38.7 C33.8 38.7 37.6 37.2 38.5 33.4" fill="none" stroke="#1E0542" stroke-width="5.4" stroke-linecap="butt" />
+  </g>
+  <g transform="translate(238 90)">
+    <use href="#lc-sb-tile" />
+    <path d="M16.1 15 H21.7 V25.3 H34.3 V15 H39.9 V41 H34.3 V30.3 H21.7 V41 H16.1 Z" fill="#1E0542" />
+  </g>
+  <g transform="translate(312 90)">
+    <use href="#lc-sb-tile" />
+    <path fill-rule="evenodd" d="M24.5 15 H31.5 L41.75 41 H35.95 L33.8 35.6 H22.2 L20.05 41 H14.25 Z M28 20.8 L24.1 30.8 H31.9 Z" fill="#1E0542" />
+  </g>
+  <g transform="translate(386 90)">
+    <use href="#lc-sb-tile" />
+    <path d="M21.8 15 H34.2 V19.4 H30.8 V36.6 H34.2 V41 H21.8 V36.6 H25.2 V19.4 H21.8 Z" fill="#1E0542" />
+  </g>
+  <g transform="translate(460 90)">
+    <use href="#lc-sb-tile" />
+    <path d="M14.9 15 H20.9 L35.5 32.8 V15 H41.1 V41 H35.1 L20.5 23.2 V41 H14.9 Z" fill="#1E0542" />
+  </g>
+
+  <use href="#lc-sb-chain" x="81" y="44" />
+  <use href="#lc-sb-chain" x="155" y="44" />
+  <use href="#lc-sb-chain" x="229" y="44" />
+  <g transform="translate(229 81) rotate(-45) scale(1.08)">
+    <use href="#lc-sb-chain" />
+  </g>
+  <use href="#lc-sb-chain" x="229" y="118" />
+  <use href="#lc-sb-chain" x="303" y="118" />
+  <use href="#lc-sb-chain" x="377" y="118" />
+  <use href="#lc-sb-chain" x="451" y="118" />
+</svg>
