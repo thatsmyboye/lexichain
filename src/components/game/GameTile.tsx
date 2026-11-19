@@ -6,6 +6,7 @@ import { letterRarity } from "@/lib/letterRarity";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 import { cn } from "@/lib/utils";
 import { SpecialTileIcon } from "./SpecialTileIcon";
+import { ChainMark } from "./ChainLink";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 
 interface BenchmarkColor {
@@ -458,7 +459,7 @@ export const GameTile = memo(function GameTile({
 
       {/* Chain-link glyph so "reused" reads without color */}
       {isReused && !isSelected && (
-        <span aria-hidden="true" className="absolute bottom-0.5 left-1 text-[11px] leading-none opacity-80 z-10 pointer-events-none">⛓</span>
+        <span aria-hidden="true" className="absolute bottom-0.5 left-1 leading-none opacity-80 z-10 pointer-events-none"><ChainMark /></span>
       )}
 
       <span aria-hidden="true" className="font-display text-[clamp(1.25rem,6vw,1.875rem)] font-bold tracking-wide relative z-10">

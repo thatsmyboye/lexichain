@@ -126,7 +126,7 @@ All colors MUST be HSL.
   }
 
   /* Color-vision settings: swap the red/green feedback pair for pairs that
-     stay distinguishable. Icons (✓/✗) and the dashed invalid path line carry
+     stay distinguishable. Icons (✓/✗) and the broken links of an invalid path carry
      the same information without color. */
   :root[data-cvd="protanopia"],
   :root[data-cvd="deuteranopia"] {

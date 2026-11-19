@@ -82,6 +82,7 @@ import {
 } from "@/components/game/SurvivalModeUI";
 import type { Pos, SpecialTile, SpecialTileType } from "@/types/game";
 import { GameBoard, type BoardStamp, type PathTone } from "./GameBoard";
+import { ChainMark } from "./ChainLink";
 import { GameHud } from "./GameHud";
 import { HowToPlayDialog } from "./HowToPlayDialog";
 import { ResultsDialog, type ResultsSummary } from "./ResultsDialog";
@@ -3384,7 +3385,7 @@ function WordPathGame({
             <div className="mx-auto flex max-w-md items-center gap-2 lg:max-w-none">
               <div className={`min-w-0 flex-1 rounded-lg border px-3 py-1.5 ${feedback ? "border-[hsl(var(--bad))] bg-[hsl(var(--bad)/0.08)]" : "border-transparent bg-muted/60"}`}>
                 <div className={`truncate text-lg font-bold tracking-wide ${displayWordFromPath ? "font-display" : ""}`} aria-hidden="true">
-                  {displayWordFromPath || <span className="text-sm font-medium text-foreground/70">{usedWords.length ? "Reuse a ⛓ tile" : "Start a chain"}</span>}
+                  {displayWordFromPath || <span className="text-sm font-medium text-foreground/70">{usedWords.length ? <>Reuse a <ChainMark className="inline-block align-[-2px]" /> tile</> : "Start a chain"}</span>}
                 </div>
                 <div role="status" aria-live="polite" className="truncate text-xs font-semibold">
                   {feedback ? (
