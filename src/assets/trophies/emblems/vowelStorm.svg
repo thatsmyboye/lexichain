@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tvs-title">
+  <title id="lc-tvs-title">Vowel Storm trophy</title>
+  <defs>
+    <linearGradient id="lc-tvs-cloud" gradientUnits="userSpaceOnUse" x1="77" y1="70" x2="179" y2="116">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="52%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+    <linearGradient id="lc-tvs-letter" gradientUnits="userSpaceOnUse" x1="99" y1="122" x2="157" y2="179">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Faceted geometric thundercloud -->
+  <polygon points="86,116 77,107 77,98 86,89 102,89 113,70 143,70 153,85 170,85 179,94 179,107 170,116" fill="url(#lc-tvs-cloud)"/>
+  <polygon points="143,70 153,85 170,85 179,94 179,107 170,116 86,116 96,105 150,105 148,88" fill="#38BDF8" fill-opacity="0.3"/>
+  <polyline points="83,103 83,99 89,93 105,93 115,74 140,74" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9" stroke-linejoin="bevel"/>
+  <polygon points="86,116 77,107 77,98 86,89 102,89 113,70 143,70 153,85 170,85 179,94 179,107 170,116" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Wind-driven storm slashes -->
+  <g fill="#7DD3FC" stroke="#071A33" stroke-width="2.5" stroke-linejoin="bevel">
+    <polygon points="85,123 92,123 84,146 77,146"/>
+    <polygon points="94,149 101,149 94,167 87,167"/>
+    <polygon points="169,123 176,123 168,146 161,146"/>
+    <polygon points="163,149 170,149 163,167 156,167"/>
+  </g>
+
+  <!-- Bold Sora-800-proportioned A: fill -> highlight -> clean dark outline on top -->
+  <path fill-rule="evenodd" d="
+    M120.5,122 H135.5 L157,179 H144 L139.2,166.5 H116.8 L112,179 H99 Z
+    M128,134.5 L119.5,156.5 H136.5 Z
+  " fill="url(#lc-tvs-letter)"/>
+  <polygon points="120.5,122 128,122 128,134.5 119.5,156.5 116.8,166.5 112,179 99,179" fill="#FFFFFF" fill-opacity="0.45"/>
+  <path fill-rule="evenodd" d="
+    M120.5,122 H135.5 L157,179 H144 L139.2,166.5 H116.8 L112,179 H99 Z
+    M128,134.5 L119.5,156.5 H136.5 Z
+  " fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+</svg>

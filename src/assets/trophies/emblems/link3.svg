@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tbt-title">
+  <title id="lc-tbt-title">Bound Together trophy</title>
+  <defs>
+    <linearGradient id="lc-tbt-metal" gradientUnits="userSpaceOnUse" x1="-34" y1="-34" x2="34" y2="34">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+
+    <g id="lc-tbt-ring">
+      <path fill-rule="evenodd" d="
+        M14,-34 L34,-14 V14 L14,34 H-14 L-34,14 V-14 L-14,-34 Z
+        M9.5,-23 L23,-9.5 V9.5 L9.5,23 H-9.5 L-23,9.5 V-9.5 L-9.5,-23 Z
+      " fill="url(#lc-tbt-metal)" stroke="#071A33" stroke-width="3.8" stroke-linejoin="bevel"/>
+      <polyline points="-29,11 -29,-11 -11,-29 11,-29" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.88" stroke-linejoin="bevel"/>
+    </g>
+
+    <!-- Band-aligned weave patches: zero curved nicks at any scale -->
+    <clipPath id="lc-tbt-c1"><rect x="148" y="99" width="19" height="26.5"/></clipPath>
+    <clipPath id="lc-tbt-c2"><polygon points="127.5,148 115.25,160.25 128.75,173.75 141,161.5"/></clipPath>
+    <clipPath id="lc-tbt-c3"><rect x="128" y="117" width="19" height="28"/></clipPath>
+  </defs>
+
+  <use href="#lc-tbt-ring" x="128" y="107.5"/>
+  <use href="#lc-tbt-ring" x="145.75" y="138.25"/>
+  <use href="#lc-tbt-ring" x="110.25" y="138.25"/>
+
+  <g clip-path="url(#lc-tbt-c1)"><use href="#lc-tbt-ring" x="128" y="107.5"/></g>
+  <g clip-path="url(#lc-tbt-c2)"><use href="#lc-tbt-ring" x="145.75" y="138.25"/></g>
+  <g clip-path="url(#lc-tbt-c3)"><use href="#lc-tbt-ring" x="128" y="107.5"/></g>
+</svg>

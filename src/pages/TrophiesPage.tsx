@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrophyBadge } from "@/components/trophies/TrophyBadge";
 import { ACHIEVEMENTS, type AchievementId } from "@/lib/achievements";
 import { TROPHY_HINTS, useTrophies } from "@/lib/trophies";
 
 const SEEN_KEY = "lexichain-trophies-seen";
 
-const RARITY_STYLE: Record<string, { ring: string; badge: string; emoji: string; label: string }> = {
-  common: { ring: "from-amber-200 to-amber-400", badge: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100", emoji: "🏆", label: "Common" },
-  rare: { ring: "from-sky-300 to-blue-500", badge: "bg-sky-100 text-sky-900 dark:bg-sky-900/40 dark:text-sky-100", emoji: "⭐", label: "Rare" },
-  epic: { ring: "from-fuchsia-300 to-purple-600", badge: "bg-purple-100 text-purple-900 dark:bg-purple-900/40 dark:text-purple-100", emoji: "💎", label: "Epic" },
-  legendary: { ring: "from-yellow-200 via-amber-400 to-orange-500", badge: "bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100", emoji: "👑", label: "Legendary" },
+const RARITY_STYLE: Record<string, { badge: string; label: string }> = {
+  common: { badge: "bg-slate-200 text-slate-900 dark:bg-slate-700/60 dark:text-slate-100", label: "Common" },
+  rare: { badge: "bg-sky-100 text-sky-900 dark:bg-sky-900/40 dark:text-sky-100", label: "Rare" },
+  epic: { badge: "bg-purple-100 text-purple-900 dark:bg-purple-900/40 dark:text-purple-100", label: "Epic" },
+  legendary: { badge: "bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100", label: "Legendary" },
 };
 
 // "Word Artisan (3 words of 6+ letters)" -> "Word Artisan"
@@ -90,12 +91,7 @@ export default function TrophiesPage() {
               key={id}
               className={`relative flex flex-col items-center rounded-xl border bg-card p-3 text-center shadow-sm ${record ? "" : "opacity-80"} ${fresh ? "animate-in zoom-in-50 fade-in duration-700" : ""}`}
             >
-              <div
-                aria-hidden="true"
-                className={`mb-2 flex h-16 w-16 items-center justify-center rounded-full text-3xl ${record ? `bg-gradient-to-br ${style.ring} shadow-md` : "bg-muted text-foreground/40"}`}
-              >
-                {record ? style.emoji : <Lock className="h-6 w-6" />}
-              </div>
+              <TrophyBadge id={id} rarity={achievement.rarity} unlocked={!!record} className="mb-2 h-16 w-16" />
               <h2 className="text-sm font-semibold leading-tight">
                 {shortName(achievement.label)}
                 {!record && <span className="sr-only"> (locked)</span>}

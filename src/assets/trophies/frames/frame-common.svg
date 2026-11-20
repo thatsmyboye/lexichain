@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-fc-title">
+  <title id="lc-fc-title">Common trophy frame</title>
+  <defs>
+    <linearGradient id="lc-fc-bevel" gradientUnits="userSpaceOnUse" x1="24" y1="24" x2="232" y2="232">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="lc-fc-inner" gradientUnits="userSpaceOnUse" x1="40" y1="40" x2="216" y2="216">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="lc-fc-well" gradientUnits="userSpaceOnUse" x1="48" y1="48" x2="208" y2="208">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#273549"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer chamfered square -->
+  <polygon points="58,24 198,24 232,58 232,198 198,232 58,232 24,198 24,58" fill="url(#lc-fc-bevel)" stroke="#1E293B" stroke-width="5" stroke-linejoin="bevel"/>
+  <!-- 120° top-left specular bevel -->
+  <polyline points="30,194 30,60 60,30 194,30" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-opacity="0.85" stroke-linejoin="bevel"/>
+  <!-- Stepped inner collar -->
+  <polygon points="66,38 190,38 218,66 218,190 190,218 66,218 38,190 38,66" fill="url(#lc-fc-inner)" stroke="#334155" stroke-width="2.5" stroke-linejoin="bevel"/>
+  <!-- Recessed emblem well (safe r = 68px centered at 128,128) -->
+  <polygon points="74,48 182,48 208,74 208,182 182,208 74,208 48,182 48,74" fill="url(#lc-fc-well)" stroke="#0F172A" stroke-width="3" stroke-linejoin="bevel"/>
+  <polygon points="79,56 177,56 200,79 200,177 177,200 79,200 56,177 56,79" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-opacity="0.32" stroke-linejoin="bevel"/>
+
+  <!-- Chamfered corner studs -->
+  <g fill="#E2E8F0" stroke="#334155" stroke-width="2">
+    <rect x="44" y="44" width="10" height="10" transform="rotate(45 49 49)"/>
+    <rect x="202" y="44" width="10" height="10" transform="rotate(45 207 49)"/>
+    <rect x="44" y="202" width="10" height="10" transform="rotate(45 49 207)"/>
+    <rect x="202" y="202" width="10" height="10" transform="rotate(45 207 207)"/>
+  </g>
+</svg>

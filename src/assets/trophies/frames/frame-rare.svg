@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-fr-title">
+  <title id="lc-fr-title">Rare trophy frame</title>
+  <defs>
+    <linearGradient id="lc-fr-well" gradientUnits="userSpaceOnUse" x1="52" y1="40" x2="204" y2="216">
+      <stop offset="0%" stop-color="#071A33"/>
+      <stop offset="100%" stop-color="#133A63"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 6 faceted bevel planes around vertical hexagon (120° light) -->
+  <polygon points="128,18 33,73 52,84 128,40" fill="#BAE6FD"/>
+  <polygon points="33,73 33,183 52,172 52,84" fill="#38BDF8"/>
+  <polygon points="128,18 223,73 204,84 128,40" fill="#0EA5E9"/>
+  <polygon points="33,183 128,238 128,216 52,172" fill="#0284C7"/>
+  <polygon points="223,73 223,183 204,172 204,84" fill="#0369A1"/>
+  <polygon points="223,183 128,238 128,216 204,172" fill="#0C4A6E"/>
+
+  <!-- Outer hex contour & miter lines -->
+  <polygon points="128,18 223,73 223,183 128,238 33,183 33,73" fill="none" stroke="#082F49" stroke-width="5" stroke-linejoin="bevel"/>
+  <g stroke="#082F49" stroke-width="2" stroke-opacity="0.55">
+    <line x1="128" y1="18" x2="128" y2="40"/>
+    <line x1="223" y1="73" x2="204" y2="84"/>
+    <line x1="223" y1="183" x2="204" y2="172"/>
+    <line x1="128" y1="238" x2="128" y2="216"/>
+    <line x1="33" y1="183" x2="52" y2="172"/>
+    <line x1="33" y1="73" x2="52" y2="84"/>
+  </g>
+  <!-- Crisp mid-bevel specular highlight -->
+  <polyline points="42.5,177.5 42.5,78.5 128,29 213.5,78.5" fill="none" stroke="#E0F2FE" stroke-width="2.5" stroke-opacity="0.85" stroke-linejoin="bevel"/>
+
+  <!-- Recessed navy emblem well (apothem 76px, safe r = 68px) -->
+  <polygon points="128,40 204,84 204,172 128,216 52,172 52,84" fill="url(#lc-fr-well)" stroke="#082F49" stroke-width="3" stroke-linejoin="bevel"/>
+  <polygon points="128,48 197,88 197,168 128,208 59,168 59,88" fill="none" stroke="#7DD3FC" stroke-width="1.5" stroke-opacity="0.38" stroke-linejoin="bevel"/>
+
+  <!-- Cardinal diamond clasps -->
+  <polygon points="128,11 139,24 128,37 117,24" fill="#E0F2FE" stroke="#082F49" stroke-width="3" stroke-linejoin="bevel"/>
+  <polygon points="128,219 139,232 128,245 117,232" fill="#38BDF8" stroke="#082F49" stroke-width="3" stroke-linejoin="bevel"/>
+</svg>

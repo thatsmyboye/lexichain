@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tcmk-title">
+  <title id="lc-tcmk-title">Combo Maker trophy</title>
+  <defs>
+    <linearGradient id="lc-tcmk-t3" gradientUnits="userSpaceOnUse" x1="80" y1="70" x2="176" y2="119">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <linearGradient id="lc-tcmk-t2" gradientUnits="userSpaceOnUse" x1="86" y1="99" x2="170" y2="144">
+      <stop offset="0%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+    <linearGradient id="lc-tcmk-t1" gradientUnits="userSpaceOnUse" x1="92" y1="128" x2="164" y2="169.5">
+      <stop offset="0%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tier 3 chevron (top, widest & brightest) -->
+  <polygon points="128,70 128,88 80,119 80,101" fill="#FFFFFF"/>
+  <polygon points="128,70 176,101 176,119 128,88" fill="url(#lc-tcmk-t3)"/>
+  <polygon points="128,70 176,101 176,119 128,88 80,119 80,101" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Tier 2 chevron (middle) -->
+  <polygon points="128,99 128,117 86,144 86,126" fill="#E0F2FE"/>
+  <polygon points="128,99 170,126 170,144 128,117" fill="url(#lc-tcmk-t2)"/>
+  <polygon points="128,99 170,126 170,144 128,117 86,144 86,126" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Tier 1 chevron (bottom) -->
+  <polygon points="128,128 128,146 92,169.5 92,151.5" fill="#BAE6FD"/>
+  <polygon points="128,128 164,151.5 164,169.5 128,146" fill="url(#lc-tcmk-t1)"/>
+  <polygon points="128,128 164,151.5 164,169.5 128,146 92,169.5 92,151.5" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Center ignition diamond -->
+  <polygon points="128,158 128,184 116,171" fill="#FFFFFF"/>
+  <polygon points="128,158 140,171 128,184" fill="#7DD3FC"/>
+  <polygon points="128,158 140,171 128,184 116,171" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+</svg>

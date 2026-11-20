@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tccr-title">
+  <title id="lc-tccr-title">Consonant Crunch trophy</title>
+  <defs>
+    <linearGradient id="lc-tccr-anvil" gradientUnits="userSpaceOnUse" x1="74" y1="135" x2="166" y2="177">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="48%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="lc-tccr-head" gradientUnits="userSpaceOnUse" x1="-15" y1="-25" x2="15" y2="25">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="52%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+    <linearGradient id="lc-tccr-handle" gradientUnits="userSpaceOnUse" x1="12" y1="-7" x2="62" y2="7">
+      <stop offset="0%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Crunch impact shards bursting up-left -->
+  <g stroke="#071A33" stroke-width="2.8" stroke-linejoin="bevel">
+    <polygon points="87,94 94,104 83,110 78,100" fill="#FFFFFF"/>
+    <polygon points="78,115 88,120 82,128 73,123" fill="#7DD3FC"/>
+  </g>
+
+  <!-- Angled heavy forging hammer (rotated +16° around 114,99; clear 9–13px strike gap above anvil) -->
+  <g transform="translate(114 99) rotate(16)" stroke-linejoin="bevel">
+    <!-- Sturdy handle -->
+    <polygon points="11,-6.5 58,-6.5 62,-2.5 62,2.5 58,6.5 11,6.5" fill="url(#lc-tccr-handle)"/>
+    <line x1="14" y1="-3.5" x2="56" y2="-3.5" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.8"/>
+    <polygon points="11,-6.5 58,-6.5 62,-2.5 62,2.5 58,6.5 11,6.5" fill="none" stroke="#071A33" stroke-width="3.5"/>
+
+    <!-- Chamfered maul head -->
+    <polygon points="-10,-25 10,-25 15,-20 15,20 10,25 -10,25 -15,20 -15,-20" fill="url(#lc-tccr-head)"/>
+    <!-- 120° shaded right/bottom facet -->
+    <polygon points="0,-25 10,-25 15,-20 15,20 10,25 0,25" fill="#38BDF8" fill-opacity="0.34"/>
+    <polyline points="-11,17 -11,-18 -8,-21 8,-21" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9"/>
+    <polygon points="-10,-25 10,-25 15,-20 15,20 10,25 -10,25 -15,20 -15,-20" fill="none" stroke="#071A33" stroke-width="3.5"/>
+  </g>
+
+  <!-- Horned geometric forging anvil (y = 135..177) -->
+  <polygon points="74,143 99,135 166,135 166,150 152,153 148,164 160,170 160,177 96,177 96,170 108,164 104,154" fill="url(#lc-tccr-anvil)"/>
+  <!-- Anvil shadow facet on waist & base -->
+  <polygon points="104,154 152,153 148,164 160,170 160,177 96,177 96,170 108,164" fill="#38BDF8" fill-opacity="0.36"/>
+  <!-- Top striking deck specular -->
+  <polyline points="82,143 100,138 162,138" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.92"/>
+  <polygon points="74,143 99,135 166,135 166,150 152,153 148,164 160,170 160,177 96,177 96,170 108,164 104,154" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+</svg>

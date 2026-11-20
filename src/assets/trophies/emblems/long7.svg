@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tlo-title">
+  <title id="lc-tlo-title">Longshot trophy</title>
+  <defs>
+    <linearGradient id="lc-tlo-limb" gradientUnits="userSpaceOnUse" x1="0" y1="-56" x2="0" y2="56">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="48%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="lc-tlo-head" gradientUnits="userSpaceOnUse" x1="30" y1="-16" x2="59" y2="16">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="55%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(128 128) rotate(-45)" stroke-linejoin="bevel">
+    <!-- Taut drawn bowstring meeting arrow nock at (-46, 0) -->
+    <polyline points="-15,-50 -46,0 -15,50" fill="none" stroke="#071A33" stroke-width="8.5" stroke-linecap="butt"/>
+    <polyline points="-15,-50 -46,0 -15,50" fill="none" stroke="#BAE6FD" stroke-width="3.8" stroke-linecap="butt"/>
+
+    <!-- Faceted recurve bow limbs (120° light falls from local -y) -->
+    <polygon points="-14,-56 14,-44 28,-16 28,16 14,44 -14,56 -17,46 3,35 14.5,12 14.5,-12 3,-35 -17,-46" fill="url(#lc-tlo-limb)"/>
+    <polyline points="-13,-51 11,-41 23,-15" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9"/>
+    <polygon points="-14,-56 14,-44 28,-16 28,16 14,44 -14,56 -17,46 3,35 14.5,12 14.5,-12 3,-35 -17,-46" fill="none" stroke="#071A33" stroke-width="3.5"/>
+
+    <!-- Bold fletching feathers -->
+    <polygon points="-53,-15 -34,-15 -24,-5 -44,-5" fill="#FFFFFF"/>
+    <polygon points="-53,15 -34,15 -24,5 -44,5" fill="#7DD3FC"/>
+    <polygon points="-53,-15 -34,-15 -24,-5 -44,-5" fill="none" stroke="#071A33" stroke-width="3.2"/>
+    <polygon points="-53,15 -34,15 -24,5 -44,5" fill="none" stroke="#071A33" stroke-width="3.2"/>
+
+    <!-- Arrow shaft (split top light / bottom shade, outline on top) -->
+    <rect x="-46" y="-5" width="84" height="5" fill="#FFFFFF"/>
+    <rect x="-46" y="0" width="84" height="5" fill="#7DD3FC"/>
+    <rect x="-46" y="-5" width="84" height="10" fill="none" stroke="#071A33" stroke-width="3.5"/>
+
+    <!-- Faceted broadhead arrow tip -->
+    <polygon points="59,0 30,-16 36,-5 36,0" fill="#FFFFFF"/>
+    <polygon points="59,0 36,0 36,5 30,16" fill="url(#lc-tlo-head)"/>
+    <polygon points="59,0 30,-16 36,-5 36,5 30,16" fill="none" stroke="#071A33" stroke-width="3.5"/>
+  </g>
+</svg>
