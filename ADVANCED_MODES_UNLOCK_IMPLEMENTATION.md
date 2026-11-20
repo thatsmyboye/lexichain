@@ -31,7 +31,7 @@ Added a new store item that allows users to instantly unlock all Advanced Game M
   - `unlocked_at` (TIMESTAMP)
   - `source` (TEXT, e.g., 'stripe_purchase_xxx')
   - `created_at`, `updated_at` (TIMESTAMPS)
-- **Migration**: `supabase/migrations/20250120000000_add_user_unlocked_modes.sql`
+- **Migration**: `supabase/migrations/20251029223958_17051b73-5198-4c08-9ac2-f10fd4493441.sql`
 
 ### 3. Payment Processing
 - **Updated**: `supabase/functions/create-payment/index.ts`
@@ -71,7 +71,7 @@ Added a new store item that allows users to instantly unlock all Advanced Game M
 - Test with both authenticated and guest users
 
 ### 3. Database Migration
-- Run the migration: `supabase/migrations/20250120000000_add_user_unlocked_modes.sql`
+- Run the migration: `supabase/migrations/20251029223958_17051b73-5198-4c08-9ac2-f10fd4493441.sql`
 - Verify the table is created correctly
 
 ## Pricing Rationale
