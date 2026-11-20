@@ -212,6 +212,11 @@ All colors MUST be HSL.
      screens never taller than the viewport allows. */
   .board-frame {
     max-width: min(28rem, 100%);
+    /* iOS offers "Save image" on a long press over anything painted with an
+       image, CSS backgrounds included, and the tray, bezel and tile faces
+       are images. Tiles use a long press for their own help, so turn the
+       system menu off for the whole board. The property is inherited. */
+    -webkit-touch-callout: none;
   }
   @media (orientation: landscape) and (max-height: 540px) {
     .board-frame {
