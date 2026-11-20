@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tep-title">
+  <title id="lc-tep-title">Epic trophy</title>
+  <defs>
+    <linearGradient id="lc-tep-tail" gradientUnits="userSpaceOnUse" x1="86" y1="170" x2="151" y2="105">
+      <stop offset="0%" stop-color="#914DEF" />
+      <stop offset="48%" stop-color="#C4B5FD" />
+      <stop offset="100%" stop-color="#FFFFFF" />
+    </linearGradient>
+    <linearGradient id="lc-tep-wing" gradientUnits="userSpaceOnUse" x1="78" y1="158" x2="146" y2="100">
+      <stop offset="0%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#EDE9FE" />
+    </linearGradient>
+  </defs>
+
+  <!-- Flanking outer comet tail ribbons -->
+  <polygon points="131,99 82,135 94,141 138,111" fill="url(#lc-tep-wing)" stroke="#14072B" stroke-width="3.2" stroke-linejoin="bevel" />
+  <polygon points="157,125 121,174 115,162 145,118" fill="url(#lc-tep-wing)" stroke="#14072B" stroke-width="3.2" stroke-linejoin="bevel" />
+
+  <!-- Central faceted meteoric plume (split light top / shaded bottom, contour on top) -->
+  <polygon points="145,99 86,170 140,116" fill="#FFFFFF" />
+  <polygon points="157,111 86,170 140,116" fill="url(#lc-tep-tail)" />
+  <polygon points="145,99 157,111 86,170" fill="none" stroke="#14072B" stroke-width="3.5" stroke-linejoin="bevel" />
+
+  <!-- Trailing comet sparks -->
+  <g stroke="#14072B" stroke-width="2.6" stroke-linejoin="bevel">
+    <polygon points="82,115 88,122 82,129 76,122" fill="#FFFFFF" />
+    <polygon points="134,167 140,174 134,181 128,174" fill="#DDD6FE" />
+  </g>
+
+  <!-- Blazing 8-point comet star head centered at (151, 105) -->
+  <g stroke-linejoin="bevel">
+    <!-- Secondary diagonal rays (r = 21) -->
+    <polygon points="151,105 166,90 156,105" fill="#EDE9FE" />
+    <polygon points="151,105 166,90 151,100" fill="#FFFFFF" />
+    <polygon points="151,105 166,120 151,110" fill="#A78BFA" />
+    <polygon points="151,105 166,120 156,105" fill="#C4B5FD" />
+    <polygon points="151,105 136,120 146,105" fill="#C4B5FD" />
+    <polygon points="151,105 136,120 151,110" fill="#A78BFA" />
+    <polygon points="151,105 136,90 151,100" fill="#FFFFFF" />
+    <polygon points="151,105 136,90 146,105" fill="#EDE9FE" />
+    <polygon points="166,90 156,105 166,120 151,110 136,120 146,105 136,90 151,100" fill="none" stroke="#14072B" stroke-width="3" />
+
+    <!-- Dominant 4-point cardinal star head (r = 31) -->
+    <polygon points="151,74 151,105 142,96" fill="#FFFFFF" />
+    <polygon points="151,74 160,96 151,105" fill="#DDD6FE" />
+    <polygon points="182,105 151,105 160,96" fill="#FFFFFF" />
+    <polygon points="182,105 160,114 151,105" fill="#A78BFA" />
+    <polygon points="151,136 151,105 160,114" fill="#A78BFA" />
+    <polygon points="151,136 142,114 151,105" fill="#C4B5FD" />
+    <polygon points="120,105 151,105 142,114" fill="#EDE9FE" />
+    <polygon points="120,105 142,96 151,105" fill="#FFFFFF" />
+    <polygon points="151,74 160,96 182,105 160,114 151,136 142,114 120,105 142,96" fill="none" stroke="#14072B" stroke-width="3.5" />
+  </g>
+
+  <!-- Brilliant comet core jewel -->
+  <polygon points="151,95 161,105 151,115 141,105" fill="#FFFFFF" stroke="#14072B" stroke-width="2.6" stroke-linejoin="bevel" />
+</svg>

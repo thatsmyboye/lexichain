@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tcl-title">
+  <title id="lc-tcl-title">Clutch Finish trophy</title>
+  <defs>
+    <linearGradient id="lc-tcl-cap" gradientUnits="userSpaceOnUse" x1="91" y1="78" x2="165" y2="178">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="48%" stop-color="#EDE9FE" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+    <linearGradient id="lc-tcl-glass" gradientUnits="userSpaceOnUse" x1="96" y1="91" x2="160" y2="165">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="50%" stop-color="#DDD6FE" />
+      <stop offset="100%" stop-color="#9F6BF7" />
+    </linearGradient>
+    <linearGradient id="lc-tcl-sand" gradientUnits="userSpaceOnUse" x1="106" y1="117" x2="150" y2="161">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="55%" stop-color="#FEF08A" />
+      <stop offset="100%" stop-color="#FACC15" />
+    </linearGradient>
+  </defs>
+
+  <!-- Faceted pinched hourglass frame (W=64 bulbs, W=22 waist) -->
+  <g stroke-linejoin="bevel">
+    <polygon points="96,91 160,91 160,106 139,125 139,131 160,150 160,165 96,165 96,150 117,131 117,125 96,106" fill="url(#lc-tcl-glass)" />
+    <!-- 120° shaded right wall -->
+    <polygon points="128,91 160,91 160,106 139,125 139,131 160,150 160,165 128,165" fill="#914DEF" fill-opacity="0.28" />
+    <!-- Top-left glass bevel catch -->
+    <polyline points="100,94 100,104 120,123" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9" />
+    <polyline points="120,133 100,152 100,162" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.75" />
+    <!-- Outer glass contour on top -->
+    <polygon points="96,91 160,91 160,106 139,125 139,131 160,150 160,165 96,165 96,150 117,131 117,125 96,106" fill="none" stroke="#14072B" stroke-width="3.5" />
+
+    <!-- Dark recessed upper & lower chambers -->
+    <polygon points="105,94 151,94 151,103 131,122 125,122 105,103" fill="#14072B" />
+    <polygon points="125,134 131,134 151,153 151,162 105,162 105,153" fill="#14072B" />
+
+    <!-- Final-second sand: tiny sliver left at top, single falling diamond grain, full bottom mound -->
+    <polygon points="118,115 138,115 131,122 125,122" fill="url(#lc-tcl-sand)" />
+    <polygon points="128,132 132,137 128,142 124,137" fill="#FFFFFF" />
+    <polygon points="107,161 107,154 128,143 149,154 149,161" fill="url(#lc-tcl-sand)" />
+    <polygon points="128,143 149,154 149,161 128,161" fill="#F59E0B" fill-opacity="0.32" />
+
+    <!-- Top beveled end-cap (W=74, y=78..91) -->
+    <polygon points="91,83 96,78 160,78 165,83 165,88 160,91 96,91 91,88" fill="url(#lc-tcl-cap)" />
+    <polygon points="128,78 160,78 165,83 165,88 160,91 128,91" fill="#914DEF" fill-opacity="0.3" />
+    <line x1="97" y1="81.5" x2="159" y2="81.5" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.9" />
+    <polygon points="91,83 96,78 160,78 165,83 165,88 160,91 96,91 91,88" fill="none" stroke="#14072B" stroke-width="3.5" />
+
+    <!-- Bottom beveled end-cap (W=74, y=165..178) -->
+    <polygon points="91,168 96,165 160,165 165,168 165,173 160,178 96,178 91,173" fill="url(#lc-tcl-cap)" />
+    <polygon points="128,165 160,165 165,168 165,173 160,178 128,178" fill="#914DEF" fill-opacity="0.3" />
+    <line x1="97" y1="168.5" x2="159" y2="168.5" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.85" />
+    <polygon points="91,168 96,165 160,165 165,168 165,173 160,178 96,178 91,173" fill="none" stroke="#14072B" stroke-width="3.5" />
+  </g>
+</svg>

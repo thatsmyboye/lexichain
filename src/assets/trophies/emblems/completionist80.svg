@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tc8-title">
+  <title id="lc-tc8-title">Completionist 80% trophy</title>
+  <defs>
+    <linearGradient id="lc-tc8-ring" gradientUnits="userSpaceOnUse" x1="71" y1="70" x2="185" y2="178">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="48%" stop-color="#EDE9FE" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+    <linearGradient id="lc-tc8-chk" gradientUnits="userSpaceOnUse" x1="103" y1="108" x2="152" y2="146">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="55%" stop-color="#EDE9FE" />
+      <stop offset="100%" stop-color="#C4B5FD" />
+    </linearGradient>
+  </defs>
+
+  <!-- Segment 5 (remaining 20% slot, 202°–266°): hollow dashed target outline -->
+  <path d="M75.6,106.8 A56.5,56.5 0 0 1 124.1,71.6 L125.4,90.6 A37.5,37.5 0 0 0 93.2,114.0 Z" fill="none" stroke="#9F6BF7" stroke-width="2.6" stroke-dasharray="7 5" stroke-linejoin="bevel" />
+
+  <!-- Segments 1–4 (4 of 5 lit = 80%, clockwise from 12 o'clock; R=58.5, r=35.5) -->
+  <g stroke-linejoin="bevel">
+    <!-- Seg 1 (-86° to -22°) -->
+    <path d="M132.1,69.6 A58.5,58.5 0 0 1 182.2,106.1 L160.9,114.7 A35.5,35.5 0 0 0 130.5,92.6 Z" fill="url(#lc-tc8-ring)" />
+    <path d="M135.4,75.0 A53.5,53.5 0 0 1 176.1,104.5" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.9" />
+    <path d="M132.1,69.6 A58.5,58.5 0 0 1 182.2,106.1 L160.9,114.7 A35.5,35.5 0 0 0 130.5,92.6 Z" fill="none" stroke="#14072B" stroke-width="3.5" />
+
+    <!-- Seg 2 (-14° to +50°) -->
+    <path d="M184.8,113.8 A58.5,58.5 0 0 1 165.6,172.8 L150.8,155.2 A35.5,35.5 0 0 0 162.4,119.4 Z" fill="url(#lc-tc8-ring)" />
+    <path d="M184.8,113.8 A58.5,58.5 0 0 1 165.6,172.8 L150.8,155.2 A35.5,35.5 0 0 0 162.4,119.4 Z" fill="none" stroke="#14072B" stroke-width="3.5" />
+
+    <!-- Seg 3 (+58° to +122°) -->
+    <path d="M159.0,177.6 A58.5,58.5 0 0 1 97.0,177.6 L109.2,158.1 A35.5,35.5 0 0 0 146.8,158.1 Z" fill="url(#lc-tc8-ring)" />
+    <path d="M159.0,177.6 A58.5,58.5 0 0 1 97.0,177.6 L109.2,158.1 A35.5,35.5 0 0 0 146.8,158.1 Z" fill="none" stroke="#14072B" stroke-width="3.5" />
+
+    <!-- Seg 4 (+130° to +194°) -->
+    <path d="M90.4,172.8 A58.5,58.5 0 0 1 71.2,113.8 L93.6,119.4 A35.5,35.5 0 0 0 105.2,155.2 Z" fill="url(#lc-tc8-ring)" />
+    <path d="M90.8,166.5 A53.5,53.5 0 0 1 75.3,118.7" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.88" />
+    <path d="M90.4,172.8 A58.5,58.5 0 0 1 71.2,113.8 L93.6,119.4 A35.5,35.5 0 0 0 105.2,155.2 Z" fill="none" stroke="#14072B" stroke-width="3.5" />
+  </g>
+
+  <!-- Centered faceted completion checkmark (max r = 29.05px, 6.45px inside inner ring) -->
+  <g stroke-linejoin="bevel">
+    <polygon points="103,128 110,121 121,132 145,108 152,115 121,146" fill="url(#lc-tc8-chk)" />
+    <polygon points="121,139 148.5,111.5 152,115 121,146 103,128 106.5,124.5" fill="#A78BFA" fill-opacity="0.4" />
+    <polyline points="106.5,127 110,123.5 121,134.5 145,110.5" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.9" />
+    <polygon points="103,128 110,121 121,132 145,108 152,115 121,146" fill="none" stroke="#14072B" stroke-width="3.5" />
+  </g>
+</svg>

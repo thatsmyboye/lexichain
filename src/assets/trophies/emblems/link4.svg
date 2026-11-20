@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tpi-title">
+  <title id="lc-tpi-title">Perfect Interlock trophy</title>
+  <defs>
+    <linearGradient id="lc-tpi-metal-h" gradientUnits="userSpaceOnUse" x1="-35" y1="-24.5" x2="35" y2="24.5">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="48%" stop-color="#EDE9FE" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+    <linearGradient id="lc-tpi-metal-v" gradientUnits="userSpaceOnUse" x1="-24.5" y1="-35" x2="24.5" y2="35">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="48%" stop-color="#EDE9FE" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+
+    <!-- Horizontal beveled link (70x49 outer, 10.2px uniform wall = 2.55px at 64px) -->
+    <g id="lc-tpi-ring-h" stroke-linejoin="bevel">
+      <path fill-rule="evenodd" d="
+        M-25.5,-24.5 H25.5 L35,-15 V15 L25.5,24.5 H-25.5 L-35,15 V-15 Z
+        M-21.3,-14.3 H21.3 L24.8,-10.8 V10.8 L21.3,14.3 H-21.3 L-24.8,10.8 V-10.8 Z
+      " fill="url(#lc-tpi-metal-h)" />
+      <polyline points="-30.2,12 -30.2,-12 -23,-19.7 23,-19.7" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.88" />
+      <path fill-rule="evenodd" d="
+        M-25.5,-24.5 H25.5 L35,-15 V15 L25.5,24.5 H-25.5 L-35,15 V-15 Z
+        M-21.3,-14.3 H21.3 L24.8,-10.8 V10.8 L21.3,14.3 H-21.3 L-24.8,10.8 V-10.8 Z
+      " fill="none" stroke="#14072B" stroke-width="3.6" />
+    </g>
+
+    <!-- Vertical beveled link (49x70 outer, 10.2px uniform wall, consistent 120° light) -->
+    <g id="lc-tpi-ring-v" stroke-linejoin="bevel">
+      <path fill-rule="evenodd" d="
+        M-24.5,-25.5 L-15,-35 H15 L24.5,-25.5 V25.5 L15,35 H-15 L-24.5,25.5 Z
+        M-14.3,-21.3 L-10.8,-24.8 H10.8 L14.3,-21.3 V21.3 L10.8,24.8 H-10.8 L-14.3,21.3 Z
+      " fill="url(#lc-tpi-metal-v)" />
+      <polyline points="-19.7,23 -19.7,-23 -12,-30.2 12,-30.2" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.88" />
+      <path fill-rule="evenodd" d="
+        M-24.5,-25.5 L-15,-35 H15 L24.5,-25.5 V25.5 L15,35 H-15 L-24.5,25.5 Z
+        M-14.3,-21.3 L-10.8,-24.8 H10.8 L14.3,-21.3 V21.3 L10.8,24.8 H-10.8 L-14.3,21.3 Z
+      " fill="none" stroke="#14072B" stroke-width="3.6" />
+    </g>
+
+    <!-- 4 isolated 90° weave patches (all cuts fall strictly in open space; zero seams) -->
+    <clipPath id="lc-tpi-c1"><rect x="150" y="90" width="16" height="16.5" /></clipPath>
+    <clipPath id="lc-tpi-c2"><rect x="149.5" y="150" width="16.5" height="16" /></clipPath>
+    <clipPath id="lc-tpi-c3"><rect x="90" y="149.5" width="16" height="16.5" /></clipPath>
+    <clipPath id="lc-tpi-c4"><rect x="110.5" y="111" width="17.5" height="17" /></clipPath>
+  </defs>
+
+  <!-- Base 4-ring diamond cycle (D = 28; opposite rings clear by 7px at center) -->
+  <use href="#lc-tpi-ring-h" x="128" y="100" />
+  <use href="#lc-tpi-ring-v" x="156" y="128" />
+  <use href="#lc-tpi-ring-h" x="128" y="156" />
+  <use href="#lc-tpi-ring-v" x="100" y="128" />
+
+  <!-- Cyclic alternating Hopf weave across all 4 neighboring ring pairs -->
+  <g clip-path="url(#lc-tpi-c1)"><use href="#lc-tpi-ring-h" x="128" y="100" /></g>
+  <g clip-path="url(#lc-tpi-c2)"><use href="#lc-tpi-ring-v" x="156" y="128" /></g>
+  <g clip-path="url(#lc-tpi-c3)"><use href="#lc-tpi-ring-h" x="128" y="156" /></g>
+  <g clip-path="url(#lc-tpi-c4)"><use href="#lc-tpi-ring-h" x="128" y="100" /></g>
+</svg>
