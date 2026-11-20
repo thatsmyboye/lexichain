@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-twa-title">
+  <title id="lc-twa-title">Word Artisan trophy</title>
+  <defs>
+    <linearGradient id="lc-twa-left" gradientUnits="userSpaceOnUse" x1="94" y1="70" x2="128" y2="180">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="lc-twa-right" gradientUnits="userSpaceOnUse" x1="128" y1="70" x2="162" y2="180">
+      <stop offset="0%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Faceted fountain nib (120° top-left split) -->
+  <polygon points="128,70 94,120 104,134 100,154 128,154" fill="url(#lc-twa-left)"/>
+  <polygon points="128,70 162,120 152,134 156,154 128,154" fill="url(#lc-twa-right)"/>
+  <polygon points="128,70 162,120 152,134 156,154 100,154 104,134 94,120" fill="none" stroke="#0F172A" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Tine slit & diamond breather vent -->
+  <line x1="128" y1="72" x2="128" y2="117" stroke="#0F172A" stroke-width="4.5" stroke-linecap="butt"/>
+  <polygon points="128,113 139,124 128,135 117,124" fill="#0F172A"/>
+  <polygon points="128,118 134,124 128,130 122,124" fill="#E2E8F0" fill-opacity="0.35"/>
+
+  <!-- Stepped nib collar cuff -->
+  <polygon points="103,162 128,162 128,180 99,180" fill="#F8FAFC"/>
+  <polygon points="128,162 153,162 157,180 128,180" fill="#94A3B8"/>
+  <polygon points="103,162 153,162 157,180 99,180" fill="none" stroke="#0F172A" stroke-width="3.5" stroke-linejoin="bevel"/>
+  <line x1="106" y1="165" x2="150" y2="165" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.8"/>
+</svg>

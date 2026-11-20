@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tww-title">
+  <title id="lc-tww-title">Wild Wizard trophy</title>
+  <defs>
+    <linearGradient id="lc-tww-crown" gradientUnits="userSpaceOnUse" x1="94" y1="69" x2="166" y2="148">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="52%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+    <linearGradient id="lc-tww-brim" gradientUnits="userSpaceOnUse" x1="76" y1="144" x2="180" y2="177">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="55%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Floating Wild sparkle star (exact 11.5 / 3.6 proportions matching Chaos Conductor) -->
+  <g transform="translate(89 98)" stroke-linejoin="bevel">
+    <polygon points="0,-11.5 3.6,-3.6 11.5,0 3.6,3.6 0,11.5 -3.6,3.6 -11.5,0 -3.6,-3.6" fill="#FFFFFF" stroke="#071A33" stroke-width="3"/>
+  </g>
+
+  <!-- Sweeping chamfered hat brim -->
+  <polygon points="76,157 93,144 163,144 180,157 165,172 128,177 91,172" fill="url(#lc-tww-brim)"/>
+  <polygon points="128,144 163,144 180,157 165,172 128,177" fill="#38BDF8" fill-opacity="0.32"/>
+  <polyline points="82,157 95,147 128,147" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9"/>
+  <polygon points="76,157 93,144 163,144 180,157 165,172 128,177 91,172" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Bent pointed wizard crown (fill -> shadow split -> highlight -> clean outline on top) -->
+  <polygon points="94,148 106,104 126,69 154,77 166,93 147,91 151,116 162,148" fill="url(#lc-tww-crown)"/>
+  <polygon points="126,69 154,77 166,93 147,91 151,116 162,148 134,148 136,102" fill="#38BDF8" fill-opacity="0.28"/>
+  <polyline points="99,134 110,105 127,74 150,80" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9" stroke-linejoin="bevel"/>
+  <polygon points="94,148 106,104 126,69 154,77 166,93 147,91 151,116 162,148" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Hatband & diamond clasp -->
+  <polygon points="95,137 161,137 163,148 93,148" fill="#38BDF8" stroke="#071A33" stroke-width="3.2" stroke-linejoin="bevel"/>
+  <polygon points="128,134 136,142.5 128,151 120,142.5" fill="#FFFFFF" stroke="#071A33" stroke-width="2.8" stroke-linejoin="bevel"/>
+
+  <!-- Wild emblem on crown (exact 0.313 inner/outer ratio matching Chaos Conductor's top tile) -->
+  <g transform="translate(126 115)" stroke-linejoin="bevel">
+    <polygon points="0,-16 5.0,-5.0 16,0 5.0,5.0 0,16 -5.0,5.0 -16,0 -5.0,-5.0" fill="#071A33"/>
+    <polygon points="0,-6.5 6.5,0 0,6.5 -6.5,0" fill="#38BDF8"/>
+  </g>
+</svg>

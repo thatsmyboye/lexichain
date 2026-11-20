@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-fl-title">
+  <title id="lc-fl-title">Legendary trophy frame</title>
+  <defs>
+    <linearGradient id="lc-fl-ring" gradientUnits="userSpaceOnUse" x1="32" y1="32" x2="224" y2="224">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="40%" stop-color="#FACC15"/>
+      <stop offset="75%" stop-color="#CA8A04"/>
+      <stop offset="100%" stop-color="#854D0E"/>
+    </linearGradient>
+    <linearGradient id="lc-fl-inner" gradientUnits="userSpaceOnUse" x1="46" y1="46" x2="210" y2="210">
+      <stop offset="0%" stop-color="#854D0E"/>
+      <stop offset="100%" stop-color="#FDE047"/>
+    </linearGradient>
+    <linearGradient id="lc-fl-well" gradientUnits="userSpaceOnUse" x1="52" y1="52" x2="204" y2="204">
+      <stop offset="0%" stop-color="#1C1104"/>
+      <stop offset="100%" stop-color="#3B2308"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 4 diagonal diamond spikes -->
+  <g stroke="#451A03" stroke-width="4" stroke-linejoin="bevel">
+    <polygon points="44,44 76,56 64,64 56,76" fill="#FEF08A"/>
+    <polygon points="212,44 200,76 192,64 180,56" fill="#FACC15"/>
+    <polygon points="44,212 56,180 64,192 76,200" fill="#EAB308"/>
+    <polygon points="212,212 180,200 192,192 200,180" fill="#A16207"/>
+  </g>
+
+  <!-- 3 cardinal starburst wings (left, right, bottom) -->
+  <g stroke="#451A03" stroke-width="4.5" stroke-linejoin="bevel">
+    <polygon points="10,128 38,108 44,128 38,148" fill="#FEF08A"/>
+    <polygon points="10,128 44,128 38,148" fill="#CA8A04"/>
+    <polygon points="246,128 218,108 212,128 218,148" fill="#EAB308"/>
+    <polygon points="246,128 212,128 218,148" fill="#854D0E"/>
+    <polygon points="128,246 108,218 128,212 148,218" fill="#EAB308"/>
+    <polygon points="128,246 128,212 148,218" fill="#854D0E"/>
+  </g>
+
+  <!-- Top 3-peak geometric crown -->
+  <polygon points="90,42 94,16 112,28 128,8 144,28 162,16 166,42" fill="#FEF08A" stroke="#451A03" stroke-width="4.5" stroke-linejoin="bevel"/>
+  <polygon points="128,8 144,28 162,16 166,42 128,42" fill="#EAB308" fill-opacity="0.72"/>
+  <polygon points="128,19 135,28 128,37 121,28" fill="#7927EC" stroke="#451A03" stroke-width="2"/>
+
+  <!-- Double-beveled imperial gold medallion ring -->
+  <circle cx="128" cy="128" r="95" fill="url(#lc-fl-ring)" stroke="#451A03" stroke-width="5"/>
+  <path d="M44 102 A88 88 0 0 1 160 46" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-opacity="0.85"/>
+  <circle cx="128" cy="128" r="85" fill="url(#lc-fl-inner)" stroke="#542C04" stroke-width="2.5"/>
+
+  <!-- Recessed obsidian-gold emblem well (r = 76px, safe r = 68px) -->
+  <circle cx="128" cy="128" r="76" fill="url(#lc-fl-well)" stroke="#451A03" stroke-width="3"/>
+  <circle cx="128" cy="128" r="70" fill="none" stroke="#FDE047" stroke-width="1.5" stroke-opacity="0.45" stroke-dasharray="10 6"/>
+</svg>

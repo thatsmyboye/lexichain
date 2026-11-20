@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tlm-title">
+  <title id="lc-tlm-title">Length Master trophy</title>
+  <defs>
+    <linearGradient id="lc-tlm-bar" gradientUnits="userSpaceOnUse" x1="69" y1="108" x2="187" y2="148">
+      <stop offset="0%" stop-color="#E0F2FE"/>
+      <stop offset="50%" stop-color="#7DD3FC"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="lc-tlm-left" gradientUnits="userSpaceOnUse" x1="102" y1="69" x2="128" y2="183">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E0F2FE"/>
+    </linearGradient>
+    <linearGradient id="lc-tlm-right" gradientUnits="userSpaceOnUse" x1="128" y1="69" x2="154" y2="183">
+      <stop offset="0%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Horizontal precision measuring-span arrow bar behind the nib (x = 69..187) -->
+  <polygon points="69,128 91,108 91,119 165,119 165,108 187,128 165,148 165,137 91,137 91,148" fill="url(#lc-tlm-bar)" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+  <!-- Top ruler graduation notches -->
+  <g stroke="#071A33" stroke-width="3" stroke-linecap="butt">
+    <line x1="98" y1="119" x2="98" y2="128"/>
+    <line x1="158" y1="119" x2="158" y2="128"/>
+  </g>
+  <line x1="74" y1="126" x2="89" y2="112" stroke="#FFFFFF" stroke-width="1.8" stroke-opacity="0.85"/>
+
+  <!-- Extended Word Craft pen nib in foreground (y = 69..183) -->
+  <polygon points="128,69 102,119 109,135 106,156 128,156" fill="url(#lc-tlm-left)"/>
+  <polygon points="128,69 154,119 147,135 150,156 128,156" fill="url(#lc-tlm-right)"/>
+  <polygon points="128,69 154,119 147,135 150,156 106,156 109,135 102,119" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Tine slit & diamond breather vent -->
+  <line x1="128" y1="71" x2="128" y2="117" stroke="#071A33" stroke-width="4.2" stroke-linecap="butt"/>
+  <polygon points="128,113 138,123 128,133 118,123" fill="#071A33"/>
+  <polygon points="128,118 133,123 128,128 123,123" fill="#BAE6FD" fill-opacity="0.5"/>
+
+  <!-- Stepped nib collar cuff -->
+  <polygon points="108,164 128,164 128,183 104,183" fill="#FFFFFF"/>
+  <polygon points="128,164 148,164 152,183 128,183" fill="#7DD3FC"/>
+  <polygon points="108,164 148,164 152,183 104,183" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+  <line x1="111" y1="167" x2="145" y2="167" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.85"/>
+</svg>

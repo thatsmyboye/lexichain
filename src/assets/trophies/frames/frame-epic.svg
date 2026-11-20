@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-fe-title">
+  <title id="lc-fe-title">Epic trophy frame</title>
+  <defs>
+    <linearGradient id="lc-fe-lug" gradientUnits="userSpaceOnUse" x1="8" y1="106" x2="248" y2="150">
+      <stop offset="0%" stop-color="#DDD6FE"/>
+      <stop offset="50%" stop-color="#9F6BF7"/>
+      <stop offset="100%" stop-color="#783BE8"/>
+    </linearGradient>
+    <linearGradient id="lc-fe-well" gradientUnits="userSpaceOnUse" x1="52" y1="52" x2="204" y2="204">
+      <stop offset="0%" stop-color="#14072B"/>
+      <stop offset="100%" stop-color="#2E1065"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Signature protruding chamfered chain-link lugs (left & right) -->
+  <path fill-rule="evenodd" d="M10,113 L18,105 H38 V151 H18 L10,143 Z M20,118 L24,114 H34 V142 H24 L20,138 Z" fill="url(#lc-fe-lug)" stroke="#24084F" stroke-width="4.5" stroke-linejoin="bevel"/>
+  <path fill-rule="evenodd" d="M246,113 L238,105 H218 V151 H238 L246,143 Z M236,118 L232,114 H222 V142 H232 L236,138 Z" fill="url(#lc-fe-lug)" stroke="#24084F" stroke-width="4.5" stroke-linejoin="bevel"/>
+
+  <!-- 8 faceted amethyst bevel planes (120° light; darkest facets >= 3.0:1 vs #0F172A) -->
+  <polygon points="88,32 168,32 159.5,52 96.5,52" fill="#DDD6FE"/>
+  <polygon points="32,88 88,32 96.5,52 52,96.5" fill="#F5F3FF"/>
+  <polygon points="32,168 32,88 52,96.5 52,159.5" fill="#C4B5FD"/>
+  <polygon points="168,32 224,88 204,96.5 159.5,52" fill="#B197FC"/>
+  <polygon points="88,224 32,168 52,159.5 96.5,204" fill="#9F6BF7"/>
+  <polygon points="224,88 224,168 204,159.5 204,96.5" fill="#8D4DF2"/>
+  <polygon points="168,224 88,224 96.5,204 159.5,204" fill="#8344EE"/>
+  <polygon points="224,168 168,224 159.5,204 204,159.5" fill="#783BE8"/>
+
+  <!-- Outer octagon contour & radial facet lines -->
+  <polygon points="88,32 168,32 224,88 224,168 168,224 88,224 32,168 32,88" fill="none" stroke="#24084F" stroke-width="5" stroke-linejoin="bevel"/>
+  <g stroke="#24084F" stroke-width="2" stroke-opacity="0.55">
+    <line x1="88" y1="32" x2="96.5" y2="52"/>
+    <line x1="168" y1="32" x2="159.5" y2="52"/>
+    <line x1="224" y1="88" x2="204" y2="96.5"/>
+    <line x1="224" y1="168" x2="204" y2="159.5"/>
+    <line x1="168" y1="224" x2="159.5" y2="204"/>
+    <line x1="88" y1="224" x2="96.5" y2="204"/>
+    <line x1="32" y1="168" x2="52" y2="159.5"/>
+    <line x1="32" y1="88" x2="52" y2="96.5"/>
+  </g>
+  <polyline points="42,163 42,92 92,42 163,42" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.8" stroke-linejoin="bevel"/>
+
+  <!-- Recessed deep-plum emblem well (apothem 76px; guide apothem 70px, inner edge 69.25px > 68px safe circle) -->
+  <polygon points="96.5,52 159.5,52 204,96.5 204,159.5 159.5,204 96.5,204 52,159.5 52,96.5" fill="url(#lc-fe-well)" stroke="#1E0542" stroke-width="3" stroke-linejoin="bevel"/>
+  <polygon points="99,58 157,58 198,99 198,157 157,198 99,198 58,157 58,99" fill="none" stroke="#C4B5FD" stroke-width="1.5" stroke-opacity="0.38" stroke-linejoin="bevel"/>
+
+  <!-- Top amethyst crest & bottom counterweight tab -->
+  <polygon points="108,34 118,14 138,14 148,34 136,44 120,44" fill="#EDE9FE" stroke="#24084F" stroke-width="4" stroke-linejoin="bevel"/>
+  <polygon points="128,18 138,29 128,40 118,29" fill="#7927EC"/>
+  <polygon points="112,216 144,216 136,242 120,242" fill="#8344EE" stroke="#24084F" stroke-width="4" stroke-linejoin="bevel"/>
+</svg>

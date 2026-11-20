@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tcm-title">
+  <title id="lc-tcm-title">Committed trophy</title>
+  <defs>
+    <linearGradient id="lc-tcm-left" gradientUnits="userSpaceOnUse" x1="86" y1="68" x2="128" y2="186">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E0F2FE"/>
+    </linearGradient>
+    <linearGradient id="lc-tcm-right" gradientUnits="userSpaceOnUse" x1="122" y1="68" x2="170" y2="186">
+      <stop offset="0%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="lc-tcm-core" gradientUnits="userSpaceOnUse" x1="114" y1="122" x2="144" y2="172">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FEF08A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Twin-tongued rising flame (primary spire y=68, secondary tongue y=88) -->
+  <polygon points="122,68 106,120 95,108 86,136 96,166 128,186" fill="url(#lc-tcm-left)"/>
+  <polygon points="122,68 135,98 140,116 158,88 170,134 160,166 128,186" fill="url(#lc-tcm-right)"/>
+  <polygon points="122,68 135,98 140,116 158,88 170,134 160,166 128,186 96,166 86,136 95,108 106,120" fill="none" stroke="#071A33" stroke-width="3.5" stroke-linejoin="bevel"/>
+  <!-- 120° leading-edge highlight -->
+  <polyline points="118,80 107,114" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.9"/>
+
+  <!-- Recessed flame heart (continuous with Dedicated & Legendary Streaker) -->
+  <polygon points="126,108 148,142 141,166 128,176 115,166 108,142" fill="#071A33"/>
+
+  <!-- Luminous hot inner tongue -->
+  <polygon points="126,121 140,145 135,163 128,170 121,163 116,145" fill="url(#lc-tcm-core)"/>
+  <polygon points="128,139 134,151 128,162 122,151" fill="#FFFFFF"/>
+</svg>

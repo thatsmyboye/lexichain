@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-ttl-title">
+  <title id="lc-ttl-title">Tight Link trophy</title>
+  <defs>
+    <linearGradient id="lc-ttl-metal" gradientUnits="userSpaceOnUse" x1="-38" y1="-38" x2="38" y2="38">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="52%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+
+    <g id="lc-ttl-ring">
+      <path fill-rule="evenodd" d="
+        M16,-38 L38,-16 V16 L16,38 H-16 L-38,16 V-16 L-16,-38 Z
+        M10.5,-25 L25,-10.5 V10.5 L10.5,25 H-10.5 L-25,10.5 V-10.5 L-10.5,-25 Z
+      " fill="url(#lc-ttl-metal)" stroke="#0F172A" stroke-width="4" stroke-linejoin="bevel"/>
+      <polyline points="-32.5,13 -32.5,-13 -13,-32.5 13,-32.5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.88" stroke-linejoin="bevel"/>
+    </g>
+
+    <!-- Band-aligned weave patch (cuts strictly perpendicular to left ring, clear of right ring's stroke) -->
+    <clipPath id="lc-ttl-top">
+      <polygon points="127.5,88.5 114.25,101.75 128.5,116 141.75,102.75"/>
+    </clipPath>
+  </defs>
+
+  <!-- Base 2-ring pair (centers at x = 109 and 147) -->
+  <use href="#lc-ttl-ring" x="109" y="128"/>
+  <use href="#lc-ttl-ring" x="147" y="128"/>
+
+  <!-- Over-under Hopf weave: Left ring over Right ring at top crossing -->
+  <g clip-path="url(#lc-ttl-top)">
+    <use href="#lc-ttl-ring" x="109" y="128"/>
+  </g>
+</svg>

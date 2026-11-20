@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-towb-title">
+  <title id="lc-towb-title">One With the Board trophy</title>
+  <defs>
+    <linearGradient id="lc-towb-tile" gradientUnits="userSpaceOnUse" x1="85" y1="85" x2="171" y2="171">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="48%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Unbroken golden chain circuit linking all 4 board tiles -->
+  <rect x="104" y="104" width="48" height="48" rx="4" fill="none" stroke="#2A1604" stroke-width="12"/>
+  <rect x="104" y="104" width="48" height="48" rx="4" fill="none" stroke="#FDE047" stroke-width="6.5"/>
+
+  <!-- 2x2 illuminated keycap board (38x38 tiles, 10px channels; ~9.5px per tile at 64px) -->
+  <g fill="url(#lc-towb-tile)" stroke="#2A1604" stroke-width="3">
+    <rect x="85" y="85" width="38" height="38" rx="7"/>
+    <rect x="133" y="85" width="38" height="38" rx="7"/>
+    <rect x="85" y="133" width="38" height="38" rx="7"/>
+    <rect x="133" y="133" width="38" height="38" rx="7"/>
+  </g>
+  <!-- Top-left tile specular highlights -->
+  <g stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.82">
+    <line x1="91" y1="89" x2="117" y2="89"/>
+    <line x1="139" y1="89" x2="165" y2="89"/>
+    <line x1="91" y1="137" x2="117" y2="137"/>
+    <line x1="139" y1="137" x2="165" y2="137"/>
+  </g>
+
+  <!-- Bold 4-point center mastery star (66x66; ~16.5px tip-to-tip at 64px) -->
+  <polygon points="128,95 137.5,118.5 161,128 137.5,137.5 128,161 118.5,137.5 95,128 118.5,118.5" fill="#FFFFFF" stroke="#2A1604" stroke-width="3.5" stroke-linejoin="bevel"/>
+  <!-- 120° shaded lower-right star facets -->
+  <polygon points="128,128 161,128 137.5,137.5 128,161" fill="#FDE047" fill-opacity="0.72"/>
+  <polygon points="128,95 137.5,118.5 128,128" fill="#FEF9C3"/>
+  <!-- Brand-amethyst core jewel -->
+  <polygon points="128,118 138,128 128,138 118,128" fill="#914DEF" stroke="#2A1604" stroke-width="2.2" stroke-linejoin="bevel"/>
+</svg>

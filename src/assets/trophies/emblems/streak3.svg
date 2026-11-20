@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tded-title">
+  <title id="lc-tded-title">Dedicated trophy</title>
+  <defs>
+    <linearGradient id="lc-tded-left" gradientUnits="userSpaceOnUse" x1="88" y1="70" x2="128" y2="184">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="lc-tded-right" gradientUnits="userSpaceOnUse" x1="128" y1="70" x2="168" y2="184">
+      <stop offset="0%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Crisp faceted 3-day flame silhouette -->
+  <polygon points="128,70 111,118 96,104 88,138 98,166 128,184" fill="url(#lc-tded-left)"/>
+  <polygon points="128,70 147,104 146,114 162,102 168,138 158,166 128,184" fill="url(#lc-tded-right)"/>
+  <polygon points="128,70 147,104 146,114 162,102 168,138 158,166 128,184 98,166 88,138 96,104 111,118" fill="none" stroke="#0F172A" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+  <!-- Recessed flame heart -->
+  <polygon points="128,112 146,144 139,163 128,171 117,163 110,144" fill="#0F172A"/>
+  <!-- Inner bright ember core -->
+  <polygon points="128,125 139,146 128,164 117,146" fill="#FFFFFF"/>
+  <polygon points="128,125 139,146 128,164" fill="#FEF3C7"/>
+</svg>
