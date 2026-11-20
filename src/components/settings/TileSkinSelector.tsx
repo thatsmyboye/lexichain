@@ -101,7 +101,7 @@ export function TileSkinSelector() {
                         isSelected ? skin.benchmarkColors.gold.border : 'border-border'
                       )}>
                         <span className={cn('tile-texture', skin.textureClass)} />
-                        <span className="relative text-2xl font-semibold">A</span>
+                        <span className="font-display relative text-2xl font-bold">A</span>
                       </div>
                     </div>
                   </div>

@@ -2,12 +2,13 @@ import type React from "react";
 import type { Benchmarks } from "@/lib/benchmarks";
 import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 import { gradeForScore } from "./wordPathEngine";
+import { Medal } from "./Medal";
 
 const TIERS = [
-  { key: "bronze", label: "Bronze", emoji: "🥉", color: "bg-orange-500" },
-  { key: "silver", label: "Silver", emoji: "🥈", color: "bg-gray-400" },
-  { key: "gold", label: "Gold", emoji: "🥇", color: "bg-yellow-400" },
-  { key: "platinum", label: "Platinum", emoji: "💎", color: "bg-purple-500" },
+  { key: "bronze", label: "Bronze" },
+  { key: "silver", label: "Silver" },
+  { key: "gold", label: "Gold" },
+  { key: "platinum", label: "Platinum" },
 ] as const;
 
 // One medal track instead of four stacked tier rows: markers sit at each
@@ -40,14 +41,16 @@ function MedalTrack({ score, benchmarks, best }: { score: number; benchmarks: Be
           const left = Math.min(100, (benchmarks[t.key] / max) * 100);
           const reached = score >= benchmarks[t.key];
           return (
+            // An unreached tier keeps its own shape, grayed, so the next
+            // milestone can be read at a glance.
             <span
               key={t.key}
               aria-hidden="true"
               title={`${t.label}: ${benchmarks[t.key]}`}
-              className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-background text-[11px] shadow ${reached ? t.color : "bg-muted"} ${reached ? "" : "grayscale opacity-70"}`}
+              className={`absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 drop-shadow-sm transition-[filter,opacity] duration-300 ${reached ? "" : "opacity-55 grayscale"}`}
               style={{ left: `${left}%` }}
             >
-              {t.emoji}
+              <Medal tier={t.label} className="block h-5 w-5" />
             </span>
           );
         })}
@@ -81,7 +84,7 @@ export function GameHud({
     <div className={`flex items-center gap-3 rounded-xl border bg-card/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/80 ${className}`}>
       <div className="shrink-0">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/75">Score</div>
-        <div className="text-2xl font-extrabold leading-none tabular-nums text-[hsl(var(--brand-600))]" aria-live="off">
+        <div className="font-display-num text-2xl font-extrabold leading-none tabular-nums text-[hsl(var(--brand-600))]" aria-live="off">
           {shown.toLocaleString()}
         </div>
         <span className="sr-only">{score} points</span>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80" role="img" aria-labelledby="lc-mbd-title">
+  <title id="lc-mbd-title">Bronze medal</title>
+  <defs>
+    <linearGradient id="lc-mbd-outer" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="72" y2="72">
+      <stop offset="0%" stop-color="#F6C18B"/>
+      <stop offset="46%" stop-color="#C87533"/>
+      <stop offset="100%" stop-color="#783910"/>
+    </linearGradient>
+    <linearGradient id="lc-mbd-bevel" gradientUnits="userSpaceOnUse" x1="12" y1="12" x2="68" y2="68">
+      <stop offset="0%" stop-color="#9A4F1C"/>
+      <stop offset="100%" stop-color="#E5A264"/>
+    </linearGradient>
+    <linearGradient id="lc-mbd-well" gradientUnits="userSpaceOnUse" x1="18" y1="18" x2="62" y2="62">
+      <stop offset="0%" stop-color="#5C2B0C"/>
+      <stop offset="100%" stop-color="#9C511D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Struck coin body -->
+  <circle cx="40" cy="40" r="35" fill="url(#lc-mbd-outer)" stroke="#431E07" stroke-width="2.5"/>
+  <!-- 120° top-left specular rim -->
+  <path d="M12.5 31 A29 29 0 0 1 51 13" fill="none" stroke="#FDE8CE" stroke-width="2.2" stroke-opacity="0.9"/>
+  <!-- Stepped coin collar -->
+  <circle cx="40" cy="40" r="28.5" fill="url(#lc-mbd-bevel)" stroke="#5C2B0C" stroke-width="1.5"/>
+  <!-- Engraved cardinal notch ticks -->
+  <g stroke="#FDE2C4" stroke-width="2" stroke-opacity="0.7" stroke-linecap="square">
+    <line x1="40" y1="8.5" x2="40" y2="12"/>
+    <line x1="40" y1="68" x2="40" y2="71.5"/>
+    <line x1="8.5" y1="40" x2="12" y2="40"/>
+    <line x1="68" y1="40" x2="71.5" y2="40"/>
+  </g>
+  <!-- Recessed core -->
+  <circle cx="40" cy="40" r="22.5" fill="url(#lc-mbd-well)" stroke="#3B1905" stroke-width="1.5"/>
+  <circle cx="40" cy="40" r="19" fill="none" stroke="#E5A264" stroke-width="1" stroke-opacity="0.45" stroke-dasharray="4 4"/>
+
+  <!-- Faceted 1-pip diamond relief -->
+  <g stroke="#431E07" stroke-width="1.4" stroke-linejoin="bevel">
+    <polygon points="40,24 54,40 40,40" fill="#F6C18B"/>
+    <polygon points="40,24 40,40 26,40" fill="#FFF3E0"/>
+    <polygon points="26,40 40,40 40,56" fill="#D98B48"/>
+    <polygon points="54,40 40,56 40,40" fill="#A65A22"/>
+  </g>
+  <polygon points="40,30.5 47.5,40 40,49.5 32.5,40" fill="#FDE8CE" fill-opacity="0.4"/>
+</svg>

@@ -179,7 +179,7 @@ function ModeTile({ mode, best, isNew, onStart }: ModeTileProps) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-base font-bold leading-tight">{mode.name}</span>
+            <span className="font-display text-base font-bold leading-tight">{mode.name}</span>
             {isNew && <span className="rounded-full bg-[hsl(var(--brand-600))] px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-white">
                 New
               </span>}
@@ -253,7 +253,7 @@ export function AdvancedGameModes({
             <span aria-hidden="true">←</span> Back
           </Button>
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight">
               More modes
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">

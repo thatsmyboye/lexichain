@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80" role="img" aria-labelledby="lc-mpd-title">
+  <title id="lc-mpd-title">Platinum medal</title>
+  <defs>
+    <linearGradient id="lc-mpd-well" gradientUnits="userSpaceOnUse" x1="18" y1="16" x2="62" y2="64">
+      <stop offset="0%" stop-color="#1E0542"/>
+      <stop offset="52%" stop-color="#4C1D95"/>
+      <stop offset="100%" stop-color="#7927EC"/>
+    </linearGradient>
+    <linearGradient id="lc-mpd-core" gradientUnits="userSpaceOnUse" x1="26" y1="22" x2="54" y2="58">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#DDD6FE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Brilliant-cut 4-plane purple-platinum diamond (70x72) -->
+  <polygon points="40,4 40,18 19,40 5,40" fill="#FFFFFF"/>
+  <polygon points="40,4 75,40 61,40 40,18" fill="#EDE9FE"/>
+  <polygon points="5,40 19,40 40,62 40,76" fill="#DDD6FE"/>
+  <polygon points="75,40 40,76 40,62 61,40" fill="#A78BFA"/>
+
+  <!-- Outer contour & facet ridges -->
+  <polygon points="40,4 75,40 40,76 5,40" fill="none" stroke="#2E1065" stroke-width="2.5" stroke-linejoin="bevel"/>
+  <g stroke="#4C1D95" stroke-width="1.2" stroke-opacity="0.55">
+    <line x1="40" y1="4" x2="40" y2="18"/>
+    <line x1="75" y1="40" x2="61" y2="40"/>
+    <line x1="40" y1="76" x2="40" y2="62"/>
+    <line x1="5" y1="40" x2="19" y2="40"/>
+  </g>
+
+  <!-- Inner platinum table & recessed brand-purple core -->
+  <polygon points="40,15.5 63.5,40 40,64.5 16.5,40" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="bevel"/>
+  <polygon points="40,18 61,40 40,62 19,40" fill="url(#lc-mpd-well)" stroke="#2E1065" stroke-width="1.6" stroke-linejoin="bevel"/>
+
+  <!-- Faceted 4-point prism star -->
+  <polygon points="40,22 44.8,35.2 58,40 44.8,44.8 40,58 35.2,44.8 22,40 35.2,35.2" fill="url(#lc-mpd-core)" stroke="#2E1065" stroke-width="1.1" stroke-linejoin="bevel"/>
+  <polygon points="40,40 58,40 44.8,44.8 40,58" fill="#C4B5FD" fill-opacity="0.72"/>
+  <polygon points="40,22 44.8,35.2 40,40" fill="#EDE9FE"/>
+  <!-- Corner crystal glint ticks -->
+  <g stroke="#EDE9FE" stroke-width="1.3" stroke-linecap="square" stroke-opacity="0.85">
+    <line x1="32.5" y1="31.5" x2="34.5" y2="33.5"/>
+    <line x1="47.5" y1="31.5" x2="45.5" y2="33.5"/>
+    <line x1="32.5" y1="48.5" x2="34.5" y2="46.5"/>
+    <line x1="47.5" y1="48.5" x2="45.5" y2="46.5"/>
+  </g>
+</svg>

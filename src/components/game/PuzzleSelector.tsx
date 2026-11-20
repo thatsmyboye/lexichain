@@ -72,7 +72,7 @@ export default function PuzzleSelector({ onPuzzleSelect, onBack, user }: PuzzleS
         <div className="mb-6 flex items-center justify-between animate-in fade-in slide-in-from-top duration-500">
           <div>
             <div className="relative inline-block">
-              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg">
+              <h1 className="font-display text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] drop-shadow-lg">
                 Puzzle Mode
               </h1>
               <div className="absolute -inset-1 bg-gradient-to-r from-brand-400/10 to-brand-600/10 blur-xl -z-10"></div>

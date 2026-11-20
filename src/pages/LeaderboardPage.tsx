@@ -31,7 +31,7 @@ export default function LeaderboardPage() {
       <FloatingTiles />
       <div className="relative z-10 container mx-auto py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Leaderboards</h1>
+          <h1 className="font-display text-4xl font-bold mb-2">Leaderboards</h1>
           <p className="text-muted-foreground">
             See how you stack up against other players
           </p>

@@ -157,7 +157,7 @@ function TileIcon({ tile, ...handlers }: TileIconProps) {
       {tile.type === "multiplier" && (
         <div className="flex flex-col items-center leading-none">
           <SpecialTileIcon type="multiplier" className="h-4 w-4" />
-          {tile.value && <span className="text-xs font-bold">{tile.value}x</span>}
+          {tile.value && <span className="font-display-num text-xs font-bold">{tile.value}x</span>}
         </div>
       )}
 

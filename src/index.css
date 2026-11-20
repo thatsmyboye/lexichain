@@ -126,7 +126,7 @@ All colors MUST be HSL.
   }
 
   /* Color-vision settings: swap the red/green feedback pair for pairs that
-     stay distinguishable. Icons (✓/✗) and the dashed invalid path line carry
+     stay distinguishable. Icons (✓/✗) and the broken links of an invalid path carry
      the same information without color. */
   :root[data-cvd="protanopia"],
   :root[data-cvd="deuteranopia"] {
@@ -219,22 +219,56 @@ All colors MUST be HSL.
     }
   }
 
-  /* Foil sheen for rare letters */
+  /* Foil sheen for rare letters: a diagonal band that sweeps across once,
+     then rests off the tile for the remainder of the cycle. The image is one
+     band per 280px, so the start and end positions below park it clear of
+     any tile up to about 120px wide. */
   .tile-foil {
     position: absolute;
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(115deg, transparent 30%, hsl(32 100% 70% / 0.35) 45%, transparent 60%);
-    background-size: 250% 100%;
+    background-image: url("/assets/board/foil-rare.webp");
+    background-size: 280px 280px;
+    background-repeat: repeat;
+    background-position: 118px 0;
     animation: foil-sweep 4.5s ease-in-out infinite;
   }
   .tile-foil-strong {
-    background-image: linear-gradient(115deg, transparent 25%, hsl(280 100% 75% / 0.45) 40%, hsl(190 100% 75% / 0.35) 55%, transparent 70%);
+    background-image: url("/assets/board/foil-rare-strong.webp");
   }
 }
 
+/* Display typeface: Sora, weights 500-800, for tile letters, the wordmark,
+   scores, and titles only. Body copy stays on the system font.
+   The file is a subset of Sora[wght].ttf from github.com/sora-xor/sora-font
+   (SIL OFL 1.1, see public/fonts/OFL.txt). To rebuild it:
+     fonttools varLib.instancer "Sora[wght].ttf" wght=500:800 -o sora-500-800.ttf
+     pyftsubset sora-500-800.ttf --output-file=public/fonts/sora-display.woff2 \
+       --flavor=woff2 --no-hinting --layout-features="kern,tnum,case,ss01" \
+       --unicodes="U+0020-007E,U+00D7,U+2013-2014,U+2026,U+2212"
+   Characters outside that set (accents, curly quotes) fall back to the system font. */
+@font-face {
+  font-family: "Sora Display";
+  src: url("/fonts/sora-display.woff2") format("woff2");
+  font-weight: 500 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer utilities {
+  /* ss01 gives the barred capital I, so a lone I on a tile reads as a letter. */
+  .font-display {
+    font-family: "Sora Display", ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "ss01" 1;
+  }
+  /* Equal-width digits, so scores and timers do not shift as they count. */
+  .font-display-num {
+    font-family: "Sora Display", ui-sans-serif, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "ss01" 1, "tnum" 1;
+  }
+
   .animate-shake { animation: shake 0.45s ease-in-out; }
   .animate-blink-twice { animation: blink 0.6s ease-in-out 2; }
   .animate-tile-pulse { animation: tile-pulse 1.4s ease-in-out infinite; }
@@ -267,8 +301,8 @@ All colors MUST be HSL.
   100% { opacity: 0; transform: scale(0.95) translateY(-12px) rotate(-6deg); }
 }
 @keyframes foil-sweep {
-  0%, 100% { background-position: 100% 0; }
-  50% { background-position: 0% 0; }
+  0% { background-position: 118px 0; }
+  44%, 100% { background-position: 398px 0; }
 }
 @keyframes vignette {
   0%, 100% { box-shadow: inset 0 0 0 0 hsl(var(--bad) / 0); }
@@ -286,7 +320,11 @@ All colors MUST be HSL.
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .tile-foil { animation: none !important; }
+  /* At rest the foil is a small glint in the top-left corner, clear of the letter */
+  .tile-foil {
+    animation: none !important;
+    background-position: 144px 0;
+  }
 }
 
 
@@ -306,7 +344,6 @@ All colors MUST be HSL.
   /* Fine paper/acrylic grain (black, low alpha) */
   --tex-noise-fine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   /* Wood grain: noise stretched along x, tinted brown, thresholded into streaks */
-  --tex-wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008 0.32' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.2 0 0 0 0 0.07 1.6 0 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
   /* Slate speckle: sparse dark and light flecks */
   --tex-speckle-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.3' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.07 0 0 0 0 0.2 4 0 0 0 -2.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
   --tex-speckle-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='110' height='110'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.1' numOctaves='1' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 4 0 0 -2.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
@@ -325,14 +362,25 @@ All colors MUST be HSL.
   pointer-events: none;
 }
 
-/* Original: clean card with a soft top light and grounded bottom edge */
+/* Original: matte ceramic in light, anodized slate in dark, under a soft top
+   light. The image is drawn at half size (128px) and each tile starts it at
+   its own offset (--tile-tex-x/y, set by GameTile from row and column) so no
+   two tiles show the same patch of grain.
+   Files come from scripts/generate-original-materials.mjs. */
 .tile-tex-card {
-  background: linear-gradient(180deg, hsl(0 0% 100% / 0.55), hsl(0 0% 100% / 0) 45%);
+  background-image:
+    linear-gradient(180deg, hsl(0 0% 100% / 0.3), transparent 45%),
+    url("/assets/board/tile-face-original-light.webp");
+  background-size: 100% 100%, 128px 128px;
+  background-position: 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, repeat;
   box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.9), inset 0 -2px 0 hsl(var(--foreground) / 0.07);
 }
 .dark .tile-tex-card {
-  background: linear-gradient(180deg, hsl(210 40% 98% / 0.06), transparent 45%);
-  box-shadow: inset 0 1px 0 hsl(210 40% 98% / 0.08), inset 0 -2px 0 hsl(0 0% 0% / 0.25);
+  background-image:
+    linear-gradient(180deg, hsl(210 40% 98% / 0.05), transparent 45%),
+    url("/assets/board/tile-face-original-dark.webp");
+  box-shadow: inset 0 1px 0 hsl(210 40% 98% / 0.09), inset 0 -2px 0 hsl(0 0% 0% / 0.3);
 }
 
 /* Ocean: sea glass. Fill is translucent (bg-white/60 + backdrop blur); this
@@ -354,16 +402,25 @@ All colors MUST be HSL.
     inset 0 -2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Forest: carved wood with grain streaks and growth rings */
+/* Forest: carved maple in light, walnut in dark, with growth rings and
+   fibers. Like Original, each tile starts the image at its own offset. The
+   grain is as deep as it can be while every part of the face keeps at least
+   7:1 contrast with the letter color; the generator enforces that.
+   Files come from scripts/generate-forest-materials.mjs. */
 .tile-tex-wood {
-  background:
-    var(--tex-wood),
-    repeating-linear-gradient(177deg, rgba(120, 72, 30, 0) 0 6px, rgba(120, 72, 30, 0.1) 6px 7px, rgba(120, 72, 30, 0) 7px 13px);
-  background-size: 160px 160px, auto;
-  box-shadow: inset 0 1px 0 rgba(255, 244, 222, 0.65), inset 0 -2px 4px rgba(80, 45, 15, 0.28);
+  background-image:
+    linear-gradient(180deg, rgba(255, 248, 232, 0.28), transparent 45%),
+    url("/assets/board/tile-face-forest-light.webp");
+  background-size: 100% 100%, 128px 128px;
+  background-position: 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, repeat;
+  box-shadow: inset 0 1px 0 rgba(255, 244, 222, 0.72), inset 0 -2px 4px rgba(80, 45, 15, 0.28);
 }
 .dark .tile-tex-wood {
-  box-shadow: inset 0 1px 0 rgba(255, 228, 190, 0.14), inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+  background-image:
+    linear-gradient(180deg, rgba(255, 228, 190, 0.08), transparent 45%),
+    url("/assets/board/tile-face-forest-dark.webp");
+  box-shadow: inset 0 1px 0 rgba(255, 228, 190, 0.16), inset 0 -2px 4px rgba(0, 0, 0, 0.48);
 }
 
 /* Sunset: glazed ceramic, glossy highlight top-left, warm pooling glaze */
@@ -480,11 +537,20 @@ All colors MUST be HSL.
   border: 1px solid hsl(var(--border));
 }
 
+/* Original: a recessed matte bed. The colors are the fallback while the
+   floor image loads. */
 :root[data-skin="original"] .board-frame,
 .skin-scene[data-skin-preview="original"] {
-  background: hsl(var(--muted));
-  border-color: hsl(var(--border));
+  background-color: #e3e9f2;
+  background-image: url("/assets/board/tray-floor-original-light.webp");
+  background-size: 128px 128px;
+  border-color: transparent;
   box-shadow: 0 10px 30px -18px hsl(var(--foreground) / 0.35);
+}
+.dark[data-skin="original"] .board-frame,
+.dark .skin-scene[data-skin-preview="original"] {
+  background-color: #090e1a;
+  background-image: url("/assets/board/tray-floor-original-dark.webp");
 }
 
 :root[data-skin="ocean"] .board-frame,
@@ -506,15 +572,25 @@ All colors MUST be HSL.
   border-color: rgba(125, 211, 252, 0.25);
 }
 
+/* Forest: a moss bed. On the board the walnut rail is a 9-slice image
+   (.board-frame::after, below); the small preview in the skin picker has no
+   bezel, so it keeps a plain wood border. */
 :root[data-skin="forest"] .board-frame,
 .skin-scene[data-skin-preview="forest"] {
-  background: var(--tex-noise-fine), linear-gradient(160deg, #4d7c0f, #166534);
-  border: 3px solid #8b5a2b;
-  box-shadow: inset 0 0 0 1px rgba(255, 237, 213, 0.35), 0 14px 30px -16px rgba(20, 83, 45, 0.7);
+  background-color: #306827;
+  background-image: url("/assets/board/tray-floor-forest-light.webp");
+  background-size: 128px 128px;
+  box-shadow: 0 14px 30px -16px rgba(20, 83, 45, 0.7);
 }
 .dark[data-skin="forest"] .board-frame,
 .dark .skin-scene[data-skin-preview="forest"] {
-  background: var(--tex-noise-fine), linear-gradient(160deg, #1a2e05, #052e16);
+  background-color: #0e2612;
+  background-image: url("/assets/board/tray-floor-forest-dark.webp");
+}
+.skin-scene[data-skin-preview="forest"] {
+  border: 3px solid #8b5a2b;
+}
+.dark .skin-scene[data-skin-preview="forest"] {
   border-color: #5b3716;
 }
 
@@ -1123,6 +1199,10 @@ All colors MUST be HSL.
 }
 /* Faces rise above their cells; keep the top row clear of the tray rim */
 .tile-grid-wrap {
+  /* Above the tray's bezel (.board-frame::after), so focus rings on edge
+     tiles are not clipped by it */
+  position: relative;
+  z-index: 1;
   margin-top: var(--tile-depth);
 }
 
@@ -1143,6 +1223,34 @@ All colors MUST be HSL.
 }
 .tile-side-skin {
   background: var(--tile-edge);
+}
+/* Original: a machined edge strip. It is anchored to the bottom because only
+   the lowest tile-depth of this element shows below the face; the strip's
+   light-catching bevel sits in those rows. High contrast keeps its solid edge. */
+:root:not(.high-contrast)[data-skin="original"] .tile-side-skin,
+:root:not(.high-contrast) .skin-scene[data-skin-preview="original"] .tile-side-skin {
+  background-color: var(--tile-edge);
+  background-image: url("/assets/board/tile-edge-original-light.webp");
+  background-size: 128px 16px;
+  background-position: var(--tile-tex-x, 0px) bottom;
+  background-repeat: repeat-x;
+}
+.dark:not(.high-contrast)[data-skin="original"] .tile-side-skin,
+.dark:not(.high-contrast) .skin-scene[data-skin-preview="original"] .tile-side-skin {
+  background-image: url("/assets/board/tile-edge-original-dark.webp");
+}
+/* Forest: cut end grain, with the same anchoring and offset as Original */
+:root:not(.high-contrast)[data-skin="forest"] .tile-side-skin,
+:root:not(.high-contrast) .skin-scene[data-skin-preview="forest"] .tile-side-skin {
+  background-color: var(--tile-edge);
+  background-image: url("/assets/board/tile-edge-forest-light.webp");
+  background-size: 128px 16px;
+  background-position: var(--tile-tex-x, 0px) bottom;
+  background-repeat: repeat-x;
+}
+.dark:not(.high-contrast)[data-skin="forest"] .tile-side-skin,
+.dark:not(.high-contrast) .skin-scene[data-skin-preview="forest"] .tile-side-skin {
+  background-image: url("/assets/board/tile-edge-forest-dark.webp");
 }
 /* A pressed tile sits flush with the tray, so its edge is out of sight.
    Hiding it also keeps it from showing through translucent selected faces. */
@@ -1186,6 +1294,34 @@ All colors MUST be HSL.
     inset 0 3px 7px var(--tray-shade),
     inset 0 1px 1px var(--tray-shade),
     inset 0 -1px 0 var(--tray-lip);
+}
+/* Original: a chamfered bezel around the tray, stretched from a 9-slice image
+   so it fits any board size. It sits under the tiles. */
+:root[data-skin="original"]:not(.high-contrast) .board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 32px solid transparent;
+  border-image: url("/assets/board/tray-frame-original-light.webp") 64 / 32px stretch;
+}
+.dark[data-skin="original"]:not(.high-contrast) .board-frame::after {
+  border-image-source: url("/assets/board/tray-frame-original-dark.webp");
+}
+/* Forest: a mitered walnut rail. Its grain runs along each side, so the
+   stretch does not distort it. */
+:root[data-skin="forest"]:not(.high-contrast) .board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 32px solid transparent;
+  border-image: url("/assets/board/tray-frame-forest-light.webp") 64 / 32px stretch;
+}
+.dark[data-skin="forest"]:not(.high-contrast) .board-frame::after {
+  border-image-source: url("/assets/board/tray-frame-forest-dark.webp");
 }
 
 /* New board: tiles drop into the tray one by one (delay set per tile) */

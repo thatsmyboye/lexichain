@@ -331,7 +331,7 @@ const StatsPage = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Game
           </Button>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+          <h1 className="font-display text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
             Your Stats
           </h1>
         </div>

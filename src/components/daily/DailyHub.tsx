@@ -6,7 +6,8 @@ import type { LoginStreakData } from "@/hooks/useLoginStreak";
 import { DAILY_MODE_NAMES, type DailyGameMode } from "@/lib/gameModes";
 import { cn } from "@/lib/utils";
 import { DailyStatusBadge } from "./DailyStatusBadge";
-import { GRADE_MEDALS } from "./medals";
+import { GRADE_LABELS } from "./medals";
+import { Medal } from "@/components/game/Medal";
 import { DAILY_MOVES_LIMIT, useDailyStatus } from "./useDailyStatus";
 import { formatCountdown, shiftDateString, useDailyCountdown } from "./useDailyCountdown";
 import { useDailyCommunity } from "./useDailyCommunity";
@@ -43,7 +44,7 @@ function DailyRow({ mode, sizeLabel, onPlay }: DailyRowProps) {
   return (
     <li className="flex min-w-0 flex-col gap-2 rounded-lg border bg-background/70 p-2.5">
       <div className="flex flex-wrap items-center justify-between gap-1.5">
-        <h3 id={headingId} className="flex items-center gap-1.5 text-sm font-bold leading-tight">
+        <h3 id={headingId} className="font-display flex items-center gap-1.5 text-sm font-bold leading-tight">
           <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-[hsl(var(--brand-500))]" />
           {name}
           <span className="sr-only">, {sizeLabel} board</span>
@@ -58,9 +59,9 @@ function DailyRow({ mode, sizeLabel, onPlay }: DailyRowProps) {
           {status.state === "done" && status.grade && (
             <div className="flex items-baseline gap-1">
               <dt className="sr-only">Medal</dt>
-              <dd className="font-semibold">
-                <span aria-hidden="true">{GRADE_MEDALS[status.grade].emoji} </span>
-                {GRADE_MEDALS[status.grade].label}
+              <dd className="flex items-center gap-1 font-semibold">
+                {status.grade !== "None" && <Medal tier={status.grade} className="h-4 w-4 self-center" />}
+                {GRADE_LABELS[status.grade]}
               </dd>
             </div>
           )}
@@ -162,12 +163,12 @@ export function DailyHub({ user, streakData, onPlayDaily, onSignInClick, classNa
     >
       <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 id={titleId} className="text-base font-bold sm:text-lg">
-          Today's puzzles <span className="text-sm font-medium text-muted-foreground">· {todayLabel}</span>
+          <span className="font-display">Today's puzzles</span> <span className="text-sm font-medium text-muted-foreground">· {todayLabel}</span>
         </h2>
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock aria-hidden="true" className="h-3.5 w-3.5" />
           <span aria-hidden="true">New in</span>
-          <span aria-live="off" aria-hidden="true" className="font-semibold tabular-nums text-foreground">
+          <span aria-live="off" aria-hidden="true" className="font-display-num font-semibold tabular-nums text-foreground">
             {formatCountdown(msLeft)}
           </span>
           <span className="sr-only">{`Next puzzle at ${nextAtLabel}`}</span>

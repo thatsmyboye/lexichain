@@ -54,7 +54,7 @@ function DailyModeTile({ mode, onSelect }: { mode: DailyGameMode; onSelect: (mod
       <span aria-hidden="true" className={MODE_ICON_CLASS}><Icon className="h-6 w-6" /></span>
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-base font-bold leading-tight">{DAILY_MODE_NAMES[mode]}</span>
+          <span className="font-display text-base font-bold leading-tight">{DAILY_MODE_NAMES[mode]}</span>
           {isNew && <span className="rounded-full bg-[hsl(var(--brand-600))] px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-white">New<span className="sr-only">, not played yet</span></span>}
         </span>
         <span className="mt-0.5 block text-sm text-muted-foreground">{MODE_BLURBS[mode]}</span>
@@ -264,7 +264,7 @@ const Index = () => {
           <Logo as="h1" size="md" />
 
           <section aria-labelledby="mode-select-title" className="w-full space-y-4">
-            <h2 id="mode-select-title" className="text-xl font-semibold text-foreground sm:text-2xl">Choose a mode</h2>
+            <h2 id="mode-select-title" className="font-display text-xl font-semibold text-foreground sm:text-2xl">Choose a mode</h2>
 
             <ul className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
               <li className="flex"><DailyModeTile mode="daily" onSelect={handleModeSelect} /></li>
@@ -273,7 +273,7 @@ const Index = () => {
                 <button type="button" onClick={handleShowAdvancedModes} className={MODE_TILE_CLASS}>
                   <span aria-hidden="true" className={cn(MODE_ICON_CLASS, "from-slate-600 to-slate-800 dark:from-slate-500 dark:to-slate-700")}><LayoutGrid className="h-6 w-6" /></span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-base font-bold leading-tight">More modes</span>
+                    <span className="font-display block text-base font-bold leading-tight">More modes</span>
                     <span className="mt-0.5 block text-sm text-muted-foreground">Classic, Time Attack, Survival, Zen and more.</span>
                   </span>
                   <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground sm:hidden" />

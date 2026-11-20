@@ -37,7 +37,7 @@ export function PrestigeEndless({ onBack }: PrestigeEndlessProps) {
             <div className="flex items-center gap-3">
               <TrendingUp className="h-8 w-8 text-primary" />
               <div>
-                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
+                <h1 className="font-display text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]">
                   Prestige Endless
                 </h1>
                 <p className="text-muted-foreground">Long-term meta-progression</p>

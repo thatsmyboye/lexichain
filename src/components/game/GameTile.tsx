@@ -6,6 +6,7 @@ import { letterRarity } from "@/lib/letterRarity";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 import { cn } from "@/lib/utils";
 import { SpecialTileIcon } from "./SpecialTileIcon";
+import { ChainMark } from "./ChainLink";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 
 interface BenchmarkColor {
@@ -389,6 +390,14 @@ export const GameTile = memo(function GameTile({
   // and selected/affected states keep their flat, high-signal fills.
   const showTexture = special.type === null && !isSelected && !isAffected;
 
+  // Where this tile starts its skin's material image, so neighbors never show
+  // the same patch of grain. The multipliers map every (row, col) to a distinct
+  // offset within the 128px repeat; the face and edge both read these.
+  const textureOffset = {
+    "--tile-tex-x": `${(col * 47 + row * 83) % 128}px`,
+    "--tile-tex-y": `${(col * 31 + row * 52) % 128}px`,
+  } as React.CSSProperties;
+
   // Frost creeps in from the edge facing the Freeze tile.
   const hasFrostDir = frostDr !== undefined && frostDc !== undefined && (frostDr !== 0 || frostDc !== 0);
   const frostStyle = hasFrostDir
@@ -419,7 +428,7 @@ export const GameTile = memo(function GameTile({
         if (e.detail === 0 && !pointerType) onActivate();
       }}
       className="tile-cell group relative aspect-square w-full select-none outline-none"
-      style={{ touchAction: "none", WebkitTouchCallout: "none" }}
+      style={{ touchAction: "none", WebkitTouchCallout: "none", ...textureOffset }}
     >
       {/* Remounts on a new board so the drop-in replays; the button (and
           keyboard focus) stays put. */}
@@ -458,10 +467,10 @@ export const GameTile = memo(function GameTile({
 
       {/* Chain-link glyph so "reused" reads without color */}
       {isReused && !isSelected && (
-        <span aria-hidden="true" className="absolute bottom-0.5 left-1 text-[11px] leading-none opacity-80 z-10 pointer-events-none">⛓</span>
+        <span aria-hidden="true" className="absolute bottom-0.5 left-1 leading-none opacity-80 z-10 pointer-events-none"><ChainMark /></span>
       )}
 
-      <span aria-hidden="true" className="text-[clamp(1.25rem,6vw,1.875rem)] font-semibold tracking-wide relative z-10">
+      <span aria-hidden="true" className="font-display text-[clamp(1.25rem,6vw,1.875rem)] font-bold tracking-wide relative z-10">
         {special.type === "wild" ? "?" : letter}
       </span>
 
@@ -498,7 +507,7 @@ export const GameTile = memo(function GameTile({
 
       {/* Multiplier value */}
       {special.type === "multiplier" && special.value && (
-        <span aria-hidden="true" className="absolute bottom-1 text-xs font-bold bg-black/30 px-1 rounded">
+        <span aria-hidden="true" className="font-display-num absolute bottom-1 text-xs font-bold bg-black/30 px-1 rounded">
           {special.value}x
         </span>
       )}

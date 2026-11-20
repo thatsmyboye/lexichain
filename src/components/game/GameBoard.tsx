@@ -1,6 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { GameTile } from "./GameTile";
+import { ChainLinkPath } from "./ChainLink";
 import type { Pos, SpecialTile } from "@/types/game";
 import type { TileSkin } from "@/lib/tileSkins";
 import { getBenchmarkColor } from "@/lib/tileSkins";
@@ -44,8 +45,9 @@ interface GameBoardProps {
 const keyOf = (p: Pos) => `${p.r},${p.c}`;
 
 
-// SVG polyline through the centers of the selected tiles. Geometry is
-// measured from the grid so it stays aligned at every size and gap.
+// Chain links between the selected tiles. They sit in the gaps, so the path
+// never covers a letter. Geometry is measured from the grid so it stays
+// aligned at every size and gap.
 function PathOverlay({ gridRef, path, size, tone }: {
   gridRef: React.RefObject<HTMLDivElement>;
   path: Pos[];
@@ -73,35 +75,27 @@ function PathOverlay({ gridRef, path, size, tone }: {
   if (path.length < 2 || !geom.width) return null;
   const cell = (geom.width - geom.gap * (size - 1)) / size;
   const rowCell = (geom.height - geom.rowGap * (size - 1)) / size;
-  const points = path
-    .map(p => `${p.c * (cell + geom.gap) + cell / 2},${p.r * (rowCell + geom.rowGap) + rowCell / 2}`)
-    .join(" ");
+  const points = path.map(p => ({
+    x: p.c * (cell + geom.gap) + cell / 2,
+    y: p.r * (rowCell + geom.rowGap) + rowCell / 2,
+  }));
   const color =
     tone === "valid" ? "hsl(var(--ok))"
       : tone === "invalid" ? "hsl(var(--bad))"
       : tone === "warn" ? "hsl(var(--warn))"
       // Skins can retint the trail (index.css "Skin themes"); brand otherwise
       : "hsl(var(--path-color, var(--brand-500)))";
-  const strokeWidth = Math.max(6, cell * 0.12);
 
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-30 overflow-visible"
+      className="pointer-events-none absolute inset-0 z-30 overflow-visible transition-colors duration-150"
       width={geom.width}
       height={geom.height}
+      style={{ color }}
     >
-      <polyline
-        points={points}
-        fill="none"
-        stroke={color}
-        strokeOpacity={0.5}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeDasharray={tone === "invalid" ? `${strokeWidth * 0.2} ${strokeWidth * 1.4}` : undefined}
-        className="transition-[stroke] duration-150"
-      />
+      {/* Not a word: the links break, so the state does not rely on color */}
+      <ChainLinkPath points={points} tile={cell} broken={tone === "invalid"} />
     </svg>
   );
 }
@@ -243,7 +237,7 @@ export const GameBoard = memo(function GameBoard({
             {"LEXI".split("").map((ch, i) => (
               <span
                 key={ch}
-                className="flex h-9 w-9 items-center justify-center rounded-md border-2 border-[hsl(var(--brand-500))] font-bold text-[hsl(var(--brand-500))] animate-tile-flip"
+                className="flex h-9 w-9 items-center justify-center rounded-md border-2 border-[hsl(var(--brand-500))] font-display font-bold text-[hsl(var(--brand-500))] animate-tile-flip"
                 style={{ animationDelay: `${i * 120}ms`, animationIterationCount: "infinite" }}
               >
                 {ch}
@@ -322,8 +316,8 @@ export const GameBoard = memo(function GameBoard({
             className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
           >
             <div className="animate-stamp rounded-2xl border-4 border-[hsl(var(--brand-500))] bg-background/90 px-5 py-2 text-center shadow-xl -rotate-6">
-              <div className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-[hsl(var(--brand-600))]">{stamp.label}</div>
-              <div className="text-lg font-bold text-foreground">+{stamp.points}</div>
+              <div className="font-display text-2xl sm:text-3xl font-black uppercase tracking-wider text-[hsl(var(--brand-600))]">{stamp.label}</div>
+              <div className="font-display-num text-lg font-bold text-foreground">+{stamp.points}</div>
             </div>
           </div>
         )}

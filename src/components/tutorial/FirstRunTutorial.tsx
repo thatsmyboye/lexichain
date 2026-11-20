@@ -5,6 +5,7 @@ import { Dialog, DialogDescription, DialogOverlay, DialogPortal, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
+import { ChainLinkPath, ChainMark } from "@/components/game/ChainLink";
 
 /* ------------------------------------------------------------------------ */
 /* First-run persistence                                                     */
@@ -40,6 +41,8 @@ export function markFirstRunTutorialSeen(): void {
 //   O I L D
 //   U G M Y
 const SIZE = 4;
+// Width of one tile in the path overlay's 100-unit box: a 25-unit cell less its padding
+const TILE_UNITS = 22;
 const LETTERS = "CATSRNEPOILDUGMY".split("");
 const T_TILE = 2;
 const CAT_TILES = [0, 1, 2];
@@ -412,11 +415,11 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
       : step === "chain"
         ? misses >= 2
           ? "Every word must reuse a tile from the last one. Try TEN: start on the glowing T, then E, then N."
-          : "Every word must reuse a tile from the last one (marked ⛓). Start from or pass through the glowing T: TEN, EAT and PET all work."
+          : <>Every word must reuse a tile from the last one (marked <ChainMark className="inline-block align-[-2px]" /><span className="sr-only">with a chain link</span>). Start from or pass through the glowing T: TEN, EAT and PET all work.</>
         : "Every word must reuse a tile from the last one.";
 
-  const pointsFor = (p: number[]) =>
-    p.map((i) => `${colOf(i) * 25 + 12.5},${rowOf(i) * 25 + 12.5}`).join(" ");
+  // Tile centers in the overlay's 100 x 100 box (four 25-unit cells a side)
+  const pointsFor = (p: number[]) => p.map((i) => ({ x: colOf(i) * 25 + 12.5, y: rowOf(i) * 25 + 12.5 }));
 
   const lineColor =
     lineTone === "ok" ? "hsl(var(--ok))" : lineTone === "bad" ? "hsl(var(--bad))" : "hsl(var(--brand-500))";
@@ -497,7 +500,7 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
                 className="flex h-9 items-center justify-center [grid-area:word] landscape-phone:justify-self-start"
               >
                 {currentWord ? (
-                  <span className="text-2xl font-bold tracking-[0.2em] text-foreground">{currentWord}</span>
+                  <span className="font-display text-2xl font-bold tracking-[0.2em] text-foreground">{currentWord}</span>
                 ) : (
                   <span className="text-sm text-muted-foreground">Drag, tap, or type</span>
                 )}
@@ -569,12 +572,12 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
                         inFlash && flash?.tone === "ok" && "border-[hsl(var(--ok))] bg-[hsl(var(--ok)/0.14)]",
                       )}
                     >
-                      <span aria-hidden="true" className="relative z-10 text-[clamp(1.25rem,7vmin,2.25rem)] font-semibold">
+                      <span aria-hidden="true" className="font-display relative z-10 text-[clamp(1.25rem,7vmin,2.25rem)] font-bold">
                         {letter}
                       </span>
                       {inLast && sel < 0 && (
-                        <span aria-hidden="true" className="absolute bottom-0.5 left-1 z-10 text-[11px] leading-none">
-                          ⛓
+                        <span aria-hidden="true" className="absolute bottom-0.5 left-1 z-10 leading-none">
+                          <ChainMark />
                         </span>
                       )}
                       {sel >= 0 && (
@@ -597,21 +600,18 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
               >
                 {step === "done" && (
                   <>
-                    <polyline points={pointsFor(CAT_TILES)} fill="none" stroke="hsl(var(--brand-500))" strokeOpacity={0.45} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
-                    <polyline points={pointsFor(chainWord)} fill="none" stroke="hsl(var(--ok))" strokeOpacity={0.55} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
+                    <g style={{ color: "hsl(var(--brand-500))" }}>
+                      <ChainLinkPath points={pointsFor(CAT_TILES)} tile={TILE_UNITS} />
+                    </g>
+                    <g style={{ color: "hsl(var(--ok))" }}>
+                      <ChainLinkPath points={pointsFor(chainWord)} tile={TILE_UNITS} />
+                    </g>
                   </>
                 )}
                 {step !== "done" && linePath.length >= 2 && (
-                  <polyline
-                    points={pointsFor(linePath)}
-                    fill="none"
-                    stroke={lineColor}
-                    strokeOpacity={0.5}
-                    strokeWidth={3.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeDasharray={lineTone === "bad" ? "0.8 5" : undefined}
-                  />
+                  <g style={{ color: lineColor }}>
+                    <ChainLinkPath points={pointsFor(linePath)} tile={TILE_UNITS} broken={lineTone === "bad"} />
+                  </g>
                 )}
               </svg>
             </div>
@@ -634,7 +634,8 @@ export function FirstRunTutorial({ open, onClose }: FirstRunTutorialProps) {
                 <div className="w-full space-y-3">
                   <ul className="space-y-1 text-sm text-muted-foreground">
                     <li>
-                      You played <strong className="text-foreground">CAT</strong> ⛓{" "}
+                      You played <strong className="text-foreground">CAT</strong>{" "}
+                      <ChainMark className="inline-block align-[-2px]" />{" "}
                       <strong className="text-foreground">{spell(chainWord)}</strong>, sharing the T.
                     </li>
                     <li>Longer words score more.</li>
