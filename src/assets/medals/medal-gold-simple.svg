@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" role="img" aria-labelledby="lc-mgs-title">
+  <title id="lc-mgs-title">Gold medal</title>
+  <defs>
+    <linearGradient id="lc-mgs-rim" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="18" y2="18">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="50%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#A16207"/>
+    </linearGradient>
+    <linearGradient id="lc-mgs-well" gradientUnits="userSpaceOnUse" x1="5" y1="5" x2="15" y2="15">
+      <stop offset="0%" stop-color="#713F12"/>
+      <stop offset="100%" stop-color="#A16207"/>
+    </linearGradient>
+  </defs>
+  <!-- 8-point starburst -->
+  <polygon points="10,1.2 12.4,4.2 16.2,3.8 15.8,7.6 18.8,10 15.8,12.4 16.2,16.2 12.4,15.8 10,18.8 7.6,15.8 3.8,16.2 4.2,12.4 1.2,10 4.2,7.6 3.8,3.8 7.6,4.2" fill="url(#lc-mgs-rim)" stroke="#5C3404" stroke-width="1.35" stroke-linejoin="bevel"/>
+  <circle cx="10" cy="10" r="5.1" fill="url(#lc-mgs-well)" stroke="#5C3404" stroke-width="0.85"/>
+  <!-- 5-point star -->
+  <polygon points="10,6.0 11.0,8.6 13.8,8.7 11.6,10.5 12.4,13.2 10,11.6 7.6,13.2 8.4,10.5 6.2,8.7 9.0,8.6" fill="#FEF9C3"/>
+</svg>

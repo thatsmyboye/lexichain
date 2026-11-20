@@ -6,7 +6,8 @@ import type { LoginStreakData } from "@/hooks/useLoginStreak";
 import { DAILY_MODE_NAMES, type DailyGameMode } from "@/lib/gameModes";
 import { cn } from "@/lib/utils";
 import { DailyStatusBadge } from "./DailyStatusBadge";
-import { GRADE_MEDALS } from "./medals";
+import { GRADE_LABELS } from "./medals";
+import { Medal } from "@/components/game/Medal";
 import { DAILY_MOVES_LIMIT, useDailyStatus } from "./useDailyStatus";
 import { formatCountdown, shiftDateString, useDailyCountdown } from "./useDailyCountdown";
 import { useDailyCommunity } from "./useDailyCommunity";
@@ -58,9 +59,9 @@ function DailyRow({ mode, sizeLabel, onPlay }: DailyRowProps) {
           {status.state === "done" && status.grade && (
             <div className="flex items-baseline gap-1">
               <dt className="sr-only">Medal</dt>
-              <dd className="font-semibold">
-                <span aria-hidden="true">{GRADE_MEDALS[status.grade].emoji} </span>
-                {GRADE_MEDALS[status.grade].label}
+              <dd className="flex items-center gap-1 font-semibold">
+                {status.grade !== "None" && <Medal tier={status.grade} className="h-4 w-4 self-center" />}
+                {GRADE_LABELS[status.grade]}
               </dd>
             </div>
           )}

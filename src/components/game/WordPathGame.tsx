@@ -83,6 +83,7 @@ import {
 import type { Pos, SpecialTile, SpecialTileType } from "@/types/game";
 import { GameBoard, type BoardStamp, type PathTone } from "./GameBoard";
 import { ChainMark } from "./ChainLink";
+import { Medal } from "./Medal";
 import { GameHud } from "./GameHud";
 import { HowToPlayDialog } from "./HowToPlayDialog";
 import { ResultsDialog, type ResultsSummary } from "./ResultsDialog";
@@ -3521,15 +3522,15 @@ function WordPathGame({
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground/75">Medal targets</h2>
               <ul className="grid grid-cols-2 gap-1.5 text-xs">
                 {([
-                  ["Bronze", "🥉", benchmarks.bronze],
-                  ["Silver", "🥈", benchmarks.silver],
-                  ["Gold", "🥇", benchmarks.gold],
-                  ["Platinum", "💎", benchmarks.platinum],
-                ] as const).map(([name, emoji, target]) => {
+                  ["Bronze", benchmarks.bronze],
+                  ["Silver", benchmarks.silver],
+                  ["Gold", benchmarks.gold],
+                  ["Platinum", benchmarks.platinum],
+                ] as const).map(([name, target]) => {
                   const reached = score >= target;
                   return (
                     <li key={name} className={`flex items-center justify-between rounded px-2 py-1 ${reached ? "bg-[hsl(var(--brand-500)/0.12)] font-semibold" : "bg-muted/60 text-foreground/80"}`}>
-                      <span><span aria-hidden="true">{emoji} </span>{name}</span>
+                      <span className="flex items-center gap-1.5"><Medal tier={name} className="h-4 w-4" />{name}</span>
                       <span className="tabular-nums">{target.toLocaleString()}{reached ? <span className="sr-only"> (reached)</span> : null}</span>
                     </li>
                   );

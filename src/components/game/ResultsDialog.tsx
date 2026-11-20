@@ -2,15 +2,16 @@ import type React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Grade } from "./wordPathEngine";
+import { Medal, UnearnedMedal } from "./Medal";
 import { DefinableWord } from "./WordDefinition";
 import { ACHIEVEMENTS, type AchievementId } from "@/lib/achievements";
 
-const MEDALS: Record<Grade, { emoji: string; ring: string; label: string }> = {
-  Platinum: { emoji: "💎", ring: "from-purple-400 to-fuchsia-500", label: "Platinum" },
-  Gold: { emoji: "🥇", ring: "from-yellow-300 to-amber-500", label: "Gold" },
-  Silver: { emoji: "🥈", ring: "from-gray-200 to-gray-400", label: "Silver" },
-  Bronze: { emoji: "🥉", ring: "from-orange-300 to-amber-700", label: "Bronze" },
-  None: { emoji: "🔤", ring: "from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))]", label: "No medal" },
+const MEDAL_LABELS: Record<Grade, string> = {
+  Platinum: "Platinum",
+  Gold: "Gold",
+  Silver: "Silver",
+  Bronze: "Bronze",
+  None: "No medal",
 };
 
 export interface ResultsSummary {
@@ -47,17 +48,22 @@ export function ResultsDialog({
   secondaryActions?: React.ReactNode;
 }) {
   if (!summary) return null;
-  const medal = MEDALS[summary.grade];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-md max-h-[90dvh] overflow-y-auto p-5 sm:p-6">
         <DialogHeader className="items-center text-center">
-          <div
-            aria-hidden="true"
-            className={`mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br ${medal.ring} text-5xl shadow-lg animate-in zoom-in-50 spin-in-12 duration-700`}
-          >
-            {summary.showGrade ? medal.emoji : "🔤"}
+          <div aria-hidden="true" className="mb-2 flex h-20 w-20 items-center justify-center animate-in zoom-in-50 spin-in-12 duration-700">
+            {!summary.showGrade ? (
+              // Modes without medals: a neutral badge, not an empty medal slot
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[hsl(var(--brand-400))] to-[hsl(var(--brand-600))] text-5xl shadow-lg">
+                🔤
+              </span>
+            ) : summary.grade === "None" ? (
+              <UnearnedMedal className="h-20 w-20" />
+            ) : (
+              <Medal tier={summary.grade} detailed className="h-20 w-20 drop-shadow-lg" />
+            )}
           </div>
           <DialogTitle className="text-2xl">{summary.title}</DialogTitle>
           <DialogDescription className="text-foreground/80">{summary.reason}</DialogDescription>
@@ -66,7 +72,7 @@ export function ResultsDialog({
         <div className="text-center">
           <div className="font-display-num text-4xl font-extrabold tabular-nums text-[hsl(var(--brand-600))]">{summary.score.toLocaleString()}</div>
           <div className="text-sm text-foreground/80">
-            points{summary.showGrade ? ` · ${medal.label}` : ""}
+            points{summary.showGrade ? ` · ${MEDAL_LABELS[summary.grade]}` : ""}
           </div>
           {summary.personalBest?.isNew && (
             <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-[hsl(var(--brand-500)/0.15)] px-3 py-1 text-sm font-bold text-[hsl(var(--brand-600))] animate-in zoom-in-75 duration-500">
