@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tew-title">
+  <title id="lc-tew-title">Epic Wordsmith trophy</title>
+  <defs>
+    <linearGradient id="lc-tew-lit" gradientUnits="userSpaceOnUse" x1="-18" y1="-72" x2="18" y2="23">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#EDE9FE" />
+    </linearGradient>
+    <linearGradient id="lc-tew-shade" gradientUnits="userSpaceOnUse" x1="-18" y1="-72" x2="18" y2="23">
+      <stop offset="0%" stop-color="#DDD6FE" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+  </defs>
+
+  <!-- Back nib (-42°, upper-right half lit to match 120° light) -->
+  <g transform="translate(128 149) rotate(-42)" stroke-linejoin="bevel">
+    <polygon points="0,-72 17.5,-36 10.5,-23 11.5,-1 0,-1" fill="url(#lc-tew-lit)" />
+    <polygon points="0,-72 -17.5,-36 -10.5,-23 -11.5,-1 0,-1" fill="url(#lc-tew-shade)" />
+    <polyline points="13.5,-36 2.5,-62" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.88" />
+    <polygon points="0,-72 17.5,-36 10.5,-23 11.5,-1 -11.5,-1 -10.5,-23 -17.5,-36" fill="none" stroke="#14072B" stroke-width="3.5" />
+    <line x1="0" y1="-70" x2="0" y2="-36" stroke="#14072B" stroke-width="3.8" stroke-linecap="butt" />
+    <polygon points="0,-39 7.5,-31.5 0,-24 -7.5,-31.5" fill="#14072B" />
+    <polygon points="0,-35.5 4,-31.5 0,-27.5 -4,-31.5" fill="#C4B5FD" fill-opacity="0.65" />
+
+    <polygon points="0,5 11.5,5 14.5,23 0,23" fill="#FFFFFF" />
+    <polygon points="-11.5,5 0,5 0,23 -14.5,23" fill="#A78BFA" />
+    <line x1="-9.5" y1="8" x2="9.5" y2="8" stroke="#FFFFFF" stroke-width="1.8" stroke-opacity="0.85" />
+    <polygon points="-11.5,5 11.5,5 14.5,23 -14.5,23" fill="none" stroke="#14072B" stroke-width="3.5" />
+  </g>
+
+  <!-- Front nib (+42°, upper-left half lit to match 120° light) -->
+  <g transform="translate(128 149) rotate(42)" stroke-linejoin="bevel">
+    <polygon points="0,-72 -17.5,-36 -10.5,-23 -11.5,-1 0,-1" fill="url(#lc-tew-lit)" />
+    <polygon points="0,-72 17.5,-36 10.5,-23 11.5,-1 0,-1" fill="url(#lc-tew-shade)" />
+    <polyline points="-13.5,-36 -2.5,-62" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.88" />
+    <polygon points="0,-72 17.5,-36 10.5,-23 11.5,-1 -11.5,-1 -10.5,-23 -17.5,-36" fill="none" stroke="#14072B" stroke-width="3.5" />
+    <line x1="0" y1="-70" x2="0" y2="-36" stroke="#14072B" stroke-width="3.8" stroke-linecap="butt" />
+    <polygon points="0,-39 7.5,-31.5 0,-24 -7.5,-31.5" fill="#14072B" />
+    <polygon points="0,-35.5 4,-31.5 0,-27.5 -4,-31.5" fill="#C4B5FD" fill-opacity="0.65" />
+
+    <polygon points="-11.5,5 0,5 0,23 -14.5,23" fill="#FFFFFF" />
+    <polygon points="0,5 11.5,5 14.5,23 0,23" fill="#A78BFA" />
+    <line x1="-9.5" y1="8" x2="9.5" y2="8" stroke="#FFFFFF" stroke-width="1.8" stroke-opacity="0.85" />
+    <polygon points="-11.5,5 11.5,5 14.5,23 -14.5,23" fill="none" stroke="#14072B" stroke-width="3.5" />
+  </g>
+
+  <!-- Crown spark diamond seated in the open V between the two nibs -->
+  <g stroke-linejoin="bevel">
+    <polygon points="128,78 128,104 118,91" fill="#FFFFFF" />
+    <polygon points="128,78 138,91 128,104" fill="#C4B5FD" />
+    <polygon points="128,78 138,91 128,104 118,91" fill="none" stroke="#14072B" stroke-width="3.2" />
+  </g>
+</svg>

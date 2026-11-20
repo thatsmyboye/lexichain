@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tdv-title">
+  <title id="lc-tdv-title">Devoted trophy</title>
+  <defs>
+    <linearGradient id="lc-tdv-left" gradientUnits="userSpaceOnUse" x1="84" y1="70" x2="132" y2="156">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="52%" stop-color="#EDE9FE" />
+      <stop offset="100%" stop-color="#C4B5FD" />
+    </linearGradient>
+    <linearGradient id="lc-tdv-right" gradientUnits="userSpaceOnUse" x1="128" y1="89" x2="170" y2="156">
+      <stop offset="0%" stop-color="#EDE9FE" />
+      <stop offset="50%" stop-color="#C4B5FD" />
+      <stop offset="100%" stop-color="#A78BFA" />
+    </linearGradient>
+    <linearGradient id="lc-tdv-cup" gradientUnits="userSpaceOnUse" x1="104" y1="154" x2="152" y2="184">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="50%" stop-color="#DDD6FE" />
+      <stop offset="100%" stop-color="#914DEF" />
+    </linearGradient>
+  </defs>
+
+  <!-- Asymmetric twin flame tongues (left spire y=70, right spire y=89; deep fork to y=124) -->
+  <polygon points="114,70 124,101 131,124 131,155 103,155 84,131 89,102 97,111" fill="url(#lc-tdv-left)" />
+  <polygon points="149,89 159,115 166,108 170,132 153,155 131,155 131,124 138,105" fill="url(#lc-tdv-right)" />
+  <!-- 120° leading-edge speculars -->
+  <polyline points="111,82 100,107" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9" />
+  <polyline points="146,99 138,118" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.85" />
+  <!-- Clean twin-flame contour on top -->
+  <polygon points="114,70 124,101 131,124 138,105 149,89 159,115 166,108 170,132 153,155 103,155 84,131 89,102 97,111" fill="none" stroke="#14072B" stroke-width="3.5" stroke-linejoin="bevel" />
+
+  <!-- Asymmetric organic flame hollows & tapered inner tongues (no diamond gems) -->
+  <polygon points="113,100 124,132 118,150 108,150 99,130" fill="#14072B" />
+  <polygon points="113,115 120,136 113,148 106,136" fill="#FFFFFF" />
+
+  <polygon points="148,113 158,135 149,150 140,150 137,134" fill="#14072B" />
+  <polygon points="148,125 153,138 147,148 142,138" fill="#FEF08A" />
+
+  <!-- Narrow tapered torch pedestal (no headband, no center jewel) -->
+  <g stroke-linejoin="bevel">
+    <polygon points="103,155 153,155 143,169 135,169 135,177 146,177 146,184 110,184 110,177 121,177 121,169 113,169" fill="url(#lc-tdv-cup)" />
+    <!-- 120° shadow right half -->
+    <polygon points="128,155 153,155 143,169 135,169 135,177 146,177 146,184 128,184" fill="#914DEF" fill-opacity="0.34" />
+    <line x1="108" y1="158.5" x2="148" y2="158.5" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.85" />
+    <polygon points="103,155 153,155 143,169 135,169 135,177 146,177 146,184 110,184 110,177 121,177 121,169 113,169" fill="none" stroke="#14072B" stroke-width="3.5" />
+  </g>
+</svg>

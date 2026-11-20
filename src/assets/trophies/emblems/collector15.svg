@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tco-title">
+  <title id="lc-tco-title">Collector trophy</title>
+  <defs>
+    <linearGradient id="lc-tco-top" gradientUnits="userSpaceOnUse" x1="-47" y1="-24" x2="47" y2="24">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="60%" stop-color="#EDE9FE" />
+      <stop offset="100%" stop-color="#DDD6FE" />
+    </linearGradient>
+    <linearGradient id="lc-tco-left" gradientUnits="userSpaceOnUse" x1="-47" y1="2" x2="-4" y2="39">
+      <stop offset="0%" stop-color="#DDD6FE" />
+      <stop offset="100%" stop-color="#B197FC" />
+    </linearGradient>
+    <linearGradient id="lc-tco-right" gradientUnits="userSpaceOnUse" x1="4" y1="2" x2="47" y2="39">
+      <stop offset="0%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#7C3AED" />
+    </linearGradient>
+
+    <!-- Single chamfered isometric keycap tile (94x48 top face, 15px raised keycap wall) -->
+    <g id="lc-tco-slab" stroke-linejoin="bevel">
+      <!-- Left lit wall, front corner bevel, right shaded wall -->
+      <polygon points="-47,2 -4,24 -4,39 -47,17" fill="url(#lc-tco-left)" />
+      <polygon points="-4,24 4,24 4,39 -4,39" fill="#EDE9FE" />
+      <polygon points="4,24 47,2 47,17 4,39" fill="url(#lc-tco-right)" />
+      <!-- Top tile face -->
+      <polygon points="-4,-24 4,-24 47,-2 47,2 4,24 -4,24 -47,2 -47,-2" fill="url(#lc-tco-top)" />
+      <!-- 120° top-left specular edge -->
+      <polyline points="-42,0 -4,-20 4,-20 42,0" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.92" />
+      <!-- Clean dark contours & wall seams on top -->
+      <polygon points="-4,-24 4,-24 47,-2 47,17 4,39 -4,39 -47,17 -47,-2" fill="none" stroke="#14072B" stroke-width="3.5" />
+      <polyline points="-47,2 -4,24 4,24 47,2" fill="none" stroke="#14072B" stroke-width="2.8" />
+      <line x1="-4" y1="24" x2="-4" y2="39" stroke="#14072B" stroke-width="2.2" />
+      <line x1="4" y1="24" x2="4" y2="39" stroke="#14072B" stroke-width="2.2" />
+    </g>
+  </defs>
+
+  <!-- 3-tier staggered stack of collected keycap tiles -->
+  <use href="#lc-tco-slab" x="125" y="141" />
+  <use href="#lc-tco-slab" x="131" y="119" />
+  <use href="#lc-tco-slab" x="126" y="97" />
+
+  <!-- Recessed keycap bezel & center diamond pip on the top tile face -->
+  <g transform="translate(126 97)" stroke-linejoin="bevel">
+    <polygon points="-3,-15 3,-15 29,-1.5 29,1.5 3,15 -3,15 -29,1.5 -29,-1.5" fill="none" stroke="#14072B" stroke-width="2.6" stroke-opacity="0.72" />
+    <polygon points="0,-9 17,0 0,9 -17,0" fill="#14072B" />
+    <polygon points="0,-4.5 8.5,0 0,4.5 -8.5,0" fill="#C4B5FD" />
+  </g>
+</svg>
