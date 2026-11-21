@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,25 @@ const RARITY_STYLE: Record<string, { badge: string; label: string }> = {
   legendary: { badge: "bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100", label: "Legendary" },
 };
 
+// Trophies per shelf: 2, then 3 from Tailwind's sm width, then 4 from lg.
+// The count is needed in script, not only in CSS, because each row of
+// trophies gets its own shelf.
+const SHELF_QUERIES = ["(min-width: 640px)", "(min-width: 1024px)"];
+function readShelfColumns() {
+  if (typeof window === "undefined" || !window.matchMedia) return 2;
+  return 2 + SHELF_QUERIES.filter(q => window.matchMedia(q).matches).length;
+}
+function useShelfColumns() {
+  const [columns, setColumns] = useState(readShelfColumns);
+  useEffect(() => {
+    const lists = SHELF_QUERIES.map(q => window.matchMedia(q));
+    const update = () => setColumns(readShelfColumns());
+    lists.forEach(l => l.addEventListener("change", update));
+    return () => lists.forEach(l => l.removeEventListener("change", update));
+  }, []);
+  return columns;
+}
+
 // "Word Artisan (3 words of 6+ letters)" -> "Word Artisan"
 const shortName = (label: string) => label.replace(/\s*\(.*\)\s*$/, "");
 
@@ -23,6 +42,7 @@ export default function TrophiesPage() {
   const trophies = useTrophies();
   const ids = Object.keys(ACHIEVEMENTS) as AchievementId[];
   const unlockedCount = ids.filter(id => trophies[id]).length;
+  const columns = useShelfColumns();
 
   // Trophies unlocked since the last visit get an unlock animation
   const freshRef = useRef<Set<string> | null>(null);
@@ -52,6 +72,12 @@ export default function TrophiesPage() {
     });
   }, [trophies]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const shelves = useMemo(() => {
+    const rows: AchievementId[][] = [];
+    for (let i = 0; i < sorted.length; i += columns) rows.push(sorted.slice(i, i + columns));
+    return rows;
+  }, [sorted, columns]);
+
   return (
     <main className="container mx-auto max-w-4xl py-6">
       <div className="mb-4 flex items-center gap-2">
@@ -80,37 +106,51 @@ export default function TrophiesPage() {
         </div>
       </div>
 
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {sorted.map(id => {
-          const achievement = ACHIEVEMENTS[id];
-          const record = trophies[id];
-          const style = RARITY_STYLE[achievement.rarity];
-          const fresh = freshRef.current?.has(id);
-          return (
-            <li
-              key={id}
-              className={`relative flex flex-col items-center rounded-xl border bg-card p-3 text-center shadow-sm ${record ? "" : "opacity-80"} ${fresh ? "animate-in zoom-in-50 fade-in duration-700" : ""}`}
-            >
-              <TrophyBadge id={id} rarity={achievement.rarity} unlocked={!!record} className="mb-2 h-16 w-16" />
-              <h2 className="text-sm font-semibold leading-tight">
-                {shortName(achievement.label)}
-                {!record && <span className="sr-only"> (locked)</span>}
-              </h2>
-              <p className="mt-1 text-xs text-foreground/75">{TROPHY_HINTS[id]}</p>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${style.badge}`}>{style.label}</span>
-                <span className="text-[10px] text-foreground/70">+{achievement.scoreBonus} pts</span>
-              </div>
-              {record && (
-                <p className="mt-1 text-[10px] text-foreground/70">
-                  {new Date(record.unlockedAt).toLocaleDateString()}{record.count > 1 ? ` · earned ${record.count}×` : ""}
-                </p>
-              )}
-              {fresh && <span className="absolute right-2 top-2 rounded-full bg-[hsl(var(--brand-500))] px-1.5 py-0.5 text-[10px] font-bold text-white">New</span>}
-            </li>
-          );
-        })}
-      </ul>
+      {/* One shelf per row. The rows are layout only, so the trophies are
+          exposed to assistive technology as a single list. */}
+      <div role="list" aria-label="Trophies" className="space-y-6">
+        {shelves.map((shelf, index) => (
+          <div
+            key={index}
+            role="presentation"
+            className="relative grid gap-x-3"
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+          >
+            {/* Sits 7px under the top of the trophies' feet, so they stand on its deck */}
+            <div aria-hidden="true" className="trophy-shelf pointer-events-none absolute inset-x-0 top-[57px]" />
+            {shelf.map(id => {
+              const achievement = ACHIEVEMENTS[id];
+              const record = trophies[id];
+              const style = RARITY_STYLE[achievement.rarity];
+              const fresh = freshRef.current?.has(id);
+              return (
+                <div
+                  key={id}
+                  role="listitem"
+                  className={`relative flex flex-col items-center px-1 text-center ${record ? "" : "opacity-80"} ${fresh ? "animate-in zoom-in-50 fade-in duration-700" : ""}`}
+                >
+                  <TrophyBadge id={id} rarity={achievement.rarity} unlocked={!!record} className="mb-[22px] h-16 w-16" />
+                  <h2 className="text-sm font-semibold leading-tight">
+                    {shortName(achievement.label)}
+                    {!record && <span className="sr-only"> (locked)</span>}
+                  </h2>
+                  <p className="mt-1 text-xs text-foreground/75">{TROPHY_HINTS[id]}</p>
+                  <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${style.badge}`}>{style.label}</span>
+                    <span className="text-[10px] text-foreground/70">+{achievement.scoreBonus} pts</span>
+                  </div>
+                  {record && (
+                    <p className="mt-1 text-[10px] text-foreground/70">
+                      {new Date(record.unlockedAt).toLocaleDateString()}{record.count > 1 ? ` · earned ${record.count}×` : ""}
+                    </p>
+                  )}
+                  {fresh && <span className="absolute right-2 top-0 rounded-full bg-[hsl(var(--brand-500))] px-1.5 py-0.5 text-[10px] font-bold text-white">New</span>}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </main>
   );
 }

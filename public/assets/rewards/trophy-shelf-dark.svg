@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 48" width="512" height="48" role="img" aria-labelledby="lc-tsd-title">
+  <title id="lc-tsd-title">Trophy case shelf</title>
+  <defs>
+    <linearGradient id="lc-tsd-deck" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="16">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+    <linearGradient id="lc-tsd-face" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="27">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="lc-tsd-shade" gradientUnits="userSpaceOnUse" x1="0" y1="27" x2="0" y2="42">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.58" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <polygon points="16,27 496,27 486,42 26,42" fill="url(#lc-tsd-shade)" />
+
+  <!-- Chamfered under-brackets inside 48px endcaps -->
+  <g stroke-linejoin="bevel">
+    <polygon points="18,27 42,27 42,35 32,43 18,43" fill="#1E293B" />
+    <polygon points="18,27 26,27 26,43 18,43" fill="#334155" />
+    <polygon points="18,27 42,27 42,35 32,43 18,43" fill="none" stroke="#475569" stroke-width="2" />
+
+    <polygon points="470,27 494,27 494,43 480,43 470,35" fill="#0F172A" />
+    <polygon points="470,27 478,27 478,41 470,35" fill="#1E293B" />
+    <polygon points="470,27 494,27 494,43 480,43 470,35" fill="none" stroke="#475569" stroke-width="2" />
+  </g>
+
+  <!-- Perspective deck & dark slate front lip -->
+  <polygon points="14,4 498,4 508,16 4,16" fill="url(#lc-tsd-deck)" />
+  <polygon points="4,16 508,16 504,27 8,27" fill="url(#lc-tsd-face)" />
+  <!-- Bright metallic ridge catch so the shelf separates cleanly on #020817 / #0F172A -->
+  <line x1="6" y1="16.5" x2="506" y2="16.5" stroke="#94A3B8" stroke-width="2" stroke-opacity="0.6" />
+  <polygon points="14,4 498,4 508,16 504,27 8,27 4,16" fill="none" stroke="#475569" stroke-width="2" stroke-linejoin="bevel" />
+</svg>

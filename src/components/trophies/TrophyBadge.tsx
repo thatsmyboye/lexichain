@@ -1,10 +1,11 @@
-import { Lock, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Achievement, AchievementId } from "@/lib/achievements";
 import frameCommon from "@/assets/trophies/frames/frame-common.svg";
 import frameRare from "@/assets/trophies/frames/frame-rare.svg";
 import frameEpic from "@/assets/trophies/frames/frame-epic.svg";
 import frameLegendary from "@/assets/trophies/frames/frame-legendary.svg";
+import lockedEmblem from "@/assets/trophies/locked-emblem.svg";
 
 type Rarity = Achievement["rarity"];
 
@@ -35,7 +36,8 @@ interface TrophyBadgeProps {
 
 /**
  * A trophy: its rarity frame with the achievement's emblem in the well.
- * Locked trophies show a padlock instead, so the emblem stays a surprise.
+ * Locked trophies show a padlock in a muted frame (see .trophy-frame-locked),
+ * so the emblem stays a surprise while the rarity shape still shows.
  * Decorative: always pair it with the trophy's name in text.
  *
  * Frames and emblems share one 256 x 256 space and are stacked as two <img>
@@ -50,10 +52,10 @@ export function TrophyBadge({ id, rarity, unlocked, className }: TrophyBadgeProp
         src={FRAMES[rarity]}
         alt=""
         draggable={false}
-        className={cn("block h-full w-full", unlocked ? "drop-shadow-md" : "opacity-80 grayscale")}
+        className={cn("block h-full w-full", unlocked ? "drop-shadow-md" : "trophy-frame-locked")}
       />
       {!unlocked ? (
-        <Lock className="absolute inset-0 m-auto h-[30%] w-[30%] text-white/85" />
+        <img src={lockedEmblem} alt="" draggable={false} className={layer} />
       ) : emblem ? (
         <img src={emblem} alt="" draggable={false} className={layer} />
       ) : (
