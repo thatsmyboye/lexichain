@@ -151,6 +151,8 @@ export function DailyHub({ user, streakData, onPlayDaily, onSignInClick, classNa
   const { nextAt, msLeft, today } = useDailyCountdown();
   const community = useDailyCommunity(user, today);
   const nextAtLabel = nextAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // Shown only on the day the player returns after missing one
+  const streakEnded = streakData && streakData.lastLoginDate === today ? streakData.endedStreak : null;
   const todayLabel = (() => {
     const [y, m, d] = today.split("-").map(Number);
     return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
@@ -185,11 +187,20 @@ export function DailyHub({ user, streakData, onPlayDaily, onSignInClick, classNa
           <dl className="min-w-0">
             <div className="flex items-center gap-1.5">
               <dt className="sr-only">Login streak</dt>
-              <Flame aria-hidden="true" className="h-5 w-5 shrink-0 text-orange-500 dark:text-orange-400" />
+              <Flame
+                aria-hidden="true"
+                className={cn("h-5 w-5 shrink-0", streakEnded ? "text-muted-foreground" : "text-orange-500 dark:text-orange-400")}
+              />
               <dd className="text-sm font-bold">
                 {streakData.currentStreak} day streak
               </dd>
             </div>
+            {streakEnded && (
+              <div className="text-xs text-muted-foreground">
+                <dt className="sr-only">Previous streak</dt>
+                <dd>{streakEnded}-day streak ended</dd>
+              </div>
+            )}
             <div className="flex items-baseline gap-1 text-xs text-muted-foreground">
               <dt>Total logins</dt>
               <dd className="font-semibold tabular-nums text-foreground">{numberFormat.format(streakData.totalLogins)}</dd>

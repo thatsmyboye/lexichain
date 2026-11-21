@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 48" width="512" height="48" role="img" aria-labelledby="lc-tsl-title">
+  <title id="lc-tsl-title">Trophy case shelf</title>
+  <defs>
+    <linearGradient id="lc-tsl-deck" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="16">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+    <linearGradient id="lc-tsl-face" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="27">
+      <stop offset="0%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+    <linearGradient id="lc-tsl-shade" gradientUnits="userSpaceOnUse" x1="0" y1="27" x2="0" y2="42">
+      <stop offset="0%" stop-color="#0F172A" stop-opacity="0.16" />
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Soft under-shelf cast shadow (stretches cleanly across center slice) -->
+  <polygon points="16,27 496,27 486,42 26,42" fill="url(#lc-tsl-shade)" />
+
+  <!-- Chamfered under-brackets strictly inside 48px non-stretching endcaps -->
+  <g stroke-linejoin="bevel">
+    <polygon points="18,27 42,27 42,35 32,43 18,43" fill="#CBD5E1" />
+    <polygon points="18,27 26,27 26,43 18,43" fill="#E2E8F0" />
+    <polygon points="18,27 42,27 42,35 32,43 18,43" fill="none" stroke="#64748B" stroke-width="2" />
+
+    <polygon points="470,27 494,27 494,43 480,43 470,35" fill="#94A3B8" />
+    <polygon points="470,27 478,27 478,41 470,35" fill="#CBD5E1" />
+    <polygon points="470,27 494,27 494,43 480,43 470,35" fill="none" stroke="#64748B" stroke-width="2" />
+  </g>
+
+  <!-- Perspective tabletop deck & front architectural lip -->
+  <polygon points="14,4 498,4 508,16 4,16" fill="url(#lc-tsl-deck)" />
+  <polygon points="4,16 508,16 504,27 8,27" fill="url(#lc-tsl-face)" />
+  <!-- 120° top-left specular catch along front bevel ridge -->
+  <line x1="6" y1="16.5" x2="506" y2="16.5" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.92" />
+  <!-- Outer & ridge contours drawn on top -->
+  <polygon points="14,4 498,4 508,16 504,27 8,27 4,16" fill="none" stroke="#64748B" stroke-width="2" stroke-linejoin="bevel" />
+  <line x1="4" y1="16" x2="508" y2="16" stroke="#94A3B8" stroke-width="1.2" />
+</svg>

@@ -314,6 +314,31 @@ All colors MUST be HSL.
   50% { box-shadow: inset 0 0 40px 8px hsl(var(--bad) / 0.45); }
 }
 
+/* Trophy case (TrophiesPage).
+   The shelf is one image cut into three: the 48px end caps, with their
+   brackets, keep their shape, and the middle stretches to any row width. */
+.trophy-shelf {
+  height: 24px;
+  border-style: solid;
+  border-width: 0 24px;
+  border-image-source: url("/assets/rewards/trophy-shelf-light.svg");
+  border-image-slice: 0 48 0 48 fill;
+  border-image-repeat: stretch;
+}
+.dark .trophy-shelf {
+  border-image-source: url("/assets/rewards/trophy-shelf-dark.svg");
+}
+/* A locked trophy's frame: muted so it reads as not yet earned, but dark
+   enough that the padlock in its well stays clear (3.5:1 or better). */
+.trophy-frame-locked {
+  filter: grayscale(0.88) brightness(0.75);
+  opacity: 0.85;
+}
+.dark .trophy-frame-locked {
+  filter: grayscale(0.85) brightness(1.12);
+  opacity: 0.56;
+}
+
 /* Honor reduced motion everywhere, including inline animation styles and
    tailwindcss-animate entrance classes (!important beats inline styles). */
 @media (prefers-reduced-motion: reduce) {

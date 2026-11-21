@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="lc-tlk-title">
+  <title id="lc-tlk-title">Locked trophy</title>
+  <defs>
+    <linearGradient id="lc-tlk-shackle" gradientUnits="userSpaceOnUse" x1="98" y1="74" x2="158" y2="114">
+      <stop offset="0%" stop-color="#E2E8F0" />
+      <stop offset="55%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+    <linearGradient id="lc-tlk-body" gradientUnits="userSpaceOnUse" x1="86" y1="114" x2="170" y2="178">
+      <stop offset="0%" stop-color="#CBD5E1" />
+      <stop offset="50%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+  </defs>
+
+  <!-- Chamfered octagonal padlock shackle (11px thick arch) -->
+  <g stroke-linejoin="bevel">
+    <path d="M98,116 V86 L110,74 H146 L158,86 V116 H147 V90 L141,85 H115 L109,90 V116 Z" fill="url(#lc-tlk-shackle)" />
+    <polyline points="103,112 103,88 112,79 144,79" fill="none" stroke="#F8FAFC" stroke-width="2" stroke-opacity="0.78" />
+    <path d="M98,116 V86 L110,74 H146 L158,86 V116 H147 V90 L141,85 H115 L109,90 V116 Z" fill="none" stroke="#0F172A" stroke-width="3.5" />
+  </g>
+
+  <!-- Heavy chamfered lock body (84x64, y=114..178) -->
+  <g stroke-linejoin="bevel">
+    <polygon points="96,114 160,114 170,124 170,168 160,178 96,178 86,168 86,124" fill="url(#lc-tlk-body)" />
+    <!-- 120° shaded right half -->
+    <polygon points="128,114 160,114 170,124 170,168 160,178 128,178" fill="#334155" fill-opacity="0.32" />
+    <!-- Top-left bevel specular -->
+    <polyline points="90,165 90,126 98,118 158,118" fill="none" stroke="#F8FAFC" stroke-width="2.2" stroke-opacity="0.75" />
+    <!-- Outer body contour on top -->
+    <polygon points="96,114 160,114 170,124 170,168 160,178 96,178 86,168 86,124" fill="none" stroke="#0F172A" stroke-width="3.5" />
+
+    <!-- Bold chamfered keyhole slot (reads cleanly at 38px) -->
+    <polygon points="128,129 137,138 132.5,144.5 135,163 121,163 123.5,144.5 119,138" fill="#0F172A" />
+    <polyline points="135,163 132.5,144.5 137,138" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-opacity="0.4" />
+  </g>
+</svg>

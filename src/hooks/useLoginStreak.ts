@@ -5,12 +5,21 @@ import type { User } from "@supabase/supabase-js";
 import type { ConsumableReward } from "@/lib/consumables";
 import { toast } from "@/hooks/use-toast";
 import { toZonedTime, format } from 'date-fns-tz';
+import { advanceStreak, recallEndedStreak, rememberEndedStreak } from "@/lib/loginStreak";
 
 export interface LoginStreakData {
   currentStreak: number;
   lastLoginDate: string;
   totalLogins: number;
+  /**
+   * Length of the streak that ended today because a day was missed, or null.
+   * Set only on the day the player comes back; see src/lib/loginStreak.ts.
+   */
+  endedStreak: number | null;
 }
+
+/** Today's date in the game's day, which rolls over at midnight US Eastern. */
+const todayInEastern = () => format(toZonedTime(new Date(), 'America/New_York'), 'yyyy-MM-dd');
 
 const STREAK_REWARDS: Record<number, ConsumableReward[]> = {
   3: [{ id: "hint_revealer", quantity: 1 }],
@@ -48,6 +57,7 @@ export function useLoginStreak(user: User | null) {
           currentStreak: data.current_streak,
           lastLoginDate: data.last_login_date,
           totalLogins: data.total_logins,
+          endedStreak: recallEndedStreak(user.id, todayInEastern()),
         });
       } else {
         // Initialize streak data for new user
@@ -63,8 +73,7 @@ export function useLoginStreak(user: User | null) {
   const initializeStreak = async () => {
     if (!user) return;
 
-    const easternTimeZone = 'America/New_York';
-    const today = format(toZonedTime(new Date(), easternTimeZone), 'yyyy-MM-dd');
+    const today = todayInEastern();
     try {
       const { data, error } = await supabase
         .from("daily_login_streaks")
@@ -83,6 +92,7 @@ export function useLoginStreak(user: User | null) {
         currentStreak: 1,
         lastLoginDate: today,
         totalLogins: 1,
+        endedStreak: null,
       });
 
       toast({
@@ -96,25 +106,13 @@ export function useLoginStreak(user: User | null) {
   const updateStreak = async () => {
     if (!user || !streakData) return;
 
-    const easternTimeZone = 'America/New_York';
-    const today = format(toZonedTime(new Date(), easternTimeZone), 'yyyy-MM-dd');
-    const lastLogin = new Date(streakData.lastLoginDate);
-    const todayDate = new Date(today);
-    const diffDays = Math.floor((todayDate.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
+    const today = todayInEastern();
+    const advance = advanceStreak(streakData, today);
+    if (!advance) {
       // Already logged in today
       return;
     }
-
-    let newStreak = streakData.currentStreak;
-    if (diffDays === 1) {
-      // Consecutive day
-      newStreak += 1;
-    } else {
-      // Streak broken, reset to 1
-      newStreak = 1;
-    }
+    const newStreak = advance.currentStreak;
 
     try {
       const { error } = await supabase
@@ -128,10 +126,15 @@ export function useLoginStreak(user: User | null) {
 
       if (error) throw error;
 
+      // A missed day ended the previous streak: remember it for today so the
+      // hub can say so instead of silently showing "1 day streak".
+      if (advance.endedStreak) rememberEndedStreak(user.id, advance.endedStreak, today);
+
       const newStreakData = {
         currentStreak: newStreak,
         lastLoginDate: today,
         totalLogins: streakData.totalLogins + 1,
+        endedStreak: advance.endedStreak,
       };
 
       setStreakData(newStreakData);
