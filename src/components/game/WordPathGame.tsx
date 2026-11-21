@@ -489,7 +489,7 @@ function WordPathGame({
         connectivity_score: detailedAnalysis.connectivityScore,
         max_score_potential: detailedAnalysis.maxScorePotential,
         letter_distribution: Object.fromEntries(detailedAnalysis.letterDistribution),
-        // p_game_mode removed - not in RPC signature
+        p_game_mode: settings.mode,
       });
     } catch (boardAnalysisError) {
       console.warn('Failed to save board analysis (non-critical):', boardAnalysisError);

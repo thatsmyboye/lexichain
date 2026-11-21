@@ -61,6 +61,7 @@ export type Database = {
           challenge_date: string
           connectivity_score: number
           created_at: string | null
+          game_mode: string
           grid_size: number
           letter_distribution: Json
           max_score_potential: number
@@ -72,6 +73,7 @@ export type Database = {
           challenge_date: string
           connectivity_score?: number
           created_at?: string | null
+          game_mode?: string
           grid_size?: number
           letter_distribution?: Json
           max_score_potential?: number
@@ -83,6 +85,7 @@ export type Database = {
           challenge_date?: string
           connectivity_score?: number
           created_at?: string | null
+          game_mode?: string
           grid_size?: number
           letter_distribution?: Json
           max_score_potential?: number
@@ -97,6 +100,7 @@ export type Database = {
           board_analysis: Json | null
           challenge_date: string
           created_at: string
+          game_mode: string
           grid_size: number | null
           id: string
           score: number
@@ -109,6 +113,7 @@ export type Database = {
           board_analysis?: Json | null
           challenge_date: string
           created_at?: string
+          game_mode?: string
           grid_size?: number | null
           id?: string
           score: number
@@ -121,6 +126,7 @@ export type Database = {
           board_analysis?: Json | null
           challenge_date?: string
           created_at?: string
+          game_mode?: string
           grid_size?: number | null
           id?: string
           score?: number
@@ -529,7 +535,11 @@ export type Database = {
     }
     Functions: {
       calculate_daily_challenge_benchmarks: {
-        Args: { days_back?: number; target_challenge_date: string }
+        Args: {
+          days_back?: number
+          p_game_mode?: string
+          target_challenge_date: string
+        }
         Returns: {
           avg_score: number
           bronze_percentile: number
@@ -560,7 +570,7 @@ export type Database = {
       }
       get_benchmark_data: { Args: { challenge_date: string }; Returns: Json }
       get_daily_leaderboard: {
-        Args: { challenge_date: string }
+        Args: { challenge_date: string; p_game_mode?: string }
         Returns: {
           display_name: string
           rank: number
@@ -569,11 +579,11 @@ export type Database = {
         }[]
       }
       get_enhanced_benchmark_data: {
-        Args: { challenge_date: string }
+        Args: { challenge_date: string; p_game_mode?: string }
         Returns: Json
       }
       get_monthly_leaderboard: {
-        Args: { month: number; year: number }
+        Args: { month: number; p_game_mode?: string; year: number }
         Returns: {
           best_score: number
           display_name: string
@@ -583,7 +593,7 @@ export type Database = {
       }
       get_week_start: { Args: { input_date?: string }; Returns: string }
       get_weekly_leaderboard: {
-        Args: { week_start: string }
+        Args: { p_game_mode?: string; week_start: string }
         Returns: {
           best_score: number
           display_name: string
@@ -615,6 +625,7 @@ export type Database = {
           grid_size: number
           letter_distribution: Json
           max_score_potential: number
+          p_game_mode?: string
           rarity_score_potential: number
           word_count: number
         }
@@ -647,12 +658,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -676,11 +687,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -701,11 +712,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -726,11 +737,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -743,11 +754,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
