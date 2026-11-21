@@ -1,6 +1,0 @@
--- This migration has been superseded by 20251029223959_17051b73-5198-4c08-9ac2-f10fd4493441.sql
--- which creates the user_unlocked_modes table with the canonical production schema.
--- This file is kept as a no-op to maintain migration version history compatibility.
--- The original content was never applied to production (timestamp predates project creation).
--- Applying the original content to production would create a trigger referencing
--- the non-existent updated_at column, breaking all UPDATEs on user_unlocked_modes.
