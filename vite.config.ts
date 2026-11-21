@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       // Registered from src/lib/appUpdates.ts, which also handles updates.
       injectRegister: false,
-      includeAssets: ['favicon.ico', 'icons/*.svg'],
+      includeAssets: ['favicon.ico', 'favicon.svg'],
       manifest: false, // use our hand-crafted public/manifest.json
       workbox: {
         // The page itself is not precached: it is fetched network-first below
@@ -59,7 +59,8 @@ export default defineConfig(({ mode }) => ({
         // woff2: the display font. webp: board materials. Both are listed so
         // installed and offline play keeps them.
         globPatterns: ['**/*.{js,css,svg,ico,woff2,webp}'],
-        globIgnores: ['sw-upgrade.js'],
+        // icon-master.svg is a press-kit file; no page loads it.
+        globIgnores: ['sw-upgrade.js', 'icons/icon-master.svg'],
         navigateFallback: null,
         cleanupOutdatedCaches: true,
         // Activate a new worker immediately and take over open tabs.
