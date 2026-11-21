@@ -65,8 +65,6 @@ type EnhancedBenchmarkData = {
   platinumPercentile?: number;
 };
 
-type EnhancedBenchmarkArgs = Database['public']['Functions']['get_enhanced_benchmark_data']['Args'];
-
 const benchmarkCache = new Map<string, { benchmarks: Benchmarks; timestamp: number }>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
@@ -91,11 +89,10 @@ export async function computeDynamicBenchmarks(
     console.log(`Calculating dynamic benchmarks for ${challengeDate} (${gameMode}) using service function...`);
     
     // Use the enhanced benchmark function that includes board analysis
-    // p_game_mode is accepted by the function but missing from the generated types
     const { data, error } = await supabaseClient.rpc('get_enhanced_benchmark_data', {
       challenge_date: challengeDate,
       p_game_mode: gameMode
-    } as EnhancedBenchmarkArgs);
+    });
     const benchmarkData = data as EnhancedBenchmarkData | null;
 
     if (error) {
