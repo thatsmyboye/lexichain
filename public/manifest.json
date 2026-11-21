@@ -4,8 +4,8 @@
   "description": "Chain letters into words, link each word to the last — how long can your chain grow?",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#7c3aed",
+  "background_color": "#7927EC",
+  "theme_color": "#7927EC",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -27,15 +27,10 @@
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon.ico",
-      "sizes": "48x48",
-      "type": "image/x-icon"
+      "src": "/icons/icon-monochrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
     }
   ],
   "categories": ["games", "entertainment"],

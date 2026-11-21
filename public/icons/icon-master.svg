@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-if-title">
+  <title id="lc-if-title">Lexichain app icon</title>
+  <defs>
+    <linearGradient id="lc-if-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#914DEF" />
+      <stop offset="52%" stop-color="#7927EC" />
+      <stop offset="100%" stop-color="#5B12C6" />
+    </linearGradient>
+    <radialGradient id="lc-if-glow" cx="25%" cy="18%" r="65%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="lc-if-tile" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#EEF2FF" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full-bleed brand plate -->
+  <rect width="128" height="128" fill="url(#lc-if-bg)" />
+  <rect width="128" height="128" fill="url(#lc-if-glow)" />
+
+  <!-- Raised white keycap tile inside Android 80% maskable safe circle -->
+  <rect x="30" y="37" width="68" height="63" rx="13" fill="#1E0542" fill-opacity="0.34" />
+  <rect x="30" y="33" width="68" height="63" rx="13" fill="#43108C" />
+  <rect x="30" y="27" width="68" height="63" rx="13" fill="url(#lc-if-tile)" stroke="#C4B5FD" stroke-width="1" />
+  <path d="M41 28.5 H87" stroke="#FFFFFF" stroke-width="1.5" />
+
+  <!-- Bold Sora-proportioned L in deep plum -->
+  <path d="M44 40 H54 V70 H84 V80 H44 Z" fill="#4C1D95" />
+
+  <!-- Chunky beveled chain link seated in upper-right pocket -->
+  <g transform="translate(74 50) rotate(-45)">
+    <path fill-rule="evenodd" d="M-15 -9.5 L-11 -13.5 H11 L15 -9.5 V3.5 L11 7.5 H-11 L-15 3.5 Z M-8.5 -5.5 L-6.5 -7.5 H6.5 L8.5 -5.5 V-0.5 L6.5 1.5 H-6.5 L-8.5 -0.5 Z" fill="#7927EC" stroke="#3B0764" stroke-width="1.5" stroke-linejoin="bevel" transform="translate(0 3)" />
+  </g>
+</svg>
