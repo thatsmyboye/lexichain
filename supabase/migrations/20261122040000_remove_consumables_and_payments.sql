@@ -14,15 +14,15 @@
 -- 1. Scheduled reward distribution
 DO $$
 DECLARE
-  job text;
+  target_job text;
 BEGIN
-  FOREACH job IN ARRAY ARRAY[
+  FOREACH target_job IN ARRAY ARRAY[
     'distribute-daily-leaderboard-rewards',
     'distribute-weekly-leaderboard-rewards',
     'distribute-monthly-leaderboard-rewards'
   ] LOOP
-    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = job) THEN
-      PERFORM cron.unschedule(job);
+    IF EXISTS (SELECT 1 FROM cron.job AS j WHERE j.jobname = target_job) THEN
+      PERFORM cron.unschedule(target_job);
     END IF;
   END LOOP;
 END $$;
