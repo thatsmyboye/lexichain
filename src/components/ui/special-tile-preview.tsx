@@ -10,6 +10,7 @@ import { SpecialTile } from "@/utils/specialTilePreview";
 import { Card } from "@/components/ui/card";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 import { SpecialTileIcon } from "@/components/game/SpecialTileIcon";
+import { XFactorPointers } from "@/components/game/SpecialTileOverlays";
 import { haptic } from "@/lib/feedback";
 import {
   LONG_PRESS_MS,
@@ -145,14 +146,7 @@ function TileIcon({ tile, ...handlers }: TileIconProps) {
         <SpecialTileIcon type={tile.type} className="h-5 w-5 sm:h-6 sm:w-6" />
       )}
 
-      {tile.type === "xfactor" && (
-        <>
-          <div className="absolute top-1 left-1 w-2 h-2 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
-          <div className="absolute top-1 right-1 w-2 h-2 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
-          <div className="absolute bottom-1 left-1 w-2 h-2 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
-          <div className="absolute bottom-1 right-1 w-2 h-2 bg-white/80 ring-1 ring-black/20 rounded-full"></div>
-        </>
-      )}
+      {tile.type === "xfactor" && <XFactorPointers insetClass="0.5" sizeClass="h-2 w-2" />}
 
       {tile.type === "multiplier" && (
         <div className="flex flex-col items-center leading-none">
