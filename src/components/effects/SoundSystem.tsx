@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 interface SoundContextType {
   /**
    * Play a sound effect. `index` is optional and only used by sounds that vary
-   * per call — e.g. `playSound('tile_select', n)` raises the pitch by n semitones.
+   * per call — e.g. `playSound('tile_select', n)` plays the nth step of a rising scale.
    */
   playSound: (soundType: SoundType, index?: number) => void;
   setVolume: (volume: number) => void;
@@ -40,13 +40,54 @@ type WindowWithWebkitAudio = Window & typeof globalThis & {
   webkitAudioContext?: typeof AudioContext;
 };
 
-// Web Audio API sound generator.
+// Recorded effects in public/sounds, rendered by scripts/sfx/render_sfx.py.
+const SAMPLE_NAMES = [
+  'tile_select_1',
+  'tile_select_2',
+  'tile_select_3',
+  'word_complete',
+  'word_invalid',
+  'tier_up',
+  'achievement',
+  'game_start',
+  'game_over',
+  'hint_used',
+  'tick',
+  'button_click',
+  'button_hover',
+  'level_up',
+  'success',
+  'notification',
+  'error',
+  'page_turn',
+] as const;
+
+type SampleName = typeof SAMPLE_NAMES[number];
+
+interface Sample {
+  buffer: AudioBuffer;
+  /** Seconds of encoder padding to skip so the attack lands on time. */
+  offset: number;
+}
+
+const TILE_SELECT_VARIANTS: SampleName[] = ['tile_select_1', 'tile_select_2', 'tile_select_3'];
+// The tile sample is an A5 marimba note. Each letter of a word steps up a
+// C major pentatonic scale from C5, so any run of taps is in key with the
+// word-complete chime. Values are semitones relative to the sample.
+const TILE_SCALE = [-9, -7, -5, -2, 0, 3, 5, 7, 10, 12, 15];
+
+// Web Audio API sound player.
+// Plays the recorded samples, and falls back to synthesized tones while they
+// are still loading or if they can't be fetched.
 // The AudioContext is created lazily on the first play (which happens inside a
 // user gesture), so browsers' autoplay policies don't leave it suspended.
 class SoundGenerator {
   private audioContext: AudioContext | null = null;
   private volume: number = 0.5;
   private muted: boolean = false;
+  private samples = new Map<SampleName, Sample>();
+  private samplesRequested = false;
+  private tileVariant = 0;
 
   setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));
@@ -54,6 +95,58 @@ class SoundGenerator {
 
   setMuted(muted: boolean) {
     this.muted = muted;
+    // Sound is opt-in, so nothing is downloaded until it is switched on.
+    if (!muted) this.loadSamples();
+  }
+
+  private loadSamples() {
+    if (this.samplesRequested || typeof window === 'undefined') return;
+    this.samplesRequested = true;
+
+    // Decoding on an OfflineAudioContext avoids creating the real context
+    // outside a user gesture; the buffers play on any context.
+    const OfflineCtor = window.OfflineAudioContext;
+    if (!OfflineCtor) return;
+    let decoder: OfflineAudioContext;
+    try {
+      decoder = new OfflineCtor(1, 1, 44100);
+    } catch {
+      return;
+    }
+
+    SAMPLE_NAMES.forEach(async name => {
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}sounds/${name}.mp3`);
+        if (!response.ok) return;
+        const buffer = await decoder.decodeAudioData(await response.arrayBuffer());
+        const data = buffer.getChannelData(0);
+        let first = 0;
+        while (first < data.length && Math.abs(data[first]) < 0.004) first++;
+        const offset = first < data.length ? Math.max(0, first / buffer.sampleRate - 0.001) : 0;
+        this.samples.set(name, { buffer, offset });
+      } catch {
+        // Leave this sound on its synthesized fallback.
+      }
+    });
+  }
+
+  /** Returns false when the sample isn't available, so the caller can fall back. */
+  private playSample(name: SampleName, semitones: number = 0, gainScale: number = 1): boolean {
+    if (this.muted) return true;
+    const sample = this.samples.get(name);
+    if (!sample) return false;
+    const ctx = this.getContext();
+    if (!ctx) return false;
+
+    const source = ctx.createBufferSource();
+    const gainNode = ctx.createGain();
+    source.buffer = sample.buffer;
+    source.playbackRate.value = Math.pow(2, semitones / 12);
+    gainNode.gain.value = this.volume * gainScale;
+    source.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    source.start(ctx.currentTime, sample.offset);
+    return true;
   }
 
   private getContext(): AudioContext | null {
@@ -131,16 +224,19 @@ class SoundGenerator {
   }
 
   playWordComplete() {
+    if (this.playSample('word_complete')) return;
     // Ascending major chord
     this.playChord([523.25, 659.25, 783.99], 0.3, 'sine');
   }
 
   playWordInvalid() {
+    if (this.playSample('word_invalid')) return;
     // Descending minor chord
     this.playChord([523.25, 466.16, 415.30], 0.2, 'sawtooth');
   }
 
   playAchievement() {
+    if (this.playSample('achievement')) return;
     // Triumphant fanfare
     this.playTone(523.25, 0.1, 'square');
     setTimeout(() => this.playTone(659.25, 0.1, 'square'), 100);
@@ -149,14 +245,17 @@ class SoundGenerator {
   }
 
   playButtonClick() {
+    if (this.playSample('button_click')) return;
     this.playTone(800, 0.1, 'square');
   }
 
   playButtonHover() {
+    if (this.playSample('button_hover')) return;
     this.playTone(600, 0.05, 'sine');
   }
 
   playGameStart() {
+    if (this.playSample('game_start')) return;
     // Upward arpeggio
     this.playTone(261.63, 0.2, 'sine');
     setTimeout(() => this.playTone(329.63, 0.2, 'sine'), 200);
@@ -165,6 +264,7 @@ class SoundGenerator {
   }
 
   playGameOver() {
+    if (this.playSample('game_over')) return;
     // Descending arpeggio
     this.playTone(523.25, 0.3, 'sine');
     setTimeout(() => this.playTone(392.00, 0.3, 'sine'), 300);
@@ -173,6 +273,7 @@ class SoundGenerator {
   }
 
   playLevelUp() {
+    if (this.playSample('level_up')) return;
     // Ascending scale
     const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
     notes.forEach((note, index) => {
@@ -181,30 +282,49 @@ class SoundGenerator {
   }
 
   playError() {
+    if (this.playSample('error')) return;
     // Low buzz
     this.playTone(150, 0.5, 'sawtooth');
   }
 
   playSuccess() {
+    if (this.playSample('success')) return;
     // High chime
     this.playTone(1046.50, 0.2, 'sine');
     setTimeout(() => this.playTone(1318.51, 0.2, 'sine'), 200);
   }
 
   playNotification() {
+    if (this.playSample('notification')) return;
     // Gentle ping
     this.playTone(800, 0.1, 'sine');
     setTimeout(() => this.playTone(1000, 0.1, 'sine'), 100);
   }
 
+  playHint() {
+    if (this.playSample('hint_used')) return;
+    this.playNotification();
+  }
+
+  playThemeChange() {
+    if (this.playSample('page_turn')) return;
+    this.playNotification();
+  }
+
   playTileSelect(index: number = 0) {
-    // Short soft blip; rises one semitone per letter (capped at two octaves)
+    // Marimba tap that climbs the scale as the word grows
+    const degree = Math.max(0, Math.min(TILE_SCALE.length - 1, Math.floor(index)));
+    const variant = TILE_SELECT_VARIANTS[this.tileVariant++ % TILE_SELECT_VARIANTS.length];
+    if (this.playSample(variant, TILE_SCALE[degree])) return;
+
+    // Fallback: short soft blip; rises one semitone per letter (capped at two octaves)
     const step = Math.max(0, Math.min(24, Math.floor(index)));
     const frequency = 440 * Math.pow(2, step / 12);
     this.playTone(frequency, 0.07, 'sine', true, 0.6);
   }
 
   playTierUp() {
+    if (this.playSample('tier_up')) return;
     // Short, bright major arpeggio
     const notes = [659.25, 830.61, 987.77, 1318.51];
     notes.forEach((note, index) => {
@@ -213,6 +333,7 @@ class SoundGenerator {
   }
 
   playTick() {
+    if (this.playSample('tick')) return;
     // Very short click for countdowns
     this.playTone(1200, 0.02, 'square', true, 0.4);
   }
@@ -300,9 +421,13 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         generator.playSuccess();
         break;
       case 'notification':
-      case 'theme_change':
-      case 'hint_used':
         generator.playNotification();
+        break;
+      case 'theme_change':
+        generator.playThemeChange();
+        break;
+      case 'hint_used':
+        generator.playHint();
         break;
       case 'tile_select':
         generator.playTileSelect(index ?? 0);
