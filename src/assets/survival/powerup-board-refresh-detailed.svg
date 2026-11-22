@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-sp-brd-title">
+  <title id="lc-sp-brd-title">Board Refresh</title>
+  <defs>
+    <linearGradient id="lc-sp-brd-top" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="30">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="42%" stop-color="#67E8F9" />
+      <stop offset="100%" stop-color="#0891B2" />
+    </linearGradient>
+    <linearGradient id="lc-sp-brd-bot" gradientUnits="userSpaceOnUse" x1="8" y1="34" x2="56" y2="56">
+      <stop offset="0%" stop-color="#A5F3FC" />
+      <stop offset="52%" stop-color="#22D3EE" />
+      <stop offset="100%" stop-color="#0E7490" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="32,25 39,32 32,39 25,32" fill="#E0F2FE" stroke="#083344" stroke-width="2.4" />
+    <polygon points="32,28.5 35.5,32 32,35.5 28.5,32" fill="#0891B2" />
+
+    
+    <polygon points="8,28 13,15 24,8 43,8 50,15 56,9 56,28 37,28 43,22 39,18 25,18 19,22 17,28" fill="url(#lc-sp-brd-top)" />
+    <polyline points="12,25 16,17 25,11 42,11" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9" />
+    <polygon points="8,28 13,15 24,8 43,8 50,15 56,9 56,28 37,28 43,22 39,18 25,18 19,22 17,28" fill="none" stroke="#083344" stroke-width="2.6" />
+
+    
+    <polygon points="56,36 51,49 40,56 21,56 14,49 8,55 8,36 27,36 21,42 25,46 39,46 45,42 47,36" fill="url(#lc-sp-brd-bot)" />
+    <polyline points="12,39 22,39" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.78" />
+    <polygon points="56,36 51,49 40,56 21,56 14,49 8,55 8,36 27,36 21,42 25,46 39,46 45,42 47,36" fill="none" stroke="#083344" stroke-width="2.6" />
+  </g>
+</svg>

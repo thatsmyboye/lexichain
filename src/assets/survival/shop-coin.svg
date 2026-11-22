@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-ss-cn-title">
+  <title id="lc-ss-cn-title">Points coin</title>
+  <defs>
+    <linearGradient id="lc-ss-cn-g" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21">
+      <stop offset="0%" stop-color="#FEF9C3" />
+      <stop offset="45%" stop-color="#FACC15" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <polygon points="8.2,3 15.8,3 21,8.2 21,15.8 15.8,21 8.2,21 3,15.8 3,8.2" fill="url(#lc-ss-cn-g)" />
+    <polyline points="5.4,14.8 5.4,9.2 9.2,5.4 14.8,5.4" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.9" />
+    <polygon points="9.6,6.2 14.4,6.2 17.8,9.6 17.8,14.4 14.4,17.8 9.6,17.8 6.2,14.4 6.2,9.6" fill="#D97706" fill-opacity="0.34" stroke="#451A03" stroke-width="1.2" />
+    <polygon points="12,8.4 15.6,12 12,15.6 8.4,12" fill="#FFFFFF" />
+    <polygon points="8.2,3 15.8,3 21,8.2 21,15.8 15.8,21 8.2,21 3,15.8 3,8.2" fill="none" stroke="#451A03" stroke-width="1.8" />
+  </g>
+</svg>

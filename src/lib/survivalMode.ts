@@ -581,7 +581,7 @@ export const POWER_UPS: Record<PowerUpType, PowerUp> = {
     rarity: 'epic',
     duration: 'instant',
     icon: '🛡️',
-    color: 'text-silver-400'
+    color: 'text-slate-600 dark:text-slate-300'
   },
 
   extra_life: {

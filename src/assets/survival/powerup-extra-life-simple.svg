@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sp-els-title">
+  <title id="lc-sp-els-title">Extra Life</title>
+  <defs>
+    <linearGradient id="lc-sp-els-h" gradientUnits="userSpaceOnUse" x1="3" y1="4" x2="21" y2="21">
+      <stop offset="0%" stop-color="#FDA4AF" />
+      <stop offset="45%" stop-color="#E11D48" />
+      <stop offset="100%" stop-color="#9F1239" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="12,7.2 8.8,3.6 5.4,3.6 3,6.6 3,11.2 12,21 21,11.2 21,6.6 18.6,3.6 15.2,3.6" fill="url(#lc-sp-els-h)" />
+    <polygon points="12,7.2 8.8,3.6 5.4,3.6 3,6.6 3,11.2 12,21 21,11.2 21,6.6 18.6,3.6 15.2,3.6" fill="none" stroke="#FACC15" stroke-width="3.2" />
+    <polygon points="12,7.2 8.8,3.6 5.4,3.6 3,6.6 3,11.2 12,21 21,11.2 21,6.6 18.6,3.6 15.2,3.6" fill="none" stroke="#4C0519" stroke-width="1.6" />
+    
+    <polygon points="10.4,8 13.6,8 13.6,10.6 16.2,10.6 16.2,13.8 13.6,13.8 13.6,16.4 10.4,16.4 10.4,13.8 7.8,13.8 7.8,10.6 10.4,10.6" fill="#FFFFFF" stroke="#4C0519" stroke-width="1.2" />
+  </g>
+</svg>

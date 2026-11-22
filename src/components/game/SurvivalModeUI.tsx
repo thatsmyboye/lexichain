@@ -16,6 +16,7 @@ import {
   SurvivalState
 } from '@/lib/survivalMode';
 import { Button } from '@/components/ui/button';
+import { PowerUpIcon, ShopItemIcon, ShopCoinIcon, ShopLifeIcon } from './SurvivalIcon';
 import lifeFull from '@/assets/survival/vital-life-full.svg';
 import lifeEmpty from '@/assets/survival/vital-life-empty.svg';
 import shieldIcon from '@/assets/survival/vital-shield.svg';
@@ -194,7 +195,7 @@ export function PowerUpsInventory({ activePowerUps, inventoryPowerUps, onActivat
                     : 'bg-green-500/20 border-green-500/30'
                 }`}
               >
-                <span>{ap.powerUp.icon}</span>
+                <PowerUpIcon type={ap.powerUp.type} fallback={ap.powerUp.icon} />
                 <span className={ap.powerUp.color}>{ap.powerUp.name}</span>
                 {ap.remainingUses !== undefined && <span className="text-muted-foreground">×{ap.remainingUses}</span>}
                 {ap.remainingWaves !== undefined && <span className="text-muted-foreground">({ap.remainingWaves}w)</span>}
@@ -222,7 +223,7 @@ export function PowerUpsInventory({ activePowerUps, inventoryPowerUps, onActivat
                 }`}
                 title={pu.description}
               >
-                <span>{pu.icon}</span>
+                <PowerUpIcon type={pu.type} fallback={pu.icon} />
                 <span className={pu.color}>{pu.name}</span>
               </button>
             ))}
@@ -272,17 +273,17 @@ export function ShopModal({ items, currentScore, currentLives, onPurchase, onClo
                 onClick={() => item.available && onPurchase(item)}
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-3xl">{item.icon}</div>
+                  <ShopItemIcon type={item.type} fallback={item.icon} />
                   <div className="flex-1">
                     <div className="font-medium text-sm mb-1">{item.name}</div>
                     <div className="text-xs text-muted-foreground mb-2">{item.description}</div>
                     <div className="flex items-center justify-between">
-                      <div className={`text-sm font-bold ${
+                      <div className={`inline-flex items-center gap-1 text-sm font-bold ${
                         item.rarity === 'epic' ? 'text-purple-500' :
                         item.rarity === 'rare' ? 'text-blue-500' :
                         'text-green-500'
                       }`}>
-                        {item.costType === 'points' ? '💰' : '❤️'} {item.cost}
+                        {item.costType === 'points' ? <ShopCoinIcon /> : <ShopLifeIcon />} {item.cost}
                       </div>
                       {!item.available && (
                         <span className="text-xs text-red-500">Not enough {item.costType}</span>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-ss-pr-title">
+  <title id="lc-ss-pr-title">Random Power-Up</title>
+  <defs>
+    <linearGradient id="lc-ss-pr-top" gradientUnits="userSpaceOnUse" x1="10" y1="7" x2="54" y2="32">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#DCFCE7" />
+    </linearGradient>
+    <linearGradient id="lc-ss-pr-left" gradientUnits="userSpaceOnUse" x1="10" y1="20" x2="32" y2="57">
+      <stop offset="0%" stop-color="#BBF7D0" />
+      <stop offset="100%" stop-color="#4ADE80" />
+    </linearGradient>
+    <linearGradient id="lc-ss-pr-right" gradientUnits="userSpaceOnUse" x1="32" y1="20" x2="54" y2="57">
+      <stop offset="0%" stop-color="#22C55E" />
+      <stop offset="100%" stop-color="#15803D" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="32,7 54,19.5 32,32 10,19.5" fill="url(#lc-ss-pr-top)" />
+    <polygon points="10,19.5 32,32 32,57 10,44.5" fill="url(#lc-ss-pr-left)" />
+    <polygon points="54,19.5 32,32 32,57 54,44.5" fill="url(#lc-ss-pr-right)" />
+
+    
+    <polyline points="14,19.5 32,10 50,19.5" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.9" />
+
+    
+    <polygon points="32,7 54,19.5 54,44.5 32,57 10,44.5 10,19.5" fill="none" stroke="#052E16" stroke-width="2.6" />
+    <polyline points="10,19.5 32,32 54,19.5" fill="none" stroke="#052E16" stroke-width="2.2" />
+    <line x1="32" y1="32" x2="32" y2="57" stroke="#052E16" stroke-width="2.2" />
+
+    
+    <polygon points="32,16.2 36.2,19.5 32,22.8 27.8,19.5" fill="#052E16" />
+
+    <polygon points="17.5,29.5 20.5,31.8 17.5,34.5 14.5,32.2" fill="#052E16" />
+    <polygon points="24.5,41.5 27.5,43.8 24.5,46.5 21.5,44.2" fill="#052E16" />
+
+    <polygon points="48,29.5 50.6,31.5 48,34 45.4,32" fill="#FEF9C3" />
+    <polygon points="43,37 45.6,39 43,41.5 40.4,39.5" fill="#FEF9C3" />
+    <polygon points="38,44.5 40.6,46.5 38,49 35.4,47" fill="#FEF9C3" />
+  </g>
+</svg>

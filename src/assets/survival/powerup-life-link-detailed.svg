@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-sp-lld-title">
+  <title id="lc-sp-lld-title">Life Link</title>
+  <defs>
+    <linearGradient id="lc-sp-lld-em" gradientUnits="userSpaceOnUse" x1="8" y1="9" x2="56" y2="56">
+      <stop offset="0%" stop-color="#BBF7D0" />
+      <stop offset="42%" stop-color="#22C55E" />
+      <stop offset="100%" stop-color="#15803D" />
+    </linearGradient>
+    <linearGradient id="lc-sp-lld-link" gradientUnits="userSpaceOnUse" x1="14" y1="24" x2="50" y2="42">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="52%" stop-color="#E2E8F0" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="32,19 23,9 14,9 8,16 8,29 32,56 56,29 56,16 50,9 41,9" fill="url(#lc-sp-lld-em)" />
+    <polygon points="32,19 41,9 50,9 56,16 56,29 32,56" fill="#14532D" fill-opacity="0.32" />
+    <polyline points="12,26 12,18 16,13 22,13" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.88" />
+    <polygon points="32,19 23,9 14,9 8,16 8,29 32,56 56,29 56,16 50,9 41,9" fill="none" stroke="#052E16" stroke-width="2.6" />
+
+    
+    <g transform="translate(32 32)">
+      <path fill-rule="evenodd" d="M-21,-5.5 L-16.5,-10 H-1 L3.5,-5.5 V5.5 L-1,10 H-16.5 L-21,5.5 Z M-15,-4.5 H-2.5 V4.5 H-15 Z" fill="url(#lc-sp-lld-link)" stroke="#052E16" stroke-width="2.2" />
+      <path fill-rule="evenodd" d="M-3.5,-5.5 L1,-10 H16.5 L21,-5.5 V5.5 L16.5,10 H1 L-3.5,5.5 Z M2.5,-4.5 H15 V4.5 H2.5 Z" fill="url(#lc-sp-lld-link)" stroke="#052E16" stroke-width="2.2" />
+      <line x1="-15.5" y1="-7.2" x2="-2" y2="-7.2" stroke="#FFFFFF" stroke-width="1.6" stroke-opacity="0.9" />
+      <line x1="2" y1="-7.2" x2="15.5" y2="-7.2" stroke="#FFFFFF" stroke-width="1.6" stroke-opacity="0.9" />
+    </g>
+  </g>
+</svg>

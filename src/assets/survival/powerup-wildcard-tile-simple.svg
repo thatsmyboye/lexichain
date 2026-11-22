@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sp-wts-title">
+  <title id="lc-sp-wts-title">Wildcard Tile</title>
+  <defs>
+    <linearGradient id="lc-sp-wts-bg" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21">
+      <stop offset="0%" stop-color="#A855F7" />
+      <stop offset="52%" stop-color="#EC4899" />
+      <stop offset="100%" stop-color="#F97316" />
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-7 12 12)" stroke-linejoin="bevel">
+    <rect x="3.5" y="3.5" width="17" height="17" rx="3.2" fill="url(#lc-sp-wts-bg)" />
+    <line x1="6" y1="5.3" x2="18" y2="5.3" stroke="#FFFFFF" stroke-width="1.3" stroke-opacity="0.72" />
+    <rect x="3.5" y="3.5" width="17" height="17" rx="3.2" fill="none" stroke="#2E1065" stroke-width="1.8" />
+    
+    <polygon points="12,5.8 13.9,10.1 18.2,12 13.9,13.9 12,18.2 10.1,13.9 5.8,12 10.1,10.1" fill="#FFFFFF" stroke="#2E1065" stroke-width="1" />
+  </g>
+</svg>
