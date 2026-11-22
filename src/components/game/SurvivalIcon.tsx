@@ -2,10 +2,9 @@
 // Power-ups come in two forms: "simple" for the small HUD chips and
 // "detailed" for the shop.
 //
-// Four power-ups have no drawn icon yet (Stone Crusher, Safety Net, Double
-// Points and Time Freeze are being redrawn). For those, the components fall
-// back to the emoji the caller passes, which is what was shown before. To add
-// one, import its files and add it to the maps below.
+// Every power-up and shop item has an icon today. If a new one is added
+// before its art exists, the components fall back to the emoji the caller
+// passes; to give it an icon, import its files and add it to the maps below.
 import type { PowerUpType, ShopItemType } from "@/lib/survivalMode";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +17,10 @@ import comboBoostSimple from "@/assets/survival/powerup-combo-boost-simple.svg";
 import wildcardTileSimple from "@/assets/survival/powerup-wildcard-tile-simple.svg";
 import shieldSimple from "@/assets/survival/powerup-shield-simple.svg";
 import extraLifeSimple from "@/assets/survival/powerup-extra-life-simple.svg";
+import stoneCrusherSimple from "@/assets/survival/powerup-stone-crusher-simple.svg";
+import safetyNetSimple from "@/assets/survival/powerup-safety-net-simple.svg";
+import doublePointsSimple from "@/assets/survival/powerup-double-points-simple.svg";
+import timeFreezeSimple from "@/assets/survival/powerup-time-freeze-simple.svg";
 
 import letterRevealDetailed from "@/assets/survival/powerup-letter-reveal-detailed.svg";
 import boardRefreshDetailed from "@/assets/survival/powerup-board-refresh-detailed.svg";
@@ -26,6 +29,10 @@ import comboBoostDetailed from "@/assets/survival/powerup-combo-boost-detailed.s
 import wildcardTileDetailed from "@/assets/survival/powerup-wildcard-tile-detailed.svg";
 import shieldDetailed from "@/assets/survival/powerup-shield-detailed.svg";
 import extraLifeDetailed from "@/assets/survival/powerup-extra-life-detailed.svg";
+import stoneCrusherDetailed from "@/assets/survival/powerup-stone-crusher-detailed.svg";
+import safetyNetDetailed from "@/assets/survival/powerup-safety-net-detailed.svg";
+import doublePointsDetailed from "@/assets/survival/powerup-double-points-detailed.svg";
+import timeFreezeDetailed from "@/assets/survival/powerup-time-freeze-detailed.svg";
 
 import shopStoneEraser from "@/assets/survival/shop-stone-eraser-detailed.svg";
 import shopRandomPowerUp from "@/assets/survival/shop-random-powerup-detailed.svg";
@@ -40,6 +47,10 @@ const POWERUP_SIMPLE_SRCS: Partial<Record<PowerUpType, string>> = {
   wildcard_tile: wildcardTileSimple,
   shield: shieldSimple,
   extra_life: extraLifeSimple,
+  stone_crusher: stoneCrusherSimple,
+  safety_net: safetyNetSimple,
+  double_points: doublePointsSimple,
+  time_freeze: timeFreezeSimple,
 };
 
 const POWERUP_DETAILED_SRCS: Partial<Record<PowerUpType, string>> = {
@@ -50,6 +61,10 @@ const POWERUP_DETAILED_SRCS: Partial<Record<PowerUpType, string>> = {
   wildcard_tile: wildcardTileDetailed,
   shield: shieldDetailed,
   extra_life: extraLifeDetailed,
+  stone_crusher: stoneCrusherDetailed,
+  safety_net: safetyNetDetailed,
+  double_points: doublePointsDetailed,
+  time_freeze: timeFreezeDetailed,
 };
 
 const SHOP_ITEM_SRCS: Partial<Record<ShopItemType, string>> = {
@@ -60,6 +75,8 @@ const SHOP_ITEM_SRCS: Partial<Record<ShopItemType, string>> = {
   power_up_random: shopRandomPowerUp,
   power_up_rare: shopRarePowerUp,
   hint: letterRevealDetailed,
+  time_freeze: timeFreezeDetailed,
+  double_points: doublePointsDetailed,
 };
 
 /** A power-up's icon for the HUD chips, or its emoji if it has no icon yet. */

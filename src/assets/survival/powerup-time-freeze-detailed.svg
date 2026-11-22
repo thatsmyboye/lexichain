@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-sp-tfd-title">
+  <title id="lc-sp-tfd-title">Time Freeze</title>
+  <defs>
+    <linearGradient id="lc-sp-tfd-cap" gradientUnits="userSpaceOnUse" x1="14" y1="6" x2="50" y2="58">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="45%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+    <linearGradient id="lc-sp-tfd-frame" gradientUnits="userSpaceOnUse" x1="17" y1="13" x2="47" y2="51">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="lc-sp-tfd-chamber" gradientUnits="userSpaceOnUse" x1="21" y1="16" x2="43" y2="48">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Bright luminous frost-crystal spikes radiating from waist (high value even at 50% opacity) -->
+    <polygon points="6,32 19,25 19,39" fill="#FFFFFF" stroke="#0C4A6E" stroke-width="2.2"/>
+    <polygon points="58,32 45,25 45,39" fill="#E0F2FE" stroke="#0C4A6E" stroke-width="2.2"/>
+    <polygon points="10,19 21,21.5 16,29" fill="#E0F2FE" stroke="#0C4A6E" stroke-width="2"/>
+    <polygon points="54,19 43,21.5 48,29" fill="#BAE6FD" stroke="#0C4A6E" stroke-width="2"/>
+    <polygon points="10,45 16,35 21,42.5" fill="#BAE6FD" stroke="#0C4A6E" stroke-width="2"/>
+    <polygon points="54,45 48,35 43,42.5" fill="#7DD3FC" stroke="#0C4A6E" stroke-width="2"/>
+
+    <!-- High-luminance frosted hourglass shell -->
+    <polygon points="17,13 47,13 47,21 37.5,30 37.5,34 47,43 47,51 17,51 17,43 26.5,34 26.5,30 17,21" fill="url(#lc-sp-tfd-frame)"/>
+    <polyline points="20,16 20,20 29,29" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.95"/>
+    <polyline points="29,35 20,44 20,48" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.9"/>
+    <polygon points="17,13 47,13 47,21 37.5,30 37.5,34 47,43 47,51 17,51 17,43 26.5,34 26.5,30 17,21" fill="none" stroke="#0C4A6E" stroke-width="2.4"/>
+
+    <!-- Bright glacial sky-blue glass chambers (no dark navy void) -->
+    <polygon points="22,16 42,16 42,20.5 33.5,28.5 30.5,28.5 22,20.5" fill="url(#lc-sp-tfd-chamber)" stroke="#0C4A6E" stroke-width="1.6"/>
+    <polygon points="30.5,35.5 33.5,35.5 42,43.5 42,48 22,48 22,43.5" fill="url(#lc-sp-tfd-chamber)" stroke="#0C4A6E" stroke-width="1.6"/>
+
+    <!-- Pure-white crystalline frozen sand & suspended throat shard -->
+    <polygon points="25,20.5 39,20.5 33.5,27 30.5,27" fill="#FFFFFF"/>
+    <polygon points="32,29 35.5,32 32,35 28.5,32" fill="#FFFFFF" stroke="#0C4A6E" stroke-width="1.3"/>
+    <polygon points="23.5,47 23.5,43.5 32,38.5 40.5,43.5 40.5,47" fill="#FFFFFF"/>
+
+    <!-- Bright ice-white beveled end caps with crisp cerulean contours -->
+    <polygon points="14,9 17,6 47,6 50,9 50,13.5 14,13.5" fill="url(#lc-sp-tfd-cap)"/>
+    <line x1="18" y1="8.8" x2="46" y2="8.8" stroke="#FFFFFF" stroke-width="2.2"/>
+    <polygon points="14,9 17,6 47,6 50,9 50,13.5 14,13.5" fill="none" stroke="#0C4A6E" stroke-width="2.4"/>
+
+    <polygon points="14,50.5 50,50.5 50,55 47,58 17,58 14,55" fill="url(#lc-sp-tfd-cap)"/>
+    <line x1="18" y1="53" x2="46" y2="53" stroke="#FFFFFF" stroke-width="2"/>
+    <polygon points="14,50.5 50,50.5 50,55 47,58 17,58 14,55" fill="none" stroke="#0C4A6E" stroke-width="2.4"/>
+  </g>
+</svg>
