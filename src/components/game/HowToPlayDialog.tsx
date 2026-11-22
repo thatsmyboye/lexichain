@@ -3,6 +3,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/component
 import { ChevronDown } from "lucide-react";
 import type { SpecialTileType } from "@/types/game";
 import { SpecialTileIcon } from "./SpecialTileIcon";
+import { XFactorPointers } from "./SpecialTileOverlays";
 import { SPECIAL_TILE_INFO } from "@/lib/specialTileInfo";
 
 // Same fills, letter colors and border shapes as the board's special tiles
@@ -134,14 +135,7 @@ export function HowToPlayDialog({
                         {swatch.type === "multiplier" && (
                           <span className="absolute -bottom-1 -right-1 rounded bg-black/60 px-0.5 text-[9px] font-bold leading-tight text-white">2x</span>
                         )}
-                        {swatch.type === "xfactor" && (
-                          <>
-                            <span className="absolute top-0.5 left-0.5 w-1 h-1 bg-white/80 rounded-full" />
-                            <span className="absolute top-0.5 right-0.5 w-1 h-1 bg-white/80 rounded-full" />
-                            <span className="absolute bottom-0.5 left-0.5 w-1 h-1 bg-white/80 rounded-full" />
-                            <span className="absolute bottom-0.5 right-0.5 w-1 h-1 bg-white/80 rounded-full" />
-                          </>
-                        )}
+                        {swatch.type === "xfactor" && <XFactorPointers insetClass="0.5" sizeClass="h-2 w-2" />}
                       </div>
                       <div className="text-xs">
                         <div className="font-medium">{SPECIAL_TILE_INFO[swatch.type].name}</div>

@@ -726,6 +726,44 @@ All colors MUST be HSL.
 }
 .tile-bomb-spark-urgent { animation-duration: 0.28s; }
 
+/* Special tile surfaces: one image per type, laid over the tile's gradient and
+   under its letter. Multiplier has a different gem cut per value. Files come
+   from scripts/generate-special-tiles.mjs, which checks that no surface
+   lowers contrast where a letter sits. That check assumes portrait and
+   desktop letter sizes: on landscape phones letters are sized from the
+   screen's width while the board follows its height, so they outgrow the
+   checked zone and overlap the art. */
+.tile-special-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+.tile-special-stone         { background-image: url("/assets/special/surface-stone.webp"); }
+.tile-special-wild          { background-image: url("/assets/special/surface-wild.webp"); }
+.tile-special-xfactor       { background-image: url("/assets/special/surface-xfactor.webp"); }
+.tile-special-multiplier    { background-image: url("/assets/special/surface-multiplier-2x.webp"); }
+.tile-special-multiplier-3  { background-image: url("/assets/special/surface-multiplier-3x.webp"); }
+.tile-special-multiplier-4  { background-image: url("/assets/special/surface-multiplier-4x.webp"); }
+.tile-special-shuffle       { background-image: url("/assets/special/surface-shuffle.webp"); }
+.tile-special-freeze        { background-image: url("/assets/special/surface-freeze.webp"); }
+.tile-special-decay         { background-image: url("/assets/special/surface-decay.webp"); }
+.tile-special-mirror        { background-image: url("/assets/special/surface-mirror.webp"); }
+.tile-special-magnet        { background-image: url("/assets/special/surface-magnet.webp"); }
+.tile-special-bomb          { background-image: url("/assets/special/surface-bomb.webp"); }
+.tile-special-chain         { background-image: url("/assets/special/surface-chain.webp"); }
+.tile-special-ghost         { background-image: url("/assets/special/surface-ghost-light.webp"); }
+.dark .tile-special-ghost   { background-image: url("/assets/special/surface-ghost-dark.webp"); }
+.tile-special-tax           { background-image: url("/assets/special/surface-tax.webp"); }
+
+/* High contrast: keep the surfaces quiet, like .tile-texture */
+.high-contrast .tile-special-surface {
+  opacity: 0.25;
+}
+
 /* Freeze: an icy glint sweeps across the tile */
 .tile-freeze-shimmer {
   position: absolute;
@@ -739,7 +777,8 @@ All colors MUST be HSL.
 }
 
 /* Frozen neighbours: frost creeps in from the edge facing the Freeze tile
-   (--frost-angle / transform-origin set inline), then breathes. */
+   (--frost-angle / transform-origin set inline), then breathes. The rime
+   texture is light mode only; each tile starts it at its own offset. */
 .tile-frost {
   position: absolute;
   inset: 0;
@@ -747,14 +786,22 @@ All colors MUST be HSL.
   pointer-events: none;
 }
 .tile-frost-directional {
-  background: var(--tex-ice), var(--tex-ice), linear-gradient(var(--frost-angle, 180deg), rgba(240, 249, 255, 0.95), rgba(207, 236, 254, 0.6));
-  background-size: 60px 60px, 120px 120px, auto;
+  background-image:
+    url("/assets/special/frost-crystals-light.webp"),
+    linear-gradient(var(--frost-angle, 180deg), rgba(240, 249, 255, 0.92), rgba(207, 236, 254, 0.56));
+  background-size: 96px 96px, auto;
+  background-position: var(--tile-tex-x, 0px) var(--tile-tex-y, 0px), 0 0;
+  background-repeat: repeat, no-repeat;
   -webkit-mask-image: linear-gradient(var(--frost-angle, 180deg), #000 0%, rgba(0, 0, 0, 0.75) 20%, transparent 48%);
   mask-image: linear-gradient(var(--frost-angle, 180deg), #000 0%, rgba(0, 0, 0, 0.75) 20%, transparent 48%);
   animation: skin-frost-creep 1.4s ease-out, skin-frost-breathe 4.5s ease-in-out 1.4s infinite;
 }
 .tile-frost-rim {
-  background: var(--tex-ice), rgba(224, 242, 254, 0.7);
+  background-image: url("/assets/special/frost-crystals-light.webp");
+  background-color: rgba(224, 242, 254, 0.55);
+  background-size: 96px 96px;
+  background-position: var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: repeat;
   -webkit-mask-image: radial-gradient(closest-side, transparent 62%, #000 100%);
   mask-image: radial-gradient(closest-side, transparent 62%, #000 100%);
   animation: skin-frost-fade 1.4s ease-out, skin-frost-breathe 4.5s ease-in-out 1.4s infinite;

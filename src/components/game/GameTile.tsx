@@ -6,6 +6,7 @@ import { letterRarity } from "@/lib/letterRarity";
 import { SPECIAL_SHAPES } from "@/lib/specialTileShapes";
 import { cn } from "@/lib/utils";
 import { SpecialTileIcon } from "./SpecialTileIcon";
+import { ExpiryRing, XFactorPointers } from "./SpecialTileOverlays";
 import { ChainMark } from "./ChainLink";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 
@@ -389,6 +390,14 @@ export const GameTile = memo(function GameTile({
   // Skin material only on plain tiles: special tiles keep their own colors,
   // and selected/affected states keep their flat, high-signal fills.
   const showTexture = special.type === null && !isSelected && !isAffected;
+  // Special tiles get their own surface art instead, hidden in the same states.
+  // Multiplier has one gem cut per value (2x is the base class).
+  const showSpecialSurface = special.type !== null && !isSelected && !isAffected;
+  const specialSurfaceClass = special.type === "multiplier" && special.value && special.value >= 3
+    ? `tile-special-multiplier-${Math.min(4, special.value)}`
+    : special.type
+      ? `tile-special-${special.type}`
+      : "";
 
   // Where this tile starts its skin's material image, so neighbors never show
   // the same patch of grain. The multipliers map every (row, col) to a distinct
@@ -446,6 +455,11 @@ export const GameTile = memo(function GameTile({
         <span aria-hidden="true" className={cn("tile-texture", skin.textureClass)} />
       )}
 
+      {/* Special tile surface art (see .tile-special-surface in index.css) */}
+      {showSpecialSurface && (
+        <span aria-hidden="true" className={cn("tile-special-surface", specialSurfaceClass)} />
+      )}
+
       {/* Purposeful idle motion for special tiles (all off under reduced motion) */}
       {special.type === "freeze" && <span aria-hidden="true" className="tile-freeze-shimmer" />}
       {special.type === "decay" && <span aria-hidden="true" className="tile-decay-blotch" />}
@@ -495,15 +509,8 @@ export const GameTile = memo(function GameTile({
         </span>
       )}
 
-      {/* X-Factor corner dots */}
-      {special.type === "xfactor" && (
-        <span aria-hidden="true">
-          <span className="absolute top-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-          <span className="absolute bottom-1 left-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-          <span className="absolute bottom-1 right-1 w-2.5 h-2.5 bg-white/80 ring-1 ring-black/20 rounded-full" />
-        </span>
-      )}
+      {/* X-Factor corner pointers */}
+      {special.type === "xfactor" && <XFactorPointers />}
 
       {/* Multiplier value */}
       {special.type === "multiplier" && special.value && (
@@ -515,18 +522,9 @@ export const GameTile = memo(function GameTile({
       {/* Bomb fuse: burns down as the expiry counter drops */}
       {special.type === "bomb" && <BombFuse turnsLeft={special.expiryTurns} />}
 
-      {/* Expiry ring: depletes as the tile's remaining turns run out */}
+      {/* Expiry ring: empties as the tile's remaining turns run out */}
       {special.type !== null && special.expiryTurns !== undefined && (
-        <span aria-hidden="true" className="absolute top-1 left-1 z-10 flex h-[18px] w-[18px] items-center justify-center">
-          <svg viewBox="0 0 20 20" className="absolute inset-0 -rotate-90">
-            <circle cx="10" cy="10" r="8" fill="rgba(0,0,0,0.7)" />
-            <circle
-              cx="10" cy="10" r="8" fill="none" stroke="white" strokeWidth="2"
-              strokeDasharray={`${Math.min(1, special.expiryTurns / 5) * 50.3} 50.3`}
-            />
-          </svg>
-          <span className="relative text-[10px] font-bold text-white">{special.expiryTurns}</span>
-        </span>
+        <ExpiryRing turns={special.expiryTurns} />
       )}
 
       {/* Special tile icon */}
