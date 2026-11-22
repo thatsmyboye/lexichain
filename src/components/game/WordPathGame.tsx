@@ -37,7 +37,7 @@ import { useSound } from "@/components/effects/SoundSystem";
 import { useARIA } from "@/components/accessibility/ARIAComponents";
 import { haptic } from "@/lib/feedback";
 import { buildShareText, shareText } from "@/lib/share";
-import { shareCardImage } from "@/lib/shareCard";
+import { shareCardImage, type ShareGrade } from "@/lib/shareCard";
 import { getPersonalBest, markModePlayed, recordResult } from "@/lib/personalBests";
 import { recordTrophies } from "@/lib/trophies";
 import { DefinableWord, DefinitionContent } from "./WordDefinition";
@@ -307,7 +307,7 @@ function WordPathGame({
   const roundBoardRef = useRef<string[][] | null>(null);
   const timeAttackDeadlineRef = useRef(0);
   // Highest-scoring play this round, with the board it was played on (share card)
-  const bestPlayRef = useRef<{ word: string; score: number; path: Pos[]; board: string[][] } | null>(null);
+  const bestPlayRef = useRef<{ word: string; score: number } | null>(null);
   // First-ever trophy unlocks earned this round, and whether we've already
   // celebrated beating the personal best
   const roundFirstTrophiesRef = useRef<AchievementId[]>([]);
@@ -970,8 +970,6 @@ function WordPathGame({
       }
     }
 
-    const playBoard = trackedBoard.map(row => [...row]);
-
     // 2. Score (one formula for every path)
     const breakdown = computeScoreBreakdown({
       actualWord,
@@ -1050,7 +1048,7 @@ function WordPathGame({
     const movesAfter = movesUsed + (countsMove ? 1 : 0);
 
     if (!bestPlayRef.current || gain > bestPlayRef.current.score) {
-      bestPlayRef.current = { word: actualWord, score: gain, path: wordPath, board: playBoard };
+      bestPlayRef.current = { word: actualWord, score: gain };
     }
     const nextUsedWords = [...usedWords, { word: actualWord, score: gain, breakdown }];
     setUsedWords(nextUsedWords);
@@ -2860,16 +2858,32 @@ function WordPathGame({
         : settings.mode === "endless" ? `Level ${endlessDifficulty}`
         : undefined;
     const text = buildShareText({ modeLabel, score, grade, words: usedWords, extra });
+    const best = bestPlayRef.current;
     shareCardImage({
       modeLabel,
+      dateLabel: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       score,
-      grade,
-      wordCount: usedWords.length,
-      best: bestPlayRef.current,
-      // Daily boards are shared by everyone, so don't reveal the letters
-      spoilerFree: isDailyMode,
-      extra,
-    }, text);
+      grade: grade.toLowerCase() as ShareGrade,
+      wordsFound: usedWords.length,
+      bestWord: best ?? undefined,
+      // Daily boards are shared by everyone, so don't reveal the best word
+      isDaily: isDailyMode,
+      wave: settings.mode === "survival" ? survivalWave : undefined,
+      level: settings.mode === "endless" ? endlessDifficulty : undefined,
+      modeStat: isDailyMode
+        ? { label: "Moves", value: `${Math.min(movesUsed, settings.dailyMovesLimit)}/${settings.dailyMovesLimit}` }
+        : undefined,
+      isNewBest: results?.personalBest?.isNew ?? false,
+      theme: resolvedTheme === "dark" ? "dark" : "light",
+    }, {
+      title: "Lexichain",
+      text,
+      filename: "lexichain-result.png",
+      notify: {
+        onDownload: () => toast.success("Share image downloaded"),
+        onError: () => toast.error("Couldn't create the share image"),
+      },
+    });
   }
 
   const pathTone: PathTone =
