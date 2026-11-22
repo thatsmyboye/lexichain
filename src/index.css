@@ -379,8 +379,6 @@ All colors MUST be HSL.
   --tex-speckle-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='110' height='110'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.1' numOctaves='1' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 4 0 0 -2.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
   /* Softer grain for paper-like surfaces */
   --tex-noise-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  /* Ice crystals: blotchy white frost */
-  --tex-ice: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='i'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='4' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 2.2 0 0 0 -0.95'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23i)'/%3E%3C/svg%3E");
 }
 
 /* 2. Tile materials (GameTile .tile-texture layer + selector previews) */
@@ -413,19 +411,29 @@ All colors MUST be HSL.
   box-shadow: inset 0 1px 0 hsl(210 40% 98% / 0.09), inset 0 -2px 0 hsl(0 0% 0% / 0.3);
 }
 
-/* Ocean: sea glass. Fill is translucent (bg-white/60 + backdrop blur); this
-   adds the diagonal reflection and a bright bevel. */
+/* Ocean: sea glass. The fill is translucent (bg-white/60 + backdrop blur), so
+   the face image is translucent too: tumbled pitting and a diagonal shimmer
+   over whatever shows through. Each tile starts it at its own offset.
+   Files for Ocean, Sunset and Frost come from scripts/generate-skins-batch2.mjs. */
 .tile-tex-glass {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.15) 34%, rgba(255, 255, 255, 0) 52%, rgba(255, 255, 255, 0.12) 100%);
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0.12) 34%, rgba(255, 255, 255, 0) 52%, rgba(255, 255, 255, 0.1) 100%),
+    url("/assets/board/tile-face-ocean-light.webp");
+  background-size: 100% 100%, 128px 128px;
+  background-position: 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, repeat;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
     inset 0 0 0 1px rgba(255, 255, 255, 0.35),
     inset 0 -2px 3px rgba(8, 145, 178, 0.18);
 }
 .dark .tile-tex-glass {
-  background:
-    linear-gradient(135deg, rgba(186, 230, 253, 0.22) 0%, rgba(186, 230, 253, 0.05) 34%, rgba(186, 230, 253, 0) 52%);
+  background-image:
+    linear-gradient(135deg, rgba(186, 230, 253, 0.2) 0%, rgba(186, 230, 253, 0.04) 34%, rgba(186, 230, 253, 0) 52%),
+    url("/assets/board/tile-face-ocean-dark.webp");
+  background-size: 100% 100%, 128px 128px;
+  background-position: 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, repeat;
   box-shadow:
     inset 0 1px 0 rgba(186, 230, 253, 0.35),
     inset 0 0 0 1px rgba(125, 211, 252, 0.16),
@@ -453,17 +461,26 @@ All colors MUST be HSL.
   box-shadow: inset 0 1px 0 rgba(255, 228, 190, 0.16), inset 0 -2px 4px rgba(0, 0, 0, 0.48);
 }
 
-/* Sunset: glazed ceramic, glossy highlight top-left, warm pooling glaze */
+/* Sunset: kiln-glazed stoneware, ivory in light and plum in dark, under a
+   glossy top-left highlight */
 .tile-tex-ceramic {
-  background:
-    radial-gradient(120% 70% at 28% 0%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 55%),
-    radial-gradient(90% 60% at 85% 115%, rgba(190, 18, 60, 0.12), transparent 70%);
+  background-image:
+    radial-gradient(120% 70% at 28% 0%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%),
+    radial-gradient(90% 60% at 85% 115%, rgba(190, 18, 60, 0.1), transparent 70%),
+    url("/assets/board/tile-face-sunset-light.webp");
+  background-size: 100% 100%, 100% 100%, 128px 128px;
+  background-position: 0 0, 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, no-repeat, repeat;
   box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.85), inset 0 -3px 5px rgba(154, 52, 18, 0.16);
 }
 .dark .tile-tex-ceramic {
-  background:
-    radial-gradient(120% 70% at 28% 0%, rgba(255, 237, 213, 0.2), rgba(255, 237, 213, 0) 55%),
-    radial-gradient(90% 60% at 85% 115%, rgba(0, 0, 0, 0.3), transparent 70%);
+  background-image:
+    radial-gradient(120% 70% at 28% 0%, rgba(255, 237, 213, 0.16), rgba(255, 237, 213, 0) 55%),
+    radial-gradient(90% 60% at 85% 115%, rgba(0, 0, 0, 0.25), transparent 70%),
+    url("/assets/board/tile-face-sunset-dark.webp");
+  background-size: 100% 100%, 100% 100%, 128px 128px;
+  background-position: 0 0, 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, no-repeat, repeat;
   box-shadow: inset 0 1px 1px rgba(255, 237, 213, 0.22), inset 0 -3px 5px rgba(0, 0, 0, 0.35);
 }
 
@@ -509,20 +526,25 @@ All colors MUST be HSL.
   box-shadow: inset 0 1px 0 rgba(253, 186, 116, 0.18), 0 0 8px rgba(249, 115, 22, 0.18);
 }
 
-/* Frost Festival: frosted ice with crystal bloom at the rim */
+/* Frost Festival: satin glacial ice with a bright rim */
 .tile-tex-ice {
-  background:
-    radial-gradient(closest-side, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.55) 100%),
-    var(--tex-ice),
-    linear-gradient(140deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 40%);
-  -webkit-mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 0.35) 45%, #000 100%);
-  mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 0.35) 45%, #000 100%);
+  background-image:
+    radial-gradient(closest-side, rgba(255, 255, 255, 0) 58%, rgba(255, 255, 255, 0.45) 100%),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 42%),
+    url("/assets/board/tile-face-frost-light.webp");
+  background-size: 100% 100%, 100% 100%, 128px 128px;
+  background-position: 0 0, 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, no-repeat, repeat;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(30, 64, 175, 0.15);
 }
 .dark .tile-tex-ice {
-  background:
-    radial-gradient(closest-side, rgba(186, 230, 253, 0) 60%, rgba(186, 230, 253, 0.2) 100%),
-    linear-gradient(140deg, rgba(186, 230, 253, 0.16), rgba(186, 230, 253, 0) 40%);
+  background-image:
+    radial-gradient(closest-side, rgba(186, 230, 253, 0) 60%, rgba(186, 230, 253, 0.16) 100%),
+    linear-gradient(140deg, rgba(186, 230, 253, 0.14), rgba(186, 230, 253, 0) 42%),
+    url("/assets/board/tile-face-frost-dark.webp");
+  background-size: 100% 100%, 100% 100%, 128px 128px;
+  background-position: 0 0, 0 0, var(--tile-tex-x, 0px) var(--tile-tex-y, 0px);
+  background-repeat: no-repeat, no-repeat, repeat;
   box-shadow: inset 0 1px 0 rgba(186, 230, 253, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.35);
 }
 
@@ -583,23 +605,22 @@ All colors MUST be HSL.
   background-image: url("/assets/board/tray-floor-original-dark.webp");
 }
 
+/* Ocean: a sunlit lagoon floor with caustics. As with Original, the colors
+   are the fallback while the floor image loads. */
 :root[data-skin="ocean"] .board-frame,
 .skin-scene[data-skin-preview="ocean"] {
-  background:
-    radial-gradient(40% 28% at 22% 18%, rgba(255, 255, 255, 0.55), transparent 70%),
-    radial-gradient(30% 22% at 78% 62%, rgba(255, 255, 255, 0.4), transparent 70%),
-    radial-gradient(26% 20% at 35% 85%, rgba(255, 255, 255, 0.3), transparent 70%),
-    linear-gradient(160deg, #7dd3fc, #0891b2);
-  border-color: rgba(255, 255, 255, 0.6);
+  position: relative;
+  background-color: #0891b2;
+  background-image: url("/assets/board/tray-floor-ocean-light.webp");
+  background-size: 128px 128px;
+  background-repeat: repeat;
+  border-color: transparent;
   box-shadow: 0 14px 32px -16px rgba(8, 145, 178, 0.6);
 }
 .dark[data-skin="ocean"] .board-frame,
 .dark .skin-scene[data-skin-preview="ocean"] {
-  background:
-    radial-gradient(40% 28% at 22% 18%, rgba(125, 211, 252, 0.18), transparent 70%),
-    radial-gradient(30% 22% at 78% 62%, rgba(125, 211, 252, 0.12), transparent 70%),
-    linear-gradient(160deg, #0c4a6e, #082f49);
-  border-color: rgba(125, 211, 252, 0.25);
+  background-color: #082f49;
+  background-image: url("/assets/board/tray-floor-ocean-dark.webp");
 }
 
 /* Forest: a moss bed. On the board the walnut rail is a 9-slice image
@@ -624,16 +645,28 @@ All colors MUST be HSL.
   border-color: #5b3716;
 }
 
+/* Sunset: the dusk gradient spans the whole tray; the floor image is a
+   translucent layer of cloud wisps tiled over it. */
 :root[data-skin="sunset"] .board-frame,
 .skin-scene[data-skin-preview="sunset"] {
-  background: linear-gradient(165deg, #fdba74 0%, #fb7185 60%, #c084fc 100%);
-  border-color: rgba(255, 255, 255, 0.55);
+  position: relative;
+  background-color: #fb7185;
+  background-image:
+    url("/assets/board/tray-floor-sunset-light.webp"),
+    linear-gradient(165deg, #fdba74 0%, #fb7185 60%, #c084fc 100%);
+  background-size: 128px 128px, 100% 100%;
+  background-repeat: repeat, no-repeat;
+  border-color: transparent;
   box-shadow: 0 14px 32px -16px rgba(225, 29, 72, 0.55);
 }
 .dark[data-skin="sunset"] .board-frame,
 .dark .skin-scene[data-skin-preview="sunset"] {
-  background: linear-gradient(165deg, #7c2d12 0%, #881337 60%, #3b0764 100%);
-  border-color: rgba(253, 186, 116, 0.25);
+  background-color: #881337;
+  background-image:
+    url("/assets/board/tray-floor-sunset-dark.webp"),
+    linear-gradient(165deg, #7c2d12 0%, #881337 60%, #3b0764 100%);
+  background-size: 128px 128px, 100% 100%;
+  background-repeat: repeat, no-repeat;
 }
 
 :root[data-skin="midnight"] .board-frame,
@@ -668,27 +701,21 @@ All colors MUST be HSL.
   box-shadow: 0 14px 32px -16px rgba(124, 45, 18, 0.7);
 }
 
+/* Frost Festival: a winter-blue bed with round snowflakes */
 :root[data-skin="frost"] .board-frame,
 .skin-scene[data-skin-preview="frost"] {
-  background:
-    radial-gradient(2px 2px at 10% 15%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 40% 8%, #fff, transparent),
-    radial-gradient(2px 2px at 75% 22%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 90% 70%, #fff, transparent),
-    radial-gradient(2px 2px at 20% 88%, #fff, transparent),
-    linear-gradient(160deg, #bae6fd, #3b82f6);
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  box-shadow: inset 0 0 0 1px rgba(225, 29, 72, 0.35), 0 14px 32px -16px rgba(30, 64, 175, 0.6);
+  position: relative;
+  background-color: #3b82f6;
+  background-image: url("/assets/board/tray-floor-frost-light.webp");
+  background-size: 128px 128px;
+  background-repeat: repeat;
+  border-color: transparent;
+  box-shadow: 0 14px 32px -16px rgba(30, 64, 175, 0.6);
 }
 .dark[data-skin="frost"] .board-frame,
 .dark .skin-scene[data-skin-preview="frost"] {
-  background:
-    radial-gradient(2px 2px at 10% 15%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1.5px 1.5px at 40% 8%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(2px 2px at 75% 22%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(2px 2px at 20% 88%, rgba(255, 255, 255, 0.6), transparent),
-    linear-gradient(160deg, #1e3a8a, #0f172a);
-  border-color: rgba(186, 230, 253, 0.45);
+  background-color: #0f172a;
+  background-image: url("/assets/board/tray-floor-frost-dark.webp");
 }
 
 :root[data-skin="lunar"] .board-frame,
@@ -1329,6 +1356,44 @@ All colors MUST be HSL.
 .dark:not(.high-contrast) .skin-scene[data-skin-preview="forest"] .tile-side-skin {
   background-image: url("/assets/board/tile-edge-forest-dark.webp");
 }
+/* Ocean (cut glass), Sunset (a glaze lip over bisque) and Frost (cleaved
+   ice): the same anchoring and offset as Original */
+:root:not(.high-contrast)[data-skin="ocean"] .tile-side-skin,
+:root:not(.high-contrast) .skin-scene[data-skin-preview="ocean"] .tile-side-skin {
+  background-color: var(--tile-edge);
+  background-image: url("/assets/board/tile-edge-ocean-light.webp");
+  background-size: 128px 16px;
+  background-position: var(--tile-tex-x, 0px) bottom;
+  background-repeat: repeat-x;
+}
+.dark:not(.high-contrast)[data-skin="ocean"] .tile-side-skin,
+.dark:not(.high-contrast) .skin-scene[data-skin-preview="ocean"] .tile-side-skin {
+  background-image: url("/assets/board/tile-edge-ocean-dark.webp");
+}
+:root:not(.high-contrast)[data-skin="sunset"] .tile-side-skin,
+:root:not(.high-contrast) .skin-scene[data-skin-preview="sunset"] .tile-side-skin {
+  background-color: var(--tile-edge);
+  background-image: url("/assets/board/tile-edge-sunset-light.webp");
+  background-size: 128px 16px;
+  background-position: var(--tile-tex-x, 0px) bottom;
+  background-repeat: repeat-x;
+}
+.dark:not(.high-contrast)[data-skin="sunset"] .tile-side-skin,
+.dark:not(.high-contrast) .skin-scene[data-skin-preview="sunset"] .tile-side-skin {
+  background-image: url("/assets/board/tile-edge-sunset-dark.webp");
+}
+:root:not(.high-contrast)[data-skin="frost"] .tile-side-skin,
+:root:not(.high-contrast) .skin-scene[data-skin-preview="frost"] .tile-side-skin {
+  background-color: var(--tile-edge);
+  background-image: url("/assets/board/tile-edge-frost-light.webp");
+  background-size: 128px 16px;
+  background-position: var(--tile-tex-x, 0px) bottom;
+  background-repeat: repeat-x;
+}
+.dark:not(.high-contrast)[data-skin="frost"] .tile-side-skin,
+.dark:not(.high-contrast) .skin-scene[data-skin-preview="frost"] .tile-side-skin {
+  background-image: url("/assets/board/tile-edge-frost-dark.webp");
+}
 /* A pressed tile sits flush with the tray, so its edge is out of sight.
    Hiding it also keeps it from showing through translucent selected faces. */
 .tile-side {
@@ -1399,6 +1464,47 @@ All colors MUST be HSL.
 }
 .dark[data-skin="forest"]:not(.high-contrast) .board-frame::after {
   border-image-source: url("/assets/board/tray-frame-forest-dark.webp");
+}
+
+/* Ocean (frosted sea glass), Sunset (burnished coral) and Frost (ice white
+   with a crimson inlay and corner stars): thin 9-slice bezels, built like
+   Original's. The corner details sit inside the 64px corners, which never
+   stretch. */
+:root[data-skin="ocean"]:not(.high-contrast) .board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 32px solid transparent;
+  border-image: url("/assets/board/tray-frame-ocean-light.webp") 64 / 32px stretch;
+}
+.dark[data-skin="ocean"]:not(.high-contrast) .board-frame::after {
+  border-image-source: url("/assets/board/tray-frame-ocean-dark.webp");
+}
+:root[data-skin="sunset"]:not(.high-contrast) .board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 32px solid transparent;
+  border-image: url("/assets/board/tray-frame-sunset-light.webp") 64 / 32px stretch;
+}
+.dark[data-skin="sunset"]:not(.high-contrast) .board-frame::after {
+  border-image-source: url("/assets/board/tray-frame-sunset-dark.webp");
+}
+:root[data-skin="frost"]:not(.high-contrast) .board-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 32px solid transparent;
+  border-image: url("/assets/board/tray-frame-frost-light.webp") 64 / 32px stretch;
+}
+.dark[data-skin="frost"]:not(.high-contrast) .board-frame::after {
+  border-image-source: url("/assets/board/tray-frame-frost-dark.webp");
 }
 
 /* New board: tiles drop into the tray one by one (delay set per tile) */
