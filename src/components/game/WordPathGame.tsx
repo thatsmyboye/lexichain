@@ -74,11 +74,11 @@ import {
   LivesDisplay,
   WaveChallengeDisplay,
   BossWaveDisplay,
-  ComboDisplay,
   PowerUpsInventory,
   ShopModal,
   ChoiceEventModal
 } from "@/components/game/SurvivalModeUI";
+import { SurvivalComboMeter } from "@/components/game/SurvivalComboMeter";
 import type { Pos, SpecialTile, SpecialTileType } from "@/types/game";
 import { GameBoard, type BoardStamp, type PathTone } from "./GameBoard";
 import { ChainMark } from "./ChainLink";
@@ -3189,7 +3189,7 @@ function WordPathGame({
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] landscape-phone:grid-cols-[auto_minmax(0,1fr)]">
         <div className="min-w-0">
-          <div className={`relative rounded-2xl p-1 ${timeLow ? "animate-vignette" : ""} ${settings.mode === "survival" && survivalBossWordRequired ? "ring-4 ring-orange-500/70" : ""}`}>
+          <div className={`relative rounded-2xl p-1 ${timeLow ? "animate-vignette" : ""} ${settings.mode === "survival" && survivalBossWordRequired ? "boss-wave-frame" : ""}`}>
             <SpecialTileTooltip tip={tileTip} onDismiss={closeTileTip} />
             <GameBoard
               board={board}
@@ -3291,7 +3291,7 @@ function WordPathGame({
                 Wave {survivalWave}{survivalBossWordRequired ? " · Boss" : ""}
               </h2>
               <LivesDisplay lives={survivalLives} maxLives={survivalMaxLives} shields={survivalShields} lifeFragments={survivalLifeFragments} />
-              <ComboDisplay comboState={survivalComboState} />
+              <SurvivalComboMeter comboState={survivalComboState} />
               {survivalBossWordRequired && survivalCurrentBoss && (
                 <BossWaveDisplay boss={survivalCurrentBoss} progress={survivalBossProgress} timeRemaining={survivalChallengeTimeRemaining} />
               )}

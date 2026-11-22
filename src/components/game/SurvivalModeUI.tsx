@@ -11,7 +11,6 @@ import {
   BossWave,
   PowerUp,
   ActivePowerUp,
-  ComboState,
   ShopItem,
   ChoiceEvent,
   SurvivalState
@@ -25,7 +24,6 @@ import { Progress } from '@/components/ui/progress';
 import {
   Heart,
   Zap,
-  Flame,
   Star,
   Clock,
   Award,
@@ -161,53 +159,6 @@ export function BossWaveDisplay({ boss, progress, timeRemaining }: BossWaveDispl
           Progress: {progress}/{boss.requirement}
         </div>
       )}
-    </div>
-  );
-}
-
-// ============================================================================
-// COMBO DISPLAY
-// ============================================================================
-
-interface ComboDisplayProps {
-  comboState: ComboState;
-}
-
-export function ComboDisplay({ comboState }: ComboDisplayProps) {
-  if (comboState.currentCombo < 3) return null;
-
-  const getComboColor = (combo: number) => {
-    if (combo >= 15) return 'from-purple-500 to-pink-500';
-    if (combo >= 10) return 'from-red-500 to-orange-500';
-    if (combo >= 7) return 'from-orange-500 to-yellow-500';
-    if (combo >= 5) return 'from-yellow-500 to-green-500';
-    return 'from-green-500 to-blue-500';
-  };
-
-  const getComboLabel = (combo: number) => {
-    if (combo >= 15) return 'LEGENDARY COMBO!';
-    if (combo >= 10) return 'EPIC COMBO!';
-    if (combo >= 7) return 'MEGA COMBO!';
-    if (combo >= 5) return 'SUPER COMBO!';
-    return 'COMBO!';
-  };
-
-  return (
-    <div className={`p-3 bg-gradient-to-r ${getComboColor(comboState.currentCombo)}/20 rounded-lg border-2 border-current animate-bounce`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Flame className="w-5 h-5 text-orange-400" />
-          <div>
-            <div className="font-display text-sm font-bold text-orange-500">{getComboLabel(comboState.currentCombo)}</div>
-            <div className="text-xs text-muted-foreground">
-              {comboState.currentCombo} words • {comboState.comboMultiplier.toFixed(1)}x multiplier
-            </div>
-          </div>
-        </div>
-        <div className="font-display-num text-2xl font-bold text-orange-500">
-          {comboState.currentCombo}
-        </div>
-      </div>
     </div>
   );
 }
