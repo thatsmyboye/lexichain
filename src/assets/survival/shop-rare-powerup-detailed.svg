@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-ss-pe-title">
+  <title id="lc-ss-pe-title">Rare Power-Up</title>
+  <defs>
+    <linearGradient id="lc-ss-pe-halo" gradientUnits="userSpaceOnUse" x1="12" y1="12" x2="52" y2="52">
+      <stop offset="0%" stop-color="#FEF9C3" />
+      <stop offset="50%" stop-color="#FACC15" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+    <linearGradient id="lc-ss-pe-star" gradientUnits="userSpaceOnUse" x1="12" y1="8" x2="52" y2="56">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#DDD6FE" />
+      <stop offset="100%" stop-color="#7927EC" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="23,12 41,12 52,23 52,41 41,52 23,52 12,41 12,23" fill="none" stroke="#2E1065" stroke-width="6.5" />
+    <polygon points="23,12 41,12 52,23 52,41 41,52 23,52 12,41 12,23" fill="none" stroke="url(#lc-ss-pe-halo)" stroke-width="3.2" />
+
+    
+    <polygon points="46,18 37,32 46,46 32,37 18,46 27,32 18,18 32,27" fill="#C4B5FD" stroke="#2E1065" stroke-width="2.2" />
+
+    
+    <polygon points="32,7 38.5,25.5 57,32 38.5,38.5 32,57 25.5,38.5 7,32 25.5,25.5" fill="url(#lc-ss-pe-star)" />
+    <polygon points="32,7 38.5,25.5 57,32 38.5,38.5 32,57 32,32" fill="#5B12C6" fill-opacity="0.28" />
+    <polygon points="32,7 38.5,25.5 57,32 38.5,38.5 32,57 25.5,38.5 7,32 25.5,25.5" fill="none" stroke="#2E1065" stroke-width="2.6" />
+
+    
+    <polygon points="32,24.5 39.5,32 32,39.5 24.5,32" fill="#FEF08A" stroke="#2E1065" stroke-width="2" />
+    <polygon points="32,28 36,32 32,36 28,32" fill="#FFFFFF" />
+  </g>
+</svg>

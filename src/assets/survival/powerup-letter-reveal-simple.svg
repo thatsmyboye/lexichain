@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sp-lrs-title">
+  <title id="lc-sp-lrs-title">Letter Reveal</title>
+  <defs>
+    <linearGradient id="lc-sp-lrs-rim" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="17" y2="17">
+      <stop offset="0%" stop-color="#E0F2FE" />
+      <stop offset="50%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="14.2,16.4 16.4,14.2 21.5,19.3 19.3,21.5" fill="#64748B" stroke="#082F49" stroke-width="1.8" />
+    
+    <polygon points="7.4,3 13.4,3 17.8,7.4 17.8,13.4 13.4,17.8 7.4,17.8 3,13.4 3,7.4" fill="url(#lc-sp-lrs-rim)" />
+    <polygon points="8.4,5.6 12.4,5.6 15.2,8.4 15.2,12.4 12.4,15.2 8.4,15.2 5.6,12.4 5.6,8.4" fill="#0C4A6E" />
+    
+    <polygon points="10.4,7 11.6,9.2 13.8,10.4 11.6,11.6 10.4,13.8 9.2,11.6 7,10.4 9.2,9.2" fill="#FEF08A" />
+    <polygon points="7.4,3 13.4,3 17.8,7.4 17.8,13.4 13.4,17.8 7.4,17.8 3,13.4 3,7.4" fill="none" stroke="#082F49" stroke-width="1.8" />
+  </g>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sp-dps-title">
+  <title id="lc-sp-dps-title">Double Points</title>
+  <defs>
+    <linearGradient id="lc-sp-dps-c1" gradientUnits="userSpaceOnUse" x1="3" y1="12.2" x2="11.8" y2="21">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="50%" stop-color="#FACC15"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="lc-sp-dps-c2" gradientUnits="userSpaceOnUse" x1="12.2" y1="3" x2="21" y2="11.8">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <!-- Two separated octagonal gold coins along an ascending diagonal (2.5px open gap prevents merging) -->
+  <g stroke-linejoin="bevel">
+    <!-- Coin 1 (bottom-left, centered at 7.4, 16.6) -->
+    <polygon points="5.5,12.2 9.3,12.2 11.8,14.7 11.8,18.5 9.3,21 5.5,21 3,18.5 3,14.7" fill="url(#lc-sp-dps-c1)"/>
+    <polygon points="7.4,14.7 9.3,16.6 7.4,18.5 5.5,16.6" fill="#78350F"/>
+    <polygon points="5.5,12.2 9.3,12.2 11.8,14.7 11.8,18.5 9.3,21 5.5,21 3,18.5 3,14.7" fill="none" stroke="#451A03" stroke-width="1.6"/>
+
+    <!-- Coin 2 (top-right, centered at 16.6, 7.4) -->
+    <polygon points="14.7,3 18.5,3 21,5.5 21,9.3 18.5,11.8 14.7,11.8 12.2,9.3 12.2,5.5" fill="url(#lc-sp-dps-c2)"/>
+    <polygon points="16.6,5.5 18.5,7.4 16.6,9.3 14.7,7.4" fill="#78350F"/>
+    <polygon points="14.7,3 18.5,3 21,5.5 21,9.3 18.5,11.8 14.7,11.8 12.2,9.3 12.2,5.5" fill="none" stroke="#451A03" stroke-width="1.6"/>
+  </g>
+</svg>

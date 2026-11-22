@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-sp-lrd-title">
+  <title id="lc-sp-lrd-title">Letter Reveal</title>
+  <defs>
+    <linearGradient id="lc-sp-lrd-rim" gradientUnits="userSpaceOnUse" x1="7" y1="7" x2="45" y2="45">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="45%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0369A1" />
+    </linearGradient>
+    <linearGradient id="lc-sp-lrd-glass" gradientUnits="userSpaceOnUse" x1="13" y1="13" x2="39" y2="39">
+      <stop offset="0%" stop-color="#0EA5E9" />
+      <stop offset="100%" stop-color="#082F49" />
+    </linearGradient>
+    <linearGradient id="lc-sp-lrd-hdl" gradientUnits="userSpaceOnUse" x1="38" y1="38" x2="57" y2="57">
+      <stop offset="0%" stop-color="#CBD5E1" />
+      <stop offset="50%" stop-color="#64748B" />
+      <stop offset="100%" stop-color="#334155" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="37,43 43,37 57,51 51,57" fill="url(#lc-sp-lrd-hdl)" />
+    <line x1="41" y1="41" x2="53" y2="53" stroke="#FFFFFF" stroke-width="1.8" stroke-opacity="0.55" />
+    <polygon points="37,43 43,37 57,51 51,57" fill="none" stroke="#082F49" stroke-width="2.5" />
+    <polygon points="35,41 41,35 45,39 39,45" fill="#FACC15" stroke="#082F49" stroke-width="2" />
+
+    
+    <polygon points="18,7 34,7 45,18 45,34 34,45 18,45 7,34 7,18" fill="url(#lc-sp-lrd-rim)" />
+    <polyline points="10,32 10,19 19,10 32,10" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.88" />
+    <polygon points="18,7 34,7 45,18 45,34 34,45 18,45 7,34 7,18" fill="none" stroke="#082F49" stroke-width="2.6" />
+
+    
+    <polygon points="20,13 32,13 39,20 39,32 32,39 20,39 13,32 13,20" fill="url(#lc-sp-lrd-glass)" stroke="#082F49" stroke-width="2" />
+    <polygon points="15,24 24,15 29,15 15,29" fill="#FFFFFF" fill-opacity="0.22" />
+
+    
+    <polygon points="26,17 28.5,23.5 35,26 28.5,28.5 26,35 23.5,28.5 17,26 23.5,23.5" fill="#FEF08A" stroke="#082F49" stroke-width="1.6" />
+    <polygon points="26,22.5 29.5,26 26,29.5 22.5,26" fill="#FFFFFF" />
+    <polygon points="18.5,19.5 20,21 18.5,22.5 17,21" fill="#E0F2FE" />
+    <polygon points="33,31 34.5,32.5 33,34 31.5,32.5" fill="#E0F2FE" />
+  </g>
+</svg>

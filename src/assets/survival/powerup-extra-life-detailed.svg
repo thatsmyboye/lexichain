@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-sp-eld-title">
+  <title id="lc-sp-eld-title">Extra Life</title>
+  <defs>
+    <linearGradient id="lc-sp-eld-gold" gradientUnits="userSpaceOnUse" x1="6" y1="9" x2="58" y2="57">
+      <stop offset="0%" stop-color="#FEF9C3" />
+      <stop offset="50%" stop-color="#FACC15" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+    <linearGradient id="lc-sp-eld-ruby" gradientUnits="userSpaceOnUse" x1="11" y1="14" x2="53" y2="52">
+      <stop offset="0%" stop-color="#FDA4AF" />
+      <stop offset="42%" stop-color="#E11D48" />
+      <stop offset="100%" stop-color="#881337" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="32,18 23,8.5 13.5,8.5 6.5,16 6.5,29 32,57 57.5,29 57.5,16 50.5,8.5 41,8.5" fill="url(#lc-sp-eld-gold)" />
+    <polygon points="32,23 24.5,14 16,14 11.5,19 11.5,28 32,50.5 52.5,28 52.5,19 48,14 39.5,14" fill="url(#lc-sp-eld-ruby)" />
+    <polygon points="32,23 39.5,14 48,14 52.5,19 52.5,28 32,50.5" fill="#881337" fill-opacity="0.32" />
+    <polyline points="14.5,26 14.5,20 17.5,16.8 23.5,16.8" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.88" />
+    <polygon points="32,18 23,8.5 13.5,8.5 6.5,16 6.5,29 32,57 57.5,29 57.5,16 50.5,8.5 41,8.5" fill="none" stroke="#4C0519" stroke-width="2.6" />
+    <polygon points="32,23 24.5,14 16,14 11.5,19 11.5,28 32,50.5 52.5,28 52.5,19 48,14 39.5,14" fill="none" stroke="#4C0519" stroke-width="1.8" />
+
+    
+    <polygon points="28,23 36,23 36,29 42,29 42,37 36,37 36,43 28,43 28,37 22,37 22,29 28,29" fill="#FFFFFF" stroke="#4C0519" stroke-width="2.2" />
+  </g>
+</svg>

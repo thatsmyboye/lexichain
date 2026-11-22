@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sp-shs-title">
+  <title id="lc-sp-shs-title">Shield power-up</title>
+  <defs>
+    <linearGradient id="lc-sp-shs-rim" gradientUnits="userSpaceOnUse" x1="3" y1="2.5" x2="21" y2="21.5">
+      <stop offset="0%" stop-color="#FEF9C3" />
+      <stop offset="50%" stop-color="#FACC15" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+    <linearGradient id="lc-sp-shs-face" gradientUnits="userSpaceOnUse" x1="6" y1="5" x2="18" y2="19">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="52%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+  </defs>
+  
+  <g stroke-linejoin="bevel">
+    <polygon points="12,2.5 20.5,6.2 20.5,14.5 12,21.5 3.5,14.5 3.5,6.2" fill="url(#lc-sp-shs-rim)" />
+    <polygon points="12,5.4 17.6,7.9 17.6,13.5 12,18.2 6.4,13.5 6.4,7.9" fill="url(#lc-sp-shs-face)" />
+    <polygon points="12,8.2 15.2,11.6 12,15 8.8,11.6" fill="#7927EC" stroke="#1E1B4B" stroke-width="1.2" />
+    <polygon points="12,2.5 20.5,6.2 20.5,14.5 12,21.5 3.5,14.5 3.5,6.2" fill="none" stroke="#1E293B" stroke-width="1.8" />
+  </g>
+</svg>

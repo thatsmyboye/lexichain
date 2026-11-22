@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-sp-cbd-title">
+  <title id="lc-sp-cbd-title">Combo Boost</title>
+  <defs>
+    <linearGradient id="lc-sp-cbd-fl" gradientUnits="userSpaceOnUse" x1="14" y1="6" x2="50" y2="44">
+      <stop offset="0%" stop-color="#FEF9C3" />
+      <stop offset="40%" stop-color="#FB923C" />
+      <stop offset="100%" stop-color="#DC2626" />
+    </linearGradient>
+    <linearGradient id="lc-sp-cbd-ch" gradientUnits="userSpaceOnUse" x1="9" y1="36" x2="55" y2="58">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="55%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="14,13 16.8,16.5 14,20 11.2,16.5" fill="#FEF08A" stroke="#431407" stroke-width="1.8" />
+    <polygon points="51,11 53.5,14 51,17 48.5,14" fill="#FFFFFF" stroke="#431407" stroke-width="1.8" />
+
+    
+    <polygon points="32,44 54,53 54,58 32,50 10,58 10,53" fill="url(#lc-sp-cbd-ch)" stroke="#431407" stroke-width="2.3" />
+    <polygon points="32,34 55,44 55,50 32,41 9,50 9,44" fill="url(#lc-sp-cbd-ch)" />
+    <polygon points="32,34 55,44 55,50 32,41" fill="#9A3412" fill-opacity="0.28" />
+    <polygon points="32,34 55,44 55,50 32,41 9,50 9,44" fill="none" stroke="#431407" stroke-width="2.4" />
+
+    
+    <polygon points="32,6 42,20 48,16 50,30 41,39 32,35 23,39 14,30 17,17 22,21" fill="url(#lc-sp-cbd-fl)" />
+    <polygon points="32,6 42,20 48,16 50,30 41,39 32,35" fill="#991B1B" fill-opacity="0.28" />
+    <polyline points="30,12 24,22 19,29" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-opacity="0.88" />
+    <polygon points="32,6 42,20 48,16 50,30 41,39 32,35 23,39 14,30 17,17 22,21" fill="none" stroke="#431407" stroke-width="2.6" />
+
+    
+    <polygon points="32,18 39,28 32,34 25,28" fill="#FEF08A" />
+    <polygon points="32,23 35.5,28 32,32 28.5,28" fill="#FFFFFF" />
+  </g>
+</svg>

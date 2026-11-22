@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sp-cbs-title">
+  <title id="lc-sp-cbs-title">Combo Boost</title>
+  <defs>
+    <linearGradient id="lc-sp-cbs-fl" gradientUnits="userSpaceOnUse" x1="6" y1="2.5" x2="18" y2="17">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="48%" stop-color="#FB923C" />
+      <stop offset="100%" stop-color="#DC2626" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="12,13.5 21,18.2 21,21.5 12,17.2 3,21.5 3,18.2" fill="#FACC15" stroke="#431407" stroke-width="1.6" />
+    
+    <polygon points="12,2.5 16.5,8.2 18.5,7 19.2,12 15.8,15.8 12,14.2 8.2,15.8 4.8,12 6.8,7 8.5,8.2" fill="url(#lc-sp-cbs-fl)" />
+    <polygon points="12,7.5 14.5,11.8 12,13.8 9.5,11.8" fill="#FFFFFF" />
+    <polygon points="12,2.5 16.5,8.2 18.5,7 19.2,12 15.8,15.8 12,14.2 8.2,15.8 4.8,12 6.8,7 8.5,8.2" fill="none" stroke="#431407" stroke-width="1.7" />
+  </g>
+</svg>

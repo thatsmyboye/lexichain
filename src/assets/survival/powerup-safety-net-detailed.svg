@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-sp-snd-title">
+  <title id="lc-sp-snd-title">Safety Net</title>
+  <defs>
+    <linearGradient id="lc-sp-snd-net" gradientUnits="userSpaceOnUse" x1="10" y1="26" x2="54" y2="55">
+      <stop offset="0%" stop-color="#FEF9C3" />
+      <stop offset="50%" stop-color="#FACC15" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="lc-sp-snd-post" gradientUnits="userSpaceOnUse" x1="6" y1="19" x2="14" y2="56">
+      <stop offset="0%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="32,7 36.2,15.8 45,20 36.2,24.2 32,33 27.8,24.2 19,20 27.8,15.8" fill="#FEF08A" stroke="#451A03" stroke-width="2.2" />
+    <polygon points="32,14 36.5,20 32,26 27.5,20" fill="#FFFFFF" />
+
+    
+    <polygon points="10,27 18,33 46,33 54,27 52,44 42,55 22,55 12,44" fill="url(#lc-sp-snd-net)" />
+    <polygon points="32,33 46,33 54,27 52,44 42,55 32,55" fill="#B45309" fill-opacity="0.22" />
+    
+    <g fill="none" stroke="#78350F" stroke-width="2.4">
+      <line x1="18" y1="33" x2="32" y2="54" />
+      <line x1="32" y1="33" x2="44" y2="51" />
+      <line x1="14" y1="41" x2="24" y2="54" />
+      <line x1="46" y1="33" x2="32" y2="54" />
+      <line x1="32" y1="33" x2="20" y2="51" />
+      <line x1="50" y1="41" x2="40" y2="54" />
+      <line x1="13" y1="43" x2="51" y2="43" />
+    </g>
+    <polygon points="10,27 18,33 46,33 54,27 52,44 42,55 22,55 12,44" fill="none" stroke="#451A03" stroke-width="2.6" />
+
+    
+    <polygon points="7,20 13,20 13,56 7,56" fill="url(#lc-sp-snd-post)" stroke="#0F172A" stroke-width="2.2" />
+    <polygon points="51,20 57,20 57,56 51,56" fill="url(#lc-sp-snd-post)" stroke="#0F172A" stroke-width="2.2" />
+  </g>
+</svg>
