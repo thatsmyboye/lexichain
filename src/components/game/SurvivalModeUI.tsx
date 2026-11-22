@@ -11,18 +11,19 @@ import {
   BossWave,
   PowerUp,
   ActivePowerUp,
-  ComboState,
   ShopItem,
   ChoiceEvent,
   SurvivalState
 } from '@/lib/survivalMode';
 import { Button } from '@/components/ui/button';
+import lifeFull from '@/assets/survival/vital-life-full.svg';
+import lifeEmpty from '@/assets/survival/vital-life-empty.svg';
+import shieldIcon from '@/assets/survival/vital-shield.svg';
+import lifeFragment from '@/assets/survival/vital-life-fragment.svg';
 import { Progress } from '@/components/ui/progress';
 import {
-  Shield,
   Heart,
   Zap,
-  Flame,
   Star,
   Clock,
   Award,
@@ -48,29 +49,21 @@ export function LivesDisplay({ lives, maxLives, shields, lifeFragments }: LivesD
         <div className="text-xs text-muted-foreground mb-1">Lives</div>
         <div className="flex items-center gap-1" role="img" aria-label={`${lives} of ${maxLives} lives`}>
           {Array.from({ length: maxLives }).map((_, i) => (
-            <span
-              key={i}
-              aria-hidden="true"
-              className={`text-xl transition-all duration-300 ${
-                i < lives ? '' : 'opacity-30 grayscale'
-              }`}
-            >
-              ❤️
-            </span>
+            <img key={i} src={i < lives ? lifeFull : lifeEmpty} alt="" className="h-5 w-5" />
           ))}
         </div>
       </div>
 
       {shields > 0 && (
         <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 rounded-lg border border-blue-500/30">
-          <Shield aria-hidden="true" className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+          <img src={shieldIcon} alt="" className="h-4 w-4" />
           <span className="text-sm text-blue-700 dark:text-blue-300 font-medium"><span className="sr-only">Shields: </span>×{shields}</span>
         </div>
       )}
 
       {lifeFragments > 0 && (
         <div className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 rounded-lg border border-purple-500/30">
-          <span aria-hidden="true" className="text-sm">💎</span>
+          <img src={lifeFragment} alt="" className="h-3.5 w-3.5" />
           <span className="text-sm text-purple-700 dark:text-purple-300 font-medium"><span className="sr-only">Life fragments: </span>{lifeFragments}/3</span>
         </div>
       )}
@@ -166,53 +159,6 @@ export function BossWaveDisplay({ boss, progress, timeRemaining }: BossWaveDispl
           Progress: {progress}/{boss.requirement}
         </div>
       )}
-    </div>
-  );
-}
-
-// ============================================================================
-// COMBO DISPLAY
-// ============================================================================
-
-interface ComboDisplayProps {
-  comboState: ComboState;
-}
-
-export function ComboDisplay({ comboState }: ComboDisplayProps) {
-  if (comboState.currentCombo < 3) return null;
-
-  const getComboColor = (combo: number) => {
-    if (combo >= 15) return 'from-purple-500 to-pink-500';
-    if (combo >= 10) return 'from-red-500 to-orange-500';
-    if (combo >= 7) return 'from-orange-500 to-yellow-500';
-    if (combo >= 5) return 'from-yellow-500 to-green-500';
-    return 'from-green-500 to-blue-500';
-  };
-
-  const getComboLabel = (combo: number) => {
-    if (combo >= 15) return 'LEGENDARY COMBO!';
-    if (combo >= 10) return 'EPIC COMBO!';
-    if (combo >= 7) return 'MEGA COMBO!';
-    if (combo >= 5) return 'SUPER COMBO!';
-    return 'COMBO!';
-  };
-
-  return (
-    <div className={`p-3 bg-gradient-to-r ${getComboColor(comboState.currentCombo)}/20 rounded-lg border-2 border-current animate-bounce`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Flame className="w-5 h-5 text-orange-400" />
-          <div>
-            <div className="font-display text-sm font-bold text-orange-500">{getComboLabel(comboState.currentCombo)}</div>
-            <div className="text-xs text-muted-foreground">
-              {comboState.currentCombo} words • {comboState.comboMultiplier.toFixed(1)}x multiplier
-            </div>
-          </div>
-        </div>
-        <div className="font-display-num text-2xl font-bold text-orange-500">
-          {comboState.currentCombo}
-        </div>
-      </div>
     </div>
   );
 }

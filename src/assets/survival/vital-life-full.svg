@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="lc-svlf-title">
+  <title id="lc-svlf-title">Full life</title>
+  <defs>
+    <linearGradient id="lc-svlf-fill" gradientUnits="userSpaceOnUse" x1="3" y1="4.5" x2="29" y2="28.5">
+      <stop offset="0%" stop-color="#FDA4AF" />
+      <stop offset="38%" stop-color="#F43F5E" />
+      <stop offset="100%" stop-color="#9F1239" />
+    </linearGradient>
+  </defs>
+
+  <g stroke-linejoin="bevel">
+    <polygon points="16,9.5 11.5,4.5 6.5,4.5 3,8.5 3,14.5 16,28.5 29,14.5 29,8.5 25.5,4.5 20.5,4.5" fill="url(#lc-svlf-fill)" />
+    
+    <polygon points="16,9.5 20.5,4.5 25.5,4.5 29,8.5 29,14.5 16,28.5" fill="#881337" fill-opacity="0.34" />
+    
+    <polyline points="5.5,13.5 5.5,9.5 7.8,6.8 11.2,6.8" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-opacity="0.88" />
+    
+    <polygon points="16,9.5 11.5,4.5 6.5,4.5 3,8.5 3,14.5 16,28.5 29,14.5 29,8.5 25.5,4.5 20.5,4.5" fill="none" stroke="#4C0519" stroke-width="2" />
+  </g>
+</svg>

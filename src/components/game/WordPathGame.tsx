@@ -24,6 +24,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { ChevronDown, CircleHelp, Lightbulb, MoreVertical, Moon, Send, Sun, Undo2, Volume2, VolumeX, X } from "lucide-react";
 import { useTheme } from "next-themes";
+import vitalLifeFull from "@/assets/survival/vital-life-full.svg";
+import vitalShield from "@/assets/survival/vital-shield.svg";
 import { getDailyChallengeDate } from "@/utils/dateUtils";
 import { saveDailyChallengeResultBulletproof } from "@/utils/dailyChallengeResultSaver";
 import { SpecialTilePreview } from "@/components/ui/special-tile-preview";
@@ -72,11 +74,11 @@ import {
   LivesDisplay,
   WaveChallengeDisplay,
   BossWaveDisplay,
-  ComboDisplay,
   PowerUpsInventory,
   ShopModal,
   ChoiceEventModal
 } from "@/components/game/SurvivalModeUI";
+import { SurvivalComboMeter } from "@/components/game/SurvivalComboMeter";
 import type { Pos, SpecialTile, SpecialTileType } from "@/types/game";
 import { GameBoard, type BoardStamp, type PathTone } from "./GameBoard";
 import { ChainMark } from "./ChainLink";
@@ -2917,7 +2919,17 @@ function WordPathGame({
           <div>
             {label(`Wave ${survivalWave}${survivalBossWordRequired ? " · Boss" : ""}`)}
             <div className="text-lg leading-none" role="img" aria-label={`${survivalLives} of ${survivalMaxLives} lives${survivalShields ? `, ${survivalShields} shield${survivalShields === 1 ? "" : "s"}` : ""}`}>
-              <span aria-hidden="true">{"❤️".repeat(Math.max(0, survivalLives))}{survivalShields > 0 ? ` 🛡️${survivalShields}` : ""}</span>
+              <span aria-hidden="true" className="flex items-center gap-0.5">
+                {Array.from({ length: Math.max(0, survivalLives) }, (_, i) => (
+                  <img key={i} src={vitalLifeFull} alt="" className="h-[18px] w-[18px]" />
+                ))}
+                {survivalShields > 0 && (
+                  <>
+                    <img src={vitalShield} alt="" className="ml-1 h-[18px] w-[18px]" />
+                    {survivalShields}
+                  </>
+                )}
+              </span>
             </div>
           </div>
         );
@@ -3177,7 +3189,7 @@ function WordPathGame({
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px] landscape-phone:grid-cols-[auto_minmax(0,1fr)]">
         <div className="min-w-0">
-          <div className={`relative rounded-2xl p-1 ${timeLow ? "animate-vignette" : ""} ${settings.mode === "survival" && survivalBossWordRequired ? "ring-4 ring-orange-500/70" : ""}`}>
+          <div className={`relative rounded-2xl p-1 ${timeLow ? "animate-vignette" : ""} ${settings.mode === "survival" && survivalBossWordRequired ? "boss-wave-frame" : ""}`}>
             <SpecialTileTooltip tip={tileTip} onDismiss={closeTileTip} />
             <GameBoard
               board={board}
@@ -3279,7 +3291,7 @@ function WordPathGame({
                 Wave {survivalWave}{survivalBossWordRequired ? " · Boss" : ""}
               </h2>
               <LivesDisplay lives={survivalLives} maxLives={survivalMaxLives} shields={survivalShields} lifeFragments={survivalLifeFragments} />
-              <ComboDisplay comboState={survivalComboState} />
+              <SurvivalComboMeter comboState={survivalComboState} />
               {survivalBossWordRequired && survivalCurrentBoss && (
                 <BossWaveDisplay boss={survivalCurrentBoss} progress={survivalBossProgress} timeRemaining={survivalChallengeTimeRemaining} />
               )}
