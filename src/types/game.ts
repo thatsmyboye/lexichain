@@ -23,7 +23,6 @@ export type ScoreBreakdown = {
   timeBonus: number;
   multipliers: {
     tileMultiplier: number;
-    consumableMultiplier: number;
     combinedApplied: number;
     capped: boolean;
     cap: number;

@@ -10,7 +10,6 @@ interface SystemStats {
   totalGames: number;
   totalDailyChallenges: number;
   totalPuzzles: number;
-  totalConsumables: number;
   recentUsers: number; // Last 7 days
   recentGames: number; // Last 7 days
   topScore: number;
@@ -35,7 +34,6 @@ export function SystemOverview() {
         gamesResult,
         dailyChallengesResult,
         puzzlesResult,
-        consumablesResult,
         recentUsersResult,
         recentGamesResult,
         topScoreResult,
@@ -45,7 +43,6 @@ export function SystemOverview() {
         supabase.from('standard_game_results').select('id', { count: 'exact', head: true }),
         supabase.from('daily_challenge_results').select('id', { count: 'exact', head: true }),
         supabase.from('puzzle_completions').select('id', { count: 'exact', head: true }),
-        supabase.from('user_consumables').select('id', { count: 'exact', head: true }),
         supabase.from('profiles')
           .select('id', { count: 'exact', head: true })
           .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
@@ -67,7 +64,6 @@ export function SystemOverview() {
         totalGames: gamesResult.count || 0,
         totalDailyChallenges: dailyChallengesResult.count || 0,
         totalPuzzles: puzzlesResult.count || 0,
-        totalConsumables: consumablesResult.count || 0,
         recentUsers: recentUsersResult.count || 0,
         recentGames: recentGamesResult.count || 0,
         topScore,
@@ -198,7 +194,7 @@ export function SystemOverview() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -223,20 +219,6 @@ export function SystemOverview() {
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-6 w-6 text-primary" />
                   <div className="text-2xl font-bold">{stats?.averageScore || 0}</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Consumables
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Database className="h-6 w-6 text-primary" />
-                  <div className="text-2xl font-bold">{stats?.totalConsumables || 0}</div>
                 </div>
               </CardContent>
             </Card>

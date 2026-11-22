@@ -18,10 +18,7 @@ import { ACHIEVEMENTS, type AchievementId } from "@/lib/achievements";
 import { supabase } from "@/integrations/supabase/client";
 import { useDailyChallengeState } from "@/hooks/useDailyChallengeState";
 import { useGoals } from "@/hooks/useGoals";
-import { useConsumables } from "@/hooks/useConsumables";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
-import { ConsumableInventoryPanel, QuickUseBar } from "@/components/consumables/ConsumableInventory";
-import { CONSUMABLES, type ConsumableId } from "@/lib/consumables";
 import type { User } from "@supabase/supabase-js";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
@@ -176,14 +173,6 @@ function WordPathGame({
   useGoals(user);
   const dailyChallengeState = useDailyChallengeState(getDailySeed());
   const dailyChallengeState5x5 = useDailyChallengeState(getDailySeed() + "-5x5");
-  const {
-    inventory: consumableInventory,
-    activeEffects,
-    // Not a hook: spends one item from the inventory
-    useConsumable: spendConsumable,
-    addActiveEffect,
-    removeActiveEffect
-  } = useConsumables(user);
   // Offline sync runs for its side effects; no return values are consumed here.
   useOfflineSync();
   const isMobile = useIsMobile();
@@ -243,9 +232,6 @@ function WordPathGame({
   const [wildTileInputs, setWildTileInputs] = useState<Map<string, string>>(new Map());
   const [pendingWildPath, setPendingWildPath] = useState<Pos[] | null>(null);
   const [newWildTiles, setNewWildTiles] = useState<Set<string>>(new Set());
-
-  // Consumable activation states
-  const [activatedConsumables, setActivatedConsumables] = useState<Set<ConsumableId>>(new Set());
 
   // Advanced mode states
   const [timeAttackTimeRemaining, setTimeAttackTimeRemaining] = useState(60);
@@ -857,7 +843,6 @@ function WordPathGame({
     setHintTiles(new Set());
     setFeedback(null);
     setStamp(null);
-    setActivatedConsumables(new Set());
   }
 
   function flashFeedback(message: string) {
@@ -997,7 +982,6 @@ function WordPathGame({
       streak,
       mode: settings.mode,
       timeAttackSpeedMultiplier,
-      activeEffects,
       baseMode: "hybrid"
     });
     if (wildUsed) {
@@ -1019,17 +1003,7 @@ function WordPathGame({
       }]);
     }
 
-    // 4. The score multiplier consumable lasts for one word
-    if (activeEffects.some(e => e.id === "score_multiplier")) {
-      removeActiveEffect("score_multiplier");
-      setActivatedConsumables(prev => {
-        const next = new Set(prev);
-        next.delete("score_multiplier");
-        return next;
-      });
-    }
-
-    // 5. Special tile effects, threading board state through each step
+    // 4. Special tile effects, threading board state through each step
     const xFactorResult = handleXFactorTiles(wordPath, trackedSpecialTiles, trackedBoard, size, setBoard, setSpecialTiles, setAffectedTiles);
     const xChanged = xFactorResult.xChanged;
     trackedBoard = xFactorResult.board;
@@ -2002,96 +1976,6 @@ function WordPathGame({
     return startDailyChallengeForMode("daily_5x5");
   }
 
-  // Consumable handlers
-  const handleUseConsumable = async (consumableId: ConsumableId) => {
-    if (!user || gameOver) return;
-    const consumable = CONSUMABLES[consumableId];
-
-    // Check if consumable can be used in current mode
-    if (consumable.dailyModeOnly && settings.mode !== "daily" && settings.mode !== "daily_5x5") {
-      toast.error("This consumable can only be used in Daily Challenge mode");
-      return;
-    }
-
-    // Check inventory
-    if (!consumableInventory[consumableId] || consumableInventory[consumableId].quantity <= 0) {
-      toast.error("You don't have any of this consumable");
-      return;
-    }
-
-    // Handle different consumable activation patterns
-    switch (consumableId) {
-      case "hint_revealer": {
-        // Only consume the item when there is something to reveal
-        const candidates = playableNow();
-        if (candidates.length === 0) {
-          toast.info("No playable words to hint right now");
-          return;
-        }
-        const success = await spendConsumable(consumableId);
-        if (!success) {
-          toast.error("Failed to use consumable");
-          return;
-        }
-        handleHintRevealer(candidates);
-        break;
-      }
-      case "extra_moves": {
-        // Extra moves execute immediately on tap
-        const successMoves = await spendConsumable(consumableId);
-        if (!successMoves) {
-          toast.error("Failed to use consumable");
-          return;
-        }
-        handleExtraMoves();
-        break;
-      }
-      case "hammer": {
-        // Hammer immediately breaks all stone tiles on the grid
-        if (path.length > 0) {
-          toast.error("Cannot use hammer while a word is in progress");
-          return;
-        }
-        
-        // Check if user has hammer consumables in inventory
-        if (!consumableInventory.hammer || consumableInventory.hammer.quantity <= 0) {
-          toast.error("No hammer consumables available");
-          return;
-        }
-
-        const brokenCount = await breakAllStoneTiles();
-        if (brokenCount === 0) {
-          toast.error("No stone tiles to break!");
-          return;
-        }
-        break;
-      }
-      case "score_multiplier": {
-        // Score multiplier activates/deactivates on tap, executes on word submission
-        if (activatedConsumables.has(consumableId)) {
-          // Deactivate if already activated
-          setActivatedConsumables(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(consumableId);
-            return newSet;
-          });
-          removeActiveEffect(consumableId);
-          toast.info("Score multiplier deactivated");
-        } else {
-          const successMultiplier = await spendConsumable(consumableId);
-          if (!successMultiplier) {
-            toast.error("Failed to use consumable");
-            return;
-          }
-          setActivatedConsumables(prev => new Set([...prev, consumableId]));
-          handleScoreMultiplier();
-        }
-        break;
-      }
-    }
-  };
-
-
   // Words playable right now: respects stones, the chain rule, used words,
   // and Wild/Ghost/Mirror tiles, at any length.
   function playableNow(limit = 60) {
@@ -2112,23 +1996,6 @@ function WordPathGame({
     clearTimeout(hintTimerRef.current);
     hintTimerRef.current = setTimeout(() => setHintTiles(new Set()), ms);
   }
-
-  const handleHintRevealer = (candidates: { word: string; path: Pos[] }[]) => {
-    // Prefer a short word so the hint nudges rather than solves
-    const pick = [...candidates].sort((a, b) => a.word.length - b.word.length)[0];
-    if (!pick) return;
-    showHintTiles(pick.path);
-    addActiveEffect({
-      id: "hint_revealer",
-      type: "hint_active",
-      duration: 5000,
-      expiresAt: new Date(Date.now() + 5000)
-    });
-    setTimeout(() => removeActiveEffect("hint_revealer"), 5000);
-    playSound("hint_used");
-    toast.success(`Hint: the path for "${pick.word.toUpperCase()}" is highlighted`);
-    announce(`Hint: ${pick.word.toUpperCase()}, starting at row ${pick.path[0].r + 1}, column ${pick.path[0].c + 1}`);
-  };
 
   function handleZenHint() {
     const candidates = playableNow();
@@ -2156,63 +2023,6 @@ function WordPathGame({
     announce("Last word undone");
   }
 
-  const handleScoreMultiplier = () => {
-    addActiveEffect({
-      id: "score_multiplier",
-      type: "score_boost",
-      duration: 0,
-      // Until next word
-      data: {
-        multiplier: 2.0
-      }
-    });
-    toast.success("Next word will have 2x score!");
-  };
-  // New function to break all stone tiles at once
-  const breakAllStoneTiles = async (): Promise<number> => {
-    // Scan entire grid for stone tiles
-    const stonePositions: Pos[] = [];
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        if (specialTiles[r][c].type === "stone") {
-          stonePositions.push({ r, c });
-        }
-      }
-    }
-
-    if (stonePositions.length === 0) {
-      return 0;
-    }
-
-    // Use one hammer consumable
-    const success = await spendConsumable("hammer");
-    if (!success) {
-      toast.error("Failed to use hammer consumable");
-      return 0;
-    }
-
-    // Break all stone tiles at once
-    const newSpecialTiles = specialTiles.map(row => [...row]);
-    stonePositions.forEach(pos => {
-      newSpecialTiles[pos.r][pos.c] = { type: null };
-    });
-    setSpecialTiles(newSpecialTiles);
-
-    const count = stonePositions.length;
-    toast.success(`Broke ${count} stone tile${count > 1 ? 's' : ''}!`);
-    return count;
-  };
-  const handleExtraMoves = () => {
-    if (settings.mode !== "daily" && settings.mode !== "daily_5x5") {
-      toast.error("Extra moves can only be used in Daily Challenge mode");
-      return;
-    }
-    setSettings(prev => ({
-      ...prev,
-      dailyMovesLimit: prev.dailyMovesLimit + 3
-    }));
-    toast.success("Added 3 extra moves to your daily challenge!");
-  };
 
   // ---------------------------------------------------------------------------
   // Input. One pointer-events path serves mouse, touch, and pen: a press on a
@@ -3431,11 +3241,10 @@ function WordPathGame({
             </div>
           </div>
 
-          {/* Mobile consumables + daily special tile preview */}
-          {isMobile && (
+          {/* Mobile daily special tile preview */}
+          {isMobile && dailyPreview.length > 0 && (
             <div className="mt-3 flex items-center justify-center gap-2 lg:hidden">
-              <QuickUseBar inventory={consumableInventory} onUseConsumable={handleUseConsumable} gameMode={settings.mode} gameState={{ gameOver, isGenerating }} disabled={gameOver || isGenerating} />
-              {dailyPreview.length > 0 && <SpecialTilePreview tiles={dailyPreview} />}
+              <SpecialTilePreview tiles={dailyPreview} />
             </div>
           )}
         </div>
@@ -3555,7 +3364,7 @@ function WordPathGame({
                   <div>Subtotal</div><div className="text-right">+{bd.totalBeforeMultipliers}</div>
                   <div>Multipliers</div>
                   <div className="text-right">
-                    {bd.multipliers.tileMultiplier}x tile {bd.multipliers.consumableMultiplier > 1 ? `· ${bd.multipliers.consumableMultiplier}x consumable` : ""}
+                    {bd.multipliers.tileMultiplier}x tile
                     <div className="text-[10px] text-foreground/75">Applied: {Number(bd.multipliers.combinedApplied.toFixed(2))}x</div>
                   </div>
                   <div className="col-span-2 border-t my-1" />
@@ -3628,9 +3437,6 @@ function WordPathGame({
               <p className="mt-1 text-[11px] text-foreground/70">+{usedWords.length - 8} more</p>
             )}
           </Card>
-
-          {/* Consumables Inventory */}
-          <ConsumableInventoryPanel inventory={consumableInventory} onUseConsumable={handleUseConsumable} gameMode={settings.mode} disabled={gameOver || isGenerating} activatedConsumables={activatedConsumables} />
         </aside>
       </div>
 

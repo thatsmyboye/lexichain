@@ -130,7 +130,7 @@
 
 ### Current Scoring Reference
 
-**Formula**: `total = round((base + rarityBonus + lengthBonus) * linkMultiplier * tileMultiplier * consumableMultiplier * modeMultiplier)`
+**Formula**: `total = round((base + rarityBonus + lengthBonus) * linkMultiplier * tileMultiplier * modeMultiplier)`
 
 Where `base = L² × 4 + L × 12` (hybrid mode).
 

@@ -20,7 +20,7 @@ Phase 1 of Lexichain improvements has been successfully implemented, focusing on
 - ✅ Step-by-step guided gameplay for new users
 - ✅ Interactive elements with highlighting
 - ✅ Progress tracking and completion celebration
-- ✅ Multiple tutorial types (main, daily challenge, consumables)
+- ✅ Multiple tutorial types (main, daily challenge)
 - ✅ Local storage persistence
 - ✅ Mobile-optimized interface
 

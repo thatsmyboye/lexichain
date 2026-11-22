@@ -14,12 +14,3 @@ port = 54323
 [inbucket]
 enabled = true
 port = 54324
-
-[functions.distribute-daily-rewards]
-verify_jwt = false
-
-[functions.distribute-weekly-rewards]
-verify_jwt = false
-
-[functions.distribute-monthly-rewards]
-verify_jwt = false

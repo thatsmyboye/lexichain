@@ -16,7 +16,6 @@ export function PrestigeEndless({ onBack }: PrestigeEndlessProps) {
     { name: 'Stone Breaker', effect: '-5% stone tile spawn', rarity: 'common', color: 'bg-gray-500' },
     { name: 'Multiplier Master', effect: '+15% special tile multipliers', rarity: 'rare', color: 'bg-blue-500' },
     { name: 'Extra Life', effect: '+1 life per 20 waves', rarity: 'epic', color: 'bg-purple-500' },
-    { name: 'Stone Shield', effect: 'Free hammer each wave', rarity: 'legendary', color: 'bg-orange-500' },
   ];
 
   return (

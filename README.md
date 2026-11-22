@@ -97,17 +97,16 @@ npm run lint
 - **Rarity bonus**: uncommon letters (+5 each), rare letters (+15 and a flat bonus).
 - **Length bonuses**: +25 (5 letters), +75 (6), +175 (7), +325 (8+).
 - **Link bonus**: +10 per shared tile with the previous word, up to a 2× multiplier at 3+ shared tiles.
-- **Tile multipliers** (Multiplier tiles, consumables, mode multipliers) apply on top.
+- **Multipliers** (Multiplier tiles and mode multipliers) apply on top.
 - **Chain tiles** add +10 per extra path tile (beyond 4) per Chain tile in the word.
 - **Tax tiles** apply a 0.7× penalty per tile.
 
-## Progression & Consumables
+## Progression
 
-Lexichain has no XP, player levels, or paid store. The structure is intentionally flat:
+Lexichain is free to play, with no XP, player levels, store, or items to buy or earn:
 
-- **All modes are open.** Every game mode is available to everyone from the start — there is nothing to unlock or level up for. Mode selection lives in `src/components/game/AdvancedGameModes.tsx`.
-- **No store or purchases.** There are no in-game purchases, Stripe checkout, or payment routes.
-- **Consumables** (Hint Revealer, Hammer, Score Multiplier, Extra Moves) are earned, not bought:
-  - **Daily login streaks** grant consumables at milestone days (3, 7, 14, 30, 50, 100) — see `src/hooks/useLoginStreak.ts`. This is the only wired source.
-  - Inventory and granting logic live in `src/hooks/useConsumables.ts` (`awardConsumables`).
-  - Note: `ACHIEVEMENT_CONSUMABLE_REWARDS` exists in `src/lib/consumables.ts` as a reward table, but achievement-based granting is **not currently wired up** — no code calls `awardConsumables` with it.
+- **All modes are open.** Every game mode is available to everyone from the start. Mode selection lives in `src/components/game/AdvancedGameModes.tsx`.
+- **No purchases.** There is no store, checkout, or payment code, in the app or on the backend.
+- **No consumables.** Every player plays the same board with the same tools. Hints exist only where a mode provides them (Zen mode, and some Survival power-ups).
+- **Daily login streaks** are tracked and shown on the daily hub (`src/hooks/useLoginStreak.ts`). They grant nothing.
+- **Medals, trophies and goals** are the rewards: see `src/lib/achievements.ts` and `src/lib/goals.ts`.
