@@ -11,7 +11,7 @@ Almost everything on screen is drawn in code. That keeps the app small and theme
 | Logo | Code-drawn wordmark: nine letter tiles joined by chain links (`src/components/brand/Logo.tsx`) |
 | Tiles and board | CSS gradients, generated noise textures, and shadows for ten skins (`src/lib/tileSkins.ts`, `src/index.css`) |
 | Special tiles | Flat gradient fills with generic line icons from the Lucide icon set (`SpecialTileIcon.tsx`) |
-| Medals, trophies, consumables, Survival | Emoji. The source uses 64 different emoji about 250 times |
+| Medals, trophies, Survival | Emoji. The source uses 64 different emoji about 250 times |
 | Mode and menu icons | Lucide line icons |
 | Sound | All 18 sound events are synthesized tones. There are no audio files |
 | Typeface | The device's system font. There is no brand typeface |
@@ -38,10 +38,10 @@ The format and size rules in the "Delivery specs" section apply to every item un
 | E. Brand and platform | 8 | 31 | P1 |
 | F. Modes and menus | 4 | 19 | P2 |
 | G. Survival mode | 7 | 33 | P2 |
-| H. Illustrations | 8 | 13 | P3 |
+| H. Illustrations | 7 | 9 | P3 |
 | I. Audio | 4 | 28 | P2 |
 | J. Typography | 2 | 2 | P1 |
-| **Total** | **54** | **262** | |
+| **Total** | **53** | **258** | |
 
 ---
 
@@ -169,13 +169,12 @@ Survival has the most game content and the least art: lives, shields, power-ups,
 
 ## H. Illustrations
 
-One consistent illustration style across these would give the quieter screens some personality. None of them block play, so they come last.
+One consistent illustration style across these would give the quieter screens some personality. None of them block play, so they come last. There is no H3: it was the four consumable item icons, dropped when consumables were removed from the game.
 
 | ID | Asset | Qty | Replaces | Format and size | Notes |
 |---|---|---|---|---|---|
 | H1 | Title hero | 1 | Nothing | SVG or PNG, 800 × 400 | Tiles joined by a chain, showing the core rule before any text |
 | H2 | Tutorial gesture | 2 | Text instructions | Lottie or sprite, 240 × 240 | A finger dragging across tiles, and a finger tapping tiles |
-| H3 | Consumable items | 4 | 💡 ⚡ 🔨 🎯 | SVG, 96 × 96 | Hint Revealer, Score Multiplier, Hammer, Extra Moves |
 | H4 | Empty states | 3 | A line of gray text | SVG, 240 × 200 | No games played, no daily challenges played, no leaderboard scores yet |
 | H5 | Sign-in illustration | 1 | A bare form | SVG or PNG, 480 × 320 | Warm and low-pressure. Sign-in is optional, so it should invite, not gate |
 | H6 | Not found page | 1 | Text | SVG, 400 × 300 | A chain that ends at a missing tile |

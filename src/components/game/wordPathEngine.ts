@@ -278,7 +278,6 @@ export type ScoreBreakdown = {
   lengthBonus: number;
   multipliers: {
     tileMultiplier: number;
-    consumableMultiplier: number;
     combinedApplied: number;
     capped: boolean;
     cap: number;
@@ -296,10 +295,6 @@ export function computeScoreBreakdown(params: {
   streak: number;
   mode: "classic" | "daily" | "daily_5x5" | "target" | "practice" | "time_attack" | "endless" | "puzzle" | "survival" | "zen" | "chaos";
   timeAttackSpeedMultiplier?: number;
-  activeEffects: Array<{
-    id: string;
-    data?: Record<string, unknown>;
-  }>;
   baseMode?: "hybrid" | "square";
 }): ScoreBreakdown {
   const {
@@ -311,7 +306,6 @@ export function computeScoreBreakdown(params: {
     streak,
     mode,
     timeAttackSpeedMultiplier = 1.0,
-    activeEffects,
     baseMode = "hybrid"
   } = params;
   const wordLen = actualWord.length;
@@ -367,12 +361,6 @@ export function computeScoreBreakdown(params: {
   const taxTilesInPath = wordPath.filter(p => specialTiles[p.r][p.c].type === "tax").length;
   const taxMultiplier = taxTilesInPath > 0 ? Math.pow(0.7, taxTilesInPath) : 1;
 
-  const scoreMultiplierEffect = activeEffects.find(e => e.id === "score_multiplier");
-  let consumableMultiplier = 1;
-  if (scoreMultiplierEffect && typeof scoreMultiplierEffect.data?.multiplier === "number") {
-    consumableMultiplier = scoreMultiplierEffect.data.multiplier as number;
-  }
-  
   // Mode-specific multipliers
   let modeMultiplier = 1;
   switch (mode) {
@@ -396,7 +384,7 @@ export function computeScoreBreakdown(params: {
       modeMultiplier = 1;
   }
   
-  const combinedMultiplierRaw = tileMultiplier * consumableMultiplier * modeMultiplier;
+  const combinedMultiplierRaw = tileMultiplier * modeMultiplier;
   const combinedApplied = combinedMultiplierRaw; // No cap - multipliers stack freely
   const capped = false;
   const totalBeforeMultipliers = Math.round((base + rarityBonus + lengthBonus + chainBonus) * linkMultiplier);
@@ -413,7 +401,6 @@ export function computeScoreBreakdown(params: {
     lengthBonus,
     multipliers: {
       tileMultiplier,
-      consumableMultiplier,
     combinedApplied,
     capped,
     cap: null

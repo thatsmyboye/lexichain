@@ -8,7 +8,7 @@
 > `AdvancedGameModes.tsx` no longer shows XP, levels, or lock badges — every mode
 > is open to all players. The other Phase 3 features (advanced modes themselves,
 > analytics, themes, achievements, hints) still apply. See the README's
-> "Progression & Consumables" section for the current structure.
+> "Progression" section for the current structure.
 
 ## 🎯 Overview
 

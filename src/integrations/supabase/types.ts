@@ -14,47 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      consumable_transactions: {
-        Row: {
-          consumable_id: string
-          created_at: string
-          game_result_id: string | null
-          id: string
-          quantity: number
-          source: string | null
-          transaction_type: string
-          user_id: string
-        }
-        Insert: {
-          consumable_id: string
-          created_at?: string
-          game_result_id?: string | null
-          id?: string
-          quantity: number
-          source?: string | null
-          transaction_type: string
-          user_id: string
-        }
-        Update: {
-          consumable_id?: string
-          created_at?: string
-          game_result_id?: string | null
-          id?: string
-          quantity?: number
-          source?: string | null
-          transaction_type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_game_result"
-            columns: ["game_result_id"]
-            isOneToOne: false
-            referencedRelation: "standard_game_results"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       daily_challenge_board_analysis: {
         Row: {
           avg_word_length: number
@@ -234,39 +193,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      leaderboard_rewards: {
-        Row: {
-          created_at: string
-          id: string
-          leaderboard_type: string
-          period: string
-          rank: number
-          rewards_given: Json
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          leaderboard_type: string
-          period: string
-          rank: number
-          rewards_given: Json
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          leaderboard_type?: string
-          period?: string
-          rank?: number
-          rewards_given?: Json
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       player_goals: {
         Row: {
@@ -454,36 +380,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_consumables: {
-        Row: {
-          consumable_id: string
-          created_at: string
-          id: string
-          last_used: string | null
-          quantity: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          consumable_id: string
-          created_at?: string
-          id?: string
-          last_used?: string | null
-          quantity?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          consumable_id?: string
-          created_at?: string
-          id?: string
-          last_used?: string | null
-          quantity?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           granted_at: string
@@ -504,27 +400,6 @@ export type Database = {
           granted_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_unlocked_modes: {
-        Row: {
-          id: string
-          mode_id: string
-          unlocked_at: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          mode_id: string
-          unlocked_at?: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          mode_id?: string
-          unlocked_at?: string
           user_id?: string
         }
         Relationships: []
@@ -555,18 +430,6 @@ export type Database = {
       current_user_has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
-      }
-      distribute_daily_leaderboard_rewards: {
-        Args: { target_date: string }
-        Returns: Json
-      }
-      distribute_monthly_leaderboard_rewards: {
-        Args: { target_month: number; target_year: number }
-        Returns: Json
-      }
-      distribute_weekly_leaderboard_rewards: {
-        Args: { target_week_start: string }
-        Returns: Json
       }
       get_benchmark_data: { Args: { challenge_date: string }; Returns: Json }
       get_daily_leaderboard: {
@@ -602,10 +465,6 @@ export type Database = {
         }[]
       }
       grant_admin_role: { Args: { target_user_id: string }; Returns: undefined }
-      grant_starter_consumables: {
-        Args: { target_user_id: string }
-        Returns: undefined
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

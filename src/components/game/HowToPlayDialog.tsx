@@ -149,46 +149,6 @@ export function HowToPlayDialog({
                 </div>
               </CollapsibleContent>
             </Collapsible>
-            
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Consumable Items</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-2">
-                  <span aria-hidden="true" className="text-muted-foreground mt-1">•</span>
-                  <span className="text-sm">Tap a consumable in your inventory to use it</span>
-                </div>
-                <div className="grid gap-2">
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden="true" className="text-lg">🔨</span>
-                    <div className="text-xs">
-                      <div className="font-medium">Hammer</div>
-                      <div className="text-muted-foreground">Breaks every Stone tile on the board at once</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden="true" className="text-lg">💡</span>
-                    <div className="text-xs">
-                      <div className="font-medium">Hint Revealer</div>
-                      <div className="text-muted-foreground">Highlights the path of one playable word for 5 seconds</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden="true" className="text-lg">⚡</span>
-                    <div className="text-xs">
-                      <div className="font-medium">Score Multiplier</div>
-                      <div className="text-muted-foreground">Doubles the score of your next word</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden="true" className="text-lg">🎯</span>
-                    <div className="text-xs">
-                      <div className="font-medium">Extra Moves</div>
-                      <div className="text-muted-foreground">Adds 3 extra moves (Daily Challenge only)</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </DialogContent>
       </Dialog>

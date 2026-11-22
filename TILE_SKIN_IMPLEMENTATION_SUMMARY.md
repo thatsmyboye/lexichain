@@ -89,7 +89,6 @@ Colors dynamically update as players reach score benchmarks, providing visual fe
 
 Potential additions (not implemented):
 - Unlockable skins via achievements
-- Store-purchasable skins
 - Level-based skin unlocks
 - Custom skin creator
 - Animated skins
@@ -109,6 +108,6 @@ Potential additions (not implemented):
 
 - The "Original" skin matches the previous default styling
 - Special tiles (wild, multiplier, stone, etc.) override skin colors for clarity
-- Affected tiles (from consumables) maintain their special animations
+- Affected tiles maintain their special animations
 - All skins are available immediately (no unlock requirements)
 
