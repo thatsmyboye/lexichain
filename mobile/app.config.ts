@@ -9,9 +9,9 @@ const APP_NAME = "Lexichain";
 // The marketing version shown in the stores. Build numbers are managed by EAS
 // (see eas.json: appVersionSource "remote", autoIncrement on production).
 const APP_VERSION = "1.0.0";
-// Printed by `npx eas-cli@latest init` (run once, signed in to your Expo
-// account). Paste it here; EAS builds and updates read it from extra.eas.
-const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID ?? "";
+// The Expo project this app builds under (from `eas init`). EAS builds and
+// updates read it from extra.eas. Set EAS_PROJECT_ID to build under another.
+const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || "df919bb8-c6ac-4cf9-a7c7-51c559cfc223";
 
 // The deployed web game the app loads. Override per build profile in eas.json
 // or locally, e.g. EXPO_PUBLIC_WEB_URL=https://my-preview.vercel.app npx expo start
