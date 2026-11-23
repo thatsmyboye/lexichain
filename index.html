@@ -8,6 +8,22 @@
     <meta name="theme-color" content="#7927EC" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#020817" media="(prefers-color-scheme: dark)" />
 
+    <!-- Web analytics: Google Tag Manager container GTM-T2GPS5VM (Google Analytics).
+         Not loaded inside the iOS/Android app, which sets __LEXICHAIN_NATIVE__
+         before any page script runs: the store privacy forms declare no tracking.
+         src/pages/PrivacyPage.tsx describes this; keep the two in step. -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      if (!window.__LEXICHAIN_NATIVE__) {
+        gtag('js', new Date());
+        var gtmScript = document.createElement('script');
+        gtmScript.async = true;
+        gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-T2GPS5VM';
+        document.head.appendChild(gtmScript);
+      }
+    </script>
+
     <!-- Critical CSS inlined to prevent render blocking -->
     <style>
       :root {

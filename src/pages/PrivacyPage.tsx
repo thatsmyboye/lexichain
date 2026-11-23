@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 // The app stores list this page's URL (https://lexichain.banton-digital.com/privacy)
 // as the privacy policy. Keep it in step with what the game actually collects,
 // and with the App Store privacy labels and Google Play data-safety form.
+// The analytics section describes the Google Tag Manager snippet in index.html,
+// which is skipped in the native app.
 //
 // Set this to the address players should write to about their data. The
 // contact section is hidden while it is empty; both stores expect one.
@@ -29,7 +31,8 @@ export default function PrivacyPage() {
           <p>
             Lexichain is a word game you can play on the web and in the Lexichain app for iOS and
             Android. This policy explains what information the game uses and why. Lexichain has no
-            ads, no in-app purchases, and no third-party analytics or tracking.
+            ads and no in-app purchases. The web version uses Google Analytics to count visits; the
+            iOS and Android apps contain no analytics or tracking.
           </p>
 
           <h2>Playing without an account</h2>
@@ -37,6 +40,24 @@ export default function PrivacyPage() {
             You can play every mode without signing up. Your settings, trophies, personal bests and
             daily-puzzle progress are stored only on your device (in the browser's or app's local
             storage). They are not sent to us. Clearing the app's data or uninstalling it removes them.
+          </p>
+
+          <h2>Analytics on the web</h2>
+          <p>
+            When you play in a web browser, the game loads Google Analytics through Google Tag
+            Manager. It tells us how many people visit, which pages they open and roughly how they
+            use the site. Google receives your IP address, your browser and device type, the pages
+            you view and actions such as clicks and scrolling, and it sets cookies to tell visits
+            apart. We use these statistics only to understand and improve the game. They are not
+            linked to your account, your display name or your game results.
+          </p>
+          <p>
+            The Lexichain apps for iOS and Android do not load Google Analytics. On the web you can
+            opt out with a content blocker or Google's{" "}
+            <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">
+              Analytics opt-out browser add-on
+            </a>
+            .
           </p>
 
           <h2>If you create an account</h2>
@@ -63,6 +84,10 @@ export default function PrivacyPage() {
             <li>
               <strong>Vercel</strong> hosts the game. Like any web host, it receives your IP address
               and device type when the game loads.
+            </li>
+            <li>
+              <strong>Google Analytics</strong> and <strong>Google Tag Manager</strong> measure
+              visits to the web version, as described above. They are not used in the apps.
             </li>
             <li>
               <strong>Free Dictionary API</strong> (dictionaryapi.dev) supplies word definitions on the
