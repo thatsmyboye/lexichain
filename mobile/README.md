@@ -59,8 +59,8 @@ One-time setup (needs an [Expo account](https://expo.dev/signup), an
 
 1. Confirm the identity in `app.config.ts`. **`APP_ID` (`com.bantondigital.lexichain`) is permanent
    once published.**
-2. `npx eas-cli@latest login`, then `npx eas-cli@latest init` from this folder. Paste the project ID
-   it prints into `EAS_PROJECT_ID` in `app.config.ts`.
+2. `npx eas-cli@latest login`. The Expo project already exists and its ID is set as
+   `EAS_PROJECT_ID` in `app.config.ts`, so there is no `eas init` step.
 3. Create the app records: in App Store Connect (bundle ID above) and in the Play Console (package
    name above).
 
@@ -81,11 +81,11 @@ Bump `APP_VERSION` in `app.config.ts` for each store release.
 
 The web project already provides these:
 
-- **Privacy policy URL:** `https://lexichain.banton-digital.com/privacy`. Set `PRIVACY_CONTACT_EMAIL`
-  in `src/pages/PrivacyPage.tsx` first; both stores expect a contact.
+- **Privacy policy URL:** `https://lexichain.banton-digital.com/privacy`. The contact address shown
+  there is `PRIVACY_CONTACT_EMAIL` in `src/pages/PrivacyPage.tsx`.
 - **In-app account deletion** (App Store Guideline 5.1.1(v), Google Play account-deletion policy):
-  My Account → Delete my account. It needs the migration
-  `supabase/migrations/20261123120000_add_delete_my_account.sql` applied to the production database.
+  My Account → Delete my account. It calls the `delete_my_account` database function
+  (`supabase/migrations/20261123120000_add_delete_my_account.sql`), which is live in production.
   Google Play also asks for a deletion URL: use the privacy policy's "Deleting your data" section.
 - **Data collected** (App Store privacy labels / Play data-safety form): email address, user ID,
   display name and gameplay content (scores, words), linked to the account, used for app

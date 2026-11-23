@@ -8,9 +8,9 @@ import { useNavigate } from "react-router-dom";
 // The analytics section describes the Google Tag Manager snippet in index.html,
 // which is skipped in the native app.
 //
-// Set this to the address players should write to about their data. The
-// contact section is hidden while it is empty; both stores expect one.
-const PRIVACY_CONTACT_EMAIL = "";
+// The address players write to about their data. Both stores expect one; the
+// contact section is hidden if this is ever emptied.
+const PRIVACY_CONTACT_EMAIL = "paul@banton-digital.com";
 const LAST_UPDATED = "November 23, 2026";
 
 export default function PrivacyPage() {
