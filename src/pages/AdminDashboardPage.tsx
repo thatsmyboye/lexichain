@@ -17,28 +17,33 @@ import { DatabaseTools } from '@/components/admin/DatabaseTools';
 
 export default function AdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
+  // False until the first answer about who is signed in arrives, so the page
+  // does not ask a signed-in admin to log in while that is still loading.
+  const [authChecked, setAuthChecked] = useState(false);
   const { isAdmin, isLoading: isLoadingAdmin } = useIsAdmin(user);
   const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
+      setAuthChecked(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      setAuthChecked(true);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!isLoadingAdmin && !isAdmin && user) {
+    if (authChecked && !isLoadingAdmin && !isAdmin && user) {
       navigate('/');
     }
-  }, [isAdmin, isLoadingAdmin, user, navigate]);
+  }, [authChecked, isAdmin, isLoadingAdmin, user, navigate]);
 
-  if (isLoadingAdmin) {
+  if (!authChecked || isLoadingAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

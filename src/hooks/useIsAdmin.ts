@@ -3,36 +3,44 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
 export function useIsAdmin(user: User | null) {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const userId = user?.id ?? null;
+  // The answer is stored with the user it belongs to. A check for one user
+  // must never be read as the answer for another, and "not checked yet" must
+  // never be read as "not an admin".
+  const [checked, setChecked] = useState<{ userId: string; isAdmin: boolean } | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      setIsLoading(false);
-      return;
-    }
+    if (!userId) return;
+    let cancelled = false;
 
     const checkAdminStatus = async () => {
+      let isAdmin = false;
       try {
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .eq('role', 'admin')
           .maybeSingle();
 
-        setIsAdmin(!error && !!data);
+        isAdmin = !error && !!data;
       } catch (error) {
         console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
       }
+      if (!cancelled) setChecked({ userId, isAdmin });
     };
 
     checkAdminStatus();
-  }, [user]);
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
-  return { isAdmin, isLoading };
+  const answered = userId !== null && checked?.userId === userId;
+
+  return {
+    isAdmin: answered && checked.isAdmin,
+    // Loading from the moment a user is known until their check comes back.
+    isLoading: userId !== null && !answered,
+  };
 }
