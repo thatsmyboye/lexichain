@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="lc-se-mc-title">
+  <title id="lc-se-mc-title">Mysterious Merchant</title>
+  <defs>
+    <linearGradient id="lc-se-mc-cloak" gradientUnits="userSpaceOnUse" x1="10" y1="6" x2="54" y2="58">
+      <stop offset="0%" stop-color="#914DEF"/>
+      <stop offset="52%" stop-color="#5B12C6"/>
+      <stop offset="100%" stop-color="#2E1065"/>
+    </linearGradient>
+    <linearGradient id="lc-se-mc-trim" gradientUnits="userSpaceOnUse" x1="14" y1="36" x2="50" y2="56">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Pointed hooded cloak & draped shoulders -->
+    <polygon points="32,6 49,17 51,38 57,57 7,57 13,38 15,17" fill="url(#lc-se-mc-cloak)"/>
+    <polygon points="32,6 49,17 51,38 57,57 32,57" fill="#1E0542" fill-opacity="0.34"/>
+    <polyline points="16,36 18,19 32,10" fill="none" stroke="#C4B5FD" stroke-width="2" stroke-opacity="0.72"/>
+    <polygon points="32,6 49,17 51,38 57,57 7,57 13,38 15,17" fill="none" stroke="#14072B" stroke-width="2.6"/>
+
+    <!-- Shadowed hood cowl & glowing golden diamond eyes -->
+    <polygon points="32,15 44,24 41,42 32,46 23,42 20,24" fill="#0F0524" stroke="#FACC15" stroke-width="2"/>
+    <polygon points="27,29 30.5,31.5 27,34 23.5,31.5" fill="#FEF08A"/>
+    <polygon points="37,29 40.5,31.5 37,34 33.5,31.5" fill="#FEF08A"/>
+
+    <!-- Gold collar clasp & merchant coin glint -->
+    <polygon points="18,45 32,51 46,45 43,57 21,57" fill="url(#lc-se-mc-trim)" stroke="#14072B" stroke-width="2.2"/>
+    <polygon points="32,45 37,50 32,55 27,50" fill="#FFFFFF" stroke="#451A03" stroke-width="1.8"/>
+  </g>
+</svg>

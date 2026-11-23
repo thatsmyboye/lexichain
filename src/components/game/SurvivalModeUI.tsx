@@ -16,7 +16,16 @@ import {
   SurvivalState
 } from '@/lib/survivalMode';
 import { Button } from '@/components/ui/button';
-import { PowerUpIcon, ShopItemIcon, ShopCoinIcon, ShopLifeIcon } from './SurvivalIcon';
+import {
+  PowerUpIcon,
+  ShopItemIcon,
+  ShopCoinIcon,
+  ShopLifeIcon,
+  BossIcon,
+  EventIcon,
+  RiskPipIcon,
+  SurvivalModalHeader
+} from './SurvivalIcon';
 import lifeFull from '@/assets/survival/vital-life-full.svg';
 import lifeEmpty from '@/assets/survival/vital-life-empty.svg';
 import shieldIcon from '@/assets/survival/vital-shield.svg';
@@ -132,7 +141,7 @@ export function BossWaveDisplay({ boss, progress, timeRemaining }: BossWaveDispl
     <div className="p-4 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-lg border-2 border-orange-500/50 animate-pulse">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{boss.icon}</span>
+          <BossIcon type={boss.type} className="h-7 w-7" />
           <div>
             <div className="font-display text-lg font-bold text-orange-500">BOSS WAVE!</div>
             <div className="text-xs text-muted-foreground">{boss.description}</div>
@@ -250,8 +259,9 @@ export function ShopModal({ items, currentScore, currentLives, onPurchase, onClo
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-background rounded-lg border border-border max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+        <SurvivalModalHeader kind="shop" className="rounded-t-lg border-b border-border" />
+        <div className="p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <ShoppingCart className="w-6 h-6 text-yellow-500" />
               <h2 className="text-2xl font-bold">Wave Shop</h2>
@@ -326,18 +336,19 @@ export function ChoiceEventModal({ event, onChoice }: ChoiceEventModalProps) {
 
   const getRiskLabel = (risk: 'low' | 'medium' | 'high') => {
     switch (risk) {
-      case 'low': return '🟢 Low Risk';
-      case 'medium': return '🟡 Medium Risk';
-      case 'high': return '🔴 High Risk';
+      case 'low': return 'Low Risk';
+      case 'medium': return 'Medium Risk';
+      case 'high': return 'High Risk';
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-background rounded-lg border border-border max-w-lg w-full">
-        <div className="p-6">
+        <SurvivalModalHeader kind="event" className="rounded-t-lg border-b border-border" />
+        <div className="p-4 sm:p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="text-4xl">{event.icon}</div>
+            <EventIcon type={event.type} className="h-10 w-10" />
             <div>
               <h2 className="text-xl font-bold">{event.prompt}</h2>
               <p className="text-sm text-muted-foreground">{event.description}</p>
@@ -353,7 +364,10 @@ export function ChoiceEventModal({ event, onChoice }: ChoiceEventModalProps) {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="text-sm font-medium flex-1">{option.text}</div>
-                  <div className="text-xs ml-2">{getRiskLabel(option.risk)}</div>
+                  <span className="ml-2 inline-flex shrink-0 items-center gap-1.5 text-xs font-medium">
+                    <RiskPipIcon risk={option.risk} />
+                    <span>{getRiskLabel(option.risk)}</span>
+                  </span>
                 </div>
               </button>
             ))}

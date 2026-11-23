@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-ttd-title">
+  <title id="lc-sb-ttd-title">Time Trial Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-ttd-rim" gradientUnits="userSpaceOnUse" x1="20" y1="26" x2="108" y2="114">
+      <stop offset="0%" stop-color="#EDE9FE"/>
+      <stop offset="48%" stop-color="#914DEF"/>
+      <stop offset="100%" stop-color="#5B12C6"/>
+    </linearGradient>
+    <linearGradient id="lc-sb-ttd-bolt" gradientUnits="userSpaceOnUse" x1="40" y1="32" x2="88" y2="108">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="45%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Stopwatch top crown & side trigger button -->
+    <rect x="52" y="12" width="24" height="10" rx="2" fill="#DDD6FE" stroke="#2E1065" stroke-width="3"/>
+    <rect x="58" y="22" width="12" height="6" fill="#A78BFA" stroke="#2E1065" stroke-width="2.6"/>
+    <polygon points="94,30 104,22 111,29 101,37" fill="#C4B5FD" stroke="#2E1065" stroke-width="2.8"/>
+
+    <!-- Chamfered octagonal chronometer casing -->
+    <polygon points="46,27 82,27 108,53 108,89 82,115 46,115 20,89 20,53" fill="url(#lc-sb-ttd-rim)"/>
+    <polyline points="25,86 25,55 48,32 80,32" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-opacity="0.88"/>
+    <polygon points="46,27 82,27 108,53 108,89 82,115 46,115 20,89 20,53" fill="none" stroke="#2E1065" stroke-width="3.4"/>
+
+    <!-- Deep obsidian dial & cardinal ticks -->
+    <polygon points="50,38 78,38 97,57 97,85 78,104 50,104 31,85 31,57" fill="#14072B" stroke="#2E1065" stroke-width="2.6"/>
+    <g stroke="#C4B5FD" stroke-width="3" stroke-linecap="square">
+      <line x1="64" y1="42" x2="64" y2="49"/>
+      <line x1="64" y1="93" x2="64" y2="100"/>
+      <line x1="35" y1="71" x2="42" y2="71"/>
+      <line x1="86" y1="71" x2="93" y2="71"/>
+    </g>
+
+    <!-- Blazing lightning bolt slashing across the stopwatch -->
+    <polygon points="75,33 38,75 61,75 53,109 90,67 67,67" fill="url(#lc-sb-ttd-bolt)"/>
+    <polygon points="75,33 38,75 61,75 67,67" fill="#FFFFFF" fill-opacity="0.45"/>
+    <polygon points="75,33 38,75 61,75 53,109 90,67 67,67" fill="none" stroke="#2E1065" stroke-width="3.2"/>
+  </g>
+</svg>

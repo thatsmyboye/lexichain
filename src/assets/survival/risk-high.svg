@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" role="img" aria-labelledby="lc-sr-hi-title">
+  <title id="lc-sr-hi-title">High risk</title>
+  <defs>
+    <linearGradient id="lc-sr-hi-g" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="14" y2="14">
+      <stop offset="0%" stop-color="#FDA4AF"/>
+      <stop offset="45%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <polygon points="8,2 14.4,13.6 1.6,13.6" fill="url(#lc-sr-hi-g)" stroke="#450A0A" stroke-width="1.6"/>
+    <rect x="7.1" y="5.7" width="1.8" height="4.1" fill="#FFFFFF"/>
+    <polygon points="8,10.8 9.1,11.9 8,13 6.9,11.9" fill="#FFFFFF"/>
+  </g>
+</svg>

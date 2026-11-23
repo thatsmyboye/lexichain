@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-lld-title">
+  <title id="lc-sb-lld-title">Letter Lockout Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-lld-ring" gradientUnits="userSpaceOnUse" x1="14" y1="14" x2="114" y2="114">
+      <stop offset="0%" stop-color="#FED7AA"/>
+      <stop offset="42%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+    <linearGradient id="lc-sb-lld-tile" gradientUnits="userSpaceOnUse" x1="36" y1="34" x2="92" y2="94">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Banned 3D keycap tile trapped inside the lockout ring (no <text>) -->
+    <rect x="38" y="42" width="52" height="52" rx="9" fill="#475569" stroke="#431407" stroke-width="3"/>
+    <rect x="38" y="34" width="52" height="52" rx="9" fill="url(#lc-sb-lld-tile)" stroke="#431407" stroke-width="3"/>
+    <!-- Geometric letter-glyph placeholder bars inside the tile -->
+    <polygon points="64,46 77,74 70,74 67,67 61,67 58,74 51,74" fill="#334155"/>
+    <polygon points="64,54 61.5,62 66.5,62" fill="#E2E8F0"/>
+
+    <!-- Heavy chamfered ember-orange lockout octagon + diagonal slash -->
+    <path fill-rule="evenodd" d="
+      M44,14 H84 L114,44 V84 L84,114 H44 L14,84 V44 Z
+      M50,30 H78 L98,50 V78 L78,98 H50 L30,78 V50 Z
+    " fill="url(#lc-sb-lld-ring)"/>
+    <polyline points="19,82 19,46 46,19 82,19" fill="none" stroke="#FFFBEB" stroke-width="2.6" stroke-opacity="0.88"/>
+    <path fill-rule="evenodd" d="
+      M44,14 H84 L114,44 V84 L84,114 H44 L14,84 V44 Z
+      M50,30 H78 L98,50 V78 L78,98 H50 L30,78 V50 Z
+    " fill="none" stroke="#431407" stroke-width="3.6"/>
+
+    <!-- Bold diagonal prohibition bar drawn cleanly over the tile -->
+    <polygon points="29,39 39,29 99,89 89,99" fill="url(#lc-sb-lld-ring)"/>
+    <line x1="39" y1="34" x2="94" y2="89" stroke="#FFFBEB" stroke-width="2.2" stroke-opacity="0.8"/>
+    <polygon points="29,39 39,29 99,89 89,99" fill="none" stroke="#431407" stroke-width="3.4"/>
+  </g>
+</svg>

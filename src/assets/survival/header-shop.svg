@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 672 84" width="672" height="84" role="img" aria-labelledby="lc-sh-shop-title">
+  <title id="lc-sh-shop-title">Wave Shop banner</title>
+  <defs>
+    <linearGradient id="lc-sh-shop-bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="672" y2="84">
+      <stop offset="0%" stop-color="#0B1224" />
+      <stop offset="50%" stop-color="#1E1046" />
+      <stop offset="100%" stop-color="#0B1224" />
+    </linearGradient>
+    <radialGradient id="lc-sh-shop-glow" gradientUnits="userSpaceOnUse" cx="336" cy="46" r="220">
+      <stop offset="0%" stop-color="#FACC15" stop-opacity="0.26" />
+      <stop offset="55%" stop-color="#7927EC" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#0F0728" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="lc-sh-shop-wood" gradientUnits="userSpaceOnUse" x1="0" y1="67" x2="0" y2="84">
+      <stop offset="0%" stop-color="#B45309" />
+      <stop offset="32%" stop-color="#78350F" />
+      <stop offset="100%" stop-color="#451A03" />
+    </linearGradient>
+    <linearGradient id="lc-sh-shop-gem" gradientUnits="userSpaceOnUse" x1="320" y1="22" x2="352" y2="53">
+      <stop offset="0%" stop-color="#FEF9C3" />
+      <stop offset="48%" stop-color="#FACC15" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+  </defs>
+
+  
+  <rect width="672" height="84" fill="url(#lc-sh-shop-bg)" />
+  <rect width="672" height="84" fill="url(#lc-sh-shop-glow)" />
+
+  
+  <g stroke="#3B1D7A" stroke-width="1.6" stroke-opacity="0.5">
+    <line x1="0" y1="45" x2="672" y2="45" />
+    <line x1="116" y1="16" x2="116" y2="67" />
+    <line x1="556" y1="16" x2="556" y2="67" />
+  </g>
+
+  
+  <g stroke="#1E1046" stroke-width="1.8" stroke-linejoin="bevel" opacity="0.65">
+    <polygon points="18,48 48,48 52,52 52,67 14,67 14,52" fill="#4C1D95" />
+    <polygon points="74,52 104,52 108,56 108,67 70,67 70,56" fill="#312E81" />
+    <polygon points="568,52 598,52 602,56 602,67 564,67 564,56" fill="#312E81" />
+    <polygon points="624,48 654,48 658,52 658,67 620,67 620,52" fill="#4C1D95" />
+  </g>
+
+  
+  <g stroke="#2E1065" stroke-width="1.8" stroke-linejoin="bevel">
+    
+    <line x1="58" y1="15" x2="58" y2="24" stroke="#FACC15" stroke-width="1.6" />
+    <polygon points="52,24 64,24 67,33 64,42 52,42 49,33" fill="#FEF08A" />
+    <polygon points="55,27 61,27 63,33 61,39 55,39 53,33" fill="#FFFFFF" />
+    
+    <line x1="150" y1="15" x2="150" y2="23" stroke="#FACC15" stroke-width="1.6" />
+    <polygon points="143,23 157,23 160,33 157,43 143,43 140,33" fill="#FEF08A" />
+    <polygon points="146,26 154,26 156,33 154,40 146,40 144,33" fill="#FFFFFF" />
+    
+    <line x1="522" y1="15" x2="522" y2="23" stroke="#FACC15" stroke-width="1.6" />
+    <polygon points="515,23 529,23 532,33 529,43 515,43 512,33" fill="#FEF08A" />
+    <polygon points="518,26 526,26 528,33 526,40 518,40 516,33" fill="#FFFFFF" />
+    
+    <line x1="614" y1="15" x2="614" y2="24" stroke="#FACC15" stroke-width="1.6" />
+    <polygon points="608,24 620,24 623,33 620,42 608,42 605,33" fill="#FEF08A" />
+    <polygon points="611,27 617,27 619,33 617,39 611,39 609,33" fill="#FFFFFF" />
+  </g>
+
+  
+  <g stroke-linejoin="bevel">
+    
+    <g stroke="#451A03" stroke-width="1.8">
+      <polygon points="188,61 194,57 230,57 236,61 236,67 188,67" fill="#D97706" />
+      <polygon points="191,54 197,50 233,50 239,54 239,60 191,60" fill="#FACC15" />
+      <polygon points="186,47 192,43 228,43 234,47 234,53 186,53" fill="#FEF08A" />
+    </g>
+
+    
+    <polygon points="270,27 288,34 288,52 270,67 252,52 252,34" fill="#FACC15" stroke="#1E293B" stroke-width="2" />
+    <polygon points="270,32 283,37 283,50 270,61 257,50 257,37" fill="#E2E8F0" stroke="#1E293B" stroke-width="1.5" />
+    <polygon points="270,40 276,46.5 270,53 264,46.5" fill="#7927EC" />
+
+    
+    <polygon points="314,60 358,60 362,67 310,67" fill="#7927EC" stroke="#14072B" stroke-width="2" />
+    <polygon points="322,53 350,53 354,60 318,60" fill="#C4B5FD" stroke="#14072B" stroke-width="1.8" />
+    <polygon points="336,22 352,37 346,53 326,53 320,37" fill="url(#lc-sh-shop-gem)" stroke="#451A03" stroke-width="2" />
+    <polygon points="336,22 336,41 320,37" fill="#FFFFFF" fill-opacity="0.55" />
+    <polygon points="336,33 343,40 336,47 329,40" fill="#FFFFFF" />
+
+    
+    <polygon points="402,39 395,32 388,32 383,38 383,47 402,67 421,47 421,38 416,32 409,32" fill="#E11D48" stroke="#4C0519" stroke-width="2" />
+    <polygon points="399,43 405,43 405,47 409,47 409,53 405,53 405,57 399,57 399,53 395,53 395,47 399,47" fill="#FFFFFF" />
+
+    
+    <polygon points="445,33 471,33 471,40 462,47 462,49 471,56 471,62 445,62 445,56 454,49 454,47 445,40" fill="#BAE6FD" stroke="#0C4A6E" stroke-width="2" />
+    <polygon points="449,36 467,36 458,45" fill="#FFFFFF" />
+    <polygon points="458,52 467,60 449,60" fill="#FFFFFF" />
+    <rect x="442" y="28" width="32" height="5" fill="#FFFFFF" stroke="#0C4A6E" stroke-width="1.8" />
+    <rect x="442" y="62" width="32" height="5" fill="#E0F2FE" stroke="#0C4A6E" stroke-width="1.8" />
+  </g>
+
+  
+  <g fill="#FEF9C3">
+    <polygon points="241,28 243,32 247,34 243,36 241,40 239,36 235,34 239,32" />
+    <polygon points="432,26 434,30 438,32 434,34 432,38 430,34 426,32 430,30" />
+  </g>
+
+  
+  <rect x="0" y="67" width="672" height="17" fill="url(#lc-sh-shop-wood)" />
+  <line x1="0" y1="67.8" x2="672" y2="67.8" stroke="#FDE68A" stroke-width="1.8" stroke-opacity="0.78" />
+  <line x1="0" y1="73" x2="672" y2="73" stroke="#451A03" stroke-width="2" />
+  <line x1="16" y1="78.5" x2="656" y2="78.5" stroke="#B45309" stroke-width="1.4" stroke-opacity="0.55" />
+
+  
+  <g stroke="#14072B" stroke-width="1.8" stroke-linejoin="bevel">
+    <polygon points="0,0 56,0 56,12 46,17 10,17 0,12" fill="#7927EC" />
+    <polygon points="56,0 112,0 112,12 102,17 66,17 56,12" fill="#FACC15" />
+    <polygon points="112,0 168,0 168,12 158,17 122,17 112,12" fill="#7927EC" />
+    <polygon points="168,0 224,0 224,12 214,17 178,17 168,12" fill="#FACC15" />
+    <polygon points="224,0 280,0 280,12 270,17 234,17 224,12" fill="#7927EC" />
+    <polygon points="280,0 336,0 336,12 326,17 290,17 280,12" fill="#FACC15" />
+    <polygon points="336,0 392,0 392,12 382,17 346,17 336,12" fill="#7927EC" />
+    <polygon points="392,0 448,0 448,12 438,17 402,17 392,12" fill="#FACC15" />
+    <polygon points="448,0 504,0 504,12 494,17 458,17 448,12" fill="#7927EC" />
+    <polygon points="504,0 560,0 560,12 550,17 514,17 504,12" fill="#FACC15" />
+    <polygon points="560,0 616,0 616,12 606,17 570,17 560,12" fill="#7927EC" />
+    <polygon points="616,0 672,0 672,12 662,17 626,17 616,12" fill="#FACC15" />
+  </g>
+</svg>

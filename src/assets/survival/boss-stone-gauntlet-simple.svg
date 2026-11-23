@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sb-sgs-title">
+  <title id="lc-sb-sgs-title">Stone Gauntlet Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-sgs-st" gradientUnits="userSpaceOnUse" x1="5" y1="3" x2="19" y2="21">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Chiseled monolith idol head -->
+    <polygon points="7.5,3 16.5,3 19,6.5 18.2,17.8 15.8,21 8.2,21 5.8,17.8 5,6.5" fill="url(#lc-sb-sgs-st)"/>
+    <polygon points="12,3 16.5,3 19,6.5 18.2,17.8 15.8,21 12,21" fill="#1E293B" fill-opacity="0.3"/>
+    <!-- Heavy overhanging stone brow -->
+    <polygon points="5.2,7.8 18.8,7.8 17.6,10.8 6.4,10.8" fill="#CBD5E1" stroke="#0F172A" stroke-width="1.5"/>
+    <!-- Glowing amber rune eyes (high contrast on dark cards) -->
+    <polygon points="7.2,11.6 10.4,11.6 10,14 7.6,14" fill="#FACC15" stroke="#0F172A" stroke-width="1.2"/>
+    <polygon points="13.6,11.6 16.8,11.6 16.4,14 14,14" fill="#FACC15" stroke="#0F172A" stroke-width="1.2"/>
+    <!-- Carved nose ridge & grim mouth -->
+    <polygon points="11,10.8 13,10.8 13.6,16.2 10.4,16.2" fill="#E2E8F0" stroke="#0F172A" stroke-width="1.3"/>
+    <line x1="8.8" y1="18.4" x2="15.2" y2="18.4" stroke="#0F172A" stroke-width="1.8" stroke-linecap="square"/>
+    <polygon points="7.5,3 16.5,3 19,6.5 18.2,17.8 15.8,21 8.2,21 5.8,17.8 5,6.5" fill="none" stroke="#0F172A" stroke-width="1.7"/>
+  </g>
+</svg>

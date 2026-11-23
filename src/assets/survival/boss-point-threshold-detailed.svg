@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-ptd-title">
+  <title id="lc-sb-ptd-title">Point Threshold Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-ptd-gem" gradientUnits="userSpaceOnUse" x1="14" y1="20" x2="114" y2="112">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="38%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Crown sparkles -->
+    <polygon points="22,18 24.8,24.2 31,27 24.8,29.8 22,36 19.2,29.8 13,27 19.2,24.2" fill="#E0F2FE" stroke="#082F49" stroke-width="2.2"/>
+    <polygon points="107,18 109.2,22.8 114,25 109.2,27.2 107,32 104.8,27.2 100,25 104.8,22.8" fill="#FFFFFF" stroke="#082F49" stroke-width="2.2"/>
+
+    <!-- Wide classic brilliant-cut sapphire -->
+    <polygon points="36,22 92,22 114,50 64,112 14,50" fill="url(#lc-sb-ptd-gem)"/>
+    <!-- Faceted 120° planes -->
+    <polygon points="36,22 48,50 14,50" fill="#FFFFFF" fill-opacity="0.72"/>
+    <polygon points="36,22 92,22 80,50 48,50" fill="#E0F2FE" fill-opacity="0.75"/>
+    <polygon points="92,22 114,50 80,50" fill="#0284C7" fill-opacity="0.45"/>
+    <polygon points="14,50 48,50 64,112" fill="#7DD3FC" fill-opacity="0.35"/>
+    <polygon points="48,50 80,50 64,112" fill="#2563EB" fill-opacity="0.28"/>
+    <polygon points="80,50 114,50 64,112" fill="#1E3A8A" fill-opacity="0.52"/>
+
+    <!-- Specular table catch -->
+    <polyline points="20,48 38,26 88,26" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-opacity="0.92"/>
+
+    <!-- Internal facet ridges -->
+    <g fill="none" stroke="#082F49" stroke-width="2.4">
+      <line x1="14" y1="50" x2="114" y2="50"/>
+      <polyline points="36,22 48,50 64,112"/>
+      <polyline points="92,22 80,50 64,112"/>
+      <polyline points="36,22 64,50 92,22"/>
+    </g>
+    <!-- Clean outer contour on top -->
+    <polygon points="36,22 92,22 114,50 64,112 14,50" fill="none" stroke="#082F49" stroke-width="3.6"/>
+  </g>
+</svg>
