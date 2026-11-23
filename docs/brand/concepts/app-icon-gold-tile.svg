@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Lexichain app icon</title>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#4A1FA8"/>
+      <stop offset="0.55" stop-color="#2A1272"/>
+      <stop offset="1" stop-color="#140A3C"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF5FD2"/>
+      <stop offset="0.5" stop-color="#B78CFF"/>
+      <stop offset="1" stop-color="#4FD8FF"/>
+    </linearGradient>
+    <linearGradient id="tileFace" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#B583FF"/>
+      <stop offset="1" stop-color="#7A2FE8"/>
+    </linearGradient>
+    <linearGradient id="tileSide" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5A1FC0"/>
+      <stop offset="1" stop-color="#3A0F8A"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3D1785"/>
+      <stop offset="1" stop-color="#1C0A47"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE48A"/>
+      <stop offset="0.5" stop-color="#F7B92B"/>
+      <stop offset="1" stop-color="#C98208"/>
+    </linearGradient>
+    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDF2"/>
+      <stop offset="1" stop-color="#FFE9A6"/>
+    </linearGradient>
+    <linearGradient id="goldLink" gradientUnits="userSpaceOnUse" x1="0" y1="-60" x2="0" y2="60">
+      <stop offset="0" stop-color="#FFE48A"/>
+      <stop offset="0.55" stop-color="#F7B92B"/>
+      <stop offset="1" stop-color="#C98208"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- one orbit ring: the only "energy" element -->
+  <g transform="rotate(-32 512 512)" fill="none">
+    <ellipse cx="512" cy="512" rx="455" ry="200" stroke="url(#ring)" stroke-width="22" opacity="0.55" filter="url(#glow)"/>
+    <ellipse cx="512" cy="512" rx="455" ry="200" stroke="url(#ring)" stroke-width="9"/>
+  </g>
+
+  <!-- chain: first link tucks behind the tile -->
+  <g transform="translate(706 706) rotate(45)">
+    <g fill="none">
+      <rect x="-90" y="-56" width="200" height="112" rx="56" stroke="#5E3600" stroke-width="52"/>
+      <rect x="-90" y="-56" width="200" height="112" rx="56" stroke="url(#goldLink)" stroke-width="38"/>
+      <rect x="160" y="-56" width="160" height="112" rx="56" stroke="#5E3600" stroke-width="52"/>
+      <rect x="160" y="-56" width="160" height="112" rx="56" stroke="url(#goldLink)" stroke-width="38"/>
+    </g>
+    <rect x="62" y="-26" width="146" height="52" rx="26" fill="#5E3600"/>
+    <rect x="69" y="-19" width="132" height="38" rx="19" fill="url(#goldLink)"/>
+  </g>
+
+  <!-- tile -->
+  <g transform="translate(-14 -22) rotate(-8 500 470)">
+    <rect x="220" y="232" width="560" height="560" rx="118" fill="#0B0424" opacity="0.5" filter="url(#shadow)"/>
+    <rect x="220" y="226" width="560" height="560" rx="118" fill="url(#tileSide)"/>
+    <rect x="220" y="190" width="560" height="560" rx="118" fill="url(#tileFace)"/>
+    <rect x="270" y="240" width="460" height="460" rx="80" fill="url(#panel)"/>
+    <rect x="270" y="240" width="460" height="460" rx="80" fill="none" stroke="#D9BFFF" stroke-opacity="0.35" stroke-width="5"/>
+    <!-- L -->
+    <path d="M384 306 H496 V528 H632 V640 H384 Z" fill="#0B0424" opacity="0.45" transform="translate(8 12)"/>
+    <path d="M384 306 H496 V528 H632 V640 H384 Z" fill="url(#gold)" stroke="url(#gold)" stroke-width="18" stroke-linejoin="round"/>
+    <path d="M410 332 H470 V554 H606 V614 H410 Z" fill="url(#cream)" stroke="url(#cream)" stroke-width="8" stroke-linejoin="round"/>
+  </g>
+</svg>
