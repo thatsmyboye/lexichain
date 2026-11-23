@@ -1,11 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-im-title">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-labelledby="lc-im-title">
   <title id="lc-im-title">Lexichain monochrome icon</title>
-  <!-- Solid keycap tile with L and beveled chain ring knocked out -->
-  <path fill-rule="evenodd" fill="#000000" d="
-    M43 29 H85 A13 13 0 0 1 98 42 V86 A13 13 0 0 1 85 99 H43 A13 13 0 0 1 30 86 V42 A13 13 0 0 1 43 29 Z
-    M43 43 V85 H85 V74 H54 V43 Z
-    M74 41 L84 51 L71 64 L61 54 Z
-  " />
-  <!-- Inner island of the knocked-out chain link so the ring stays open -->
-  <path fill="#000000" d="M74 47.5 L77.5 51 L71 57.5 L67.5 54 Z" />
+  <!-- The app icon's mark as one flat silhouette, scaled to sit inside the
+       80% safe circle: solid letter tile with the L knocked out, plus the chain. -->
+  <g transform="translate(512 512) scale(0.78) translate(-588 -582)">
+    <g transform="translate(706 706) rotate(45)">
+      <rect x="-90" y="-56" width="200" height="112" rx="56" fill="none" stroke="#000000" stroke-width="46"/>
+      <rect x="160" y="-56" width="160" height="112" rx="56" fill="none" stroke="#000000" stroke-width="46"/>
+      <rect x="62" y="-26" width="146" height="52" rx="26" fill="#000000"/>
+    </g>
+    <g transform="translate(-14 -22) rotate(-8 500 470)">
+      <path fill-rule="evenodd" fill="#000000" d="M338 190 H662 A118 118 0 0 1 780 308 V668 A118 118 0 0 1 662 786 H338 A118 118 0 0 1 220 668 V308 A118 118 0 0 1 338 190 Z M384 306 H496 V528 H632 V640 H384 Z"/>
+    </g>
+  </g>
 </svg>

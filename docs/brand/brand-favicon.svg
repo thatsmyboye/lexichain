@@ -1,16 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="lc-fv-title">
   <title id="lc-fv-title">Lexichain</title>
   <defs>
-    <linearGradient id="lc-fv-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#914DEF" />
-      <stop offset="100%" stop-color="#6713DD" />
+    <linearGradient id="lc-fv-face" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B583FF" />
+      <stop offset="100%" stop-color="#7A2FE8" />
+    </linearGradient>
+    <linearGradient id="lc-fv-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE48A" />
+      <stop offset="100%" stop-color="#F7B92B" />
     </linearGradient>
   </defs>
-  <rect x="1" y="1" width="30" height="30" rx="7" fill="url(#lc-fv-bg)" stroke="#3B0764" stroke-width="1" />
-  <!-- Bold L -->
-  <path d="M6.5 6.5 H11.5 V20.5 H25.5 V25.5 H6.5 Z" fill="#FFFFFF" />
-  <!-- Oversized open-aperture link (stays open at 16px) -->
-  <g transform="translate(20.5 11.5) rotate(-45)">
-    <path fill-rule="evenodd" d="M-6.5 -3 L-4.5 -5 H4.5 L6.5 -3 V3 L4.5 5 H-4.5 L-6.5 3 Z M-3.5 -1.5 L-2.5 -2.5 H2.5 L3.5 -1.5 V1.5 L2.5 2.5 H-2.5 L-3.5 1.5 Z" fill="#FFFFFF" />
-  </g>
+  <!-- The app icon's letter tile on its own: the chain and ring do not survive 16px -->
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="url(#lc-fv-face)" />
+  <rect x="4" y="4" width="24" height="24" rx="4.5" fill="#24104F" />
+  <!-- Bold gold L -->
+  <path d="M9 7.5 H15 V19 H23.5 V24.5 H9 Z" fill="url(#lc-fv-gold)" />
 </svg>

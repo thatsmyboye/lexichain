@@ -77,6 +77,20 @@ function rasterizeSvg(svgBuf, targetW, targetH) {
   });
 }
 
+// The mark (tile plus chain) runs to the corner of the full-bleed icon, which a
+// circular launcher mask would cut off. This re-centres it and scales it to
+// fit the 80% maskable safe circle; the plate stays full-bleed.
+// Mark bounding circle in the 1024 source: centre (588, 582), radius 515.
+function makeMaskableIconSvg(svgBuf) {
+  const svgText = svgBuf.toString("utf8");
+  const markStart = svgText.indexOf("<!-- Mark:");
+  if (markStart === -1) throw new Error('brand-icon-fullbleed.svg: missing the "<!-- Mark:" comment');
+  const mark = svgText.slice(markStart).replace(/<\/svg>\s*$/, "");
+  return Buffer.from(
+    `${svgText.slice(0, markStart)}<g transform="translate(512 512) scale(0.78) translate(-588 -582)">${mark}</g></svg>`,
+  );
+}
+
 function makeRoundedMaskSvg(size, radiusRatio = 0.22) {
   const r = Math.round(size * radiusRatio);
   return Buffer.from(
@@ -375,7 +389,7 @@ async function main() {
   ]) {
     const outPath = path.join(ICONS_DIR, file);
     const flatBuf = await rasterizeSvg(iconFullSvg, size, size)
-      .flatten({ background: "#7927EC" })
+      .flatten({ background: "#2A1272" })
       .ensureAlpha()
       .png()
       .toBuffer();
@@ -396,14 +410,14 @@ async function main() {
   // -------------------------------------------------------------------------
   // E2: Full-bleed opaque 3-channel RGB icons (maskable, App Store 1024, iOS touch)
   // -------------------------------------------------------------------------
-  for (const { file, size } of [
+  for (const { file, size, source } of [
     { file: "icon-1024.png", size: 1024 },
-    { file: "icon-maskable-512.png", size: 512 },
+    { file: "icon-maskable-512.png", size: 512, source: makeMaskableIconSvg(iconFullSvg) },
     { file: "apple-touch-icon.png", size: 180 },
   ]) {
     const outPath = path.join(ICONS_DIR, file);
-    await rasterizeSvg(iconFullSvg, size, size)
-      .flatten({ background: "#7927EC" })
+    await rasterizeSvg(source ?? iconFullSvg, size, size)
+      .flatten({ background: "#2A1272" })
       .removeAlpha()
       .png({ compressionLevel: 9, adaptiveFiltering: true })
       .toFile(outPath);

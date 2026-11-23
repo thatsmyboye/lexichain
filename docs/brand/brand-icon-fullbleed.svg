@@ -1,36 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-if-title">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-labelledby="lc-if-title">
   <title id="lc-if-title">Lexichain app icon</title>
   <defs>
-    <linearGradient id="lc-if-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#914DEF" />
-      <stop offset="52%" stop-color="#7927EC" />
-      <stop offset="100%" stop-color="#5B12C6" />
-    </linearGradient>
-    <radialGradient id="lc-if-glow" cx="25%" cy="18%" r="65%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22" />
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    <radialGradient id="lc-if-bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#4A1FA8"/>
+      <stop offset="0.55" stop-color="#2A1272"/>
+      <stop offset="1" stop-color="#140A3C"/>
     </radialGradient>
-    <linearGradient id="lc-if-tile" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" />
-      <stop offset="100%" stop-color="#EEF2FF" />
+    <linearGradient id="lc-if-ring" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF5FD2"/>
+      <stop offset="0.5" stop-color="#B78CFF"/>
+      <stop offset="1" stop-color="#4FD8FF"/>
     </linearGradient>
+    <linearGradient id="lc-if-tileFace" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#B583FF"/>
+      <stop offset="1" stop-color="#7A2FE8"/>
+    </linearGradient>
+    <linearGradient id="lc-if-tileSide" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5A1FC0"/>
+      <stop offset="1" stop-color="#3A0F8A"/>
+    </linearGradient>
+    <linearGradient id="lc-if-panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3D1785"/>
+      <stop offset="1" stop-color="#1C0A47"/>
+    </linearGradient>
+    <linearGradient id="lc-if-gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE48A"/>
+      <stop offset="0.5" stop-color="#F7B92B"/>
+      <stop offset="1" stop-color="#C98208"/>
+    </linearGradient>
+    <linearGradient id="lc-if-cream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDF2"/>
+      <stop offset="1" stop-color="#FFE9A6"/>
+    </linearGradient>
+    <linearGradient id="lc-if-goldLink" gradientUnits="userSpaceOnUse" x1="0" y1="-60" x2="0" y2="60">
+      <stop offset="0" stop-color="#FFE48A"/>
+      <stop offset="0.55" stop-color="#F7B92B"/>
+      <stop offset="1" stop-color="#C98208"/>
+    </linearGradient>
+    <filter id="lc-if-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="lc-if-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
   </defs>
 
-  <!-- Full-bleed brand plate -->
-  <rect width="128" height="128" fill="url(#lc-if-bg)" />
-  <rect width="128" height="128" fill="url(#lc-if-glow)" />
+  <!-- Plate: full-bleed indigo field with one neon ring -->
+  <rect width="1024" height="1024" fill="url(#lc-if-bg)"/>
+  <g transform="rotate(-32 512 512)" fill="none">
+    <ellipse cx="512" cy="512" rx="455" ry="200" stroke="url(#lc-if-ring)" stroke-width="22" opacity="0.55" filter="url(#lc-if-glow)"/>
+    <ellipse cx="512" cy="512" rx="455" ry="200" stroke="url(#lc-if-ring)" stroke-width="9"/>
+  </g>
 
-  <!-- Raised white keycap tile inside Android 80% maskable safe circle -->
-  <rect x="30" y="37" width="68" height="63" rx="13" fill="#1E0542" fill-opacity="0.34" />
-  <rect x="30" y="33" width="68" height="63" rx="13" fill="#43108C" />
-  <rect x="30" y="27" width="68" height="63" rx="13" fill="url(#lc-if-tile)" stroke="#C4B5FD" stroke-width="1" />
-  <path d="M41 28.5 H87" stroke="#FFFFFF" stroke-width="1.5" />
+  <!-- Mark: gold chain (first link tucks behind the tile), then the letter tile.
+       The generator scripts split this file at the "Plate" and "Mark" comments. -->
+  <g transform="translate(706 706) rotate(45)">
+    <g fill="none">
+      <rect x="-90" y="-56" width="200" height="112" rx="56" stroke="#5E3600" stroke-width="52"/>
+      <rect x="-90" y="-56" width="200" height="112" rx="56" stroke="url(#lc-if-goldLink)" stroke-width="38"/>
+      <rect x="160" y="-56" width="160" height="112" rx="56" stroke="#5E3600" stroke-width="52"/>
+      <rect x="160" y="-56" width="160" height="112" rx="56" stroke="url(#lc-if-goldLink)" stroke-width="38"/>
+    </g>
+    <rect x="62" y="-26" width="146" height="52" rx="26" fill="#5E3600"/>
+    <rect x="69" y="-19" width="132" height="38" rx="19" fill="url(#lc-if-goldLink)"/>
+  </g>
 
-  <!-- Bold Sora-proportioned L in deep plum -->
-  <path d="M44 40 H54 V70 H84 V80 H44 Z" fill="#4C1D95" />
-
-  <!-- Chunky beveled chain link seated in upper-right pocket -->
-  <g transform="translate(74 50) rotate(-45)">
-    <path fill-rule="evenodd" d="M-15 -9.5 L-11 -13.5 H11 L15 -9.5 V3.5 L11 7.5 H-11 L-15 3.5 Z M-8.5 -5.5 L-6.5 -7.5 H6.5 L8.5 -5.5 V-0.5 L6.5 1.5 H-6.5 L-8.5 -0.5 Z" fill="#7927EC" stroke="#3B0764" stroke-width="1.5" stroke-linejoin="bevel" transform="translate(0 3)" />
+  <g transform="translate(-14 -22) rotate(-8 500 470)">
+    <rect x="220" y="232" width="560" height="560" rx="118" fill="#0B0424" opacity="0.5" filter="url(#lc-if-shadow)"/>
+    <rect x="220" y="226" width="560" height="560" rx="118" fill="url(#lc-if-tileSide)"/>
+    <rect x="220" y="190" width="560" height="560" rx="118" fill="url(#lc-if-tileFace)"/>
+    <rect x="270" y="240" width="460" height="460" rx="80" fill="url(#lc-if-panel)"/>
+    <rect x="270" y="240" width="460" height="460" rx="80" fill="none" stroke="#D9BFFF" stroke-opacity="0.35" stroke-width="5"/>
+    <!-- L -->
+    <path d="M384 306 H496 V528 H632 V640 H384 Z" fill="#0B0424" opacity="0.45" transform="translate(8 12)"/>
+    <path d="M384 306 H496 V528 H632 V640 H384 Z" fill="url(#lc-if-gold)" stroke="url(#lc-if-gold)" stroke-width="18" stroke-linejoin="round"/>
+    <path d="M410 332 H470 V554 H606 V614 H410 Z" fill="url(#lc-if-cream)" stroke="url(#lc-if-cream)" stroke-width="8" stroke-linejoin="round"/>
   </g>
 </svg>
