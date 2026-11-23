@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { isNativeApp, requestNative, type NativeShareResult } from "./nativeApp";
 
 export const SHARE_ORIGIN = "https://lexichain.banton-digital.com";
 
@@ -30,7 +31,13 @@ export function buildShareText(params: {
 }
 
 export async function shareText(title: string, text: string): Promise<void> {
-  if (navigator.share) {
+  // The mobile app opens the system share sheet (Android WebViews have no
+  // navigator.share).
+  if (isNativeApp()) {
+    const result = await requestNative<NativeShareResult>({ type: "share", title, text });
+    if (result !== "error") return;
+    // The share sheet failed: fall through to the clipboard.
+  } else if (navigator.share) {
     try {
       await navigator.share({ title, text });
       return;

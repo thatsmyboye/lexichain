@@ -431,6 +431,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      delete_my_account: { Args: never; Returns: undefined }
       get_benchmark_data: { Args: { challenge_date: string }; Returns: Json }
       get_daily_leaderboard: {
         Args: { challenge_date: string; p_game_mode?: string }

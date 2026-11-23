@@ -1,7 +1,7 @@
 import { GameSettings } from '@/components/settings/GameSettings';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FloatingTiles } from '@/components/effects/FloatingTiles';
 
 export default function SettingsPage() {
@@ -22,6 +22,11 @@ export default function SettingsPage() {
           </Button>
         </div>
         <GameSettings />
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          <Link to="/privacy" className="underline-offset-4 hover:text-foreground hover:underline">
+            Privacy policy
+          </Link>
+        </p>
       </div>
     </main>
   );

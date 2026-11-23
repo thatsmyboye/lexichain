@@ -1,5 +1,8 @@
-// Distinct haptic patterns per game event. navigator.vibrate is a no-op on
-// devices (and iOS Safari) that don't support it.
+// Distinct haptic patterns per game event. In the mobile app they play on the
+// native haptic engine (iOS included). In a browser, navigator.vibrate is a
+// no-op on devices (and iOS Safari) that don't support it.
+import { isNativeApp, postToNative } from "./nativeApp";
+
 const PATTERNS = {
   select: 8,
   info: 12,
@@ -12,6 +15,10 @@ const PATTERNS = {
 export type HapticEvent = keyof typeof PATTERNS;
 
 export function haptic(event: HapticEvent) {
+  if (isNativeApp()) {
+    postToNative({ type: "haptic", event });
+    return;
+  }
   try {
     navigator.vibrate?.(PATTERNS[event] as number | number[]);
   } catch {

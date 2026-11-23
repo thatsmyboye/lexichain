@@ -7,6 +7,7 @@
 // (src/assets/medals/) come from the bundle. If one fails to load the card
 // draws a plain wordmark or badge in its place.
 import { SHARE_ORIGIN } from "@/lib/share";
+import { blobToBase64, isNativeApp, requestNative, type NativeShareResult } from "@/lib/nativeApp";
 
 export type ShareGrade = "bronze" | "silver" | "gold" | "platinum" | "none";
 
@@ -527,6 +528,18 @@ export async function shareCardImage(
     const file = new File([blob], filename, { type: "image/png" });
     const title = options?.title ?? "Lexichain Result";
     const text = options?.text ?? `I scored ${data.score.toLocaleString()} points in Lexichain!`;
+
+    // In the mobile app the system share sheet takes the image (it can also
+    // save it to Photos/Files). A WebView cannot download files.
+    if (isNativeApp()) {
+      const base64 = await blobToBase64(blob);
+      const result = await requestNative<NativeShareResult>({ type: "shareImage", base64, filename, title, text });
+      if (result === "error") {
+        options?.notify?.onError?.("Could not share the result card. Try again.");
+        return "error";
+      }
+      return result === "cancelled" ? "cancelled" : "shared";
+    }
 
     if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
       try {
