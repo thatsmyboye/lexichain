@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-mwd-title">
+  <title id="lc-sb-mwd-title">Multi-Word Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-mwd-blade" gradientUnits="userSpaceOnUse" x1="16" y1="14" x2="112" y2="96">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="52%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#64748B"/>
+    </linearGradient>
+    <linearGradient id="lc-sb-mwd-hilt" gradientUnits="userSpaceOnUse" x1="20" y1="80" x2="108" y2="114">
+      <stop offset="0%" stop-color="#FCA5A5"/>
+      <stop offset="45%" stop-color="#DC2626"/>
+      <stop offset="100%" stop-color="#7F1D1D"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Sword 1 (top-left to bottom-right) -->
+    <polygon points="16,16 36,20 88,72 72,88 20,36" fill="url(#lc-sb-mwd-blade)"/>
+    <polygon points="16,16 80,80 72,88 20,36" fill="#475569" fill-opacity="0.32"/>
+    <line x1="22" y1="22" x2="78" y2="78" stroke="#450A0A" stroke-width="2.2"/>
+    <polygon points="16,16 36,20 88,72 72,88 20,36" fill="none" stroke="#450A0A" stroke-width="3.2"/>
+    <!-- Crossguard, grip & pommel 1 -->
+    <polygon points="64,96 96,64 103,71 71,103" fill="#FACC15" stroke="#450A0A" stroke-width="3"/>
+    <polygon points="82,92 92,82 108,98 98,108" fill="url(#lc-sb-mwd-hilt)" stroke="#450A0A" stroke-width="3"/>
+    <polygon points="108,98 117,107 107,117 98,108" fill="#FACC15" stroke="#450A0A" stroke-width="2.8"/>
+
+    <!-- Sword 2 (top-right to bottom-left, layered over center) -->
+    <polygon points="112,16 108,36 56,88 40,72 92,20" fill="url(#lc-sb-mwd-blade)"/>
+    <polygon points="112,16 108,36 56,88 48,80" fill="#475569" fill-opacity="0.32"/>
+    <line x1="106" y1="22" x2="50" y2="78" stroke="#450A0A" stroke-width="2.2"/>
+    <polygon points="112,16 108,36 56,88 40,72 92,20" fill="none" stroke="#450A0A" stroke-width="3.2"/>
+    <!-- Crossguard, grip & pommel 2 -->
+    <polygon points="64,96 32,64 25,71 57,103" fill="#FACC15" stroke="#450A0A" stroke-width="3"/>
+    <polygon points="46,92 36,82 20,98 30,108" fill="url(#lc-sb-mwd-hilt)" stroke="#450A0A" stroke-width="3"/>
+    <polygon points="20,98 11,107 21,117 30,108" fill="#FACC15" stroke="#450A0A" stroke-width="2.8"/>
+
+    <!-- Center clash spark diamond -->
+    <polygon points="64,46 74,56 64,66 54,56" fill="#EF4444" stroke="#450A0A" stroke-width="2.8"/>
+    <polygon points="64,51 69,56 64,61 59,56" fill="#FEF08A"/>
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sb-lls-title">
+  <title id="lc-sb-lls-title">Letter Lockout Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-lls-ring" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21">
+      <stop offset="0%" stop-color="#FED7AA"/>
+      <stop offset="45%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Banned letter tile locked inside the prohibition octagon -->
+    <rect x="6.8" y="6.8" width="10.4" height="10.4" rx="1.8" fill="#F1F5F9" stroke="#431407" stroke-width="1.5"/>
+    <polygon points="12,9.2 14.8,12 12,14.8 9.2,12" fill="#64748B"/>
+
+    <!-- Bold chamfered prohibition ring + diagonal lockout slash -->
+    <path fill-rule="evenodd" d="
+      M8.2,3 H15.8 L21,8.2 V15.8 L15.8,21 H8.2 L3,15.8 V8.2 Z
+      M9.5,6.1 H14.5 L17.9,9.5 V14.5 L14.5,17.9 H9.5 L6.1,14.5 V9.5 Z
+    " fill="url(#lc-sb-lls-ring)" stroke="#431407" stroke-width="1.6"/>
+    <polygon points="6.1,7.9 7.9,6.1 17.9,16.1 16.1,17.9" fill="url(#lc-sb-lls-ring)" stroke="#431407" stroke-width="1.5"/>
+  </g>
+</svg>

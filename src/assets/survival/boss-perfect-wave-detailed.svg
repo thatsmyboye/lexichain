@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-pwd-title">
+  <title id="lc-sb-pwd-title">Perfect Wave Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-pwd-ring" gradientUnits="userSpaceOnUse" x1="18" y1="18" x2="110" y2="110">
+      <stop offset="0%" stop-color="#FCE7F3"/>
+      <stop offset="50%" stop-color="#F472B6"/>
+      <stop offset="100%" stop-color="#BE185D"/>
+    </linearGradient>
+    <linearGradient id="lc-sb-pwd-star" gradientUnits="userSpaceOnUse" x1="16" y1="16" x2="112" y2="112">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="45%" stop-color="#FBCFE8"/>
+      <stop offset="100%" stop-color="#DB2777"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Precision beveled diamond halo frame -->
+    <polygon points="64,14 114,64 64,114 14,64" fill="#500724" fill-opacity="0.22"/>
+    <path fill-rule="evenodd" d="
+      M64,14 L114,64 L64,114 L14,64 Z
+      M64,26 L102,64 L64,102 L26,64 Z
+    " fill="url(#lc-sb-pwd-ring)" stroke="#500724" stroke-width="3.2"/>
+
+    <!-- Secondary diagonal rose-prism spikes -->
+    <polygon points="94,34 74,64 94,94 64,74 34,94 54,64 34,34 64,54" fill="#F9A8D4" stroke="#500724" stroke-width="2.8"/>
+
+    <!-- Dominant 4-point flawless prism star -->
+    <polygon points="64,12 77,51 116,64 77,77 64,116 51,77 12,64 51,51" fill="url(#lc-sb-pwd-star)"/>
+    <polygon points="64,12 77,51 116,64 77,77 64,116 64,64" fill="#BE185D" fill-opacity="0.26"/>
+    <polygon points="64,12 77,51 116,64 77,77 64,116 51,77 12,64 51,51" fill="none" stroke="#500724" stroke-width="3.4"/>
+
+    <!-- Pure crystalline core diamond + 2 corner glints -->
+    <polygon points="64,48 80,64 64,80 48,64" fill="#FFFFFF" stroke="#500724" stroke-width="2.4"/>
+    <polygon points="64,56 72,64 64,72 56,64" fill="#FCE7F3"/>
+    <polygon points="24,24 27,30 33,33 27,36 24,42 21,36 15,33 21,30" fill="#FFFFFF" stroke="#500724" stroke-width="2"/>
+    <polygon points="104,86 106.5,91.5 112,94 106.5,96.5 104,102 101.5,96.5 96,94 101.5,91.5" fill="#FBCFE8" stroke="#500724" stroke-width="2"/>
+  </g>
+</svg>

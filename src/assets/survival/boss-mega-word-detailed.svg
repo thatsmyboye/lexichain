@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-mgd-title">
+  <title id="lc-sb-mgd-title">Mega Word Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-mgd-outer" gradientUnits="userSpaceOnUse" x1="16" y1="12" x2="112" y2="114">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="38%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+    <linearGradient id="lc-sb-mgd-inner" gradientUnits="userSpaceOnUse" x1="36" y1="48" x2="92" y2="106">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Soaring embers -->
+    <polygon points="24,18 29,24 24,30 19,24" fill="#FEF08A" stroke="#450A0A" stroke-width="2.2"/>
+    <polygon points="106,16 111,22 106,28 101,22" fill="#FFFFFF" stroke="#450A0A" stroke-width="2.2"/>
+    <polygon points="113,44 117,49 113,54 109,49" fill="#FB923C" stroke="#450A0A" stroke-width="2"/>
+
+    <!-- Roaring 3-plume volcanic inferno burst -->
+    <polygon points="64,12 80,44 104,28 98,64 114,76 92,112 36,112 14,76 30,64 24,28 48,44" fill="url(#lc-sb-mgd-outer)"/>
+    <polygon points="64,12 80,44 104,28 98,64 114,76 92,112 64,112" fill="#7F1D1D" fill-opacity="0.32"/>
+    <polyline points="59,24 47,48 31,38 34,64" fill="none" stroke="#FEF9C3" stroke-width="2.6" stroke-opacity="0.9"/>
+    <polygon points="64,12 80,44 104,28 98,64 114,76 92,112 36,112 14,76 30,64 24,28 48,44" fill="none" stroke="#450A0A" stroke-width="3.6"/>
+
+    <!-- Dark forged furnace cradle holding the white-hot core -->
+    <polygon points="64,46 92,76 78,104 50,104 36,76" fill="#450A0A"/>
+    <polygon points="64,56 82,78 64,98 46,78" fill="url(#lc-sb-mgd-inner)"/>
+    <polygon points="64,67 73,78 64,89 55,78" fill="#FFFFFF"/>
+
+    <!-- Cracked molten base pedestal (distinguishes Mega Word from plain flames) -->
+    <polygon points="28,108 100,108 92,118 36,118" fill="#450A0A" stroke="#FEF08A" stroke-width="1.8"/>
+  </g>
+</svg>

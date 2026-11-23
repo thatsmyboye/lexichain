@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-wld-title">
+  <title id="lc-sb-wld-title">Word Length Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-wld-gold" gradientUnits="userSpaceOnUse" x1="14" y1="22" x2="114" y2="108">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="44%" stop-color="#FACC15"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="lc-sb-wld-band" gradientUnits="userSpaceOnUse" x1="20" y1="86" x2="108" y2="108">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="55%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Recessed royal crimson-plum crown velvet behind spikes -->
+    <polygon points="28,86 38,44 64,34 90,44 100,86" fill="#4C1D95" stroke="#451A03" stroke-width="3"/>
+
+    <!-- Sovereign 3-spire beveled gold crown -->
+    <polygon points="20,86 14,40 42,60 64,22 86,60 114,40 108,86" fill="url(#lc-sb-wld-gold)"/>
+    <polygon points="64,22 86,60 114,40 108,86 64,86" fill="#92400E" fill-opacity="0.28"/>
+    <polyline points="24,80 19,48 43,65 62,31" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-opacity="0.9"/>
+    <polygon points="20,86 14,40 42,60 64,22 86,60 114,40 108,86" fill="none" stroke="#451A03" stroke-width="3.4"/>
+
+    <!-- Finial diamond tips on all three spires -->
+    <polygon points="64,12 71,19 64,26 57,19" fill="#FEF9C3" stroke="#451A03" stroke-width="2.6"/>
+    <polygon points="14,32 20,38 14,44 8,38" fill="#FEF08A" stroke="#451A03" stroke-width="2.4"/>
+    <polygon points="114,32 120,38 114,44 108,38" fill="#FACC15" stroke="#451A03" stroke-width="2.4"/>
+
+    <!-- Heavy jeweled headband -->
+    <polygon points="18,86 110,86 106,108 22,108" fill="url(#lc-sb-wld-band)"/>
+    <line x1="22" y1="90" x2="106" y2="90" stroke="#FEF9C3" stroke-width="2.2" stroke-opacity="0.85"/>
+    <polygon points="18,86 110,86 106,108 22,108" fill="none" stroke="#451A03" stroke-width="3.4"/>
+
+    <!-- Center amethyst sovereign gem & flanking ruby jewels -->
+    <polygon points="64,54 76,68 64,82 52,68" fill="#7927EC" stroke="#2E1065" stroke-width="2.8"/>
+    <polygon points="64,54 64,82 52,68" fill="#C4B5FD" fill-opacity="0.45"/>
+    <polygon points="64,62 70,68 64,74 58,68" fill="#FFFFFF"/>
+
+    <polygon points="36,92 43,97 36,102 29,97" fill="#F43F5E" stroke="#451A03" stroke-width="2"/>
+    <polygon points="64,91 72,97 64,103 56,97" fill="#FEF9C3" stroke="#451A03" stroke-width="2"/>
+    <polygon points="92,92 99,97 92,102 85,97" fill="#F43F5E" stroke="#451A03" stroke-width="2"/>
+  </g>
+</svg>

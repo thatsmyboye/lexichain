@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 504 84" width="504" height="84" role="img" aria-labelledby="lc-sh-evt-title">
+  <title id="lc-sh-evt-title">Choice Event banner</title>
+  <defs>
+    <linearGradient id="lc-sh-evt-bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="84">
+      <stop offset="0%" stop-color="#050817" />
+      <stop offset="68%" stop-color="#1E0B3B" />
+      <stop offset="100%" stop-color="#100522" />
+    </linearGradient>
+    <radialGradient id="lc-sh-evt-portal" gradientUnits="userSpaceOnUse" cx="252" cy="42" r="96">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.88" />
+      <stop offset="30%" stop-color="#C084FC" stop-opacity="0.55" />
+      <stop offset="72%" stop-color="#7927EC" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#1E0B3B" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="lc-sh-evt-gl" gradientUnits="userSpaceOnUse" cx="110" cy="48" r="56">
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.34" />
+      <stop offset="100%" stop-color="#22C55E" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="lc-sh-evt-gr" gradientUnits="userSpaceOnUse" cx="394" cy="48" r="56">
+      <stop offset="0%" stop-color="#EF4444" stop-opacity="0.34" />
+      <stop offset="100%" stop-color="#EF4444" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="lc-sh-evt-stone" gradientUnits="userSpaceOnUse" x1="206" y1="11" x2="298" y2="62">
+      <stop offset="0%" stop-color="#64748B" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+  </defs>
+
+  
+  <rect width="504" height="84" fill="url(#lc-sh-evt-bg)" />
+  <rect width="504" height="84" fill="url(#lc-sh-evt-portal)" />
+  <rect width="504" height="84" fill="url(#lc-sh-evt-gl)" />
+  <rect width="504" height="84" fill="url(#lc-sh-evt-gr)" />
+
+  
+  <g stroke="#A78BFA" stroke-width="1" stroke-opacity="0.3" fill="none">
+    <polyline points="26,20 68,14 148,26 178,16" />
+    <polyline points="478,20 436,14 356,26 326,16" />
+  </g>
+  <g fill="#E9D5FF">
+    <polygon points="26,17 29,20 26,23 23,20" />
+    <polygon points="68,11 71,14 68,17 65,14" />
+    <polygon points="148,23 151,26 148,29 145,26" />
+    <polygon points="178,13 181,16 178,19 175,16" />
+    <polygon points="478,17 481,20 478,23 475,20" />
+    <polygon points="436,11 439,14 436,17 433,14" />
+    <polygon points="356,23 359,26 356,29 353,26" />
+    <polygon points="326,13 329,16 326,19 323,16" />
+  </g>
+
+  
+  <rect x="0" y="60" width="504" height="24" fill="#100522" />
+  <line x1="0" y1="60" x2="504" y2="60" stroke="#4C1D95" stroke-width="1.6" stroke-opacity="0.65" />
+
+  
+  <polygon points="244,60 250,60 176,84 82,84" fill="#22C55E" fill-opacity="0.32" />
+  <polyline points="244,60 82,84" fill="none" stroke="#4ADE80" stroke-width="2" stroke-opacity="0.88" />
+  <polyline points="250,60 176,84" fill="none" stroke="#4ADE80" stroke-width="1.5" stroke-opacity="0.62" />
+  <g fill="none" stroke="#BBF7D0" stroke-width="2" stroke-linejoin="bevel">
+    <polyline points="200,68 188,71.5 198,74.5" />
+    <polyline points="164,74 150,78 162,81.5" />
+  </g>
+
+  
+  <polygon points="254,60 260,60 422,84 328,84" fill="#EF4444" fill-opacity="0.34" />
+  <polyline points="260,60 422,84" fill="none" stroke="#FB7185" stroke-width="2" stroke-opacity="0.88" />
+  <polyline points="254,60 328,84" fill="none" stroke="#FB7185" stroke-width="1.5" stroke-opacity="0.62" />
+  <g fill="none" stroke="#FECDD3" stroke-width="2" stroke-linejoin="bevel">
+    <polyline points="304,68 316,71.5 306,74.5" />
+    <polyline points="340,74 354,78 342,81.5" />
+  </g>
+
+  
+  <polygon points="252,61 264,84 240,84" fill="#1E1B4B" stroke="#050817" stroke-width="1.6" />
+  <polygon points="252,67 257.5,72.5 252,78 246.5,72.5" fill="#FACC15" stroke="#050817" stroke-width="1.4" />
+
+  
+  <g stroke-linejoin="bevel">
+    
+    <polygon points="99,54 121,54 124,61 96,61" fill="#334155" stroke="#050817" stroke-width="1.8" />
+    <polygon points="106.5,35 113.5,35 118.5,40 118.5,47 113.5,52 106.5,52 101.5,47 101.5,40" fill="#22C55E" stroke="#052E16" stroke-width="1.8" />
+    <polygon points="110,40 113.5,43.5 110,47 106.5,43.5" fill="#FFFFFF" />
+
+    
+    <polygon points="383,54 405,54 408,61 380,61" fill="#334155" stroke="#050817" stroke-width="1.8" />
+    <polygon points="394,34 403.5,52 384.5,52" fill="#EF4444" stroke="#450A0A" stroke-width="1.8" />
+    <rect x="392.8" y="40.5" width="2.4" height="5" fill="#FFFFFF" />
+    <polygon points="394,47.2 395.5,48.7 394,50.2 392.5,48.7" fill="#FFFFFF" />
+  </g>
+
+  
+  <g stroke-linejoin="bevel">
+    <path fill-rule="evenodd" d="
+      M224,11 H280 L298,29 V61 H206 V29 Z
+      M228,23 H276 L284,31 V61 H220 V31 Z
+    " fill="url(#lc-sh-evt-stone)" stroke="#020817" stroke-width="2.2" />
+
+    
+    <g fill="#C4B5FD">
+      <polygon points="213,34 216.5,37.5 213,41 209.5,37.5" />
+      <polygon points="213,47 216.5,50.5 213,54 209.5,50.5" />
+      <polygon points="291,34 294.5,37.5 291,41 287.5,37.5" />
+      <polygon points="291,47 294.5,50.5 291,54 287.5,50.5" />
+    </g>
+
+    
+    <polygon points="252,3 261,12 252,21 243,12" fill="#FACC15" stroke="#020817" stroke-width="2" />
+    <polygon points="252,7.5 256.5,12 252,16.5 247.5,12" fill="#FFFFFF" />
+
+    
+    <polygon points="252,26 256,38 268,42 256,46 252,58 248,46 236,42 248,38" fill="#FFFFFF" stroke="#2E1065" stroke-width="1.8" />
+    <polygon points="252,37 257,42 252,47 247,42" fill="#FEF08A" stroke="#2E1065" stroke-width="1.4" />
+  </g>
+</svg>

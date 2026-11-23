@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="lc-sb-sgd-title">
+  <title id="lc-sb-sgd-title">Stone Gauntlet Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-sgd-rock" gradientUnits="userSpaceOnUse" x1="26" y1="12" x2="102" y2="116">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="48%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="lc-sb-sgd-brow" gradientUnits="userSpaceOnUse" x1="26" y1="36" x2="102" y2="56">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+  </defs>
+  <g stroke-linejoin="bevel">
+    <!-- Floating flanking stone chips -->
+    <polygon points="10,48 21,44 23,58 12,60" fill="#94A3B8" stroke="#0F172A" stroke-width="2.8"/>
+    <polygon points="107,66 118,62 117,76 106,74" fill="#64748B" stroke="#0F172A" stroke-width="2.8"/>
+
+    <!-- Monumental carved stone guardian monolith -->
+    <polygon points="40,12 88,12 102,32 97,94 84,116 44,116 31,94 26,32" fill="url(#lc-sb-sgd-rock)"/>
+    <polygon points="64,12 88,12 102,32 97,94 84,116 64,116" fill="#1E293B" fill-opacity="0.3"/>
+    <polyline points="32,88 31,34 42,17 84,17" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-opacity="0.82"/>
+
+    <!-- Quarry fissure cracks -->
+    <polyline points="82,13 77,26 83,35" fill="none" stroke="#0F172A" stroke-width="2.8"/>
+    <polyline points="32,84 44,88 48,98" fill="none" stroke="#0F172A" stroke-width="2.6"/>
+
+    <!-- Heavy sculpted brow ridge -->
+    <polygon points="27,38 101,38 94,55 34,55" fill="url(#lc-sb-sgd-brow)" stroke="#0F172A" stroke-width="3.2"/>
+
+    <!-- Deep recessed eye sockets with glowing amber guardian runes -->
+    <polygon points="37,55 56,55 54,71 39,71" fill="#0F172A"/>
+    <polygon points="72,55 91,55 89,71 74,71" fill="#0F172A"/>
+    <polygon points="40,59 53,59 51,68 42,68" fill="#FACC15"/>
+    <polygon points="75,59 88,59 86,68 77,68" fill="#FACC15"/>
+    <polygon points="43,61 48,61 47,65 44,65" fill="#FEF9C3"/>
+    <polygon points="78,61 83,61 82,65 79,65" fill="#FEF9C3"/>
+
+    <!-- Beveled monolith nose & grim jaw line -->
+    <polygon points="58,55 70,55 75,86 53,86" fill="#CBD5E1"/>
+    <polygon points="64,55 70,55 75,86 64,86" fill="#64748B" fill-opacity="0.45"/>
+    <polygon points="58,55 70,55 75,86 53,86" fill="none" stroke="#0F172A" stroke-width="3"/>
+
+    <polygon points="46,96 82,96 78,104 50,104" fill="#1E293B" stroke="#0F172A" stroke-width="2.6"/>
+
+    <!-- Clean outer contour on top -->
+    <polygon points="40,12 88,12 102,32 97,94 84,116 44,116 31,94 26,32" fill="none" stroke="#0F172A" stroke-width="3.6"/>
+  </g>
+</svg>

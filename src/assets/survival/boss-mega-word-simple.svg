@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-labelledby="lc-sb-mgs-title">
+  <title id="lc-sb-mgs-title">Mega Word Boss</title>
+  <defs>
+    <linearGradient id="lc-sb-mgs-fl" gradientUnits="userSpaceOnUse" x1="3.5" y1="3" x2="20.5" y2="21">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="42%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+  </defs>
+  <!-- Tri-plumed roaring inferno over dark-ringed furnace core (pops on orange boss panel) -->
+  <g stroke-linejoin="bevel">
+    <polygon points="12,2.8 15,8.2 19.2,5.6 18.4,11.8 20.8,14.2 17.2,20.8 6.8,20.8 3.2,14.2 5.6,11.8 4.8,5.6 9,8.2" fill="url(#lc-sb-mgs-fl)"/>
+    <polygon points="12,2.8 15,8.2 19.2,5.6 18.4,11.8 20.8,14.2 17.2,20.8 12,20.8" fill="#7F1D1D" fill-opacity="0.32"/>
+    <polygon points="12,2.8 15,8.2 19.2,5.6 18.4,11.8 20.8,14.2 17.2,20.8 6.8,20.8 3.2,14.2 5.6,11.8 4.8,5.6 9,8.2" fill="none" stroke="#450A0A" stroke-width="1.8"/>
+    <!-- Dark-rimmed white-hot furnace diamond -->
+    <polygon points="12,9.8 16.4,14.8 12,19.4 7.6,14.8" fill="#450A0A"/>
+    <polygon points="12,11.6 14.8,14.8 12,17.8 9.2,14.8" fill="#FEF9C3"/>
+  </g>
+</svg>
