@@ -12,6 +12,9 @@ const APP_VERSION = "1.0.0";
 // The Expo project this app builds under (from `eas init`). EAS builds and
 // updates read it from extra.eas. Set EAS_PROJECT_ID to build under another.
 const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || "df919bb8-c6ac-4cf9-a7c7-51c559cfc223";
+// The Expo account that owns that project. EAS refuses to build when the
+// signed-in user differs from the owner and this is left out.
+const EAS_OWNER = "banton-digital";
 
 // The deployed web game the app loads. Override per build profile in eas.json
 // or locally, e.g. EXPO_PUBLIC_WEB_URL=https://my-preview.vercel.app npx expo start
@@ -31,6 +34,7 @@ const DARK_SURFACE = "#020817";
 const config: ExpoConfig = {
   name: APP_NAME,
   slug: "lexichain",
+  owner: EAS_OWNER,
   platforms: ["ios", "android"],
   scheme: "lexichain",
   version: APP_VERSION,
