@@ -26,6 +26,7 @@ const DebugPage = lazy(() => import("./pages/DebugPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const TrophiesPage = lazy(() => import("./pages/TrophiesPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const LoadingSpinner = () => <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
   </div>;
@@ -57,6 +58,7 @@ const App = () => {
                     <Route path="/admin" element={<AdminDashboardPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/trophies" element={<TrophiesPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

@@ -19,3 +19,18 @@ They are not imported anywhere, so they add nothing to the build.
 - **Survival unlock icons** (G7 in `docs/art-asset-list.md`): the six unlocks
   in `SURVIVAL_UNLOCKS` (`src/lib/survivalMode.ts`) are defined but never shown
   to the player. The icons were deferred until an unlocks screen exists.
+
+## Mobile app (mobile/)
+
+- `mobile/` is a separate Expo project with its own `package.json`; install
+  packages there with `npx expo install`, not npm. The root ESLint config
+  ignores it; check it with `cd mobile && npm run typecheck`.
+- The app loads the deployed site in a WebView. `src/lib/nativeApp.ts` (web)
+  and `mobile/src/bridge.ts` (native) define the same bridge messages: change
+  them together.
+- Web code that uses a browser API a WebView lacks (file downloads,
+  `navigator.share` on Android, `navigator.vibrate` on iOS) should go through
+  `nativeApp.ts` when `isNativeApp()` is true, as `feedback.ts`, `share.ts`
+  and `shareCard.ts` do.
+- Keep `src/pages/PrivacyPage.tsx` accurate when the game starts storing or
+  sending new data: the store listings point to it.

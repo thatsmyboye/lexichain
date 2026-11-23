@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -8,12 +8,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 
 export default function MyAccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [validationError, setValidationError] = useState<string>("");
+  const [deleting, setDeleting] = useState(false);
+  // Set once the account is deleted, so the sign-out that follows goes home
+  // instead of to the sign-in page.
+  const accountDeleted = useRef(false);
   const navigate = useNavigate();
   const { profile, loading, getDisplayName, updateDisplayName } = useProfile(user);
 
@@ -31,6 +47,7 @@ export default function MyAccountPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (accountDeleted.current) return;
       if (!session?.user) {
         navigate("/auth");
         return;
@@ -68,6 +85,24 @@ export default function MyAccountPage() {
       // Keep the form in sync with the saved value
       setDisplayName(profile?.display_name || "");
     }
+  };
+
+  // Permanently deletes the account and its server-side data
+  // (supabase/migrations/20261123120000_add_delete_my_account.sql). Required
+  // by the App Store and Google Play for apps that allow sign-up.
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) {
+      setDeleting(false);
+      toast.error("Couldn't delete your account. Check your connection and try again.");
+      return;
+    }
+    accountDeleted.current = true;
+    // The server session is already gone; clear the one stored on this device.
+    await supabase.auth.signOut({ scope: "local" });
+    toast.success("Your account has been deleted");
+    navigate("/", { replace: true });
   };
 
   const handleBack = () => {
@@ -170,6 +205,44 @@ export default function MyAccountPage() {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 border-destructive/40">
+          <CardHeader>
+            <CardTitle>Delete account</CardTitle>
+            <CardDescription>
+              Permanently delete your account, display name, saved game results and leaderboard
+              entries. Progress stored on this device (trophies, personal bests, settings) stays
+              here and keeps working without an account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="destructive" disabled={deleting}>
+                  {deleting ? "Deleting..." : "Delete my account"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently deletes {user.email ? <strong>{user.email}</strong> : "your account"} and
+                    all of its saved results. It can't be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep account</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete permanently
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </div>

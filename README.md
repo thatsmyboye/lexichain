@@ -91,6 +91,15 @@ npm run lint
 
 **Stack:** React + TypeScript · Vite · Tailwind CSS · shadcn/ui · Supabase
 
+## Mobile apps (iOS and Android)
+
+`mobile/` is an Expo app that packages the deployed game for the App Store and Google Play. It
+loads the live site in a native WebView and adds native haptics, the system share sheet, offline
+play, a native splash screen and Android back-button handling. A web deploy updates the apps too.
+Setup, builds and the store checklist are in [`mobile/README.md`](mobile/README.md).
+
+The web side of that integration is `src/lib/nativeApp.ts`; it does nothing in a browser.
+
 ## Score System
 
 - **Base score**: 10 points per letter.

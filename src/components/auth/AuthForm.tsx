@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -168,6 +169,15 @@ const AuthForm = ({ onBackToTitle, initialMode = "signup" }: AuthFormProps) => {
                   : "Already have an account? Sign in"
                 }
               </button>
+              {!isLogin && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  See what an account stores in the{" "}
+                  <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground">
+                    privacy policy
+                  </Link>
+                  .
+                </p>
+              )}
             </div>
 
             <div className="mt-6 text-center">
