@@ -162,13 +162,49 @@ class SoundGenerator {
       }
     }
 
-    if (this.audioContext.state === 'suspended') {
+    // Anything other than "running" needs a resume: "suspended" (created
+    // outside a user gesture) and also iOS's "interrupted", which the engine
+    // enters after a call, Siri, or the app going to the background.
+    if (this.audioContext.state !== 'running') {
       this.audioContext.resume().catch(() => {
         // Ignore: resume can be rejected outside a user gesture; next play will retry.
       });
     }
 
     return this.audioContext;
+  }
+
+  /**
+   * Call from the tap that switches sound on. That tap is a user gesture, so
+   * the audio engine can be started here for certain, and a short sound tells
+   * the player it is on. Without this the engine first starts on the next tile
+   * touch, which iOS does not always accept as a gesture (a drag is not one).
+   */
+  confirmEnabled() {
+    if (this.muted) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    // A silent one-sample buffer started inside the gesture: the long-standing
+    // way to unlock audio on iOS, alongside the resume() above.
+    try {
+      const silence = ctx.createBufferSource();
+      silence.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      silence.connect(ctx.destination);
+      silence.start();
+    } catch {
+      // The confirmation below still tries to play.
+    }
+
+    // The recordings start downloading on this same tap. Wait briefly for the
+    // tile note so the confirmation is the real sound, not the fallback tone;
+    // the engine is already running, so playing a moment later is allowed.
+    const play = (attempt: number) => {
+      if (this.muted) return;
+      if (this.samples.has('tile_select_1') || attempt >= 10) this.playTileSelect(4);
+      else window.setTimeout(() => play(attempt + 1), 100);
+    };
+    play(0);
   }
 
   close() {
@@ -380,6 +416,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   const handleSetMuted = useCallback((muted: boolean) => {
     setMuted(muted);
     soundGeneratorRef.current?.setMuted(muted);
+    if (!muted) soundGeneratorRef.current?.confirmEnabled();
     localStorage.setItem('lexichain-sound-muted', muted.toString());
   }, []);
 
