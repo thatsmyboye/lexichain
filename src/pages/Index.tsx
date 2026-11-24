@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLoginStreak } from "@/hooks/useLoginStreak";
 import type { User } from "@supabase/supabase-js";
 import { AdvancedGameModes } from "@/components/game/AdvancedGameModes";
-import { getModeName, DAILY_MODE_NAMES, MODE_BLURBS, type AdvancedGameMode, type DailyGameMode } from "@/lib/gameModes";
+import { getModeName, isModeAvailable, DAILY_MODE_NAMES, MODE_BLURBS, type AdvancedGameMode, type DailyGameMode } from "@/lib/gameModes";
 import PuzzleSelector from "@/components/game/PuzzleSelector";
 import MiniMarathon from "@/components/game/MiniMarathon";
 import WeeklyGauntlet from "@/components/game/WeeklyGauntlet";
@@ -155,6 +155,9 @@ const Index = () => {
     // Keep selectedAdvancedMode set so user sees their last selection highlighted
   };
   const handleAdvancedModeSelect = (mode: AdvancedGameMode) => {
+    // Hidden modes are not in the list; this stops any other path starting one.
+    if (!isModeAvailable(mode)) return;
+
     // Special handling for puzzle mode
     if (mode === 'puzzle') {
       setShowAdvancedModes(false);

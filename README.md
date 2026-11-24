@@ -55,6 +55,8 @@ Special tiles have an **expiry counter** (top-left) — they disappear after tha
 | **Puzzle** | Curated boards with specific constraints to solve. |
 | **Chaos** | High volatility — anything goes. |
 
+Mini-Marathon, Prestige Endless and Weekly Gauntlet exist in code but are hidden from players (`HIDDEN_MODES` in `src/lib/gameModes.ts`). Mini-Marathon and Prestige Endless are not finished yet.
+
 ## Progress and sharing
 
 - **Daily hub** on the title screen: today's Daily and 5×5 status, streak calendar, countdown to the next puzzle, and (signed in) how many played and your percentile.

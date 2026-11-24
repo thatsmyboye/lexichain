@@ -20,6 +20,23 @@ They are not imported anywhere, so they add nothing to the build.
   in `SURVIVAL_UNLOCKS` (`src/lib/survivalMode.ts`) are defined but never shown
   to the player. The icons were deferred until an unlocks screen exists.
 
+## Modes hidden from players
+
+`HIDDEN_MODES` in `src/lib/gameModes.ts` lists modes that exist in code but
+are not offered. A hidden mode is left out of the "More modes" list and
+`Index.tsx` refuses to start it. The mobile app loads the website, so the
+same list applies there.
+
+- **Mini-Marathon** (`mini_marathon`) and **Prestige Endless**
+  (`prestige_endless`): not finished. Hidden on November 24, 2026 until they
+  are complete. Their code is still in place: `MiniMarathon.tsx`,
+  `PrestigeEndless.tsx`, `useMiniMarathonState.ts`,
+  `usePrestigeEndlessState.ts`.
+- **Weekly Gauntlet** (`weekly_gauntlet`): was already hidden before that.
+
+To bring a mode back, remove it from `HIDDEN_MODES`. Do not describe a hidden
+mode in store listings, screenshots or other player-facing text.
+
 ## Mobile app (mobile/)
 
 - `mobile/` is a separate Expo project with its own `package.json`; install
