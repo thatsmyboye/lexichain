@@ -13,6 +13,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       // Top-center keeps toasts clear of the pinned action bar on phones;
       // they pause on hover/focus and can be dismissed.
       position="top-center"
+      // Start below the status bar and Dynamic Island when the page runs edge
+      // to edge (the iOS app, or installed to the home screen). The inset is
+      // 0 in a normal browser tab, which leaves Sonner's default spacing.
+      offset={{ top: "calc(env(safe-area-inset-top, 0px) + 24px)" }}
+      mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
       visibleToasts={3}
       closeButton
       duration={3000}
