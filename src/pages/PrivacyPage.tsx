@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 // The address players write to about their data. Both stores expect one; the
 // contact section is hidden if this is ever emptied.
 const PRIVACY_CONTACT_EMAIL = "paul@banton-digital.com";
-const LAST_UPDATED = "November 23, 2026";
+const LAST_UPDATED = "November 24, 2026";
 
 export default function PrivacyPage() {
   const navigate = useNavigate();
@@ -29,10 +29,10 @@ export default function PrivacyPage() {
           <p className="text-muted-foreground">Last updated {LAST_UPDATED}</p>
 
           <p>
-            Lexichain is a word game you can play on the web and in the Lexichain app for iOS and
-            Android. This policy explains what information the game uses and why. Lexichain has no
-            ads and no in-app purchases. The web version uses Google Analytics to count visits; the
-            iOS and Android apps contain no analytics or tracking.
+            Lexichain is a word game you can play on the web and in the Lexichain app for iOS. This
+            policy explains what information the game uses and why. Lexichain has no ads and no
+            in-app purchases. The web version uses Google Analytics to count visits; the iOS app
+            contains no analytics or tracking.
           </p>
 
           <h2>Playing without an account</h2>
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
             linked to your account, your display name or your game results.
           </p>
           <p>
-            The Lexichain apps for iOS and Android do not load Google Analytics. On the web you can
+            The Lexichain app for iOS does not load Google Analytics. On the web you can
             opt out with a content blocker or Google's{" "}
             <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">
               Analytics opt-out browser add-on
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong>Google Analytics</strong> and <strong>Google Tag Manager</strong> measure
-              visits to the web version, as described above. They are not used in the apps.
+              visits to the web version, as described above. They are not used in the app.
             </li>
             <li>
               <strong>Free Dictionary API</strong> (dictionaryapi.dev) supplies word definitions on the
