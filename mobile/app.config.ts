@@ -35,7 +35,11 @@ const config: ExpoConfig = {
   name: APP_NAME,
   slug: "lexichain",
   owner: EAS_OWNER,
-  platforms: ["ios", "android"],
+  // iOS only for now. Android is not supported at first, so it is left out
+  // here and out of the build scripts, which keeps it out of EAS's build
+  // numbering. The android settings below are kept for when it is added:
+  // put "android" back here and in the package.json scripts.
+  platforms: ["ios"],
   scheme: "lexichain",
   version: APP_VERSION,
   // The game has portrait and landscape-phone layouts; iPad multitasking also

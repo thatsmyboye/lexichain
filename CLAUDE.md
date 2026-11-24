@@ -39,6 +39,12 @@ mode in store listings, screenshots or other player-facing text.
 
 ## Mobile app (mobile/)
 
+- **iOS only for now.** Android is not supported at first, so the build and
+  submit scripts target iOS alone and `platforms` in `app.config.ts` lists
+  only `ios`. That keeps Android out of EAS's build numbering. The Android
+  settings and code are kept for later; `mobile/README.md` says how to turn
+  the platform back on.
+
 - `mobile/` is a separate Expo project with its own `package.json`; install
   packages there with `npx expo install`, not npm. The root ESLint config
   ignores it; check it with `cd mobile && npm run typecheck`.
