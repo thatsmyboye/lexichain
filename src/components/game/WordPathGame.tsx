@@ -3178,7 +3178,7 @@ function WordPathGame({
 
       {/* HUD: score, medal track, and the mode's key stat stay above the board */}
       <GameHud
-        className="sticky top-1 z-30 mb-3 landscape-phone:static landscape-phone:order-1 landscape-phone:mb-0 landscape-phone:flex-1"
+        className="sticky top-[calc(env(safe-area-inset-top,0px)+0.25rem)] z-30 mb-3 landscape-phone:static landscape-phone:order-1 landscape-phone:mb-0 landscape-phone:flex-1"
         score={score}
         benchmarks={benchmarks}
         showTrack={settings.mode !== "endless" && settings.mode !== "puzzle"}

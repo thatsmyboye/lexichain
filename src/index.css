@@ -207,6 +207,29 @@ All colors MUST be HSL.
     padding-right: env(safe-area-inset-right, 0px);
   }
 
+  /* Edge to edge (the iOS app, or installed to the home screen), a scrolled
+     page shows through behind the status bar and Dynamic Island. Once the
+     page has scrolled (html[data-scrolled], set in src/main.tsx) this strip
+     covers that area in the page's base color. It has no height in a
+     browser tab, and sits under dialogs (z-50) so their dimmed backdrop
+     still covers it. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: env(safe-area-inset-top, 0px);
+    /* The page's own base color, which a board skin may have changed. */
+    background: inherit;
+    z-index: 35;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 150ms ease-out;
+  }
+
+  html[data-scrolled] body::before {
+    opacity: 1;
+  }
+
   /* Inside the mobile app (src/lib/nativeApp.ts): no text-selection loupe or
      long-press callout on game UI, as in a native app. Form fields keep
      normal editing. */
