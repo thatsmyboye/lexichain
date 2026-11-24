@@ -2,6 +2,20 @@ export type AdvancedGameMode = 'classic' | 'time_attack' | 'endless' | 'puzzle' 
 
 export type DailyGameMode = 'daily' | 'daily_5x5';
 
+// Modes that exist in code but are not offered to players. Mini-Marathon and
+// Prestige Endless are unfinished; Weekly Gauntlet was already held back.
+// A hidden mode is left out of the mode list and cannot be started. To bring
+// one back, remove it from this set (see CLAUDE.md, "Modes hidden from players").
+export const HIDDEN_MODES: ReadonlySet<AdvancedGameMode> = new Set<AdvancedGameMode>([
+  'mini_marathon',
+  'weekly_gauntlet',
+  'prestige_endless',
+]);
+
+export function isModeAvailable(mode: AdvancedGameMode): boolean {
+  return !HIDDEN_MODES.has(mode);
+}
+
 export const ADVANCED_MODE_NAMES: Record<AdvancedGameMode, string> = {
   classic: 'Classic',
   time_attack: 'Time Attack',

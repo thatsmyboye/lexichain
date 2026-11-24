@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Clock, Puzzle, Infinity as InfinityIcon, Sta
 import { useSound } from '@/components/effects';
 import { FloatingTiles } from '@/components/effects/FloatingTiles';
 import { usePersonalBests, useModesPlayed } from '@/lib/personalBests';
-import { MODE_BLURBS, getPersonalBestKey, type AdvancedGameMode } from '@/lib/gameModes';
+import { MODE_BLURBS, getPersonalBestKey, isModeAvailable, type AdvancedGameMode } from '@/lib/gameModes';
 import { cn } from '@/lib/utils';
 export type { AdvancedGameMode } from '@/lib/gameModes';
 interface AdvancedModeConfig {
@@ -264,7 +264,7 @@ export function AdvancedGameModes({
 
         {/* Mode tiles */}
         <ul className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
-          {ADVANCED_MODES.filter(mode => mode.id !== 'weekly_gauntlet').map(mode => {
+          {ADVANCED_MODES.filter(mode => isModeAvailable(mode.id)).map(mode => {
             const bestKey = getPersonalBestKey(mode.id);
             const best = bestKey ? bests[bestKey]?.score ?? null : null;
             // Modes without tracked results never get marked played, so only badge tracked ones

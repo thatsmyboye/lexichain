@@ -1,6 +1,9 @@
-# Lexichain for iOS and Android
+# Lexichain for iOS
 
-An [Expo](https://expo.dev) (SDK 58) app that packages the Lexichain web game for the App Store and Google Play.
+An [Expo](https://expo.dev) (SDK 58) app that packages the Lexichain web game for the App Store.
+
+**Android is not supported yet.** The Android settings and code in this project are kept for later,
+but nothing builds or submits for Android: see "Android" at the end.
 
 ## How it works
 
@@ -53,29 +56,26 @@ Before committing: `npm run typecheck` and `npm run doctor`.
 
 ## Build and publish with EAS
 
-One-time setup (needs an [Expo account](https://expo.dev/signup), an
-[Apple Developer Program](https://developer.apple.com/programs/) membership and a
-[Google Play Console](https://play.google.com/console) account):
+One-time setup (needs an [Expo account](https://expo.dev/signup) and an
+[Apple Developer Program](https://developer.apple.com/programs/) membership):
 
 1. Confirm the identity in `app.config.ts`. **`APP_ID` (`com.bantondigital.lexichain`) is permanent
    once published.**
 2. `npx eas-cli@latest login`. The Expo project already exists and its ID is set as
    `EAS_PROJECT_ID` in `app.config.ts`, so there is no `eas init` step.
-3. Create the app records: in App Store Connect (bundle ID above) and in the Play Console (package
-   name above).
+3. Create the app record in App Store Connect (bundle ID above).
 
 Builds (EAS manages signing credentials; let it create them when asked):
 
 ```bash
-npm run build:preview      # installable test builds: Android APK + iOS ad-hoc
-npm run build:production   # store builds: Android App Bundle + iOS archive
-npm run submit             # upload the latest production builds to both stores
+npm run build:preview      # installable iOS test build (ad hoc)
+npm run build:production   # iOS store build
+npm run submit             # upload the latest production build to App Store Connect
 ```
 
-The first Android upload to Google Play must be done by hand in the Play Console (an API key for
-`eas submit` can only be used once the app exists). After that, configure a Google service account
-key for `eas submit`. Build numbers increment automatically (`eas.json`: `appVersionSource: remote`).
-Bump `APP_VERSION` in `app.config.ts` for each store release.
+Build numbers increment automatically (`eas.json`: `appVersionSource: remote`). EAS counts them per
+platform, and only iOS is built, so only the iOS number moves. Bump `APP_VERSION` in `app.config.ts`
+for each store release.
 
 ## Store listing checklist
 
@@ -104,3 +104,25 @@ Apple rejects apps that are "just a website" (Guideline 4.2). This one goes furt
 tab: native haptics, the system share sheet, offline play, native splash and theme integration,
 and no browser UI. In the review notes, mention that the game is fully playable offline after the
 first launch and without an account.
+
+## Android
+
+Android is not supported at first. To keep it out of builds and out of EAS's build numbering:
+
+- `platforms` in `app.config.ts` lists only `ios`;
+- the `build:preview`, `build:production` and `submit` scripts pass `--platform ios`.
+
+The `android` block in `app.config.ts`, the Android profile settings in `eas.json`, the Android
+icons, and the Android code paths (back button, native padding) are kept so the platform can be
+added later. To turn it on:
+
+1. Add `"android"` to `platforms` in `app.config.ts`.
+2. Change the three scripts in `package.json` to `--platform all`.
+3. Create the app in the [Google Play Console](https://play.google.com/console) (package name
+   `com.bantondigital.lexichain`). The first upload to Google Play must be done by hand there; an
+   API key for `eas submit` only works once the app exists.
+4. Fill in the Play data-safety form from the "Data collected" entry above, and give the privacy
+   policy's "Deleting your data" section as the account-deletion URL.
+
+Android production builds were started on November 24, 2026 before this decision, so EAS's Android
+build number is already past 1.
